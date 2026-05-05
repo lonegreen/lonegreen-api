@@ -161,7 +161,8 @@ const {
   validateLineItemsMatchAmount,
   appendPaymentLedgerEntrySafe,
   assertNewInvoiceTotalCoversNetPaid,
-  runInvoiceIntegrityChecks
+  runInvoiceIntegrityChecks,
+  createPaymentRecord
 } = require("../services/financialIntegrityService");
 
 
@@ -1008,53 +1009,16 @@ router.put("/workflow/invoices/:id/status", auth, requireCompanyBillingForMutati
 
 
       if (remainingBalance > 0) {
-
-
-        const payIns = await pool.query(`
-
-
-          INSERT INTO payments (invoice_id, amount, method, date, notes, company_id)
-
-
-          VALUES ($1,$2,'card',CURRENT_DATE,$3,$4)
-
-
-          RETURNING *
-
-
-        `, [
-
-
-          req.params.id,
-
-
-          remainingBalance,
-
-
-          "Manual invoice status change marked this invoice paid.",
-
-
-          req.user.company_id
-
-
-        ]);
-
-        if (payIns.rows[0]) {
-          await appendPaymentLedgerEntrySafe(null, {
-            company_id: req.user.company_id,
-            event_type: "payment_received",
-            invoice_id: Number(req.params.id),
-            payment_id: payIns.rows[0].id,
-            amount: remainingBalance,
-            metadata: {
-              method: payIns.rows[0].method,
-              source: "invoice_status_mark_paid"
-            },
-            created_by: req.user.id
-          });
-        }
-
-
+        await createPaymentRecord({
+          companyId: req.user.company_id,
+          invoiceId: Number(req.params.id),
+          amount: remainingBalance,
+          method: normalizePaymentMethod("card"),
+          date: new Date().toISOString().split("T")[0],
+          notes: "Manual invoice status change marked this invoice paid.",
+          userId: req.user.id,
+          metadata: { source: "invoice_status_mark_paid" }
+        });
       }
 
 

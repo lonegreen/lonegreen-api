@@ -260,6 +260,7 @@ const sourceExpectations = [
       "getNetPaidForInvoice",
       "appendPaymentLedgerEntry",
       "createPaymentRecord",
+      "SET status = 'paid', paid_at = COALESCE(paid_at, CURRENT_TIMESTAMP)",
       "Subscription price cannot be negative"
     ]
   },
@@ -272,7 +273,8 @@ const sourceExpectations = [
       "payments_nonpositive_amount",
       "refunds_exceed_payment_amount",
       "invoice_net_paid_exceeds_total",
-      "invoice_paid_status_balance_mismatch"
+      "invoice_paid_status_balance_mismatch",
+      "invoice_open_status_balance_mismatch"
     ]
   }
 ];

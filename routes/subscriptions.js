@@ -1250,7 +1250,7 @@ router.put("/ops/subscriptions/:id/mark-paid", auth, requireCompanyBillingForMut
       const invoiceInsert = await pool.query(`
         INSERT INTO invoices
         (company_id, client_id, source_subscription_id, source_type, invoice_number, status, issued_date, due_date, subtotal, amount, notes, line_items)
-        VALUES ($1,$2,$3,'subscription',$4,'paid',$5,$5,$6,$6,$7,$8::jsonb)
+        VALUES ($1,$2,$3,'subscription',$4,'unpaid',$5,$5,$6,$6,$7,$8::jsonb)
         RETURNING *
       `, [
         companyId,
@@ -1269,12 +1269,6 @@ router.put("/ops/subscriptions/:id/mark-paid", auth, requireCompanyBillingForMut
       ]);
 
       invoiceId = invoiceInsert.rows[0].id;
-    } else {
-      await pool.query(`
-        UPDATE invoices
-        SET status = 'paid', paid_at = CURRENT_TIMESTAMP
-        WHERE id = $1 AND company_id = $2
-      `, [invoiceId, companyId]);
     }
 
     const alreadyPaid = await getNetPaidForInvoice(null, companyId, invoiceId);
@@ -1295,6 +1289,12 @@ router.put("/ops/subscriptions/:id/mark-paid", auth, requireCompanyBillingForMut
         }
       });
     }
+
+    await pool.query(`
+      UPDATE invoices
+      SET status = 'paid', paid_at = COALESCE(paid_at, CURRENT_TIMESTAMP)
+      WHERE id = $1 AND company_id = $2
+    `, [invoiceId, companyId]);
 
     if (existingBilling.rows.length === 0) {
       await pool.query(`

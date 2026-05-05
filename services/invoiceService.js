@@ -131,7 +131,7 @@ async function recalculateInvoiceFinancials(companyId, invoiceId, db = pool) {
   if (invoice.status !== "cancelled") {
     if (invoice.status === "draft" && paidAmount === 0) {
       nextStatus = "draft";
-    } else if (remainingBalance <= 0 && totalAmount > 0) {
+    } else if (remainingBalance <= 0 && totalAmount >= 0) {
       nextStatus = "paid";
     } else if (invoice.due_date && dateOnly(invoice.due_date) < today) {
       nextStatus = "overdue";

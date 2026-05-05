@@ -458,6 +458,31 @@ const checks = [
       ORDER BY id
       LIMIT 100
     `
+  },
+  {
+    id: "invoice_open_status_balance_mismatch",
+    title: "Open invoices with zero remaining balance",
+    sql: `
+      WITH balances AS (
+        SELECT
+          i.id,
+          i.company_id,
+          i.invoice_number,
+          i.status,
+          COALESCE(i.amount, 0)::numeric AS invoice_total,
+          COALESCE((SELECT SUM(p.amount)::numeric FROM payments p WHERE p.invoice_id = i.id AND p.company_id = i.company_id), 0)
+            - COALESCE((SELECT SUM(r.amount)::numeric FROM refunds r WHERE r.invoice_id = i.id AND r.company_id = i.company_id), 0) AS net_paid
+        FROM invoices i
+      )
+      SELECT id, company_id, invoice_number, status, invoice_total, net_paid,
+             invoice_total - net_paid AS remaining_balance
+      FROM balances
+      WHERE status IN ('unpaid', 'overdue')
+        AND invoice_total >= 0
+        AND invoice_total - net_paid <= 0.01
+      ORDER BY id
+      LIMIT 100
+    `
   }
 ];
 

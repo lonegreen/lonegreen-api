@@ -379,7 +379,7 @@ async function runInvoiceIntegrityChecks(companyId, invoiceId) {
   if (row.status !== "cancelled") {
     if (row.status === "draft" && netPaid === 0) {
       expectedStatus = "draft";
-    } else if (remaining <= 0 && total > 0) {
+    } else if (remaining <= 0 && total >= 0) {
       expectedStatus = "paid";
     } else if (due && due < today) {
       expectedStatus = "overdue";
