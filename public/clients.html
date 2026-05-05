@@ -1,0 +1,1406 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Clients</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="/app-shell.css">
+
+  <style>
+    * { box-sizing: border-box; }
+
+    :root {
+      --bg: #f5f8f6;
+      --panel: #ffffff;
+      --text: #163328;
+      --muted: #587165;
+      --border: #dbe8df;
+      --green: #1f5c3a;
+      --green-dark: #17462c;
+      --green-soft: #eaf5ee;
+      --blue-soft: #eef4ff;
+      --blue: #1d4ed8;
+      --red-soft: #fff1f2;
+      --red: #b42318;
+      --shadow: 0 16px 40px rgba(16, 24, 40, 0.07);
+      --radius: 18px;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      background:
+        radial-gradient(circle at top left, rgba(31, 92, 58, 0.10), transparent 340px),
+        linear-gradient(180deg, #eef5f1 0%, #f7faf8 180px, #f4f6f8 100%);
+      color: var(--text);
+    }
+
+    .page {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 28px 20px 40px;
+      display: grid;
+      gap: 18px;
+    }
+
+    .page-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      gap: 18px;
+      flex-wrap: wrap;
+    }
+
+    .page-title h1 {
+      margin: 0 0 6px;
+      font-size: 34px;
+      color: var(--green);
+      letter-spacing: -0.04em;
+    }
+
+    .page-title p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .panel {
+      background: rgba(255,255,255,0.96);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+
+    .page-hint {
+      background: #fffaf0;
+      border: 1px solid #fde5b4;
+      color: #7c4a03;
+      border-radius: var(--radius);
+      padding: 16px 18px;
+      box-shadow: 0 12px 28px rgba(16, 24, 40, 0.05);
+    }
+
+    .page-hint strong {
+      display: block;
+      margin-bottom: 5px;
+    }
+
+    .page-hint p {
+      margin: 0;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .form-panel {
+      padding: 22px;
+    }
+
+    .form-panel h3 {
+      margin: 0 0 16px;
+      color: var(--green);
+      font-size: 19px;
+      letter-spacing: -0.02em;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      align-items: end;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .field label,
+    .search-panel label {
+      font-size: 12px;
+      font-weight: 900;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    input, button, select {
+      font: inherit;
+    }
+
+    input, select {
+      width: 100%;
+      padding: 11px 13px;
+      border: 1px solid #cfe0d5;
+      border-radius: 12px;
+      background: white;
+      color: var(--text);
+      outline: none;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    input:focus,
+    select:focus {
+      border-color: var(--green);
+      box-shadow: 0 0 0 4px rgba(31, 92, 58, 0.12);
+    }
+
+    button {
+      cursor: pointer;
+      border: none;
+      border-radius: 12px;
+      padding: 11px 16px;
+      font-weight: 900;
+      transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+      white-space: nowrap;
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 10px 20px rgba(16, 24, 40, 0.08);
+    }
+
+    button:disabled {
+      opacity: 0.65;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    .add,
+    .open-btn {
+      background: var(--green);
+      color: white;
+    }
+
+    .add:hover,
+    .open-btn:hover {
+      background: var(--green-dark);
+    }
+
+    .edit-btn {
+      background: var(--green-soft);
+      color: var(--green);
+      border: 1px solid #cfe0d5;
+    }
+
+    .delete {
+      background: var(--red-soft);
+      color: var(--red);
+      border: 1px solid #fecdd3;
+    }
+
+    .search-panel {
+      padding: 16px 18px;
+    }
+
+    .search-panel label {
+      display: block;
+      margin-bottom: 8px;
+    }
+
+    .search-input {
+      width: 100%;
+      padding: 13px 14px;
+      border-radius: 14px;
+      border: 1px solid #cfe0d5;
+      background: white;
+    }
+
+    .clients-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 18px;
+    }
+
+    .card {
+      padding: 20px;
+      border-radius: var(--radius);
+      background: linear-gradient(180deg, #ffffff 0%, #fbfdfc 100%);
+      border: 1px solid var(--border);
+      box-shadow: 0 14px 30px rgba(16, 24, 40, 0.06);
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      gap: 14px;
+      align-items: flex-start;
+      margin-bottom: 14px;
+    }
+
+    .client-name {
+      margin: 0;
+      font-size: 21px;
+      color: #143326;
+      font-weight: 900;
+      letter-spacing: -0.03em;
+    }
+
+    .badge-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 900;
+      border: 1px solid transparent;
+    }
+
+    .badge-subscription {
+      background: #ecfdf3;
+      color: #027a48;
+      border-color: #abefc6;
+    }
+
+    .badge-upcoming {
+      background: var(--blue-soft);
+      color: var(--blue);
+      border-color: #c7d7fe;
+    }
+
+    .meta-list {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px 16px;
+      margin-bottom: 16px;
+    }
+
+    .meta-label {
+      display: block;
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: #6b7f75;
+      margin-bottom: 4px;
+    }
+
+    .meta-value {
+      color: #17372a;
+      font-size: 14px;
+      word-break: break-word;
+      line-height: 1.35;
+    }
+
+    .section-title {
+      margin: 16px 0 10px;
+      font-size: 13px;
+      font-weight: 900;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .jobs-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .job {
+      padding: 12px 14px;
+      border-radius: 14px;
+      background: #f6faf7;
+      border: 1px solid var(--border);
+    }
+
+    .job-main {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: center;
+      flex-wrap: wrap;
+      font-weight: 900;
+      color: var(--text);
+    }
+
+    .job-sub {
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.4;
+    }
+
+    .empty-state,
+    .more-note {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .card-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 18px;
+    }
+
+    .no-results,
+    .empty {
+      grid-column: 1 / -1;
+      padding: 24px;
+      color: var(--muted);
+      border: 1px dashed var(--border);
+      border-radius: var(--radius);
+      background: #f8fbf9;
+      line-height: 1.5;
+    }
+
+    .empty strong {
+      display: block;
+      color: var(--text);
+      margin-bottom: 5px;
+    }
+
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.52);
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+      padding: 18px;
+    }
+
+    .modal-box {
+      background: white;
+      padding: 22px;
+      border-radius: 20px;
+      width: 680px;
+      max-width: calc(100vw - 30px);
+      max-height: 92vh;
+      overflow: auto;
+      box-shadow: 0 18px 40px rgba(16, 24, 40, 0.18);
+    }
+
+    .modal-box h3 {
+      margin: 0 0 16px;
+      color: var(--green);
+      font-size: 24px;
+      letter-spacing: -0.03em;
+    }
+
+    .modal-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .modal-grid .field.wide {
+      grid-column: 1 / -1;
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 16px;
+    }
+
+    .modal-stack {
+      display: grid;
+      gap: 12px;
+    }
+
+    .modal-stack label {
+      font-size: 12px;
+      font-weight: 900;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .skeleton-card {
+      padding: 20px;
+      border-radius: var(--radius);
+      background: rgba(255,255,255,0.96);
+      border: 1px solid var(--border);
+      box-shadow: 0 14px 30px rgba(16, 24, 40, 0.06);
+      display: grid;
+      gap: 10px;
+    }
+
+    .skeleton {
+      position: relative;
+      overflow: hidden;
+      background: #edf3ef;
+      border-radius: 12px;
+      min-height: 16px;
+    }
+
+    .skeleton:after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      transform: translateX(-100%);
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.7), transparent);
+      animation: shimmer 1.1s infinite;
+    }
+
+    @keyframes shimmer {
+      100% { transform: translateX(100%); }
+    }
+
+    @media (max-width: 900px) {
+      .form-grid,
+      .clients-grid,
+      .meta-list,
+      .modal-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .page {
+        padding: 22px 14px 30px;
+      }
+
+      .page-title h1 {
+        font-size: 28px;
+      }
+
+      .card,
+      .form-panel,
+      .search-panel {
+        padding: 16px;
+      }
+
+      .card-actions button,
+      .modal-actions button {
+        width: 100%;
+      }
+    }
+  </style>
+  <link rel="stylesheet" href="/ui-cleanup.css">
+  <script src="/js/role-guard.js"></script>
+</head>
+
+<body>
+  <script>
+(function(){
+  const token = localStorage.getItem("token");
+
+  let user = null;
+
+  try {
+    user = JSON.parse(localStorage.getItem("user") || "null");
+  } catch (e) {
+    user = null;
+  }
+
+  if (!token || !user) {
+    window.location.href = "/login.html";
+    return;
+  }
+
+  const role = String(user.role || "").toLowerCase();
+
+  if (role === "worker") {
+    window.location.href = "/control.html";
+    return;
+  }
+})();
+</script>
+
+<div class="page">
+  <div class="page-header">
+    <div class="page-title">
+      <h1>Clients</h1>
+      <p>Manage customer details, service activity, and upcoming work from one place.</p>
+    </div>
+  </div>
+
+  <div id="clientsHint" class="page-hint" style="display:none;">
+    <strong>Build your client base first.</strong>
+    <p>Add your first client here, then open the profile to create jobs, estimates, subscriptions, and invoices from one connected timeline.</p>
+  </div>
+
+  <div class="panel form-panel">
+    <h3>Add Client</h3>
+    <div class="form-grid">
+      <div class="field">
+        <label for="name">Name</label>
+        <input id="name" placeholder="Client name">
+      </div>
+      <div class="field">
+        <label for="phone">Phone</label>
+        <input id="phone" placeholder="Phone number">
+      </div>
+      <div class="field">
+        <label for="address">Address</label>
+        <input id="address" placeholder="Street address">
+      </div>
+      <div class="field">
+        <label for="zip">ZIP</label>
+        <input id="zip" placeholder="ZIP code">
+      </div>
+    </div>
+    <div class="card-actions">
+      <button class="add" onclick="addClient()">Add Client</button>
+    </div>
+  </div>
+
+  <div class="panel search-panel">
+    <label for="search">Search Clients</label>
+    <input id="search" class="search-input" placeholder="Search by name, phone, address, or ZIP">
+  </div>
+
+  <div id="list" class="clients-grid">
+    <div class="skeleton-card">
+      <div class="skeleton" style="width:44%;height:20px;"></div>
+      <div class="skeleton" style="width:78%;height:14px;"></div>
+      <div class="skeleton" style="width:100%;height:62px;"></div>
+    </div>
+    <div class="skeleton-card">
+      <div class="skeleton" style="width:38%;height:20px;"></div>
+      <div class="skeleton" style="width:70%;height:14px;"></div>
+      <div class="skeleton" style="width:100%;height:62px;"></div>
+    </div>
+  </div>
+</div>
+
+<div id="subModal" class="modal-overlay">
+  <div class="modal-box">
+    <h3>Add Subscription</h3>
+
+    <div class="modal-stack">
+      <input id="sub_service" placeholder="Service">
+
+      <select id="sub_freq">
+        <option value="weekly">Weekly</option>
+        <option value="biweekly">Biweekly</option>
+        <option value="monthly">Monthly</option>
+      </select>
+
+      <label for="sub_date">Start Date</label>
+      <input type="date" id="sub_date">
+
+      <input id="sub_price" placeholder="Price">
+
+      <select id="sub_worker">
+        <option value="">Select Worker</option>
+      </select>
+    </div>
+
+    <div class="modal-actions">
+      <button class="add" onclick="confirmSub()">Add</button>
+      <button class="edit-btn" onclick="closeSub()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<div id="jobModal" class="modal-overlay">
+  <div class="modal-box">
+    <h3>Add Job</h3>
+
+    <div class="modal-stack">
+      <input id="job_service" placeholder="Service">
+
+      <label for="job_date">Date</label>
+      <input type="date" id="job_date">
+
+      <label for="job_start">Start Time</label>
+      <input type="time" id="job_start">
+
+      <label for="job_end">End Time</label>
+      <input type="time" id="job_end">
+
+      <input id="job_price" placeholder="Price">
+
+      <select id="job_worker">
+        <option value="">Select Worker</option>
+      </select>
+    </div>
+
+    <div class="modal-actions">
+      <button class="add" onclick="confirmJob()">Add</button>
+      <button class="edit-btn" onclick="closeJob()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<div id="clientEditModal" class="modal-overlay">
+  <div class="modal-box">
+    <h3 id="clientEditTitle">Edit Client</h3>
+    <div class="modal-grid">
+      <div class="field">
+        <label for="edit_client_name">Name</label>
+        <input id="edit_client_name" placeholder="Client name">
+      </div>
+      <div class="field">
+        <label for="edit_client_phone">Phone</label>
+        <input id="edit_client_phone" placeholder="Phone number">
+      </div>
+      <div class="field wide">
+        <label for="edit_client_address">Address</label>
+        <input id="edit_client_address" placeholder="Street address">
+      </div>
+      <div class="field">
+        <label for="edit_client_zip">ZIP</label>
+        <input id="edit_client_zip" placeholder="ZIP code">
+      </div>
+      <div class="field wide">
+        <label for="edit_client_notes">Notes</label>
+        <input id="edit_client_notes" placeholder="Client notes">
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="add" onclick="saveClientEdit(this)">Save</button>
+      <button class="edit-btn" onclick="closeEditClient()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<div id="deleteClientModal" class="modal-overlay">
+  <div class="modal-box">
+    <h3>Delete Client</h3>
+    <p>This will safely archive, cancel, deactivate, or delete only when safe.</p>
+    <div class="modal-actions">
+      <button class="edit-btn" onclick="closeDeleteClient()">Cancel</button>
+      <button class="delete" onclick="confirmDeleteClient(this)">Delete</button>
+    </div>
+  </div>
+</div>
+
+<script src="/js/ui.js"></script>
+<script src="/js/auth.js"></script>
+<script src="/js/api.js"></script>
+<script src="/js/format.js"></script>
+
+<script>
+function escapeHtml(value){
+  return String(value ?? "").replace(/[&<>\"']/g, char => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    "\"": "&quot;",
+    "'": "&#39;"
+  }[char]));
+}
+
+const SafeUI = {
+  showToast(message, type){
+    if(window.AppUI && typeof window.AppUI.showToast === "function"){
+      window.AppUI.showToast(message, type);
+      return;
+    }
+    alert(message);
+  },
+
+  emptyState(title, message, actions){
+    if(window.AppUI && typeof window.AppUI.emptyState === "function"){
+      return window.AppUI.emptyState(title, message, actions || []);
+    }
+
+    const actionHtml = (actions || []).map(action => `
+      <button class="${escapeHtml(action.className || "add")}" onclick="${escapeHtml(action.onClick || "")}">
+        ${escapeHtml(action.label || "Action")}
+      </button>
+    `).join("");
+
+    return `
+      <div class="empty">
+        <strong>${escapeHtml(title)}</strong>
+        <div>${escapeHtml(message || "")}</div>
+        ${actionHtml ? `<div class="card-actions">${actionHtml}</div>` : ""}
+      </div>
+    `;
+  },
+
+  setLoading(isLoading, message){
+    if(window.AppUI && typeof window.AppUI.setLoading === "function"){
+      window.AppUI.setLoading(isLoading, message);
+    }
+  },
+
+  async withButton(button, fn, options){
+    if(window.AppUI && typeof window.AppUI.withButton === "function"){
+      return window.AppUI.withButton(button, fn, options || {});
+    }
+
+    const original = button ? button.textContent : "";
+    if(button){
+      button.disabled = true;
+      button.textContent = (options && options.loading) || "Loading...";
+    }
+
+    try {
+      return await fn();
+    } finally {
+      if(button){
+        button.disabled = false;
+        button.textContent = original;
+      }
+    }
+  }
+};
+
+function openClient(id){
+  window.location = "/client.html?id=" + encodeURIComponent(id);
+}
+
+let currentJobClient = null;
+let currentClient = null;
+let editingClientId = null;
+let deletingClientId = null;
+const API = window.location.origin;
+const token = localStorage.getItem("token");
+let allClients = [];
+let allJobs = [];
+
+if(!token){
+  window.location = "/login.html";
+}
+
+async function safeFetch(url, options = {}){
+  let res;
+
+  if(window.AppAPI && typeof window.AppAPI.fetch === "function"){
+    res = await window.AppAPI.fetch(url, options);
+  } else {
+    res = await fetch(url, {
+      ...options,
+      headers: {
+        ...(options.headers || {}),
+        Authorization: "Bearer " + localStorage.getItem("token")
+      }
+    });
+
+    if(res.status === 401){
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      window.location = "/login.html";
+      throw new Error("Unauthorized");
+    }
+  }
+
+  const text = await res.text();
+
+  if(!res.ok){
+    console.log("SERVER ERROR:", text);
+    throw new Error(text);
+  }
+
+  try {
+    return JSON.parse(text);
+  } catch {
+    return {};
+  }
+}
+
+function openEditClient(clientId){
+  const client = allClients.find(item => String(item.id) === String(clientId));
+  if(!client) return;
+
+  editingClientId = client.id;
+  document.getElementById("clientEditTitle").textContent = "Edit Client";
+  document.getElementById("edit_client_name").value = client.name || "";
+  document.getElementById("edit_client_phone").value = client.phone || "";
+  document.getElementById("edit_client_address").value = client.address || "";
+  document.getElementById("edit_client_zip").value = client.zip || "";
+  document.getElementById("edit_client_notes").value = client.notes || "";
+  document.getElementById("clientEditModal").style.display = "flex";
+}
+
+function closeEditClient(){
+  editingClientId = null;
+  document.getElementById("clientEditModal").style.display = "none";
+}
+
+function currentRole(){
+  try {
+    return String((JSON.parse(localStorage.getItem("user") || "{}").role) || "").toLowerCase();
+  } catch {
+    return "";
+  }
+}
+
+function canDeleteRecords(){
+  return ["owner", "admin", "manager"].includes(currentRole());
+}
+
+function openDeleteClient(id){
+  deletingClientId = id;
+  document.getElementById("deleteClientModal").style.display = "flex";
+}
+
+function closeDeleteClient(){
+  deletingClientId = null;
+  document.getElementById("deleteClientModal").style.display = "none";
+}
+
+async function openJob(client_id){
+  currentJobClient = client_id;
+
+  document.getElementById("jobModal").style.display = "flex";
+
+  const workerData = await safeFetch(API + "/ops/workers");
+  const workers = Array.isArray(workerData) ? workerData : [];
+
+  const select = document.getElementById("job_worker");
+  select.innerHTML = `<option value="">Select Worker</option>`;
+
+  workers.forEach(w => {
+    const opt = document.createElement("option");
+    opt.value = w.id;
+    opt.textContent = w.name;
+    select.appendChild(opt);
+  });
+
+  const today = new Date().toISOString().split("T")[0];
+  document.getElementById("job_date").value = today;
+}
+
+function closeJob(){
+  document.getElementById("jobModal").style.display = "none";
+}
+
+async function confirmJob(){
+  const service = document.getElementById("job_service").value;
+  const date = document.getElementById("job_date").value;
+  const start = document.getElementById("job_start").value;
+  const end = document.getElementById("job_end").value;
+  const price = document.getElementById("job_price").value;
+  const worker_id = document.getElementById("job_worker").value;
+
+  if(!service || !date){
+    SafeUI.showToast("Service and date are required.", "error");
+    return;
+  }
+
+  await safeFetch(API + "/workflow/jobs",{
+    method:"POST",
+    headers:{
+      "Content-Type":"application/json"
+    },
+    body: JSON.stringify({
+      client_id: currentJobClient,
+      service,
+      date,
+      start_time: start || "08:00",
+      end_time: end || "09:00",
+      worker_id,
+      price,
+      type:"job"
+    })
+  });
+
+  closeJob();
+  document.getElementById("job_service").value = "";
+  document.getElementById("job_price").value = "";
+
+  SafeUI.showToast("Job created for this client.", "success");
+  load();
+}
+
+async function openSub(client_id){
+  currentClient = client_id;
+
+  document.getElementById("subModal").style.display = "flex";
+
+  const workerData = await safeFetch(API + "/ops/workers");
+  const workers = Array.isArray(workerData) ? workerData : [];
+
+  const select = document.getElementById("sub_worker");
+  select.innerHTML = `<option value="">Select Worker</option>`;
+
+  workers.forEach(w => {
+    const opt = document.createElement("option");
+    opt.value = w.id;
+    opt.textContent = w.name;
+    select.appendChild(opt);
+  });
+
+  const today = new Date().toISOString().split("T")[0];
+  document.getElementById("sub_date").value = today;
+}
+
+function closeSub(){
+  document.getElementById("subModal").style.display = "none";
+}
+
+async function confirmSub(){
+  const service = document.getElementById("sub_service").value;
+  const freq = document.getElementById("sub_freq").value;
+  const date = document.getElementById("sub_date").value;
+  const price = document.getElementById("sub_price").value;
+  const worker_id = document.getElementById("sub_worker").value;
+
+  if(!service || !date){
+    SafeUI.showToast("Service and start date are required.", "error");
+    return;
+  }
+
+  await safeFetch(API + "/ops/subscriptions",{
+    method:"POST",
+    headers:{
+      "Content-Type":"application/json"
+    },
+    body: JSON.stringify({
+      client_id: currentClient,
+      service,
+      frequency: freq,
+      next_date: date,
+      price,
+      worker_id
+    })
+  });
+
+  closeSub();
+  document.getElementById("sub_service").value = "";
+  document.getElementById("sub_price").value = "";
+
+  SafeUI.showToast("Subscription added successfully.", "success");
+  load();
+}
+
+function renderClient(c){
+  const card = document.createElement("div");
+  card.className = "card";
+
+  const header = document.createElement("div");
+  header.className = "card-header";
+
+  const left = document.createElement("div");
+  const name = document.createElement("h3");
+  name.className = "client-name";
+  name.textContent = c.name || "";
+
+  const badgeRow = document.createElement("div");
+  badgeRow.className = "badge-row";
+
+  if(c.has_active_subscription){
+    const badge = document.createElement("span");
+    badge.className = "badge badge-subscription";
+    badge.textContent = "Active Subscription";
+    badgeRow.appendChild(badge);
+  }
+
+  if(Number(c.upcoming_jobs_count || 0) > 0){
+    const badge = document.createElement("span");
+    badge.className = "badge badge-upcoming";
+    badge.textContent = `${c.upcoming_jobs_count} Upcoming Job${Number(c.upcoming_jobs_count) === 1 ? "" : "s"}`;
+    badgeRow.appendChild(badge);
+  }
+
+  left.appendChild(name);
+  if(badgeRow.childNodes.length){
+    left.appendChild(badgeRow);
+  }
+  header.appendChild(left);
+
+  const metaList = document.createElement("div");
+  metaList.className = "meta-list";
+
+  const metaItems = [
+    { label: "Phone", value: c.phone || "No phone" },
+    { label: "Address", value: c.address || "No address" },
+    { label: "ZIP", value: c.zip || "Not provided" },
+    {
+      label: "Last Job",
+      value: c.last_job_date
+        ? `${String(c.last_job_date).split("T")[0]}${c.last_job_status ? " • " + c.last_job_status : ""}`
+        : "No job history"
+    },
+    {
+      label: "Last Estimate",
+      value: c.last_estimate_status || "No estimate history"
+    }
+  ];
+
+  metaItems.forEach(item => {
+    const wrap = document.createElement("div");
+    const label = document.createElement("span");
+    label.className = "meta-label";
+    label.textContent = item.label;
+
+    const value = document.createElement("div");
+    value.className = "meta-value";
+    value.textContent = item.value;
+
+    wrap.appendChild(label);
+    wrap.appendChild(value);
+    metaList.appendChild(wrap);
+  });
+
+  const sectionTitle = document.createElement("div");
+  sectionTitle.className = "section-title";
+  sectionTitle.textContent = "Upcoming Jobs";
+
+  const jobsWrap = document.createElement("div");
+  jobsWrap.id = "jobs-" + c.id;
+  jobsWrap.className = "jobs-list";
+
+  const actions = document.createElement("div");
+  actions.className = "card-actions";
+
+  const openBtn = document.createElement("button");
+  openBtn.className = "open-btn";
+  openBtn.textContent = "Open Profile";
+  openBtn.onclick = () => openClient(c.id);
+
+  const editBtn = document.createElement("button");
+  editBtn.className = "edit-btn";
+  editBtn.textContent = "Edit";
+  editBtn.onclick = () => openEditClient(c.id);
+
+  const jobBtn = document.createElement("button");
+  jobBtn.className = "edit-btn";
+  jobBtn.textContent = "Add Job";
+  jobBtn.onclick = () => openJob(c.id);
+
+  const subBtn = document.createElement("button");
+  subBtn.className = "edit-btn";
+  subBtn.textContent = "Add Subscription";
+  subBtn.onclick = () => openSub(c.id);
+
+  const deleteBtn = document.createElement("button");
+  deleteBtn.className = "delete";
+  deleteBtn.textContent = "Archive Client";
+  deleteBtn.onclick = () => archiveClient(c.id);
+
+  actions.appendChild(openBtn);
+  actions.appendChild(editBtn);
+  actions.appendChild(jobBtn);
+  actions.appendChild(subBtn);
+  actions.appendChild(deleteBtn);
+
+  if(canDeleteRecords()){
+    const permanentDeleteBtn = document.createElement("button");
+    permanentDeleteBtn.className = "delete";
+    permanentDeleteBtn.textContent = "Delete";
+    permanentDeleteBtn.onclick = () => openDeleteClient(c.id);
+    actions.appendChild(permanentDeleteBtn);
+  }
+
+  card.appendChild(header);
+  card.appendChild(metaList);
+  card.appendChild(sectionTitle);
+  card.appendChild(jobsWrap);
+  card.appendChild(actions);
+
+  return card;
+}
+
+function getFilteredClients(){
+  const searchValue = (document.getElementById("search")?.value || "").trim().toLowerCase();
+
+  const activeClients = allClients.filter(c => c.archived !== true);
+
+  if(!searchValue) return activeClients;
+
+  return activeClients.filter(c => {
+    const haystack = [
+      c.name || "",
+      c.phone || "",
+      c.address || "",
+      c.zip || ""
+    ].join(" ").toLowerCase();
+
+    return haystack.includes(searchValue);
+  });
+}
+
+function renderUpcomingJobs(){
+  const today = new Date().toISOString().split("T")[0];
+
+  getFilteredClients().forEach(client => {
+    const el = document.getElementById("jobs-" + client.id);
+    if(!el) return;
+
+    el.textContent = "";
+
+    const clientJobs = allJobs
+      .filter(j => String(j.client_id) === String(client.id))
+      .filter(j => j.date && String(j.date).split("T")[0] >= today)
+      .sort((a, b) => {
+        const aValue = `${String(a.date || "").split("T")[0]} ${String(a.start_time || "")}`;
+        const bValue = `${String(b.date || "").split("T")[0]} ${String(b.start_time || "")}`;
+        return aValue.localeCompare(bValue);
+      });
+
+    if(clientJobs.length === 0){
+      const empty = document.createElement("div");
+      empty.className = "empty-state";
+      empty.textContent = "No upcoming jobs scheduled.";
+      el.appendChild(empty);
+      return;
+    }
+
+    clientJobs.slice(0, 3).forEach(j => {
+      const job = document.createElement("div");
+      job.className = "job";
+
+      const main = document.createElement("div");
+      main.className = "job-main";
+
+      const service = document.createElement("span");
+      service.textContent = j.service || "Upcoming job";
+
+      const date = document.createElement("span");
+      date.textContent = String(j.date || "").split("T")[0];
+
+      const sub = document.createElement("div");
+      sub.className = "job-sub";
+      sub.textContent = `${j.status || "scheduled"}${j.start_time ? " • " + String(j.start_time).slice(0, 5) : ""}${j.end_time ? " - " + String(j.end_time).slice(0, 5) : ""}`;
+
+      main.appendChild(service);
+      main.appendChild(date);
+      job.appendChild(main);
+      job.appendChild(sub);
+      el.appendChild(job);
+    });
+
+    if(clientJobs.length > 3){
+      const more = document.createElement("div");
+      more.className = "more-note";
+      more.textContent = "Open profile to view all jobs";
+      el.appendChild(more);
+    }
+  });
+}
+
+function renderClients(){
+  const list = document.getElementById("list");
+  list.textContent = "";
+
+  const filteredClients = getFilteredClients();
+
+  if(filteredClients.length === 0){
+    list.innerHTML = SafeUI.emptyState(
+      allClients.length ? "No clients match that search." : "No clients yet.",
+      allClients.length ? "Try a different search or clear the filter to see your client list." : "Create your first client to unlock jobs, subscriptions, and invoicing.",
+      allClients.length ? [{ label: "Clear Search", onClick: "document.getElementById('search').value=''; renderClients()", className: "edit-btn" }] : [{ label: "Add First Client", onClick: "document.getElementById('name').focus()", className: "add" }]
+    );
+    return;
+  }
+
+  filteredClients.forEach(c => {
+    list.appendChild(renderClient(c));
+  });
+
+  renderUpcomingJobs();
+}
+
+async function load(){
+  SafeUI.setLoading(true, "Loading clients...");
+  try {
+    const data = await safeFetch(API + "/clients");
+    allClients = Array.isArray(data) ? data : [];
+    document.getElementById("clientsHint").style.display = allClients.length ? "none" : "block";
+    renderClients();
+    await loadJobs();
+  } catch(err){
+    console.log("LOAD ERROR:", err);
+    document.getElementById("list").innerHTML = SafeUI.emptyState(
+      "Unable to load clients right now.",
+      "Refresh and try again. The system could not read the client list.",
+      [{ label: "Refresh", onClick: "load()", className: "add" }]
+    );
+    SafeUI.showToast("Unable to load clients.", "error");
+  } finally {
+    SafeUI.setLoading(false);
+  }
+}
+
+async function addClient(){
+  const name = document.getElementById("name").value;
+  const phone = document.getElementById("phone").value;
+  const address = document.getElementById("address").value;
+  const zip = document.getElementById("zip").value;
+
+  if(!name){
+    SafeUI.showToast("Enter a client name first.", "error");
+    return;
+  }
+
+  SafeUI.setLoading(true, "Saving client...");
+  try {
+    await safeFetch(API + "/clients",{
+      method:"POST",
+      headers:{
+        "Content-Type":"application/json"
+      },
+      body: JSON.stringify({ name, phone, address, zip })
+    });
+
+    document.getElementById("name").value = "";
+    document.getElementById("phone").value = "";
+    document.getElementById("address").value = "";
+    document.getElementById("zip").value = "";
+    SafeUI.showToast("Client added successfully.", "success");
+    load();
+  } catch(err){
+    SafeUI.showToast("Unable to add client.", "error");
+  } finally {
+    SafeUI.setLoading(false);
+  }
+}
+
+async function archiveClient(id){
+  if(!confirm("Archive this client? Historical jobs and invoices will remain.")) return;
+
+  SafeUI.setLoading(true, "Archiving client...");
+  try {
+    await safeFetch(API + "/clients/" + id + "/archive",{
+      method:"PUT"
+    });
+
+    SafeUI.showToast("Client archived.", "success");
+    load();
+  } catch(err){
+    SafeUI.showToast("Unable to archive client.", "error");
+  } finally {
+    SafeUI.setLoading(false);
+  }
+}
+
+async function confirmDeleteClient(button){
+  if(!deletingClientId) return;
+
+  await SafeUI.withButton(button, async () => {
+    try {
+      const data = await safeFetch(API + "/clients/" + deletingClientId + "/permanent",{
+        method:"DELETE"
+      });
+
+      closeDeleteClient();
+      SafeUI.showToast(data.message || "Client updated safely.", "success");
+      await load();
+    } catch(err){
+      SafeUI.showToast((err && err.message) || "Unable to delete client.", "error");
+    }
+  }, { loading: "Deleting..." });
+}
+
+async function saveClientEdit(button){
+  if(!editingClientId){
+    SafeUI.showToast("Client edit is not ready.", "error");
+    return;
+  }
+
+  const payload = {
+    name: document.getElementById("edit_client_name").value.trim(),
+    phone: document.getElementById("edit_client_phone").value.trim(),
+    address: document.getElementById("edit_client_address").value.trim(),
+    zip: document.getElementById("edit_client_zip").value.trim(),
+    notes: document.getElementById("edit_client_notes").value.trim()
+  };
+
+  if(!payload.name){
+    SafeUI.showToast("Client name is required.", "error");
+    return;
+  }
+
+  await SafeUI.withButton(button, async () => {
+    try {
+      await safeFetch(API + "/clients/" + editingClientId,{
+        method:"PUT",
+        headers:{
+          "Content-Type":"application/json"
+        },
+        body: JSON.stringify(payload)
+      });
+
+      closeEditClient();
+      SafeUI.showToast("Client updated.", "success");
+      await load();
+    } catch(err){
+      SafeUI.showToast("Unable to update client.", "error");
+    }
+  }, { loading: "Saving..." });
+}
+
+async function addJob(client_id){
+  const service = prompt("Service?");
+  const date = prompt("Date YYYY-MM-DD");
+
+  if(!service || !date) return;
+
+  await safeFetch(API + "/workflow/jobs",{
+    method:"POST",
+    headers:{
+      "Content-Type":"application/json"
+    },
+    body: JSON.stringify({
+      client_id,
+      service,
+      date,
+      start_time:"08:00",
+      end_time:"09:00",
+      type:"job"
+    })
+  });
+
+  load();
+}
+
+async function addSub(client_id){
+  const service = prompt("Service?");
+  const freq = prompt("weekly / biweekly / monthly");
+  const price = prompt("Price");
+
+  if(!service || !freq) return;
+
+  const today = new Date().toISOString().split("T")[0];
+
+  await safeFetch(API + "/ops/subscriptions",{
+    method:"POST",
+    headers:{
+      "Content-Type":"application/json"
+    },
+    body: JSON.stringify({
+      client_id,
+      service,
+      frequency: freq,
+      next_date: today,
+      price
+    })
+  });
+
+  SafeUI.showToast("Subscription added.", "success");
+  load();
+}
+
+async function loadJobs(){
+  try {
+    const jobs = await safeFetch(API + "/workflow/jobs");
+    allJobs = Array.isArray(jobs) ? jobs : [];
+    renderClients();
+  } catch(err){
+    console.log("JOB ERROR:", err);
+    SafeUI.showToast("Unable to load client jobs.", "error");
+  }
+}
+
+document.getElementById("search").addEventListener("input", renderClients);
+
+window.addEventListener("click", event => {
+  if(event.target === document.getElementById("clientEditModal")){
+    closeEditClient();
+  }
+  if(event.target === document.getElementById("deleteClientModal")){
+    closeDeleteClient();
+  }
+  if(event.target === document.getElementById("jobModal")){
+    closeJob();
+  }
+  if(event.target === document.getElementById("subModal")){
+    closeSub();
+  }
+});
+
+window.onload = load;
+</script>
+
+</body>
+</html>

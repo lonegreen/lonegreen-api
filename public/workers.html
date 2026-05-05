@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Workers</title>
+  <link rel="stylesheet" href="/app-shell.css">
+  <style>
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background:
+        radial-gradient(circle at top left, rgba(31, 92, 58, 0.08), transparent 28%),
+        linear-gradient(180deg, #edf5f0 0%, #f7f9f8 180px, #f4f6f8 100%);
+      color: #173327;
+      padding: 22px;
+    }
+
+    .page {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .hero {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      gap: 18px;
+      flex-wrap: wrap;
+      margin-bottom: 18px;
+    }
+
+    .hero h1 {
+      margin: 0 0 6px;
+      color: #1f5c3a;
+      font-size: 32px;
+      letter-spacing: -0.03em;
+    }
+
+    .hero p {
+      margin: 0;
+      color: #648076;
+      line-height: 1.5;
+    }
+
+    .panel {
+      background: rgba(255,255,255,0.96);
+      border: 1px solid #dbe7df;
+      border-radius: 20px;
+      box-shadow: 0 18px 42px rgba(16,24,40,0.06);
+    }
+
+    .summary {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 14px;
+      margin-bottom: 18px;
+    }
+
+    .summary-card {
+      padding: 18px;
+    }
+
+    .label {
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #688076;
+      margin-bottom: 8px;
+    }
+
+    .value {
+      font-size: 28px;
+      font-weight: 800;
+      color: #1f5c3a;
+      letter-spacing: -0.03em;
+    }
+
+    .toolbar {
+      padding: 18px;
+      margin-bottom: 18px;
+      display: grid;
+      grid-template-columns: 1.4fr auto;
+      gap: 12px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+    }
+
+    .card {
+      padding: 18px;
+      min-width: 0;
+    }
+
+    .top {
+      display: flex;
+      justify-content: space-between;
+      gap: 14px;
+      align-items: flex-start;
+      margin-bottom: 14px;
+    }
+
+    .title {
+      margin: 0 0 6px;
+      color: #173327;
+      font-size: 20px;
+      letter-spacing: -0.02em;
+      word-break: break-word;
+    }
+
+    .sub {
+      color: #648076;
+      font-size: 13px;
+      margin-bottom: 4px;
+      word-break: break-word;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 7px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 800;
+      text-transform: uppercase;
+      white-space: nowrap;
+      letter-spacing: 0.02em;
+    }
+
+    .active {
+      background: #ecfdf3;
+      color: #027a48;
+    }
+
+    .inactive {
+      background: #fef2f2;
+      color: #b42318;
+    }
+
+    .meta {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .meta-box {
+      padding: 12px;
+      border-radius: 14px;
+      background: #f7faf8;
+      border: 1px solid #deebe3;
+      min-width: 0;
+      word-break: break-word;
+    }
+
+    .btn {
+      border: none;
+      border-radius: 12px;
+      padding: 11px 16px;
+      cursor: pointer;
+      font-weight: 800;
+      font-family: inherit;
+      transition: transform .15s ease, box-shadow .15s ease, opacity .15s ease;
+      box-shadow: 0 8px 16px rgba(16,24,40,0.06);
+    }
+
+    .btn:hover:not(:disabled) {
+      transform: translateY(-1px);
+      box-shadow: 0 12px 22px rgba(16,24,40,0.10);
+    }
+
+    .btn:disabled {
+      opacity: .55;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    .primary { background: #1f5c3a; color: white; }
+    .blue { background: #2563eb; color: white; }
+    .orange { background: #f59e0b; color: white; }
+    .red { background: #dc2626; color: white; }
+    .gray { background: #eef2f0; color: #1f5c3a; border: 1px solid #dbe7df; }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    input {
+      width: 100%;
+      padding: 11px 13px;
+      border-radius: 12px;
+      border: 1px solid #cfe0d5;
+      background: white;
+      color: #173327;
+      font: inherit;
+      outline: none;
+      transition: border .15s ease, box-shadow .15s ease;
+    }
+
+    input:focus {
+      border-color: #1f5c3a;
+      box-shadow: 0 0 0 4px rgba(31,92,58,0.10);
+    }
+
+    .modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.52);
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+      padding: 18px;
+    }
+
+    .modal-box {
+      width: 520px;
+      max-width: 100%;
+      background: white;
+      padding: 22px;
+      border-radius: 20px;
+      box-shadow: 0 24px 54px rgba(0,0,0,0.22);
+    }
+
+    .modal-box h3 {
+      margin: 0 0 16px;
+      color: #1f5c3a;
+      font-size: 22px;
+      letter-spacing: -0.02em;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+    }
+
+    .check-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px;
+      border: 1px solid #dbe7df;
+      border-radius: 14px;
+      background: #f8fbf9;
+      color: #315548;
+      font-weight: 800;
+    }
+
+    .check-row input {
+      width: auto;
+      box-shadow: none;
+    }
+
+    .modal-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    .empty {
+      padding: 28px;
+      border: 1px dashed #dbe7df;
+      border-radius: 18px;
+      background: #f8fbf9;
+      color: #688076;
+      grid-column: 1 / -1;
+      line-height: 1.5;
+    }
+
+    .empty strong {
+      display: block;
+      color: #173327;
+      font-size: 18px;
+      margin-bottom: 6px;
+    }
+
+    @media (max-width: 900px) {
+      body {
+        padding: 14px;
+      }
+
+      .summary,
+      .grid,
+      .toolbar,
+      .meta {
+        grid-template-columns: 1fr;
+      }
+
+      .hero {
+        align-items: stretch;
+      }
+
+      .hero .btn,
+      .toolbar .btn,
+      .actions .btn,
+      .modal-actions .btn {
+        width: 100%;
+      }
+
+      .top {
+        flex-direction: column;
+      }
+    }
+  </style>
+  <link rel="stylesheet" href="/ui-cleanup.css">
+  <script src="/js/role-guard.js"></script>
+</head>
+<body>
+  <script>
+(function(){
+  const token = localStorage.getItem("token");
+
+  let user = null;
+
+  try {
+    user = JSON.parse(localStorage.getItem("user") || "null");
+  } catch (e) {
+    user = null;
+  }
+
+  if (!token || !user) {
+    window.location.href = "/login.html";
+    return;
+  }
+
+  const role = String(user.role || "").toLowerCase();
+
+  if (role === "worker") {
+    window.location.href = "/control.html";
+    return;
+  }
+})();
+</script>
+<div class="page">
+  <div class="hero">
+    <div>
+      <h1>Workers</h1>
+      <p>Manage your active field team, daily load, and completion performance.</p>
+    </div>
+    <button class="btn primary" onclick="openModal()">Add Worker</button>
+  </div>
+
+  <div class="summary">
+    <div class="panel summary-card"><div class="label">Total Workers</div><div class="value" id="totalCount">0</div></div>
+    <div class="panel summary-card"><div class="label">Active</div><div class="value" id="activeCount">0</div></div>
+    <div class="panel summary-card"><div class="label">Assigned Jobs</div><div class="value" id="assignedCount">0</div></div>
+    <div class="panel summary-card"><div class="label">Completed Jobs</div><div class="value" id="completedCount">0</div></div>
+  </div>
+
+  <div class="panel toolbar">
+    <input id="search" placeholder="Search workers by name or phone">
+    <button class="btn blue" onclick="load()">Refresh</button>
+  </div>
+
+  <div id="list" class="grid"></div>
+</div>
+
+<div id="workerModal" class="modal">
+  <div class="modal-box">
+    <h3 id="modalTitle">Add Worker</h3>
+    <div class="form-grid">
+      <input id="worker_name" placeholder="Worker name">
+      <input id="worker_phone" placeholder="Phone">
+      <label class="check-row"><input id="worker_active" type="checkbox" checked> Active worker</label>
+    </div>
+    <div class="modal-actions">
+      <button class="btn primary" onclick="saveWorker()">Save</button>
+      <button class="btn gray" onclick="closeModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<div id="deleteWorkerModal" class="modal">
+  <div class="modal-box">
+    <h3>Delete Worker</h3>
+    <p>This will safely archive, cancel, deactivate, or delete only when safe.</p>
+    <div class="modal-actions">
+      <button class="btn gray" onclick="closeDeleteWorker()">Cancel</button>
+      <button class="btn red" onclick="confirmDeleteWorker(this)">Delete</button>
+    </div>
+  </div>
+</div>
+
+<script src="/js/ui.js"></script>
+<script src="/js/auth.js"></script>
+<script src="/js/api.js"></script>
+<script src="/js/format.js"></script>
+<script>
+const API = window.location.origin;
+let workers = [];
+let editingId = null;
+let deletingWorkerId = null;
+
+const getToken = AppAuth.getToken;
+
+if(!getToken()){
+  window.top.location.href = "/login.html";
+}
+
+const apiFetch = AppAPI.fetch;
+
+function escapeHtml(value){
+  return String(value ?? "").replace(/[&<>\"']/g, char => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#39;"
+  }[char]));
+}
+
+async function safeJson(res){
+  try {
+    return await res.json();
+  } catch {
+    try {
+      const text = await res.text();
+      return { error: text || "Request failed." };
+    } catch {
+      return { error: "Request failed." };
+    }
+  }
+}
+
+function getErrorMessage(data, fallback){
+  if(data && typeof data.error === "string" && data.error.trim()) return data.error;
+  if(data && typeof data.message === "string" && data.message.trim()) return data.message;
+  return fallback;
+}
+
+function setButtonLoading(button, text){
+  if(!button) return function(){};
+  const oldText = button.textContent;
+  button.disabled = true;
+  button.textContent = text;
+  return function(){
+    button.disabled = false;
+    button.textContent = oldText;
+  };
+}
+
+function currentRole(){
+  try {
+    return String((JSON.parse(localStorage.getItem("user") || "{}").role) || "").toLowerCase();
+  } catch {
+    return "";
+  }
+}
+
+function canDeleteWorkers(){
+  return ["owner", "admin", "manager"].includes(currentRole());
+}
+
+function filteredWorkers(){
+  const q = (document.getElementById("search").value || "").trim().toLowerCase();
+
+  if(!q) return workers;
+
+  return workers.filter(worker =>
+    [worker.name, worker.phone].join(" ").toLowerCase().includes(q)
+  );
+}
+
+function renderSummary(){
+  document.getElementById("totalCount").textContent = workers.length;
+  document.getElementById("activeCount").textContent = workers.filter(worker => worker.active !== false).length;
+  document.getElementById("assignedCount").textContent = workers.reduce((sum, worker) => sum + Number(worker.jobs_assigned || 0), 0);
+  document.getElementById("completedCount").textContent = workers.reduce((sum, worker) => sum + Number(worker.jobs_completed || 0), 0);
+}
+
+function render(){
+  renderSummary();
+
+  const list = document.getElementById("list");
+  const items = filteredWorkers();
+
+  if(!items.length){
+    list.innerHTML = `<div class="empty"><strong>No workers found</strong>Add a worker or adjust your search.</div>`;
+    return;
+  }
+
+  list.innerHTML = items.map(worker => {
+    const active = worker.active !== false;
+
+    return `
+      <div class="panel card">
+        <div class="top">
+          <div>
+            <h3 class="title">${escapeHtml(worker.name || "Worker")}</h3>
+            <div class="sub">${escapeHtml(worker.phone || "No phone on file")}</div>
+          </div>
+          <span class="badge ${active ? "active" : "inactive"}">${active ? "active" : "inactive"}</span>
+        </div>
+
+        <div class="meta">
+          <div class="meta-box"><div class="label">Jobs Assigned</div>${escapeHtml(worker.jobs_assigned || 0)}</div>
+          <div class="meta-box"><div class="label">Jobs Completed</div>${escapeHtml(worker.jobs_completed || 0)}</div>
+        </div>
+
+        <div class="actions">
+          <button class="btn blue" onclick="openModal(${Number(worker.id)})">Edit</button>
+          <button class="btn orange" onclick="toggleStatus(${Number(worker.id)})">${active ? "Deactivate" : "Activate"}</button>
+          ${canDeleteWorkers() ? `<button class="btn red" onclick="openDeleteWorker(${Number(worker.id)})">Delete</button>` : ""}
+        </div>
+      </div>
+    `;
+  }).join("");
+}
+
+function openModal(id = null){
+  editingId = id;
+
+  const worker = workers.find(item => String(item.id) === String(id));
+
+  document.getElementById("modalTitle").textContent = worker ? "Edit Worker" : "Add Worker";
+  document.getElementById("worker_name").value = worker ? (worker.name || "") : "";
+  document.getElementById("worker_phone").value = worker ? (worker.phone || "") : "";
+  document.getElementById("worker_active").checked = worker ? worker.active !== false : true;
+  document.getElementById("workerModal").style.display = "flex";
+}
+
+function closeModal(){
+  document.getElementById("workerModal").style.display = "none";
+}
+
+function openDeleteWorker(id){
+  deletingWorkerId = id;
+  document.getElementById("deleteWorkerModal").style.display = "flex";
+}
+
+function closeDeleteWorker(){
+  deletingWorkerId = null;
+  document.getElementById("deleteWorkerModal").style.display = "none";
+}
+
+async function saveWorker(){
+  const restoreButton = setButtonLoading(event && event.target ? event.target : null, "Saving...");
+
+  try {
+    const payload = {
+      name: document.getElementById("worker_name").value.trim(),
+      phone: document.getElementById("worker_phone").value.trim(),
+      active: document.getElementById("worker_active").checked
+    };
+
+    if(!payload.name){
+      alert("Worker name is required.");
+      return;
+    }
+
+    const url = editingId ? API + "/ops/workers/" + editingId : API + "/ops/workers";
+    const method = editingId ? "PUT" : "POST";
+
+    const res = await apiFetch(url, {
+      method,
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+
+    const data = await safeJson(res);
+
+    if(!res.ok){
+      alert(getErrorMessage(data, "Unable to save worker."));
+      return;
+    }
+
+    closeModal();
+    await load();
+  } finally {
+    restoreButton();
+  }
+}
+
+async function toggleStatus(id){
+  const restoreButton = setButtonLoading(event && event.target ? event.target : null, "Updating...");
+
+  try {
+    const worker = workers.find(item => String(item.id) === String(id));
+    if(!worker) return;
+
+    const res = await apiFetch(API + "/ops/workers/" + id, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name: worker.name,
+        phone: worker.phone || "",
+        active: worker.active === false
+      })
+    });
+
+    const data = await safeJson(res);
+
+    if(!res.ok){
+      alert(getErrorMessage(data, "Unable to update worker."));
+      return;
+    }
+
+    await load();
+  } finally {
+    restoreButton();
+  }
+}
+
+async function confirmDeleteWorker(button){
+  if(!deletingWorkerId) return;
+
+  await AppUI.withButton(button, async () => {
+    const res = await apiFetch(API + "/ops/workers/" + encodeURIComponent(deletingWorkerId) + "/permanent", {
+      method: "DELETE"
+    });
+
+    const data = await safeJson(res);
+
+    if(!res.ok){
+      AppUI.showToast(getErrorMessage(data, "Unable to delete worker."), "error");
+      return;
+    }
+
+    closeDeleteWorker();
+    AppUI.showToast(data.message || "Worker updated safely.", "success");
+    await load();
+  }, { loading: "Deleting..." });
+}
+
+async function load(){
+  const list = document.getElementById("list");
+  list.innerHTML = `<div class="empty"><strong>Loading workers...</strong>Please wait while the field team is loaded.</div>`;
+
+  try {
+    const res = await apiFetch(API + "/ops/workers");
+    const data = await safeJson(res);
+
+    if(!res.ok){
+      throw new Error(getErrorMessage(data, "Unable to load workers."));
+    }
+
+    workers = Array.isArray(data) ? data : [];
+    render();
+  } catch(err){
+    workers = [];
+    renderSummary();
+    list.innerHTML = `<div class="empty"><strong>Unable to load workers</strong>${escapeHtml(err && err.message ? err.message : "Please refresh and try again.")}</div>`;
+  }
+}
+
+document.getElementById("search").addEventListener("input", render);
+
+window.onclick = function(e){
+  if(e.target === document.getElementById("workerModal")){
+    closeModal();
+  }
+  if(e.target === document.getElementById("deleteWorkerModal")){
+    closeDeleteWorker();
+  }
+};
+
+document.addEventListener("keydown", function(e){
+  if(e.key === "Escape"){
+    closeModal();
+    closeDeleteWorker();
+  }
+});
+
+load();
+</script>
+</body>
+</html>

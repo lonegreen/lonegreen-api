@@ -1,0 +1,831 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LoneGreen Login</title>
+
+  <!--
+    TODO(dev): Re-enable Google Identity Services for production launch.
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+  -->
+
+  <style>
+    * {
+      box-sizing: border-box;
+      font-family: Inter, Arial, sans-serif;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at top left, rgba(46, 125, 50, 0.35), transparent 35%),
+        linear-gradient(135deg, #071b12, #0f2e1c 45%, #123f28);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      color: #102016;
+    }
+
+    .page {
+      width: 100%;
+      max-width: 1100px;
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.16);
+      border-radius: 28px;
+      overflow: hidden;
+      box-shadow: 0 30px 90px rgba(0,0,0,0.35);
+      backdrop-filter: blur(18px);
+    }
+
+    .brand-panel {
+      padding: 56px;
+      color: white;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .brand-panel::after {
+      content: "";
+      position: absolute;
+      width: 280px;
+      height: 280px;
+      border-radius: 999px;
+      background: rgba(80, 200, 120, 0.18);
+      right: -90px;
+      bottom: -90px;
+    }
+
+    .brand-logo {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 800;
+      font-size: 24px;
+      margin-bottom: 70px;
+    }
+
+    .brand-mark {
+      width: 46px;
+      height: 46px;
+      border-radius: 15px;
+      background: linear-gradient(135deg, #38b66b, #d7f7df);
+      color: #0f2e1c;
+      display: grid;
+      place-items: center;
+      font-size: 24px;
+      box-shadow: 0 10px 30px rgba(56,182,107,0.35);
+    }
+
+    .brand-panel h1 {
+      font-size: 46px;
+      line-height: 1.05;
+      margin: 0 0 18px;
+      letter-spacing: -1.4px;
+    }
+
+    .brand-panel p {
+      margin: 0;
+      max-width: 470px;
+      color: rgba(255,255,255,0.78);
+      font-size: 16px;
+      line-height: 1.7;
+    }
+
+    .brand-stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+      margin-top: 46px;
+      position: relative;
+      z-index: 2;
+    }
+
+    .stat {
+      padding: 18px;
+      border-radius: 20px;
+      background: rgba(255,255,255,0.10);
+      border: 1px solid rgba(255,255,255,0.12);
+    }
+
+    .stat strong {
+      display: block;
+      font-size: 22px;
+      margin-bottom: 4px;
+    }
+
+    .stat span {
+      font-size: 12px;
+      color: rgba(255,255,255,0.7);
+    }
+
+    .auth-panel {
+      background: #f8fbf8;
+      padding: 42px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .auth-card {
+      width: 100%;
+      max-width: 410px;
+    }
+
+    .mobile-logo {
+      display: none;
+      align-items: center;
+      gap: 10px;
+      font-weight: 800;
+      color: #143c27;
+      margin-bottom: 24px;
+    }
+
+    .auth-header {
+      margin-bottom: 26px;
+    }
+
+    .auth-header h2 {
+      margin: 0 0 8px;
+      font-size: 30px;
+      letter-spacing: -0.7px;
+      color: #0f2418;
+    }
+
+    .auth-header p {
+      margin: 0;
+      color: #6a756d;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .form {
+      display: none;
+    }
+
+    .form.active {
+      display: block;
+    }
+
+    .field {
+      margin-bottom: 16px;
+      text-align: left;
+    }
+
+    label {
+      display: block;
+      font-size: 13px;
+      font-weight: 700;
+      margin-bottom: 7px;
+      color: #1f3528;
+    }
+
+    input {
+      width: 100%;
+      padding: 14px 14px;
+      border-radius: 14px;
+      border: 1px solid #dbe5dd;
+      background: white;
+      outline: none;
+      font-size: 15px;
+      transition: 0.18s ease;
+    }
+
+    input:focus {
+      border-color: #2c8b55;
+      box-shadow: 0 0 0 4px rgba(44,139,85,0.12);
+    }
+
+    .password-wrap {
+      position: relative;
+    }
+
+    .password-wrap input {
+      padding-right: 48px;
+    }
+
+    .eye-btn {
+      position: absolute;
+      right: 8px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 38px;
+      height: 38px;
+      border: none;
+      border-radius: 11px;
+      background: transparent;
+      color: #5d6b63;
+      cursor: pointer;
+      margin: 0;
+      padding: 0;
+      font-size: 17px;
+    }
+
+    .eye-btn:hover {
+      background: #eef5ef;
+    }
+
+    .row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin: 4px 0 18px;
+    }
+
+    .link {
+      border: none;
+      background: none;
+      color: #1f6f42;
+      padding: 0;
+      margin: 0;
+      width: auto;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      text-decoration: none;
+    }
+
+    .link:hover {
+      text-decoration: underline;
+    }
+
+    .btn {
+      width: 100%;
+      padding: 14px 16px;
+      border: none;
+      border-radius: 14px;
+      background: linear-gradient(135deg, #1f5c3a, #2d8b55);
+      color: white;
+      font-size: 15px;
+      font-weight: 800;
+      cursor: pointer;
+      transition: 0.18s ease;
+      box-shadow: 0 12px 28px rgba(31,92,58,0.22);
+    }
+
+    .btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 16px 34px rgba(31,92,58,0.28);
+    }
+
+    .btn:disabled {
+      opacity: 0.7;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .secondary-btn {
+      background: white;
+      color: #1f5c3a;
+      border: 1px solid #dbe5dd;
+      box-shadow: none;
+      margin-top: 10px;
+    }
+
+    .divider {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin: 22px 0;
+      color: #87928b;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .divider::before,
+    .divider::after {
+      content: "";
+      height: 1px;
+      background: #dce6de;
+      flex: 1;
+    }
+
+    .message {
+      display: none;
+      padding: 12px 14px;
+      border-radius: 14px;
+      margin-top: 16px;
+      font-size: 13px;
+      line-height: 1.45;
+      text-align: left;
+    }
+
+    .message.show {
+      display: block;
+    }
+
+    .message.error {
+      background: #fff1f1;
+      color: #b42318;
+      border: 1px solid #ffd5d2;
+    }
+
+    .message.success {
+      background: #ecfdf3;
+      color: #067647;
+      border: 1px solid #b8f2cb;
+    }
+
+    .hint {
+      color: #718079;
+      font-size: 13px;
+      line-height: 1.55;
+      margin: -4px 0 18px;
+    }
+
+    .legal-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 18px;
+      font-size: 12px;
+      justify-content: center;
+    }
+
+    .legal-links a {
+      color: #1f6f42;
+      font-weight: 800;
+      text-decoration: none;
+    }
+
+    .legal-links a:hover {
+      text-decoration: underline;
+    }
+
+    .g_id_signin {
+      display: flex;
+      justify-content: center;
+      min-height: 44px;
+    }
+
+    @media (max-width: 850px) {
+      .page {
+        grid-template-columns: 1fr;
+      }
+
+      .brand-panel {
+        display: none;
+      }
+
+      .auth-panel {
+        padding: 30px 20px;
+      }
+
+      .mobile-logo {
+        display: flex;
+      }
+
+      .auth-header h2 {
+        font-size: 26px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <main class="page">
+    <section class="brand-panel">
+      <div class="brand-logo">
+        <div class="brand-mark">🌿</div>
+        <span>LoneGreen</span>
+      </div>
+
+      <h1>Run your outdoor service business with confidence.</h1>
+      <p>
+        Manage customers, jobs, estimates, invoices, subscriptions, and daily operations from one clean control panel.
+      </p>
+
+      <div class="brand-stats">
+        <div class="stat">
+          <strong>CRM</strong>
+          <span>Clients & leads</span>
+        </div>
+        <div class="stat">
+          <strong>Jobs</strong>
+          <span>Schedule & dispatch</span>
+        </div>
+        <div class="stat">
+          <strong>Billing</strong>
+          <span>Invoices & payments</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="auth-panel">
+      <div class="auth-card">
+        <div class="mobile-logo">
+          <div class="brand-mark">🌿</div>
+          <span>LoneGreen</span>
+        </div>
+
+        <!-- LOGIN FORM -->
+        <form id="loginForm" class="form active" onsubmit="event.preventDefault(); login();">
+          <div class="auth-header">
+            <h2>Welcome back</h2>
+            <p>Sign in to continue to your LoneGreen control panel.</p>
+          </div>
+
+          <div class="field">
+            <label for="username">Username</label>
+            <input id="username" autocomplete="username" placeholder="Enter your username" />
+          </div>
+
+          <div class="field">
+            <label for="password">Password</label>
+            <div class="password-wrap">
+              <input id="password" type="password" autocomplete="current-password" placeholder="Enter your password" />
+              <button type="button" class="eye-btn" onclick="togglePassword('password', this)">👁</button>
+            </div>
+          </div>
+
+          <div class="row">
+            <span></span>
+            <button type="button" class="link" onclick="showForm('forgotForm')">Forgot your password?</button>
+          </div>
+
+          <button id="loginBtn" class="btn" type="submit">Sign In</button>
+
+          <div class="divider">OR</div>
+
+          <!-- GOOGLE LOGIN (temporarily disabled for development) -->
+          <div id="googleButton" style="display:flex;justify-content:center;">
+            <button
+              type="button"
+              class="btn secondary-btn"
+              disabled
+              aria-disabled="true"
+              title="Google Login is temporarily disabled"
+              style="width:240px;cursor:not-allowed;"
+            >
+              Google Login — Coming Soon
+            </button>
+          </div>
+          <div style="margin-top:14px;text-align:center;font-size:13px;color:#6a756d;">
+            Don’t have an account?
+            <a href="/signup.html" class="link" style="font-size:13px;">Sign up</a>
+          </div>
+        </form>
+
+        <!-- FORGOT PASSWORD FORM -->
+        <form id="forgotForm" class="form" onsubmit="event.preventDefault(); sendResetCode();">
+          <div class="auth-header">
+            <h2>Reset password</h2>
+            <p>Enter your username. We will send a reset code to your company's email on file.</p>
+          </div>
+
+          <div class="field">
+            <label for="forgotUsername">Username</label>
+            <input id="forgotUsername" type="text" autocomplete="username" placeholder="Enter your username" />
+          </div>
+
+          <button id="forgotBtn" class="btn" type="submit">Send Reset Code</button>
+          <button type="button" class="btn secondary-btn" onclick="showForm('loginForm')">Back to Login</button>
+        </form>
+
+        <!-- RESET PASSWORD FORM -->
+        <form id="resetForm" class="form" onsubmit="event.preventDefault(); resetPassword();">
+          <div class="auth-header">
+            <h2>Create new password</h2>
+            <p>Enter your username, the code from your email, and your new password.</p>
+          </div>
+
+          <div class="field">
+            <label for="resetUsername">Username</label>
+            <input id="resetUsername" type="text" autocomplete="username" placeholder="Enter your username" />
+          </div>
+
+          <div class="field">
+            <label for="resetCode">Reset Code</label>
+            <input id="resetCode" inputmode="numeric" placeholder="Enter reset code" />
+          </div>
+
+          <div class="field">
+            <label for="newPassword">New Password</label>
+            <div class="password-wrap">
+              <input id="newPassword" type="password" autocomplete="new-password" placeholder="Enter new password" />
+              <button type="button" class="eye-btn" onclick="togglePassword('newPassword', this)">👁</button>
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="confirmPassword">Confirm Password</label>
+            <div class="password-wrap">
+              <input id="confirmPassword" type="password" autocomplete="new-password" placeholder="Confirm new password" />
+              <button type="button" class="eye-btn" onclick="togglePassword('confirmPassword', this)">👁</button>
+            </div>
+          </div>
+
+          <button id="resetBtn" class="btn" type="submit">Update Password</button>
+          <button type="button" class="btn secondary-btn" onclick="showForm('loginForm')">Back to Login</button>
+        </form>
+
+        <div id="messageBox" class="message"></div>
+        <div class="legal-links">
+          <a href="/terms.html" target="_blank" rel="noopener">Terms of Service</a>
+          <a href="/privacy.html" target="_blank" rel="noopener">Privacy Policy</a>
+          <a href="/billing-policy.html" target="_blank" rel="noopener">Billing Policy</a>
+          <a href="/refund-policy.html" target="_blank" rel="noopener">Refund Policy</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script src="/js/ui.js"></script>
+  <script src="/js/auth.js"></script>
+  <script src="/js/api.js"></script>
+  <script src="/js/format.js"></script>
+
+  <script>
+    const API = window.location.origin;
+
+    function showMessage(message, type) {
+      const box = document.getElementById("messageBox");
+      box.textContent = message || "";
+      box.className = "message " + (type || "error") + (message ? " show" : "");
+    }
+
+    function clearMessage() {
+      showMessage("", "error");
+    }
+
+    function showForm(formId) {
+      clearMessage();
+
+      document.querySelectorAll(".form").forEach(form => {
+        form.classList.remove("active");
+      });
+
+      document.getElementById(formId).classList.add("active");
+    }
+
+    function setButtonLoading(buttonId, isLoading, loadingText) {
+      const btn = document.getElementById(buttonId);
+      if (!btn) return;
+
+      if (isLoading) {
+        btn.dataset.originalText = btn.textContent;
+        btn.textContent = loadingText || "Loading...";
+        btn.disabled = true;
+      } else {
+        btn.textContent = btn.dataset.originalText || btn.textContent;
+        btn.disabled = false;
+      }
+    }
+
+    function togglePassword(inputId, button) {
+      const input = document.getElementById(inputId);
+
+      if (input.type === "password") {
+        input.type = "text";
+        button.textContent = "🙈";
+      } else {
+        input.type = "password";
+        button.textContent = "👁";
+      }
+    }
+
+    function safeDecodeToken(token) {
+      try {
+        return JSON.parse(atob(token.split(".")[1]));
+      } catch (err) {
+        return null;
+      }
+    }
+
+    function finishLogin(token, user) {
+      if (!token) {
+        showMessage("Login succeeded, but no token was returned.", "error");
+        return;
+      }
+
+      localStorage.setItem("token", token);
+
+      if (user) {
+        localStorage.setItem("user", JSON.stringify(user));
+      } else {
+        const payload = safeDecodeToken(token);
+        if (payload) {
+          localStorage.setItem("user", JSON.stringify(payload));
+        }
+      }
+
+      const redirectPage = localStorage.getItem("redirectAfterLogin");
+
+      if (redirectPage) {
+        localStorage.setItem("currentPage", redirectPage);
+        localStorage.removeItem("redirectAfterLogin");
+      }
+
+      window.location.href = "/control.html";
+    }
+
+    async function login() {
+      const username = document.getElementById("username").value.trim();
+      const password = document.getElementById("password").value;
+      clearMessage();
+
+      if (!username || !password) {
+        showMessage("Please enter username and password.", "error");
+        return;
+      }
+
+      setButtonLoading("loginBtn", true, "Signing in...");
+
+      try {
+        const res = await fetch(API + "/auth/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ username, password })
+        });
+
+        let data = {};
+        try {
+          data = await res.json();
+        } catch (err) {
+          data = {};
+        }
+
+        if (!res.ok) {
+          showMessage(data.error || "Wrong username or password.", "error");
+          return;
+        }
+
+        finishLogin(data.token, data.user);
+      } catch (err) {
+        showMessage("Server error. Please try again.", "error");
+      } finally {
+        setButtonLoading("loginBtn", false);
+      }
+    }
+
+    async function sendResetCode() {
+      const username = document.getElementById("forgotUsername").value.trim();
+      clearMessage();
+
+      if (!username) {
+        showMessage("Please enter your username.", "error");
+        return;
+      }
+
+      setButtonLoading("forgotBtn", true, "Sending code...");
+
+      try {
+        const res = await fetch(API + "/auth/forgot-password", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ username })
+        });
+
+        let data = {};
+        try {
+          data = await res.json();
+        } catch (err) {
+          data = {};
+        }
+
+        if (!res.ok) {
+          showMessage(data.error || "Could not send reset code.", "error");
+          return;
+        }
+
+        document.getElementById("resetUsername").value = username;
+        showForm("resetForm");
+        showMessage("Reset code sent. Check your company's email and enter the code below.", "success");
+      } catch (err) {
+        showMessage("Server error. Please try again.", "error");
+      } finally {
+        setButtonLoading("forgotBtn", false);
+      }
+    }
+
+    async function resetPassword() {
+      const username = document.getElementById("resetUsername").value.trim();
+      const code = document.getElementById("resetCode").value.trim();
+      const password = document.getElementById("newPassword").value;
+      const confirmPassword = document.getElementById("confirmPassword").value;
+
+      clearMessage();
+
+      if (!username || !code || !password || !confirmPassword) {
+        showMessage("Please complete all fields.", "error");
+        return;
+      }
+
+      if (password !== confirmPassword) {
+        showMessage("Passwords do not match.", "error");
+        return;
+      }
+
+      setButtonLoading("resetBtn", true, "Updating password...");
+
+      try {
+        const res = await fetch(API + "/auth/reset-password", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ username, code, password })
+        });
+
+        let data = {};
+        try {
+          data = await res.json();
+        } catch (err) {
+          data = {};
+        }
+
+        if (!res.ok) {
+          showMessage(data.error || "Could not reset password.", "error");
+          return;
+        }
+
+        document.getElementById("password").value = "";
+        document.getElementById("newPassword").value = "";
+        document.getElementById("confirmPassword").value = "";
+        document.getElementById("resetCode").value = "";
+
+        showForm("loginForm");
+        showMessage("Password updated successfully. You can now sign in.", "success");
+      } catch (err) {
+        showMessage("Server error. Please try again.", "error");
+      } finally {
+        setButtonLoading("resetBtn", false);
+      }
+    }
+
+    function handleCredentialResponse(response) {
+      clearMessage();
+
+      let decoded = {};
+      try {
+        decoded = JSON.parse(atob(response.credential.split(".")[1]));
+      } catch (err) {
+        showMessage("Google login failed.", "error");
+        return;
+      }
+
+      const email = decoded.email;
+
+      fetch(API + "/auth/google-login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email })
+      })
+      .then(async res => {
+        let data = {};
+        try {
+          data = await res.json();
+        } catch (err) {
+          data = {};
+        }
+
+        if (!res.ok) {
+          throw new Error(data.error || "Google login unavailable.");
+        }
+
+        return data;
+      })
+      .then(data => {
+        finishLogin(data.token, data.user);
+      })
+      .catch(err => {
+        showMessage(err.message || "Google login failed.", "error");
+      });
+    }
+  </script>
+
+  <script>
+    window.addEventListener("load", function () {
+      // TODO(dev): Set to false and restore Google script include when re-enabling GIS login.
+      const GOOGLE_LOGIN_DISABLED = true;
+      if (GOOGLE_LOGIN_DISABLED) return;
+
+      if (!window.google || !google.accounts || !google.accounts.id) return;
+
+      google.accounts.id.initialize({
+        client_id: "138894488133-ep01obq1qfi822sf0k8a5mc96i6u81er.apps.googleusercontent.com",
+        callback: handleCredentialResponse,
+        auto_select: false,
+        cancel_on_tap_outside: true,
+        use_fedcm_for_prompt: false
+      });
+
+      google.accounts.id.renderButton(
+        document.getElementById("googleButton"),
+        {
+          type: "standard",
+          theme: "outline",
+          size: "large",
+          text: "signin_with",
+          shape: "rectangular",
+          logo_alignment: "left",
+          width: 240
+        }
+      );
+    });
+  </script>
+</body>
+</html>

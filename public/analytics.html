@@ -1,0 +1,837 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Analytics</title>
+  <link rel="stylesheet" href="/app-shell.css">
+  <style>
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background:
+        radial-gradient(circle at top left, rgba(31, 92, 58, 0.08), transparent 28%),
+        linear-gradient(180deg, #edf5f0 0%, #f7f9f8 190px, #f4f6f8 100%);
+      color: #173327;
+      padding: 22px;
+    }
+
+    .page {
+      max-width: 1240px;
+      margin: 0 auto;
+      display: grid;
+      gap: 18px;
+    }
+
+    .hero {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+
+    h1 {
+      margin: 0 0 6px;
+      color: #1f5c3a;
+      font-size: 32px;
+      letter-spacing: -0.03em;
+    }
+
+    p {
+      margin: 0;
+      color: #648076;
+      line-height: 1.5;
+    }
+
+    .panel {
+      background: rgba(255,255,255,0.96);
+      border: 1px solid #dbe7df;
+      border-radius: 18px;
+      box-shadow: 0 18px 42px rgba(16,24,40,0.06);
+      padding: 18px;
+      min-width: 0;
+    }
+
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .kpi {
+      background: #f8fbf9;
+      border: 1px solid #dbe7df;
+      border-radius: 16px;
+      padding: 14px;
+      min-width: 0;
+    }
+
+    .kpi span {
+      display: block;
+      color: #648076;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      font-weight: 800;
+    }
+
+    .kpi strong {
+      display: block;
+      margin-top: 6px;
+      font-size: 24px;
+      color: #173327;
+      letter-spacing: -0.03em;
+      word-break: break-word;
+    }
+
+    .chart-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+
+    .chart-title {
+      margin: 0 0 14px;
+      color: #173327;
+      font-size: 16px;
+      font-weight: 800;
+    }
+
+    .css-chart {
+      display: grid;
+      gap: 10px;
+    }
+
+    .bar-row {
+      display: grid;
+      grid-template-columns: 120px 1fr 90px;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .bar-label {
+      color: #315548;
+      font-size: 13px;
+      font-weight: 800;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .bar-track {
+      height: 14px;
+      border-radius: 999px;
+      background: #edf3ef;
+      overflow: hidden;
+      border: 1px solid #dbe7df;
+    }
+
+    .bar-fill {
+      height: 100%;
+      border-radius: 999px;
+      background: #1f5c3a;
+      min-width: 3px;
+    }
+
+    .bar-fill.secondary {
+      background: #2563eb;
+    }
+
+    .bar-value {
+      text-align: right;
+      color: #648076;
+      font-size: 13px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .split-chart {
+      display: grid;
+      gap: 10px;
+    }
+
+    .split-row {
+      display: grid;
+      grid-template-columns: 120px 1fr 90px;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .split-track {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 4px;
+      align-items: center;
+    }
+
+    .mini-track {
+      height: 14px;
+      border-radius: 999px;
+      background: #edf3ef;
+      overflow: hidden;
+      border: 1px solid #dbe7df;
+    }
+
+    .mini-fill {
+      height: 100%;
+      border-radius: 999px;
+      background: #2563eb;
+      min-width: 3px;
+    }
+
+    .mini-fill.done {
+      background: #1f5c3a;
+    }
+
+    .table-wrap {
+      overflow: auto;
+    }
+
+    .pro-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+
+    .compact-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .compact-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 10px 0;
+      border-bottom: 1px solid #e4ece7;
+      color: #315548;
+      font-weight: 800;
+    }
+
+    .compact-row:last-child {
+      border-bottom: 0;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 640px;
+    }
+
+    th,
+    td {
+      padding: 11px 10px;
+      border-bottom: 1px solid #e4ece7;
+      text-align: left;
+      white-space: nowrap;
+    }
+
+    tbody tr:last-child td {
+      border-bottom: none;
+    }
+
+    th {
+      color: #648076;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+      background: #f8fbf9;
+    }
+
+    .tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .tab {
+      border: 1px solid #cfe0d5;
+      background: white;
+      color: #1f5c3a;
+      border-radius: 999px;
+      padding: 10px 14px;
+      font-weight: 800;
+      cursor: pointer;
+      transition: .15s ease;
+    }
+
+    .tab:hover {
+      border-color: #1f5c3a;
+      transform: translateY(-1px);
+    }
+
+    .tab.active {
+      background: #1f5c3a;
+      color: white;
+      box-shadow: 0 10px 20px rgba(31,92,58,0.18);
+    }
+
+    .section {
+      display: none;
+      gap: 14px;
+    }
+
+    .section.active {
+      display: grid;
+    }
+
+    .btn {
+      border: 0;
+      border-radius: 12px;
+      padding: 11px 14px;
+      font-weight: 800;
+      cursor: pointer;
+      background: #1f5c3a;
+      color: white;
+      font-family: inherit;
+      transition: transform .15s ease, box-shadow .15s ease, opacity .15s ease;
+      box-shadow: 0 8px 16px rgba(16,24,40,0.06);
+    }
+
+    .btn:hover:not(:disabled) {
+      transform: translateY(-1px);
+      box-shadow: 0 12px 22px rgba(16,24,40,0.10);
+    }
+
+    .btn:disabled {
+      opacity: .55;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    .empty,
+    .error-box {
+      padding: 22px;
+      border-radius: 16px;
+      border: 1px dashed #dbe7df;
+      background: #f8fbf9;
+      color: #648076;
+      line-height: 1.5;
+    }
+
+    .empty strong,
+    .error-box strong {
+      display: block;
+      color: #173327;
+      font-size: 18px;
+      margin-bottom: 6px;
+    }
+
+    .error-box {
+      border-color: #f0c7c7;
+      background: #fff7f7;
+      color: #b42318;
+    }
+
+    .page-forbidden {
+      padding: 28px;
+      background: white;
+      border: 1px solid #dbe7df;
+      border-radius: 18px;
+      box-shadow: 0 18px 42px rgba(16,24,40,0.06);
+      color: #b42318;
+      font-weight: 800;
+    }
+
+    @media (max-width: 980px) {
+      .kpi-grid,
+      .chart-grid,
+      .pro-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .bar-row,
+      .split-row {
+        grid-template-columns: 90px 1fr 80px;
+      }
+    }
+
+    @media (max-width: 640px) {
+      body {
+        padding: 12px;
+      }
+
+      .kpi-grid,
+      .chart-grid,
+      .pro-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .hero {
+        align-items: stretch;
+        flex-direction: column;
+      }
+
+      .hero .btn {
+        width: 100%;
+      }
+
+      .bar-row,
+      .split-row {
+        grid-template-columns: 1fr;
+        gap: 6px;
+      }
+
+      .bar-value {
+        text-align: left;
+      }
+    }
+  </style>
+</head>
+<body>
+<div class="page">
+  <div class="hero">
+    <div>
+      <h1>Analytics</h1>
+      <p>Internal business reporting for revenue, work, workers, and clients.</p>
+    </div>
+    <button class="btn" onclick="load()">Refresh</button>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" onclick="showSection('overview', this)">Overview</button>
+    <button class="tab" onclick="showSection('revenue', this)">Revenue</button>
+    <button class="tab" onclick="showSection('pro', this)">Pro</button>
+    <button class="tab" onclick="showSection('workers', this)">Workers</button>
+    <button class="tab" onclick="showSection('clients', this)">Clients</button>
+  </div>
+
+  <div id="overview" class="section active">
+    <div class="panel"><div class="kpi-grid" id="overviewKpis"></div></div>
+  </div>
+
+  <div id="revenue" class="section">
+    <div class="panel"><div class="kpi-grid" id="revenueKpis"></div></div>
+
+    <div class="chart-grid">
+      <div class="panel">
+        <h3 class="chart-title">Monthly Revenue</h3>
+        <div id="monthlyRevenueChart" class="css-chart"></div>
+      </div>
+      <div class="panel">
+        <h3 class="chart-title">Invoice Totals</h3>
+        <div id="invoiceTotalsChart" class="css-chart"></div>
+      </div>
+    </div>
+
+    <div class="panel table-wrap">
+      <table>
+        <thead><tr><th>Payment Method</th><th>Count</th><th>Total</th></tr></thead>
+        <tbody id="paymentRows"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div id="pro" class="section">
+    <div class="panel"><div class="kpi-grid" id="proKpis"></div></div>
+    <div class="pro-grid">
+      <div class="panel">
+        <h3 class="chart-title">Top Workers</h3>
+        <div id="proTopWorkers" class="compact-list"></div>
+      </div>
+      <div class="panel">
+        <h3 class="chart-title">Alerts</h3>
+        <div id="proAlerts" class="compact-list"></div>
+      </div>
+    </div>
+    <div class="chart-grid">
+      <div class="panel">
+        <h3 class="chart-title">Revenue Trend</h3>
+        <div id="proRevenueTrend" class="css-chart"></div>
+      </div>
+      <div class="panel">
+        <h3 class="chart-title">Jobs Trend</h3>
+        <div id="proJobsTrend" class="css-chart"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="workers" class="section">
+    <div class="panel">
+      <h3 class="chart-title">Worker Assigned vs Completed</h3>
+      <div id="workerChart" class="split-chart"></div>
+    </div>
+
+    <div class="panel table-wrap">
+      <table>
+        <thead><tr><th>Worker</th><th>Assigned</th><th>Completed</th><th>Completion Rate</th></tr></thead>
+        <tbody id="workerRows"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div id="clients" class="section">
+    <div class="panel table-wrap">
+      <table>
+        <thead><tr><th>Client</th><th>Total Jobs</th><th>Active Subscriptions</th><th>Unpaid Balance</th><th>Last Service</th></tr></thead>
+        <tbody id="clientRows"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script src="/js/ui.js"></script>
+<script src="/js/auth.js"></script>
+<script src="/js/api.js"></script>
+<script src="/js/format.js"></script>
+<script>
+const API = window.location.origin;
+const charts = {};
+
+function money(value){
+  return AppFormat.formatMoney(value || 0);
+}
+
+function date(value){
+  return value ? String(value).split("T")[0] : "-";
+}
+
+function esc(value){
+  if(window.AppFormat && typeof AppFormat.escapeHtml === "function"){
+    return AppFormat.escapeHtml(value || "");
+  }
+
+  return String(value ?? "").replace(/[&<>"']/g, ch => ({
+    "&":"&amp;",
+    "<":"&lt;",
+    ">":"&gt;",
+    '"':"&quot;",
+    "'":"&#39;"
+  }[ch]));
+}
+
+function number(value){
+  const n = Number(value || 0);
+  return Number.isFinite(n) ? n : 0;
+}
+
+function percent(value){
+  const n = number(value);
+  return Math.max(0, Math.min(100, n));
+}
+
+function getUser(){
+  return AppAuth.getUser() || {};
+}
+
+function allowed(){
+  return ["owner","admin"].includes(getUser().role);
+}
+
+function showSection(id, button){
+  document.querySelectorAll(".section").forEach(section => {
+    section.classList.toggle("active", section.id === id);
+  });
+
+  document.querySelectorAll(".tab").forEach(tab => tab.classList.remove("active"));
+
+  if(button) button.classList.add("active");
+}
+
+function kpi(label, value){
+  return '<div class="kpi"><span>' + esc(label) + '</span><strong>' + esc(value) + '</strong></div>';
+}
+
+async function safeJson(res){
+  try {
+    return await res.json();
+  } catch {
+    try {
+      const text = await res.text();
+      return { error: text || "Request failed." };
+    } catch {
+      return { error: "Request failed." };
+    }
+  }
+}
+
+function getErrorMessage(data, fallback){
+  if(data && typeof data.error === "string" && data.error.trim()) return data.error;
+  if(data && typeof data.message === "string" && data.message.trim()) return data.message;
+  return fallback;
+}
+
+async function loadJson(path){
+  const res = await AppAPI.fetch(API + path);
+  const data = await safeJson(res);
+
+  if(!res.ok){
+    throw new Error(getErrorMessage(data, "Request failed"));
+  }
+
+  return data;
+}
+
+function emptyState(title, text){
+  return '<div class="empty"><strong>' + esc(title) + '</strong><div>' + esc(text || "") + '</div></div>';
+}
+
+function errorState(title, text){
+  return '<div class="error-box"><strong>' + esc(title) + '</strong><div>' + esc(text || "") + '</div></div>';
+}
+
+function maxValue(rows, key){
+  const values = rows.map(row => number(row[key]));
+  return Math.max(1, ...values);
+}
+
+function renderBarChart(id, rows, labelKey, valueKey, valueFormatter){
+  const el = document.getElementById(id);
+  const safeRows = Array.isArray(rows) ? rows : [];
+
+  if(!safeRows.length){
+    el.innerHTML = emptyState("No chart data", "There is no data to display yet.");
+    return;
+  }
+
+  const max = maxValue(safeRows, valueKey);
+
+  el.innerHTML = safeRows.map(row => {
+    const value = number(row[valueKey]);
+    const width = Math.max(2, Math.round((value / max) * 100));
+    const display = valueFormatter ? valueFormatter(value) : value;
+
+    return '<div class="bar-row">' +
+      '<div class="bar-label" title="' + esc(row[labelKey] || "-") + '">' + esc(row[labelKey] || "-") + '</div>' +
+      '<div class="bar-track"><div class="bar-fill" style="width:' + width + '%;"></div></div>' +
+      '<div class="bar-value">' + esc(display) + '</div>' +
+    '</div>';
+  }).join("");
+}
+
+function renderSplitChart(id, rows){
+  const el = document.getElementById(id);
+  const safeRows = Array.isArray(rows) ? rows : [];
+
+  if(!safeRows.length){
+    el.innerHTML = emptyState("No worker data", "Workers will appear here after jobs are assigned.");
+    return;
+  }
+
+  const maxAssigned = Math.max(1, ...safeRows.map(row => number(row.jobs_assigned)));
+  const maxCompleted = Math.max(1, ...safeRows.map(row => number(row.jobs_completed)));
+
+  el.innerHTML = safeRows.map(row => {
+    const assigned = number(row.jobs_assigned);
+    const completed = number(row.jobs_completed);
+    const assignedWidth = Math.max(2, Math.round((assigned / maxAssigned) * 100));
+    const completedWidth = Math.max(2, Math.round((completed / maxCompleted) * 100));
+
+    return '<div class="split-row">' +
+      '<div class="bar-label" title="' + esc(row.name || "Worker") + '">' + esc(row.name || "Worker") + '</div>' +
+      '<div class="split-track">' +
+        '<div class="mini-track" title="Assigned"><div class="mini-fill" style="width:' + assignedWidth + '%;"></div></div>' +
+        '<div class="mini-track" title="Completed"><div class="mini-fill done" style="width:' + completedWidth + '%;"></div></div>' +
+      '</div>' +
+      '<div class="bar-value">' + esc(assigned + " / " + completed) + '</div>' +
+    '</div>';
+  }).join("");
+}
+
+function drawChart(id, config){
+  if(!config || !config.data) return;
+
+  if(config.type === "bar" && config.data.datasets && config.data.datasets[0]){
+    const labels = config.data.labels || [];
+    const data = config.data.datasets[0].data || [];
+
+    renderBarChart(
+      id,
+      labels.map((label, index) => ({ label, value: data[index] })),
+      "label",
+      "value",
+      config.valueFormatter
+    );
+    return;
+  }
+
+  if(config.type === "doughnut" && config.data.datasets && config.data.datasets[0]){
+    const labels = config.data.labels || [];
+    const data = config.data.datasets[0].data || [];
+
+    renderBarChart(
+      id,
+      labels.map((label, index) => ({ label, value: data[index] })),
+      "label",
+      "value",
+      config.valueFormatter
+    );
+  }
+}
+
+function renderOverview(data){
+  data = data || {};
+
+  document.getElementById("overviewKpis").innerHTML = [
+    kpi("Total Clients", number(data.total_clients)),
+    kpi("Active Subscriptions", number(data.active_subscriptions)),
+    kpi("Open Invoices", number(data.open_invoices)),
+    kpi("Overdue Invoices", number(data.overdue_invoices)),
+    kpi("Jobs Today", number(data.jobs_today)),
+    kpi("Jobs This Week", number(data.jobs_this_week))
+  ].join("");
+}
+
+function renderRevenue(data){
+  data = data || {};
+
+  const invoiceTotals = Array.isArray(data.invoice_totals) ? data.invoice_totals : [];
+  const paymentTotals = Array.isArray(data.payment_totals) ? data.payment_totals : [];
+  const monthlyRevenue = Array.isArray(data.monthly_revenue) ? data.monthly_revenue : [];
+
+  document.getElementById("revenueKpis").innerHTML = [
+    kpi("Total Revenue", money(data.total_revenue)),
+    kpi("Unpaid Amount", money(data.unpaid_amount)),
+    kpi("Invoice Statuses", invoiceTotals.length),
+    kpi("Payment Methods", paymentTotals.length)
+  ].join("");
+
+  document.getElementById("paymentRows").innerHTML = paymentTotals.length
+    ? paymentTotals.map(row =>
+      '<tr><td>' + esc(row.method || "-") + '</td><td>' + esc(number(row.count)) + '</td><td>' + esc(money(row.amount)) + '</td></tr>'
+    ).join("")
+    : '<tr><td colspan="3">No payments yet.</td></tr>';
+
+  drawChart("monthlyRevenueChart", {
+    type: "bar",
+    data: {
+      labels: monthlyRevenue.map(row => row.month),
+      datasets: [{ label: "Monthly Revenue", data: monthlyRevenue.map(row => number(row.revenue)) }]
+    },
+    valueFormatter: money
+  });
+
+  drawChart("invoiceTotalsChart", {
+    type: "doughnut",
+    data: {
+      labels: invoiceTotals.map(row => row.status),
+      datasets: [{ data: invoiceTotals.map(row => number(row.amount)) }]
+    },
+    valueFormatter: money
+  });
+}
+
+function compactRow(label, value){
+  return '<div class="compact-row"><span>' + esc(label) + '</span><strong>' + esc(value) + '</strong></div>';
+}
+
+function renderPro(data){
+  data = data || {};
+  const revenue = data.revenue || {};
+  const jobs = data.jobs || {};
+  const clients = data.clients || {};
+  const subscriptions = data.subscriptions || {};
+  const workers = data.workers || {};
+  const trends = data.trends || {};
+  const alerts = data.alerts || {};
+  const topWorkers = Array.isArray(workers.top_workers_by_completed_jobs) ? workers.top_workers_by_completed_jobs : [];
+  const monthlyRevenue = Array.isArray(trends.monthly_revenue) ? trends.monthly_revenue : [];
+  const monthlyJobs = Array.isArray(trends.monthly_jobs) ? trends.monthly_jobs : [];
+
+  document.getElementById("proKpis").innerHTML = [
+    kpi("Collected", money(revenue.total_collected)),
+    kpi("This Month", money(revenue.this_month_collected)),
+    kpi("Unpaid", money(revenue.unpaid_total)),
+    kpi("Completion Rate", percent(jobs.completion_rate) + "%"),
+    kpi("Estimated MRR", money(subscriptions.estimated_mrr)),
+    kpi("Active Clients", number(clients.active_clients))
+  ].join("");
+
+  document.getElementById("proTopWorkers").innerHTML = topWorkers.length
+    ? topWorkers.map(row => compactRow(row.worker_name || "Worker", number(row.completed_jobs) + " completed")).join("")
+    : emptyState("No worker data", "Completed jobs will appear here.");
+
+  document.getElementById("proAlerts").innerHTML = [
+    compactRow("Unassigned Jobs", number(alerts.unassigned_jobs)),
+    compactRow("Overdue Jobs", number(alerts.overdue_jobs)),
+    compactRow("Unpaid Invoices", number(alerts.unpaid_invoices)),
+    compactRow("Overdue Invoices", number(alerts.overdue_invoices))
+  ].join("");
+
+  renderBarChart("proRevenueTrend", monthlyRevenue, "month", "revenue", money);
+  renderBarChart("proJobsTrend", monthlyJobs, "month", "jobs");
+}
+
+function renderWorkers(rows){
+  const safeRows = Array.isArray(rows) ? rows : [];
+
+  document.getElementById("workerRows").innerHTML = safeRows.length
+    ? safeRows.map(row =>
+      '<tr><td>' + esc(row.name || "Worker") + '</td><td>' + esc(number(row.jobs_assigned)) + '</td><td>' + esc(number(row.jobs_completed)) + '</td><td>' + esc(percent(row.completion_rate)) + '%</td></tr>'
+    ).join("")
+    : '<tr><td colspan="4">No workers yet.</td></tr>';
+
+  renderSplitChart("workerChart", safeRows);
+}
+
+function renderClients(rows){
+  const safeRows = Array.isArray(rows) ? rows : [];
+
+  document.getElementById("clientRows").innerHTML = safeRows.length
+    ? safeRows.map(row =>
+      '<tr><td>' + esc(row.name || "Client") + '</td><td>' + esc(number(row.total_jobs)) + '</td><td>' + esc(number(row.active_subscriptions)) + '</td><td>' + esc(money(row.unpaid_balance)) + '</td><td>' + esc(date(row.last_service_date)) + '</td></tr>'
+    ).join("")
+    : '<tr><td colspan="5">No clients yet.</td></tr>';
+}
+
+function renderLoadError(message){
+  document.getElementById("overviewKpis").innerHTML = errorState("Unable to load overview", message);
+  document.getElementById("revenueKpis").innerHTML = errorState("Unable to load revenue", message);
+  document.getElementById("proKpis").innerHTML = errorState("Unable to load pro analytics", message);
+  document.getElementById("proTopWorkers").innerHTML = errorState("Unable to load top workers", message);
+  document.getElementById("proAlerts").innerHTML = errorState("Unable to load alerts", message);
+  document.getElementById("proRevenueTrend").innerHTML = errorState("Unable to load trend", message);
+  document.getElementById("proJobsTrend").innerHTML = errorState("Unable to load trend", message);
+  document.getElementById("paymentRows").innerHTML = '<tr><td colspan="3">Unable to load payments.</td></tr>';
+  document.getElementById("monthlyRevenueChart").innerHTML = errorState("Unable to load chart", message);
+  document.getElementById("invoiceTotalsChart").innerHTML = errorState("Unable to load chart", message);
+  document.getElementById("workerChart").innerHTML = errorState("Unable to load workers", message);
+  document.getElementById("workerRows").innerHTML = '<tr><td colspan="4">Unable to load workers.</td></tr>';
+  document.getElementById("clientRows").innerHTML = '<tr><td colspan="5">Unable to load clients.</td></tr>';
+}
+
+async function load(){
+  if(!AppAuth.getToken()){
+    window.location.href = "/login.html";
+    return;
+  }
+
+  if(!allowed()){
+    document.querySelector(".page").innerHTML =
+      '<div class="page-forbidden">You do not have permission to view analytics.</div>';
+    return;
+  }
+
+  AppUI.setLoading(true, "Loading analytics...");
+
+  try {
+    const [overview, revenue, pro, workers, clients] = await Promise.all([
+      loadJson("/analytics/overview"),
+      loadJson("/analytics/revenue"),
+      loadJson("/analytics/pro"),
+      loadJson("/analytics/workers"),
+      loadJson("/analytics/clients")
+    ]);
+
+    renderOverview(overview);
+    renderRevenue(revenue);
+    renderPro(pro);
+    renderWorkers(workers);
+    renderClients(clients);
+  } catch(err){
+    const message = err && err.message ? err.message : "Please refresh and try again.";
+    renderLoadError(message);
+    AppUI.showToast("Unable to load analytics.", "error");
+  } finally {
+    AppUI.setLoading(false);
+  }
+}
+
+load();
+</script>
+</body>
+</html>

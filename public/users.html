@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Users</title>
+  <link rel="stylesheet" href="/app-shell.css">
+  <style>
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background:
+        radial-gradient(circle at top left, rgba(31, 92, 58, 0.08), transparent 28%),
+        linear-gradient(180deg, #edf5f0 0%, #f7f9f8 180px, #f4f7f5 100%);
+      padding: 22px;
+      color: #173327;
+    }
+
+    .page {
+      max-width: 1180px;
+      margin: 0 auto;
+    }
+
+    .hero {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      align-items: flex-end;
+      padding: 22px;
+      margin-bottom: 18px;
+      background: rgba(255,255,255,0.96);
+      border: 1px solid #dbe7df;
+      border-radius: 20px;
+      box-shadow: 0 18px 42px rgba(16,24,40,0.06);
+    }
+
+    h1 {
+      margin: 0 0 6px;
+      font-size: 30px;
+      color: #1f5c3a;
+      letter-spacing: -0.03em;
+    }
+
+    h2 {
+      margin: 0 0 16px;
+      color: #173327;
+      font-size: 20px;
+      letter-spacing: -0.02em;
+    }
+
+    p {
+      margin: 0;
+      color: #667d73;
+      line-height: 1.5;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 360px 1fr;
+      gap: 18px;
+      align-items: start;
+    }
+
+    .panel {
+      padding: 20px;
+      background: rgba(255,255,255,0.96);
+      border: 1px solid #dbe7df;
+      border-radius: 20px;
+      box-shadow: 0 18px 42px rgba(16,24,40,0.06);
+      min-width: 0;
+    }
+
+    .form-grid {
+      display: grid;
+      gap: 12px;
+    }
+
+    label {
+      display: grid;
+      gap: 6px;
+      font-weight: 800;
+      color: #315548;
+      font-size: 13px;
+    }
+
+    input,
+    select {
+      width: 100%;
+      padding: 11px 13px;
+      border-radius: 12px;
+      border: 1px solid #cfe0d5;
+      background: white;
+      color: #173327;
+      font: inherit;
+      outline: none;
+      transition: border .15s ease, box-shadow .15s ease, opacity .15s ease;
+    }
+
+    input:focus,
+    select:focus {
+      border-color: #1f5c3a;
+      box-shadow: 0 0 0 4px rgba(31,92,58,0.10);
+    }
+
+    select:disabled,
+    input:disabled {
+      opacity: .55;
+      cursor: not-allowed;
+      background: #f3f6f4;
+    }
+
+    .table-wrap {
+      width: 100%;
+      overflow-x: auto;
+      border: 1px solid #dce6df;
+      border-radius: 16px;
+      background: white;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 720px;
+    }
+
+    th,
+    td {
+      padding: 12px;
+      border-bottom: 1px solid #dce6df;
+      text-align: left;
+      vertical-align: middle;
+    }
+
+    tbody tr:last-child td {
+      border-bottom: none;
+    }
+
+    th {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      color: #667d73;
+      background: #f8fbf9;
+      font-weight: 800;
+    }
+
+    td {
+      color: #173327;
+      line-height: 1.45;
+    }
+
+    .actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .muted {
+      color: #667d73;
+      font-size: 13px;
+    }
+
+    .status {
+      margin-top: 12px;
+      min-height: 20px;
+      font-weight: 800;
+      line-height: 1.45;
+    }
+
+    .status.error { color: #c13d39; }
+    .status.ok { color: #25804f; }
+
+    .btn {
+      border: none;
+      border-radius: 12px;
+      padding: 11px 16px;
+      cursor: pointer;
+      font-weight: 800;
+      font-family: inherit;
+      transition: transform .15s ease, box-shadow .15s ease, opacity .15s ease;
+      box-shadow: 0 8px 16px rgba(16,24,40,0.06);
+    }
+
+    .btn:hover:not(:disabled) {
+      transform: translateY(-1px);
+      box-shadow: 0 12px 22px rgba(16,24,40,0.10);
+    }
+
+    .btn:disabled {
+      opacity: .55;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    .primary { background: #1f5c3a; color: white; }
+    .gray { background: #eef2f0; color: #1f5c3a; border: 1px solid #dbe7df; }
+    .danger { background: #dc2626; color: white; }
+
+    .modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.52);
+      justify-content: center;
+      align-items: center;
+      padding: 18px;
+      z-index: 999;
+    }
+
+    .modal-box {
+      width: 520px;
+      max-width: 100%;
+      background: white;
+      border-radius: 20px;
+      padding: 22px;
+      box-shadow: 0 24px 54px rgba(16,24,40,0.22);
+    }
+
+    .modal-box h3 {
+      margin: 0 0 12px;
+      color: #1f5c3a;
+      font-size: 22px;
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 16px;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 7px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 800;
+      text-transform: uppercase;
+      white-space: nowrap;
+      letter-spacing: 0.02em;
+    }
+
+    .badge.active {
+      background: #ecfdf3;
+      color: #027a48;
+    }
+
+    .badge.inactive {
+      background: #fef2f2;
+      color: #b42318;
+    }
+
+    .page-empty,
+    .page-error,
+    .page-forbidden {
+      padding: 28px;
+      border-radius: 18px;
+      border: 1px dashed #dbe7df;
+      background: #f8fbf9;
+      color: #667d73;
+      line-height: 1.5;
+    }
+
+    .page-empty h3,
+    .page-error h3 {
+      margin: 0 0 6px;
+      color: #173327;
+      font-size: 18px;
+    }
+
+    .page-forbidden {
+      background: white;
+      border-style: solid;
+      box-shadow: 0 18px 42px rgba(16,24,40,0.06);
+      color: #b42318;
+      font-weight: 800;
+    }
+
+    @media (max-width: 900px) {
+      body {
+        padding: 14px;
+      }
+
+      .grid {
+        grid-template-columns: 1fr;
+      }
+
+      .hero {
+        align-items: stretch;
+        flex-direction: column;
+      }
+
+      .hero .btn,
+      .form-grid .btn {
+        width: 100%;
+      }
+    }
+  </style>
+  
+</head>
+<body>
+  <script>
+(function(){
+  const token = localStorage.getItem("token");
+  let user = null;
+
+  try {
+    user = JSON.parse(localStorage.getItem("user") || "null");
+  } catch {
+    user = null;
+  }
+
+  if (!token || !user) {
+    window.top.location.href = "/login.html";
+    return;
+  }
+
+  const role = String(user.role || "").toLowerCase();
+
+  if (role === "worker") {
+    window.top.location.href = "/control.html";
+    return;
+  }
+})();
+</script>
+  
+<div class="page">
+  <div class="hero">
+    <div>
+      <h1>Users</h1>
+      <p>Manage team access for this company workspace.</p>
+    </div>
+    <button class="btn gray" onclick="load()">Refresh</button>
+  </div>
+
+  <div class="grid">
+    <div class="panel">
+      <h2>Create User</h2>
+      <form id="userForm" class="form-grid">
+        <label>Username <input id="username" autocomplete="off" required></label>
+        <label>Password <input id="password" type="password" required minlength="4"></label>
+        <label>Role
+          <select id="role" onchange="toggleWorkerField()">
+            <option value="admin">Admin</option>
+            <option value="manager">Manager</option>
+            <option value="worker">Worker</option>
+            <option value="owner">Owner</option>
+          </select>
+        </label>
+        <label id="workerWrap" style="display:none;">Linked Worker
+          <select id="worker_id"><option value="">No linked worker</option></select>
+        </label>
+        <button class="btn primary" type="submit">Create User</button>
+      </form>
+      <div class="status" id="formStatus"></div>
+    </div>
+
+    <div class="panel">
+      <h2>Team Users</h2>
+      <div id="usersBox" class="muted">Loading users...</div>
+    </div>
+  </div>
+</div>
+
+<div id="deleteUserModal" class="modal">
+  <div class="modal-box">
+    <h3>Delete User</h3>
+    <p>This will safely archive, cancel, deactivate, or delete only when safe.</p>
+    <div class="modal-actions">
+      <button class="btn danger" onclick="confirmDeleteUser(this)">Delete</button>
+      <button class="btn gray" onclick="closeDeleteUser()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script src="/js/ui.js"></script>
+<script src="/js/auth.js"></script>
+<script src="/js/api.js"></script>
+<script>
+let users = [];
+let workers = [];
+let deletingUserId = null;
+
+function esc(value){
+  return String(value ?? "").replace(/[&<>"']/g, ch => ({
+    "&":"&amp;",
+    "<":"&lt;",
+    ">":"&gt;",
+    '"':"&quot;",
+    "'":"&#39;"
+  }[ch]));
+}
+
+async function safeJson(res){
+  try {
+    return await res.json();
+  } catch {
+    try {
+      const text = await res.text();
+      return { error: text || "Request failed." };
+    } catch {
+      return { error: "Request failed." };
+    }
+  }
+}
+
+function getErrorMessage(data, fallback){
+  if(data && typeof data.error === "string" && data.error.trim()) return data.error;
+  if(data && typeof data.message === "string" && data.message.trim()) return data.message;
+  return fallback;
+}
+
+function currentUser(){
+  return AppAuth.getUser() || {};
+}
+
+function allowed(){
+  return ["owner","admin"].includes(currentUser().role);
+}
+
+function canDeleteUsers(){
+  return ["owner","admin"].includes(currentUser().role);
+}
+
+function setStatus(text, type){
+  const el = document.getElementById("formStatus");
+  el.textContent = text || "";
+  el.className = "status " + (type || "");
+}
+
+function formatRole(role){
+  return role ? role.charAt(0).toUpperCase() + role.slice(1) : "-";
+}
+
+function setButtonLoading(button, text){
+  if(!button) return function(){};
+  const oldText = button.textContent;
+  button.disabled = true;
+  button.textContent = text;
+  return function(){
+    button.disabled = false;
+    button.textContent = oldText;
+  };
+}
+
+function toggleWorkerField(){
+  document.getElementById("workerWrap").style.display =
+    document.getElementById("role").value === "worker" ? "grid" : "none";
+}
+
+function renderWorkerOptions(){
+  document.getElementById("worker_id").innerHTML =
+    '<option value="">No linked worker</option>' +
+    workers.map(worker =>
+      '<option value="' + esc(worker.id) + '">' +
+      esc(worker.name || ("Worker #" + worker.id)) +
+      '</option>'
+    ).join("");
+}
+
+function renderUsers(){
+  if(!Array.isArray(users) || !users.length){
+    document.getElementById("usersBox").innerHTML =
+      '<div class="page-empty"><h3>No users yet</h3><p>Create your first team user from the form.</p></div>';
+    return;
+  }
+
+  document.getElementById("usersBox").innerHTML =
+    '<div class="table-wrap"><table><thead><tr><th>User</th><th>Role</th><th>Worker</th><th>Status</th><th>Actions</th></tr></thead><tbody>' +
+    users.map(user => {
+      const userId = Number(user.id);
+      const roleOptions = ["owner","admin","manager","worker"].map(role =>
+        '<option value="' + role + '" ' + (user.role === role ? "selected" : "") + '>' + formatRole(role) + '</option>'
+      ).join("");
+
+      const workerOptions =
+        '<option value="">No linked worker</option>' +
+        workers.map(worker =>
+          '<option value="' + esc(worker.id) + '" ' +
+          (String(user.worker_id || "") === String(worker.id) ? "selected" : "") + '>' +
+          esc(worker.name || ("Worker #" + worker.id)) +
+          '</option>'
+        ).join("");
+
+      const deleteButton = canDeleteUsers() && userId !== Number(currentUser().id)
+        ? '<button class="btn danger" onclick="openDeleteUser(' + userId + ')">Delete</button>'
+        : '';
+
+      return '<tr>' +
+        '<td><strong>' + esc(user.username) + '</strong><div class="muted">#' + esc(user.id) + '</div></td>' +
+        '<td><select onchange="updateUser(' + userId + ', { role: this.value })">' + roleOptions + '</select></td>' +
+        '<td><select onchange="updateUser(' + userId + ', { worker_id: this.value ? Number(this.value) : null })" ' + (user.role === "worker" ? "" : "disabled") + '>' + workerOptions + '</select></td>' +
+        '<td><span class="badge ' + (user.active ? "active" : "inactive") + '">' + (user.active ? "Active" : "Inactive") + '</span></td>' +
+        '<td><div class="actions"><button class="btn gray" onclick="updateUser(' + userId + ', { active: ' + (!user.active) + ' }, this)">' + (user.active ? "Deactivate" : "Activate") + '</button>' + deleteButton + '</div></td>' +
+      '</tr>';
+    }).join("") +
+    '</tbody></table></div>';
+}
+
+function openDeleteUser(id){
+  deletingUserId = id;
+  document.getElementById("deleteUserModal").style.display = "flex";
+}
+
+function closeDeleteUser(){
+  deletingUserId = null;
+  document.getElementById("deleteUserModal").style.display = "none";
+}
+
+async function load(){
+  if(!AppAuth.requireAuth()) return;
+
+  if(!allowed()){
+    document.querySelector(".page").innerHTML = '<div class="page-forbidden">You do not have permission to manage users.</div>';
+    return;
+  }
+
+  AppUI.setLoading(true, "Loading users...");
+
+  try {
+    const [userList, options] = await Promise.all([
+      AppAPI.safeFetch("/users"),
+      AppAPI.safeFetch("/users/options")
+    ]);
+
+    users = Array.isArray(userList) ? userList : [];
+    workers = options && Array.isArray(options.workers) ? options.workers : [];
+
+    renderWorkerOptions();
+    renderUsers();
+  } catch(err) {
+    users = [];
+    workers = [];
+    renderWorkerOptions();
+    document.getElementById("usersBox").innerHTML =
+      '<div class="page-error"><h3>Unable to load users</h3><p>' + esc(err.message || "Please refresh and try again.") + '</p></div>';
+    AppUI.showToast(err.message || "Unable to load users.", "error");
+  } finally {
+    AppUI.setLoading(false);
+  }
+}
+
+async function updateUser(id, changes, button){
+  const restoreButton = setButtonLoading(button || (event && event.target ? event.target : null), "Updating...");
+
+  try {
+    const res = await AppAPI.fetch("/users/" + id, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(changes)
+    });
+
+    const data = await safeJson(res);
+
+    if(!res.ok){
+      throw new Error(getErrorMessage(data, "Unable to update user"));
+    }
+
+    AppUI.showToast("User updated.", "success");
+    await load();
+  } catch(err) {
+    AppUI.showToast(err.message || "Unable to update user.", "error");
+    await load();
+  } finally {
+    restoreButton();
+  }
+}
+
+async function confirmDeleteUser(button){
+  if(!deletingUserId) return;
+
+  await AppUI.withButton(button, async () => {
+    const res = await AppAPI.fetch("/users/" + deletingUserId, {
+      method: "DELETE"
+    });
+
+    const data = await safeJson(res);
+
+    if(!res.ok){
+      AppUI.showToast(getErrorMessage(data, "Unable to delete user."), "error");
+      return;
+    }
+
+    closeDeleteUser();
+    AppUI.showToast(data.message || "User updated safely.", "success");
+    await load();
+  }, { loading: "Deleting..." });
+}
+
+window.addEventListener("click", event => {
+  if(event.target === document.getElementById("deleteUserModal")){
+    closeDeleteUser();
+  }
+});
+
+document.getElementById("userForm").addEventListener("submit", async event => {
+  event.preventDefault();
+
+  const button = event.target.querySelector('button[type="submit"]');
+  const restoreButton = setButtonLoading(button, "Creating...");
+
+  setStatus("Creating user...", "");
+
+  const role = document.getElementById("role").value;
+
+  const payload = {
+    username: document.getElementById("username").value.trim(),
+    password: document.getElementById("password").value,
+    role,
+    worker_id: role === "worker" && document.getElementById("worker_id").value
+      ? Number(document.getElementById("worker_id").value)
+      : null
+  };
+
+  try {
+    const res = await AppAPI.fetch("/users", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+
+    const data = await safeJson(res);
+
+    if(!res.ok){
+      throw new Error(getErrorMessage(data, "Unable to create user"));
+    }
+
+    event.target.reset();
+    toggleWorkerField();
+    setStatus("User created.", "ok");
+    await load();
+  } catch(err) {
+    setStatus(err.message || "Unable to create user.", "error");
+  } finally {
+    restoreButton();
+  }
+});
+
+load();
+</script>
+</body>
+</html>

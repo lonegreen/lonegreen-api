@@ -1,0 +1,1708 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Client Profile</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="/app-shell.css">
+
+  <style>
+    * { box-sizing: border-box; }
+
+    :root {
+      --bg: #f5f8f6;
+      --panel: #ffffff;
+      --text: #173327;
+      --muted: #60796d;
+      --border: #dbe7df;
+      --green: #1f5c3a;
+      --green-dark: #17462c;
+      --green-soft: #eaf5ee;
+      --blue: #2563eb;
+      --orange: #f59e0b;
+      --red: #ef4444;
+      --gray-soft: #eef2f0;
+      --shadow: 0 18px 42px rgba(16, 24, 40, 0.07);
+      --radius: 20px;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background:
+        radial-gradient(circle at top left, rgba(31, 92, 58, 0.10), transparent 340px),
+        linear-gradient(180deg, #edf5f0 0%, #f7f9f8 190px, #f4f6f8 100%);
+      color: var(--text);
+      padding: 22px;
+    }
+
+    .page {
+      max-width: 1280px;
+      margin: 0 auto;
+      display: grid;
+      gap: 18px;
+    }
+
+    .hero {
+      display: flex;
+      justify-content: space-between;
+      gap: 18px;
+      align-items: flex-end;
+      flex-wrap: wrap;
+    }
+
+    .hero h1 {
+      margin: 0 0 6px;
+      font-size: 34px;
+      color: var(--green);
+      letter-spacing: -0.04em;
+    }
+
+    .hero p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    .panel {
+      background: rgba(255,255,255,0.96);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+
+    .client-panel {
+      padding: 24px;
+    }
+
+    .client-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 18px;
+      align-items: flex-start;
+      flex-wrap: wrap;
+      margin-bottom: 18px;
+    }
+
+    .client-name {
+      margin: 0 0 8px;
+      color: #163328;
+      font-size: 31px;
+      font-weight: 900;
+      letter-spacing: -0.04em;
+    }
+
+    .client-copy {
+      color: var(--muted);
+      line-height: 1.6;
+      max-width: 760px;
+    }
+
+    .meta {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .meta-box,
+    .summary-box,
+    .detail {
+      padding: 14px;
+      border-radius: 16px;
+      background: #f8fbf9;
+      border: 1px solid var(--border);
+      min-width: 0;
+      overflow-wrap: anywhere;
+    }
+
+    .label {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      color: #688076;
+    }
+
+    .value-strong {
+      font-size: 22px;
+      font-weight: 900;
+      color: var(--green);
+      letter-spacing: -0.03em;
+    }
+
+
+    .summary-box.pro-card {
+      position: relative;
+      overflow: hidden;
+      background: linear-gradient(180deg, #ffffff 0%, #f7fbf8 100%);
+    }
+
+    .summary-box.pro-card:before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 5px;
+      background: var(--green);
+      opacity: 0.9;
+    }
+
+    .summary-box.money-card:before { background: #2563eb; }
+    .summary-box.warning-card:before { background: #f59e0b; }
+    .summary-box.success-card:before { background: #027a48; }
+
+    .overview-block {
+      margin-top: 18px;
+    }
+
+    .overview-block-title {
+      margin: 0 0 12px;
+      color: var(--green);
+      font-size: 18px;
+      font-weight: 900;
+      letter-spacing: -0.03em;
+    }
+
+    .timeline-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 9px;
+      border-radius: 999px;
+      background: #eef7f1;
+      color: var(--green);
+      font-size: 11px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin-bottom: 8px;
+    }
+
+    .muted-line {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    .action-bar {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .action-btn {
+      border: none;
+      border-radius: 18px;
+      min-height: 96px;
+      padding: 18px 20px;
+      text-align: left;
+      cursor: pointer;
+      background: linear-gradient(135deg, #1f5c3a 0%, #2d7a4b 100%);
+      color: white;
+      font-weight: 900;
+      box-shadow: 0 18px 34px rgba(31, 92, 58, 0.18);
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .action-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 22px 40px rgba(31, 92, 58, 0.22);
+    }
+
+    .action-btn strong {
+      display: block;
+      font-size: 22px;
+      margin-bottom: 6px;
+    }
+
+    .action-btn span {
+      display: block;
+      font-size: 13px;
+      color: rgba(255,255,255,0.88);
+      line-height: 1.45;
+      font-weight: 700;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .tab {
+      padding: 12px 18px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,0.92);
+      color: #365a4c;
+      font-weight: 900;
+      cursor: pointer;
+      transition: 0.16s ease;
+    }
+
+    .tab:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 10px 22px rgba(16, 24, 40, 0.08);
+    }
+
+    .tab.active {
+      background: var(--green);
+      border-color: var(--green);
+      color: white;
+    }
+
+    .section {
+      display: none;
+      padding: 22px;
+    }
+
+    .section.active {
+      display: block;
+    }
+
+    .section-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+    }
+
+    .section-head h2 {
+      margin: 0;
+      color: var(--green);
+      font-size: 23px;
+      letter-spacing: -0.03em;
+    }
+
+    .section-copy {
+      color: #648076;
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    .summary-grid,
+    .detail-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .list {
+      display: grid;
+      gap: 14px;
+    }
+
+    .card {
+      border: 1px solid #deebe3;
+      border-radius: 18px;
+      padding: 18px;
+      background: #fbfdfc;
+    }
+
+    .card-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 14px;
+      align-items: flex-start;
+      flex-wrap: wrap;
+      margin-bottom: 12px;
+    }
+
+    .card-title {
+      margin: 0 0 6px;
+      color: var(--text);
+      font-size: 20px;
+      font-weight: 900;
+      letter-spacing: -0.03em;
+    }
+
+    .sub {
+      color: #648076;
+      font-size: 13px;
+      line-height: 1.5;
+      margin-bottom: 4px;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 900;
+      text-transform: uppercase;
+    }
+
+    .status-scheduled,
+    .status-draft,
+    .status-unpaid,
+    .status-sent {
+      background: #fff7ed;
+      color: #c2410c;
+    }
+
+    .status-assigned,
+    .status-in_progress {
+      background: #ebf3ff;
+      color: #1d4ed8;
+    }
+
+    .status-clear,
+    .status-completed,
+    .status-approved,
+    .status-paid,
+    .status-active,
+    .status-converted {
+      background: #ecfdf3;
+      color: #027a48;
+    }
+
+    .status-cancelled,
+    .status-rejected,
+    .status-overdue,
+    .status-paused {
+      background: #fef2f2;
+      color: #b42318;
+    }
+
+    .active-highlight {
+      border-color: #b7ebc7;
+      background: linear-gradient(180deg, #ffffff 0%, #f5fcf7 100%);
+    }
+
+    .paused-highlight {
+      border-color: #f6c6c6;
+      background: linear-gradient(180deg, #ffffff 0%, #fff6f6 100%);
+    }
+
+    .detail-grid {
+      margin-bottom: 14px;
+    }
+
+    .actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+      margin-top: 14px;
+    }
+
+    .btn,
+    textarea,
+    input,
+    select {
+      font: inherit;
+    }
+
+    .btn {
+      border: none;
+      border-radius: 12px;
+      padding: 11px 16px;
+      cursor: pointer;
+      font-weight: 900;
+      transition: 0.16s ease;
+      white-space: nowrap;
+    }
+
+    .btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 12px 24px rgba(16, 24, 40, 0.12);
+    }
+
+    .primary { background: var(--green); color: white; }
+    .primary:hover { background: var(--green-dark); }
+    .blue { background: var(--blue); color: white; }
+    .orange { background: var(--orange); color: white; }
+    .red { background: var(--red); color: white; }
+    .gray { background: var(--gray-soft); color: var(--green); border: 1px solid var(--border); }
+
+    .empty {
+      padding: 18px;
+      border: 1px dashed var(--border);
+      border-radius: 16px;
+      background: #f8fbf9;
+      color: #688076;
+      line-height: 1.5;
+    }
+
+    .empty strong {
+      display: block;
+      color: var(--text);
+      margin-bottom: 5px;
+    }
+
+    textarea,
+    input,
+    select {
+      width: 100%;
+      padding: 11px 13px;
+      border-radius: 12px;
+      border: 1px solid #cfe0d5;
+      background: white;
+      color: var(--text);
+      outline: none;
+    }
+
+    textarea:focus,
+    input:focus,
+    select:focus {
+      border-color: var(--green);
+      box-shadow: 0 0 0 3px rgba(31, 92, 58, 0.12);
+    }
+
+    .notes-box {
+      width: 100%;
+      min-height: 220px;
+      padding: 14px;
+      border-radius: 16px;
+      border: 1px solid #cfe0d5;
+      background: white;
+      resize: vertical;
+    }
+
+    .modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.52);
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+      padding: 18px;
+    }
+
+    .modal-box {
+      width: 760px;
+      max-width: 100%;
+      max-height: 92vh;
+      overflow: auto;
+      background: white;
+      padding: 24px;
+      border-radius: 22px;
+      box-shadow: 0 24px 54px rgba(16, 24, 40, 0.22);
+    }
+
+    .modal-box h3 {
+      margin: 0 0 16px;
+      color: var(--green);
+      font-size: 24px;
+      letter-spacing: -0.03em;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .wide {
+      grid-column: 1 / -1;
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 16px;
+      flex-wrap: wrap;
+    }
+
+    .skeleton {
+      position: relative;
+      overflow: hidden;
+      background: #edf3ef;
+      border-radius: 12px;
+      min-height: 16px;
+    }
+
+    .skeleton:after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      transform: translateX(-100%);
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.72), transparent);
+      animation: shimmer 1.1s infinite;
+    }
+
+    @keyframes shimmer {
+      100% { transform: translateX(100%); }
+    }
+
+    @media (max-width: 980px) {
+      .meta,
+      .summary-grid,
+      .detail-grid,
+      .form-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .action-bar {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 640px) {
+      body {
+        padding: 14px;
+      }
+
+      .hero h1 {
+        font-size: 28px;
+      }
+
+      .section,
+      .client-panel {
+        padding: 16px;
+      }
+
+      .actions,
+      .modal-actions {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .btn,
+      .modal-actions .btn {
+        width: 100%;
+      }
+
+      .tabs .tab {
+        flex: 1;
+      }
+    }
+  </style>
+  <link rel="stylesheet" href="/ui-cleanup.css">
+  <script src="/js/role-guard.js"></script>
+</head>
+
+<body>
+  <script>
+(function(){
+  const token = localStorage.getItem("token");
+
+  let user = null;
+
+  try {
+    user = JSON.parse(localStorage.getItem("user") || "null");
+  } catch (e) {
+    user = null;
+  }
+
+  if (!token || !user) {
+    window.location.href = "/login.html";
+    return;
+  }
+
+  const role = String(user.role || "").toLowerCase();
+
+  if (role === "worker") {
+    window.location.href = "/control.html";
+    return;
+  }
+})();
+</script>
+<div class="page">
+  <div class="hero">
+    <div>
+      <h1>Client Profile</h1>
+      <p>Central control for jobs, subscriptions, invoices, and client notes.</p>
+    </div>
+  </div>
+
+  <div id="clientInfo" class="panel client-panel">
+    <div class="skeleton" style="width:240px;height:28px;margin-bottom:12px;"></div>
+    <div class="skeleton" style="width:70%;height:16px;margin-bottom:16px;"></div>
+    <div class="meta">
+      <div class="meta-box"><div class="skeleton" style="height:44px;"></div></div>
+      <div class="meta-box"><div class="skeleton" style="height:44px;"></div></div>
+      <div class="meta-box"><div class="skeleton" style="height:44px;"></div></div>
+      <div class="meta-box"><div class="skeleton" style="height:44px;"></div></div>
+    </div>
+  </div>
+
+  <div class="panel section" style="display:block;">
+    <div class="section-head" style="margin-bottom:0;">
+      <h2>Quick Actions</h2>
+      <div class="section-copy">Keep everything inside the client record.</div>
+    </div>
+    <div class="action-bar">
+      <button class="action-btn" onclick="openJobModal()">
+        <strong>+ Add Job</strong>
+        <span>Schedule work, assign a worker, and keep this client moving.</span>
+      </button>
+      <button class="action-btn" onclick="openSubModal()">
+        <strong>+ Add Subscription</strong>
+        <span>Create recurring service without leaving the client page.</span>
+      </button>
+      <button class="action-btn" onclick="openInvoiceModal()">
+        <strong>+ Create Invoice</strong>
+        <span>Bill work from this client record and track payment status here.</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" id="overviewTab" onclick="showTab('overview')">Overview</button>
+    <button class="tab" id="jobsTab" onclick="showTab('jobs')">Jobs</button>
+    <button class="tab" id="subsTab" onclick="showTab('subs')">Subscriptions</button>
+    <button class="tab" id="invoicesTab" onclick="showTab('invoices')">Invoices</button>
+    <button class="tab" id="notesTab" onclick="showTab('notes')">Notes</button>
+  </div>
+
+  <div id="overviewSection" class="panel section active">
+    <div class="section-head">
+      <div>
+        <h2>Overview</h2>
+        <div class="section-copy">Full client timeline plus lead and estimate history in one place.</div>
+      </div>
+    </div>
+    <div id="overviewSummary" class="summary-grid"></div>
+    <div id="timelineList" class="list"></div>
+    <div style="margin-top:18px;">
+      <div class="section-head">
+        <div>
+          <h2 style="font-size:20px;">Leads & Estimates</h2>
+          <div class="section-copy">History connected to this client record.</div>
+        </div>
+      </div>
+      <div id="estimatesList" class="list"></div>
+    </div>
+  </div>
+
+  <div id="jobsSection" class="panel section">
+    <div class="section-head">
+      <div>
+        <h2>Jobs</h2>
+        <div class="section-copy">Track status, start work, and complete jobs without leaving the client.</div>
+      </div>
+      <button class="btn primary" onclick="openJobModal()">+ Add Job</button>
+    </div>
+    <div id="jobsList" class="list"></div>
+  </div>
+
+  <div id="subsSection" class="panel section">
+    <div class="section-head">
+      <div>
+        <h2>Subscriptions</h2>
+        <div class="section-copy">See next visit, frequency, and status clearly.</div>
+      </div>
+      <button class="btn primary" onclick="openSubModal()">+ Add Subscription</button>
+    </div>
+    <div id="subsList" class="list"></div>
+  </div>
+
+  <div id="invoicesSection" class="panel section">
+    <div class="section-head">
+      <div>
+        <h2>Invoices</h2>
+        <div class="section-copy">Review billing totals and mark invoices paid from here.</div>
+      </div>
+      <button class="btn primary" onclick="openInvoiceModal()">+ Create Invoice</button>
+    </div>
+    <div id="invoiceSummary" class="summary-grid"></div>
+    <div id="invoicesList" class="list"></div>
+  </div>
+
+  <div id="notesSection" class="panel section">
+    <div class="section-head">
+      <div>
+        <h2>Notes</h2>
+        <div class="section-copy">Save internal notes directly on the client profile.</div>
+      </div>
+      <button class="btn primary" onclick="saveClientNotes()">Save Notes</button>
+    </div>
+    <textarea id="clientNotes" class="notes-box" placeholder="No notes yet. Add internal client notes, access details, billing notes, or worker instructions here."></textarea>
+  </div>
+</div>
+
+<div id="jobModal" class="modal">
+  <div class="modal-box">
+    <h3>Add Job</h3>
+    <div class="form-grid">
+      <input id="job_service" placeholder="Service">
+      <select id="job_estimate_id">
+        <option value="">No linked estimate</option>
+      </select>
+      <input id="job_date" type="date">
+      <select id="job_status">
+        <option value="scheduled">Scheduled</option>
+        <option value="assigned">Assigned</option>
+        <option value="in_progress">In Progress</option>
+        <option value="completed">Completed</option>
+        <option value="cancelled">Cancelled</option>
+      </select>
+      <input id="job_start" type="time">
+      <input id="job_end" type="time">
+      <select id="job_worker_id">
+        <option value="">No worker assigned</option>
+      </select>
+      <input id="job_price" type="number" placeholder="Price">
+      <textarea id="job_internal_notes" class="wide" rows="4" placeholder="Internal notes"></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn primary" onclick="saveJob()">Save Job</button>
+      <button class="btn gray" onclick="closeModal('jobModal')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<div id="subModal" class="modal">
+  <div class="modal-box">
+    <h3>Add Subscription</h3>
+    <div class="form-grid">
+      <input id="sub_service" placeholder="Service">
+      <select id="sub_frequency">
+        <option value="weekly">Weekly</option>
+        <option value="biweekly">Biweekly</option>
+        <option value="monthly">Monthly</option>
+      </select>
+      <input id="sub_price" type="number" placeholder="Price">
+      <input id="sub_next_date" type="date">
+      <select id="sub_worker_id" class="wide">
+        <option value="">No worker assigned</option>
+      </select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn primary" onclick="saveSubscription()">Save Subscription</button>
+      <button class="btn gray" onclick="closeModal('subModal')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<div id="invoiceModal" class="modal">
+  <div class="modal-box">
+    <h3>Create Invoice</h3>
+    <div class="form-grid">
+      <select id="invoice_job_id" class="wide">
+        <option value="">No linked job</option>
+      </select>
+      <input id="invoice_amount" type="number" placeholder="Amount">
+      <input id="invoice_due_date" type="date">
+      <select id="invoice_status">
+        <option value="draft">Draft</option>
+        <option value="unpaid">Unpaid</option>
+        <option value="paid">Paid</option>
+        <option value="overdue">Overdue</option>
+        <option value="cancelled">Cancelled</option>
+      </select>
+      <textarea id="invoice_notes" class="wide" rows="4" placeholder="Invoice notes"></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn primary" onclick="saveInvoice()">Create Invoice</button>
+      <button class="btn gray" onclick="closeModal('invoiceModal')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<div id="deleteSubscriptionVisitModal" class="modal">
+  <div class="modal-box">
+    <h3>Remove Subscription Visit</h3>
+    <p>This will safely cancel this generated subscription visit without deleting subscription, invoice, or payment history.</p>
+    <div class="modal-actions">
+      <button class="btn gray" onclick="closeDeleteSubscriptionVisitModal()">Cancel</button>
+      <button class="btn red" onclick="confirmDeleteSubscriptionVisit()">Remove Visit</button>
+    </div>
+  </div>
+</div>
+
+<script src="/js/ui.js"></script>
+<script src="/js/auth.js"></script>
+<script src="/js/api.js"></script>
+<script src="/js/format.js"></script>
+
+<script>
+const API = window.location.origin;
+let clientId = null;
+let state = null;
+let currentTab = "overview";
+let editingJobId = null;
+let editingSubscriptionId = null;
+let currentUser = null;
+
+function getUser(){
+  try {
+    return JSON.parse(localStorage.getItem("user"));
+  } catch {
+    return null;
+  }
+}
+
+function getToken(){
+  return localStorage.getItem("token");
+}
+
+if(!getToken() || !getUser() || !getUser().company_id){
+  localStorage.setItem("redirectAfterLogin", "client.html" + window.location.search);
+  window.top.location.href = "/login.html";
+}
+
+async function apiFetch(url, options = {}){
+  try {
+    const res = await fetch(url, {
+      ...options,
+      headers: {
+        ...(options.headers || {}),
+        Authorization: "Bearer " + getToken()
+      }
+    });
+
+    if(res.status === 403 && window.AppAPI){ window.AppAPI.handleForbidden(); }
+
+    if(res.status === 401){
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      window.top.location.href = "/login.html";
+      throw new Error("Unauthorized");
+    }
+
+    return res;
+  } catch (err) {
+    throw new Error(`Fetch failed: ${url} - ${err.message}`);
+  }
+}
+
+async function readJsonSafe(res, fallback){
+  try {
+    return await res.json();
+  } catch(err){
+    return fallback;
+  }
+}
+
+async function readError(res, fallback){
+  try {
+    const data = await res.clone().json();
+    const message = data.error || data.message || fallback;
+    return `${res.url || "URL unknown"} [${res.status}] - ${message}`;
+  } catch(err){
+    try {
+      const text = await res.clone().text();
+      return `${res.url || "URL unknown"} [${res.status}] - ${text || fallback}`;
+    } catch(e){
+      return `${res.url || "URL unknown"} [${res.status}] - ${fallback}`;
+    }
+  }
+}
+
+async function loadWorkers(){
+  const res = await apiFetch(API + "/ops/workers");
+  if(!res.ok) return [];
+  const data = await readJsonSafe(res, []);
+  return Array.isArray(data) ? data : [];
+}
+
+function formatDate(value){
+  return value ? String(value).split("T")[0] : "";
+}
+
+function badge(status){
+  const safeStatus = String(status || "draft").replace(/[^a-z_]/g, "");
+  return `<span class="badge status-${escapeHtml(safeStatus)}">${escapeHtml(status || "draft")}</span>`;
+}
+
+function escapeHtml(value){
+  return String(value ?? "").replace(/[&<>\"']/g, char => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    "\"": "&quot;",
+    "'": "&#39;"
+  }[char]));
+}
+
+function money(value){
+  return "$" + Number(value || 0).toFixed(2);
+}
+
+function jobTime(value){
+  return value ? String(value).slice(0, 5) : "";
+}
+
+
+function normalizeStatus(value){
+  return String(value || "").toLowerCase().trim();
+}
+
+function isClosedStatus(status){
+  return ["completed", "cancelled", "canceled", "paid", "rejected", "converted"].includes(normalizeStatus(status));
+}
+
+function isJobOpen(job){
+  return !["completed", "cancelled", "canceled"].includes(normalizeStatus(job && job.status));
+}
+
+function isInvoicePaid(inv){
+  return normalizeStatus(inv && inv.status) === "paid";
+}
+
+function getTimestamp(dateValue, timeValue = ""){
+  const date = formatDate(dateValue);
+  if(!date) return 0;
+  const time = jobTime(timeValue) || "00:00";
+  const stamp = new Date(date + "T" + time);
+  return Number.isNaN(stamp.getTime()) ? 0 : stamp.getTime();
+}
+
+function getTodayStart(){
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return today.getTime();
+}
+
+function sortByUpcomingDate(a, b){
+  return getTimestamp(a.date || a.next_date || a.event_date, a.start_time) - getTimestamp(b.date || b.next_date || b.event_date, b.start_time);
+}
+
+function sortByNewestDate(a, b){
+  return getTimestamp(b.date || b.next_date || b.event_date || b.issued_date || b.due_date, b.start_time) - getTimestamp(a.date || a.next_date || a.event_date || a.issued_date || a.due_date, a.start_time);
+}
+
+function getNextJob(){
+  const today = getTodayStart();
+
+  return state.jobs
+    .filter(job => job && job.date && isJobOpen(job))
+    .filter(job => getTimestamp(job.date, job.start_time) >= today)
+    .sort(sortByUpcomingDate)[0] || null;
+}
+
+function getNextSubscription(){
+  const today = getTodayStart();
+
+  return state.subscriptions
+    .filter(sub => sub && sub.next_date)
+    .filter(sub => normalizeStatus(sub.status || "active") === "active")
+    .filter(sub => getTimestamp(sub.next_date) >= today)
+    .sort(sortByUpcomingDate)[0] || null;
+}
+
+function getLatestInvoice(){
+  return [...state.invoices]
+    .sort((a, b) => getTimestamp(b.issued_date || b.due_date || b.created_at) - getTimestamp(a.issued_date || a.due_date || a.created_at))[0] || null;
+}
+
+function getFinancialSummary(){
+  const totalInvoices = state.invoices.length;
+  const paidInvoices = state.invoices.filter(isInvoicePaid).length;
+  const lifetimeRevenue = state.invoices.reduce((sum, inv) => sum + (isInvoicePaid(inv) ? Number(inv.amount || 0) : 0), 0);
+  const outstandingBalance = state.invoices.reduce((sum, inv) => sum + (isInvoicePaid(inv) ? 0 : Number(inv.amount || 0)), 0);
+  const averageTicket = paidInvoices > 0 ? lifetimeRevenue / paidInvoices : 0;
+
+  return {
+    totalInvoices,
+    paidInvoices,
+    lifetimeRevenue,
+    outstandingBalance,
+    averageTicket
+  };
+}
+
+function buildTimelineItems(){
+  const today = getTodayStart();
+
+  const jobs = state.jobs.map(job => ({
+    title: job.service || "Job",
+    type: "job",
+    status: job.status || "scheduled",
+    body: [job.worker_name || job.worker_id ? "Worker: " + (job.worker_name || job.worker_id) : "", job.price ? "Price: " + money(job.price) : ""].filter(Boolean).join(" • "),
+    event_date: job.date,
+    start_time: job.start_time,
+    sort_date: job.date,
+    priority: isJobOpen(job) && getTimestamp(job.date, job.start_time) >= today ? 1 : 3
+  }));
+
+  const subs = state.subscriptions.map(sub => ({
+    title: sub.service || "Subscription",
+    type: "subscription",
+    status: sub.status || "active",
+    body: [sub.frequency || "", sub.price ? money(sub.price) : "", sub.worker_name || sub.worker_id ? "Worker: " + (sub.worker_name || sub.worker_id) : ""].filter(Boolean).join(" • "),
+    event_date: sub.next_date,
+    sort_date: sub.next_date,
+    priority: normalizeStatus(sub.status || "active") === "active" ? 2 : 4
+  }));
+
+  const invoices = state.invoices.map(inv => ({
+    title: inv.invoice_number || ("Invoice #" + inv.id),
+    type: "invoice",
+    status: inv.status || "draft",
+    body: [money(inv.amount || 0), inv.due_date ? "Due: " + formatDate(inv.due_date) : ""].filter(Boolean).join(" • "),
+    event_date: inv.issued_date || inv.due_date,
+    sort_date: inv.issued_date || inv.due_date,
+    priority: isInvoicePaid(inv) ? 4 : 2
+  }));
+
+  return [...jobs, ...subs, ...invoices]
+    .filter(item => item.sort_date)
+    .sort((a, b) => {
+      if(a.priority !== b.priority) return a.priority - b.priority;
+      if(a.priority <= 2) return getTimestamp(a.sort_date, a.start_time) - getTimestamp(b.sort_date, b.start_time);
+      return getTimestamp(b.sort_date, b.start_time) - getTimestamp(a.sort_date, a.start_time);
+    });
+}
+
+
+function showTab(tab){
+  currentTab = tab;
+  ["overview","jobs","subs","invoices","notes"].forEach(name => {
+    document.getElementById(name + "Section").classList.toggle("active", name === tab);
+    document.getElementById(name + "Tab").classList.toggle("active", name === tab);
+  });
+}
+
+function closeModal(id){
+  document.getElementById(id).style.display = "none";
+}
+
+function fillEstimateOptions(){
+  if(!state) return;
+  const select = document.getElementById("job_estimate_id");
+  select.innerHTML = `<option value="">No linked estimate</option>` + state.estimates.map(item => `<option value="${escapeHtml(item.id)}">${escapeHtml(item.customer_name || "Estimate")} - ${escapeHtml(item.service || "")}</option>`).join("");
+}
+
+function fillWorkerOptions(selectId, selectedId = ""){
+  if(!state) return;
+  const select = document.getElementById(selectId);
+  if(!select) return;
+
+  select.innerHTML = `<option value="">No worker assigned</option>` + state.workers.map(worker => `<option value="${escapeHtml(worker.id)}" ${String(selectedId) === String(worker.id) ? "selected" : ""}>${escapeHtml(worker.name || "Worker")} ${worker.active === false ? " (inactive)" : ""}</option>`).join("");
+}
+
+function fillInvoiceJobOptions(selectedId = ""){
+  if(!state) return;
+  const select = document.getElementById("invoice_job_id");
+  select.innerHTML = `<option value="">No linked job</option>` + state.jobs.map(job => `<option value="${escapeHtml(job.id)}" ${String(selectedId) === String(job.id) ? "selected" : ""}>${escapeHtml(job.service || "Job")} - ${escapeHtml(formatDate(job.date))}</option>`).join("");
+}
+
+function renderClientInfo(){
+  const client = state.client;
+  const openJobs = state.jobs.filter(isJobOpen).length;
+  const activeSubs = state.subscriptions.filter(sub => normalizeStatus(sub.status || "active") === "active").length;
+  const unpaidInvoices = state.invoices.filter(inv => ["unpaid", "overdue", "draft", "sent"].includes(normalizeStatus(inv.status))).length;
+  const financial = getFinancialSummary();
+
+  document.getElementById("clientInfo").innerHTML = `
+    <div class="client-head">
+      <div>
+        <h2 class="client-name">${escapeHtml(client.name || "Client")}</h2>
+        <div class="client-copy">This page is the main workspace for service scheduling, recurring care, invoicing, and client notes.</div>
+      </div>
+      <div>
+        ${openJobs > 0 ? badge("active") : badge("clear")}
+      </div>
+    </div>
+    <div class="meta">
+      <div class="meta-box"><span class="label">Phone</span>${escapeHtml(client.phone || "-")}</div>
+      <div class="meta-box"><span class="label">Address</span>${escapeHtml(client.address || "-")}</div>
+      <div class="meta-box"><span class="label">ZIP</span>${escapeHtml(client.zip || "-")}</div>
+      <div class="meta-box"><span class="label">Open Jobs</span><span class="value-strong">${openJobs}</span></div>
+      <div class="meta-box"><span class="label">Active Subscriptions</span><span class="value-strong">${activeSubs}</span></div>
+      <div class="meta-box"><span class="label">Unpaid Invoices</span><span class="value-strong">${unpaidInvoices}</span></div>
+      <div class="meta-box"><span class="label">Total Jobs</span><span class="value-strong">${state.jobs.length}</span></div>
+      <div class="meta-box"><span class="label">Lifetime Revenue</span><span class="value-strong">${money(financial.lifetimeRevenue)}</span></div>
+    </div>
+  `;
+
+  document.getElementById("clientNotes").value = client.notes || "";
+}
+
+function renderOverviewSummary(){
+  const nextSubscription = getNextSubscription();
+  const nextJob = getNextJob();
+  const latestInvoice = getLatestInvoice();
+  const financial = getFinancialSummary();
+  const timelineItems = buildTimelineItems();
+
+  document.getElementById("overviewSummary").innerHTML = `
+    <div class="summary-box pro-card">
+      <span class="label">Next Job</span>
+      ${nextJob ? `${escapeHtml(nextJob.service || "Job")}<div class="sub">${escapeHtml(formatDate(nextJob.date))} • ${escapeHtml(nextJob.status || "scheduled")}${jobTime(nextJob.start_time) ? " • " + escapeHtml(jobTime(nextJob.start_time)) : ""}</div>` : `<strong>No jobs scheduled</strong><div class="sub">No upcoming open work for this client.</div>`}
+    </div>
+    <div class="summary-box pro-card success-card">
+      <span class="label">Next Visit</span>
+      ${nextSubscription ? `${escapeHtml(nextSubscription.service || "Subscription")}<div class="sub">${escapeHtml(formatDate(nextSubscription.next_date))} • ${escapeHtml(nextSubscription.frequency || "")}</div>` : `<strong>No recurring visit scheduled</strong><div class="sub">No active subscription visit found.</div>`}
+    </div>
+    <div class="summary-box pro-card money-card">
+      <span class="label">Latest Invoice</span>
+      ${latestInvoice ? `${escapeHtml(latestInvoice.invoice_number || ("Invoice #" + latestInvoice.id))}<div class="sub">${money(latestInvoice.amount || 0)} • ${escapeHtml(latestInvoice.status || "draft")}</div>` : `<strong>No invoices yet</strong><div class="sub">Create an invoice from this client record.</div>`}
+    </div>
+    <div class="summary-box pro-card">
+      <span class="label">Timeline Events</span>
+      <span class="value-strong">${timelineItems.length}</span>
+      <div class="sub">Jobs, subscriptions, and invoices</div>
+    </div>
+
+    <div class="summary-box pro-card money-card">
+      <span class="label">Lifetime Revenue</span>
+      <span class="value-strong">${money(financial.lifetimeRevenue)}</span>
+      <div class="sub">Paid invoice revenue</div>
+    </div>
+    <div class="summary-box pro-card warning-card">
+      <span class="label">Outstanding Balance</span>
+      <span class="value-strong">${money(financial.outstandingBalance)}</span>
+      <div class="sub">Open invoice balance</div>
+    </div>
+    <div class="summary-box pro-card">
+      <span class="label">Total Invoices</span>
+      <span class="value-strong">${financial.totalInvoices}</span>
+      <div class="sub">${financial.paidInvoices} paid invoices</div>
+    </div>
+    <div class="summary-box pro-card success-card">
+      <span class="label">Average Ticket</span>
+      <span class="value-strong">${money(financial.averageTicket)}</span>
+      <div class="sub">Average paid invoice</div>
+    </div>
+  `;
+}
+
+function renderTimeline(){
+  const wrap = document.getElementById("timelineList");
+  const items = buildTimelineItems();
+
+  if(!items.length){
+    wrap.innerHTML = `<div class="empty"><strong>No timeline activity yet.</strong>Jobs, active subscriptions, and invoices will appear here after they are created.</div>`;
+    return;
+  }
+
+  wrap.innerHTML = `
+    <div class="overview-block">
+      <h3 class="overview-block-title">Smart Timeline</h3>
+    </div>
+    ${items.map(item => `
+      <div class="card ${item.priority <= 2 ? "active-highlight" : ""}">
+        <div class="timeline-label">${escapeHtml(item.type)}</div>
+        <div class="card-top">
+          <div>
+            <h3 class="card-title">${escapeHtml(item.title)}</h3>
+            <div class="sub">${escapeHtml(formatDate(item.event_date))}${item.start_time ? " • " + escapeHtml(jobTime(item.start_time)) : ""}</div>
+          </div>
+          ${badge(item.status)}
+        </div>
+        <div class="muted-line">${escapeHtml(item.body || "No additional details.")}</div>
+      </div>
+    `).join("")}
+  `;
+}
+
+function renderJobs(){
+  const wrap = document.getElementById("jobsList");
+  if(!state.jobs.length){
+    wrap.innerHTML = `<div class="empty"><strong>No jobs scheduled</strong>This client does not have any jobs yet.<div style="margin-top:12px;"><button class="btn primary" onclick="openJobModal()">+ Add Job</button></div></div>`;
+    return;
+  }
+
+  wrap.innerHTML = [...state.jobs].sort((a, b) => {
+    const aOpen = isJobOpen(a) ? 0 : 1;
+    const bOpen = isJobOpen(b) ? 0 : 1;
+    if(aOpen !== bOpen) return aOpen - bOpen;
+    return aOpen === 0 ? sortByUpcomingDate(a, b) : sortByNewestDate(a, b);
+  }).map(job => {
+    const normalizedStatus = normalizeStatus(job.status || "scheduled");
+    const isClosed = ["completed", "cancelled", "canceled"].includes(normalizedStatus);
+    const isInProgress = normalizedStatus === "in_progress";
+    return `
+    <div class="card">
+      <div class="card-top">
+        <div>
+          <h3 class="card-title">${escapeHtml(job.service || "Job")}</h3>
+          <div class="sub">${escapeHtml(formatDate(job.date) || "-")} • ${escapeHtml(job.worker_name || job.worker_id || "Unassigned")}</div>
+        </div>
+        ${badge(job.status)}
+      </div>
+      <div class="detail-grid">
+        <div class="detail"><span class="label">Status</span>${escapeHtml(job.status || "scheduled")}</div>
+        <div class="detail"><span class="label">Time</span>${escapeHtml(jobTime(job.start_time) || "-")}${job.end_time ? ` - ${escapeHtml(jobTime(job.end_time))}` : ""}</div>
+        <div class="detail"><span class="label">Price</span>${money(job.price || 0)}</div>
+        <div class="detail"><span class="label">Payment</span>${escapeHtml(job.payment_status || "unpaid")}</div>
+      </div>
+      ${job.internal_notes ? `<div class="sub">Notes: ${escapeHtml(job.internal_notes)}</div>` : ""}
+      <div class="actions">
+        <button class="btn gray" onclick="openJobModal(${Number(job.id)})">Edit</button>
+        ${!isClosed && !isInProgress ? `<button class="btn blue" onclick="updateJobStatus(${Number(job.id)}, 'in_progress')">Start</button>` : ""}
+        ${!isClosed ? `<button class="btn primary" onclick="updateJobStatus(${Number(job.id)}, 'completed')">Complete</button>` : ""}
+        ${!isClosed ? `<button class="btn red" onclick="updateJobStatus(${Number(job.id)}, 'cancelled')">Cancel</button>` : ""}
+        <button class="btn gray" onclick="openInvoiceModal(${Number(job.id)}, ${Number(job.price || 0)})">Create Invoice</button>
+        ${(job.type === 'subscription_visit' || job.source_subscription_id) && currentUser && ["owner", "admin", "manager"].includes(currentUser.role) ? `<button class="btn red" onclick="deleteSubscriptionVisit(${Number(job.id)})">Remove Visit</button>` : ""}
+      </div>
+    </div>
+  `}).join("");
+}
+
+function renderEstimates(){
+  const wrap = document.getElementById("estimatesList");
+  const items = [
+    ...state.leads.map(item => ({ ...item, kind: "Lead" })),
+    ...state.estimates.map(item => ({ ...item, kind: "Estimate" }))
+  ];
+
+  if(!items.length){
+    wrap.innerHTML = `<div class="empty"><strong>No linked estimates</strong>No leads or estimates are connected to this client record yet.</div>`;
+    return;
+  }
+
+  wrap.innerHTML = items.map(item => `
+    <div class="card">
+      <div class="card-top">
+        <div>
+          <h3 class="card-title">${escapeHtml(item.customer_name || item.kind)}</h3>
+          <div class="sub">${escapeHtml(item.kind)} • ${escapeHtml(item.service || "")}</div>
+        </div>
+        ${badge(item.status)}
+      </div>
+      <div class="detail-grid">
+        <div class="detail"><span class="label">Visit Date</span>${escapeHtml(formatDate(item.visit_date))}</div>
+        <div class="detail"><span class="label">Amount</span>${money(item.quoted_price || 0)}</div>
+        <div class="detail"><span class="label">Phone</span>${escapeHtml(item.phone || "-")}</div>
+        <div class="detail"><span class="label">Source Lead</span>${escapeHtml(item.source_lead_id || "-")}</div>
+      </div>
+      ${item.notes ? `<div class="sub">Notes: ${escapeHtml(item.notes)}</div>` : ""}
+    </div>
+  `).join("");
+}
+
+function renderSubs(){
+  const wrap = document.getElementById("subsList");
+  if(!state.subscriptions.length){
+    wrap.innerHTML = `<div class="empty"><strong>No subscriptions yet</strong>Create recurring service without leaving this client profile.<div style="margin-top:12px;"><button class="btn primary" onclick="openSubModal()">+ Add Subscription</button></div></div>`;
+    return;
+  }
+
+  wrap.innerHTML = [...state.subscriptions].sort((a, b) => {
+    const aActive = normalizeStatus(a.status || "active") === "active" ? 0 : 1;
+    const bActive = normalizeStatus(b.status || "active") === "active" ? 0 : 1;
+    if(aActive !== bActive) return aActive - bActive;
+    return sortByUpcomingDate(a, b);
+  }).map(sub => `
+    <div class="card ${sub.status === "active" ? "active-highlight" : ""} ${sub.status === "paused" ? "paused-highlight" : ""}">
+      <div class="card-top">
+        <div>
+          <h3 class="card-title">${escapeHtml(sub.service || "Subscription")}</h3>
+          <div class="sub">Frequency: <strong>${escapeHtml(sub.frequency || "-")}</strong></div>
+        </div>
+        ${badge(sub.status)}
+      </div>
+      <div class="detail-grid">
+        <div class="detail"><span class="label">Next Visit</span><span class="value-strong" style="font-size:18px;">${escapeHtml(formatDate(sub.next_date) || "-")}</span></div>
+        <div class="detail"><span class="label">Frequency</span>${escapeHtml(sub.frequency || "-")}</div>
+        <div class="detail"><span class="label">Worker</span>${escapeHtml(sub.worker_name || sub.worker_id || "-")}</div>
+        <div class="detail"><span class="label">Price</span>${money(sub.price || 0)}</div>
+      </div>
+      <div class="sub">${sub.status === "active" ? "Active recurring service is currently running." : sub.status === "paused" ? "This recurring service is paused." : "Subscription status stored on this client."}</div>
+      <div class="actions">
+        <button class="btn gray" onclick="openSubModal(${Number(sub.id)})">Edit</button>
+        ${sub.status === "active" ? `<button class="btn orange" onclick="updateSubscriptionStatus(${Number(sub.id)}, 'paused')">Pause</button><button class="btn red" onclick="updateSubscriptionStatus(${Number(sub.id)}, 'cancelled')">Cancel</button>` : ""}
+        ${sub.status === "paused" ? `<button class="btn blue" onclick="updateSubscriptionStatus(${Number(sub.id)}, 'active')">Resume</button><button class="btn red" onclick="updateSubscriptionStatus(${Number(sub.id)}, 'cancelled')">Cancel</button>` : ""}
+      </div>
+    </div>
+  `).join("");
+}
+
+function invoicePaidAmount(inv){
+  return inv.status === "paid" ? Number(inv.amount || 0) : 0;
+}
+
+function invoiceRemainingAmount(inv){
+  return inv.status === "paid" ? 0 : Number(inv.amount || 0);
+}
+
+function renderInvoiceSummary(){
+  const total = state.invoices.reduce((sum, inv) => sum + Number(inv.amount || 0), 0);
+  const paid = state.invoices.reduce((sum, inv) => sum + invoicePaidAmount(inv), 0);
+  const remaining = state.invoices.reduce((sum, inv) => sum + invoiceRemainingAmount(inv), 0);
+
+  document.getElementById("invoiceSummary").innerHTML = `
+    <div class="summary-box"><span class="label">Total</span><span class="value-strong">${money(total)}</span></div>
+    <div class="summary-box"><span class="label">Paid</span><span class="value-strong">${money(paid)}</span></div>
+    <div class="summary-box"><span class="label">Remaining</span><span class="value-strong">${money(remaining)}</span></div>
+    <div class="summary-box"><span class="label">Invoices</span><span class="value-strong">${state.invoices.length}</span></div>
+  `;
+}
+
+function renderInvoices(){
+  const wrap = document.getElementById("invoicesList");
+  renderInvoiceSummary();
+
+  if(!state.invoices.length){
+    wrap.innerHTML = `<div class="empty"><strong>No invoices yet</strong>Create an invoice from this client record when work is ready to bill.<div style="margin-top:12px;"><button class="btn primary" onclick="openInvoiceModal()">+ Create Invoice</button></div></div>`;
+    return;
+  }
+
+  wrap.innerHTML = [...state.invoices].sort(sortByNewestDate).map(inv => `
+    <div class="card">
+      <div class="card-top">
+        <div>
+          <h3 class="card-title">${escapeHtml(inv.invoice_number || ("Invoice #" + inv.id))}</h3>
+          <div class="sub">Issued ${escapeHtml(formatDate(inv.issued_date))} • Due ${escapeHtml(formatDate(inv.due_date))}</div>
+        </div>
+        ${badge(inv.status)}
+      </div>
+      <div class="detail-grid">
+        <div class="detail"><span class="label">Total</span>${money(inv.amount || 0)}</div>
+        <div class="detail"><span class="label">Paid</span>${money(invoicePaidAmount(inv))}</div>
+        <div class="detail"><span class="label">Remaining</span>${money(invoiceRemainingAmount(inv))}</div>
+        <div class="detail"><span class="label">Job</span>${escapeHtml(inv.job_id || "-")}</div>
+      </div>
+      <div class="actions">
+        ${normalizeStatus(inv.status) === "paid" ? "" : `<button class="btn primary" onclick="setInvoiceStatus(${Number(inv.id)}, 'paid')">Mark as Paid</button>`}
+        ${["paid", "cancelled", "canceled"].includes(normalizeStatus(inv.status)) ? "" : `<button class="btn orange" onclick="setInvoiceStatus(${Number(inv.id)}, 'overdue')">Mark Overdue</button>`}
+        ${["cancelled", "canceled"].includes(normalizeStatus(inv.status)) ? "" : `<button class="btn red" onclick="setInvoiceStatus(${Number(inv.id)}, 'cancelled')">Cancel</button>`}
+      </div>
+    </div>
+  `).join("");
+}
+
+function openJobModal(jobId = null){
+  const title = document.querySelector("#jobModal h3");
+  const job = jobId && state ? state.jobs.find(item => String(item.id) === String(jobId)) : null;
+
+  editingJobId = job ? job.id : null;
+  if(title) title.textContent = job ? "Edit Job" : "Add Job";
+
+  document.getElementById("job_service").value = job ? (job.service || "") : "";
+  document.getElementById("job_estimate_id").value = job ? (job.estimate_id || "") : "";
+  document.getElementById("job_date").value = job ? formatDate(job.date) : new Date().toISOString().split("T")[0];
+  document.getElementById("job_status").value = job ? (job.status || "scheduled") : "scheduled";
+  document.getElementById("job_start").value = job ? (jobTime(job.start_time) || "08:00") : "08:00";
+  document.getElementById("job_end").value = job ? (jobTime(job.end_time) || "09:00") : "09:00";
+  fillWorkerOptions("job_worker_id", job ? (job.worker_id || "") : "");
+  document.getElementById("job_price").value = job ? Number(job.price || 0) : "";
+  document.getElementById("job_internal_notes").value = job ? (job.internal_notes || "") : "";
+  document.getElementById("jobModal").style.display = "flex";
+}
+
+async function openSubModal(subscriptionId = null){
+  const title = document.querySelector("#subModal h3");
+  const subscription = subscriptionId && state ? state.subscriptions.find(item => String(item.id) === String(subscriptionId)) : null;
+
+  editingSubscriptionId = subscription ? subscription.id : null;
+  if(title) title.textContent = subscription ? "Edit Subscription" : "Add Subscription";
+
+  document.getElementById("sub_service").value = subscription ? (subscription.service || "") : "";
+  document.getElementById("sub_frequency").value = subscription ? (subscription.frequency || "weekly") : "weekly";
+  document.getElementById("sub_price").value = subscription ? Number(subscription.price || 0) : "";
+  document.getElementById("sub_next_date").value = subscription ? formatDate(subscription.next_date) : new Date().toISOString().split("T")[0];
+  fillWorkerOptions("sub_worker_id", subscription ? (subscription.worker_id || "") : "");
+  document.getElementById("subModal").style.display = "flex";
+}
+
+function openInvoiceModal(jobId = "", amount = ""){
+  fillInvoiceJobOptions(jobId || "");
+  document.getElementById("invoice_amount").value = amount || "";
+  document.getElementById("invoice_due_date").value = new Date().toISOString().split("T")[0];
+  document.getElementById("invoice_status").value = "unpaid";
+  document.getElementById("invoice_notes").value = "";
+  document.getElementById("invoiceModal").style.display = "flex";
+}
+
+async function updateJobStatus(id, status){
+  const res = await apiFetch(API + "/workflow/jobs/" + id + "/status", {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ status })
+  });
+
+  if(!res.ok){
+    alert(await readError(res, "Unable to update job."));
+    return;
+  }
+
+  await load();
+  showTab("jobs");
+}
+
+async function saveJob(){
+  const payload = {
+    client_id: Number(clientId),
+    estimate_id: job_estimate_id.value ? Number(job_estimate_id.value) : null,
+    service: job_service.value.trim(),
+    type: "one_time_job",
+    date: job_date.value,
+    start_time: job_start.value || "08:00",
+    end_time: job_end.value || "09:00",
+    status: job_status.value,
+    worker_id: job_worker_id.value ? Number(job_worker_id.value) : null,
+    price: job_price.value ? Number(job_price.value) : 0,
+    payment_status: "unpaid",
+    internal_notes: job_internal_notes.value.trim()
+  };
+
+  if(!payload.service || !payload.date){
+    alert("Please fill the required job fields.");
+    return;
+  }
+
+  const res = await apiFetch(editingJobId ? (API + "/workflow/jobs/" + editingJobId) : (API + "/workflow/jobs"), {
+    method: editingJobId ? "PUT" : "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload)
+  });
+
+  if(!res.ok){
+    alert(await readError(res, "Unable to save job."));
+    return;
+  }
+
+  closeModal("jobModal");
+  editingJobId = null;
+  await load();
+  showTab("jobs");
+}
+
+async function saveSubscription(){
+  const currentSub = editingSubscriptionId
+    ? state.subscriptions.find(item => String(item.id) === String(editingSubscriptionId))
+    : null;
+
+  const payload = {
+    client_id: Number(clientId),
+    service: sub_service.value.trim(),
+    frequency: sub_frequency.value,
+    start_date: editingSubscriptionId
+      ? (currentSub && currentSub.start_date ? formatDate(currentSub.start_date) : sub_next_date.value)
+      : sub_next_date.value,
+    price: sub_price.value ? Number(sub_price.value) : 0,
+    next_date: sub_next_date.value,
+    worker_id: sub_worker_id.value ? Number(sub_worker_id.value) : null,
+    status: editingSubscriptionId ? ((currentSub && currentSub.status) || "active") : "active",
+    pause_reason: editingSubscriptionId ? ((currentSub && currentSub.pause_reason) || "") : "",
+    cancel_reason: editingSubscriptionId ? ((currentSub && currentSub.cancel_reason) || "") : ""
+  };
+
+  if(!payload.service || !payload.next_date){
+    alert("Please fill the required subscription fields.");
+    return;
+  }
+
+  const res = await apiFetch(editingSubscriptionId ? (API + "/ops/subscriptions/" + editingSubscriptionId) : (API + "/ops/subscriptions"), {
+    method: editingSubscriptionId ? "PUT" : "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload)
+  });
+
+  if(!res.ok){
+    alert(await readError(res, "Unable to save subscription."));
+    return;
+  }
+
+  closeModal("subModal");
+  editingSubscriptionId = null;
+  await load();
+  showTab("subs");
+}
+
+async function updateSubscriptionStatus(id, status){
+  const payload = { status };
+
+  if(status === "paused"){
+    payload.pause_reason = prompt("Pause reason (optional):") || "";
+  }
+
+  if(status === "cancelled"){
+    payload.cancel_reason = prompt("Cancel reason (optional):") || "";
+  }
+
+  const res = await apiFetch(API + "/ops/subscriptions/" + id + "/status", {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload)
+  });
+
+  if(!res.ok){
+    alert(await readError(res, "Unable to update subscription."));
+    return;
+  }
+
+  await load();
+  showTab("subs");
+}
+
+async function saveInvoice(){
+  const payload = {
+    client_id: Number(clientId),
+    job_id: invoice_job_id.value ? Number(invoice_job_id.value) : null,
+    amount: invoice_amount.value ? Number(invoice_amount.value) : 0,
+    due_date: invoice_due_date.value,
+    status: invoice_status.value,
+    notes: invoice_notes.value.trim()
+  };
+
+  const res = await apiFetch(API + "/workflow/invoices", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload)
+  });
+
+  if(!res.ok){
+    alert(await readError(res, "Unable to create invoice."));
+    return;
+  }
+
+  closeModal("invoiceModal");
+  await load();
+  showTab("invoices");
+}
+
+async function setInvoiceStatus(id, status){
+  const res = await apiFetch(API + "/workflow/invoices/" + id + "/status", {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ status })
+  });
+
+  if(!res.ok){
+    alert(await readError(res, "Unable to update invoice."));
+    return;
+  }
+
+  await load();
+  showTab("invoices");
+}
+
+async function saveClientNotes(){
+  const payload = {
+    name: state.client.name || "",
+    phone: state.client.phone || "",
+    address: state.client.address || "",
+    zip: state.client.zip || "",
+    notes: document.getElementById("clientNotes").value.trim()
+  };
+
+  const res = await apiFetch(API + "/clients/" + clientId, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload)
+  });
+
+  if(!res.ok){
+    alert("Unable to save notes.");
+    return;
+  }
+
+  await load();
+  showTab("notes");
+}
+
+function renderLoadError(message){
+  document.getElementById("clientInfo").innerHTML = `
+    <div class="empty">
+      <strong>Unable to load client profile.</strong>
+      <div>${escapeHtml(message || "Refresh and try again.")}</div>
+      <div style="margin-top:12px;">
+        <button class="btn primary" onclick="load()">Refresh</button>
+      </div>
+    </div>
+  `;
+  document.getElementById("overviewSummary").innerHTML = "";
+  document.getElementById("timelineList").innerHTML = `<div class="empty">No profile data loaded.</div>`;
+  document.getElementById("estimatesList").innerHTML = `<div class="empty">No estimate data loaded.</div>`;
+  document.getElementById("jobsList").innerHTML = `<div class="empty">No job data loaded.</div>`;
+  document.getElementById("subsList").innerHTML = `<div class="empty">No subscription data loaded.</div>`;
+  document.getElementById("invoiceSummary").innerHTML = "";
+  document.getElementById("invoicesList").innerHTML = `<div class="empty">No invoice data loaded.</div>`;
+}
+
+async function load(){
+  clientId = new URLSearchParams(window.location.search).get("id");
+
+  if(!clientId){
+    renderLoadError("Missing client ID.");
+    return;
+  }
+
+  // Load current user
+  currentUser = getUser();
+
+  try {
+    const [timelineRes, workers] = await Promise.all([
+      apiFetch(API + "/workflow/clients/" + clientId + "/timeline"),
+      loadWorkers().catch(() => [])
+    ]);
+
+    if(!timelineRes.ok){
+      renderLoadError(await readError(timelineRes, "Unable to read client timeline."));
+      return;
+    }
+
+    const timeline = await readJsonSafe(timelineRes, {});
+
+    state = {
+      ...(timeline || {}),
+      client: timeline && timeline.client ? timeline.client : {},
+      leads: Array.isArray(timeline && timeline.leads) ? timeline.leads : [],
+      estimates: Array.isArray(timeline && timeline.estimates) ? timeline.estimates : [],
+      jobs: Array.isArray(timeline && timeline.jobs) ? timeline.jobs : [],
+      subscriptions: Array.isArray(timeline && timeline.subscriptions) ? timeline.subscriptions : [],
+      invoices: Array.isArray(timeline && timeline.invoices) ? timeline.invoices : [],
+      timeline: Array.isArray(timeline && timeline.timeline) ? timeline.timeline : [],
+      workers: Array.isArray(workers) ? workers : []
+    };
+
+    renderClientInfo();
+    renderOverviewSummary();
+    renderTimeline();
+    renderJobs();
+    renderEstimates();
+    renderSubs();
+    renderInvoices();
+    fillEstimateOptions();
+    fillInvoiceJobOptions();
+    showTab(currentTab);
+  } catch(err){
+    console.log("CLIENT PROFILE LOAD ERROR:", err);
+    renderLoadError("Server connection failed while loading this client.");
+  }
+}
+
+let deletingSubscriptionVisitId = null;
+
+function deleteSubscriptionVisit(id) {
+  deletingSubscriptionVisitId = id;
+  document.getElementById("deleteSubscriptionVisitModal").style.display = "block";
+}
+
+function closeDeleteSubscriptionVisitModal() {
+  document.getElementById("deleteSubscriptionVisitModal").style.display = "none";
+  deletingSubscriptionVisitId = null;
+}
+
+async function confirmDeleteSubscriptionVisit() {
+  if (!deletingSubscriptionVisitId) return;
+
+  try {
+    const res = await apiFetch(API + "/clients/" + clientId + "/jobs/" + deletingSubscriptionVisitId + "/subscription-visit", {
+      method: "DELETE"
+    });
+
+    if (!res.ok) {
+      const error = await readError(res, "Failed to remove subscription visit");
+      alert("Error: " + error);
+      return;
+    }
+
+    closeDeleteSubscriptionVisitModal();
+    await load(); // Reload data
+  } catch (err) {
+    console.log("DELETE SUBSCRIPTION VISIT ERROR:", err);
+    alert("Failed to remove subscription visit");
+  }
+}
+
+window.onclick = function(e){
+  if (e.target === document.getElementById("deleteSubscriptionVisitModal")) {
+    closeDeleteSubscriptionVisitModal();
+  }
+  ["jobModal","subModal","invoiceModal"].forEach(id => {
+    const modal = document.getElementById(id);
+    if(e.target === modal) closeModal(id);
+  });
+};
+
+load();
+</script>
+</body>
+</html>

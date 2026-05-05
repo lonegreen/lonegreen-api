@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Calendar</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <style>
+    :root {
+      --bg: #f6f8f7;
+      --card: #ffffff;
+      --text: #17211b;
+      --muted: #6b7280;
+      --border: #e5e7eb;
+      --green: #1f5c3a;
+      --green-dark: #17462c;
+      --soft-green: #eef7f1;
+      --shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+      --radius: 16px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 16px 20px;
+      background: rgba(255,255,255,0.92);
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      backdrop-filter: blur(12px);
+    }
+
+    .topbar h2 {
+      margin: 0;
+      flex: 1;
+      font-size: 22px;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+    }
+
+    .topbar .sub {
+      display: block;
+      margin-top: 3px;
+      font-size: 12px;
+      color: var(--muted);
+      font-weight: 500;
+      letter-spacing: normal;
+    }
+
+    .topbar button {
+      padding: 9px 13px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      cursor: pointer;
+      background: white;
+      color: var(--text);
+      font-weight: 700;
+      transition: 0.18s ease;
+      white-space: nowrap;
+    }
+
+    .topbar button:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08);
+    }
+
+    .topbar button.primary {
+      background: var(--green);
+      color: white;
+      border-color: var(--green);
+    }
+
+    .topbar button.primary:hover {
+      background: var(--green-dark);
+    }
+
+    .page {
+      padding: 18px;
+    }
+
+    .calendar-shell {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .calendar-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--border);
+      background: linear-gradient(180deg, #ffffff, #fbfdfc);
+    }
+
+    .calendar-title {
+      font-size: 14px;
+      font-weight: 800;
+    }
+
+    .calendar-note {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 3px;
+    }
+
+    .legend {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .legend span {
+      font-size: 11px;
+      color: var(--muted);
+      background: #f9fafb;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 5px 8px;
+    }
+
+    .calendar-wrap {
+      overflow-x: auto;
+      width: 100%;
+      position: relative;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 82px repeat(7, minmax(145px, 1fr));
+      min-width: 1120px;
+    }
+
+    .cell {
+      border-right: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      min-height: 94px;
+      position: relative;
+      background: white;
+      padding: 5px;
+    }
+
+    .cell:hover {
+      background: #fbfdfc;
+    }
+
+    .header {
+      background: #f9fafb;
+      color: var(--text);
+      text-align: center;
+      padding: 12px 8px;
+      font-weight: 800;
+      min-height: 60px;
+      border-right: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 2;
+    }
+
+    .header small {
+      display: block;
+      margin-top: 4px;
+      font-weight: 600;
+      color: var(--muted);
+      opacity: 1;
+    }
+
+    .header.today {
+      background: var(--soft-green);
+      color: var(--green);
+    }
+
+    .time {
+      text-align: center;
+      padding-top: 34px;
+      font-weight: 800;
+      font-size: 12px;
+      color: var(--muted);
+      background: #f9fafb;
+      position: sticky;
+      left: 0;
+      z-index: 1;
+    }
+
+    .job {
+      position: relative;
+      display: block;
+      margin-bottom: 5px;
+      padding: 8px;
+      color: white;
+      border-radius: 12px;
+      cursor: grab;
+      font-size: 12px;
+      line-height: 1.35;
+      box-shadow: 0 6px 15px rgba(15, 23, 42, 0.16);
+      user-select: none;
+      overflow: hidden;
+    }
+
+    .job:active {
+      cursor: grabbing;
+    }
+
+    .job b {
+      font-size: 12.5px;
+    }
+
+    .muted {
+      opacity: 0.92;
+      font-size: 11px;
+      margin-top: 3px;
+    }
+
+    .scheduled { background: #f59e0b; }
+    .confirmed { background: #2563eb; }
+    .assigned { background: #0ea5e9; }
+    .en_route { background: #4f46e5; }
+    .arrived { background: #7c3aed; }
+    .in_progress { background: #9333ea; }
+    .completed { background: #16a34a; }
+    .rescheduled { background: #0891b2; }
+    .cancelled { background: #dc2626; }
+    .skipped { background: #6b7280; }
+    .no_access { background: #b91c1c; }
+    .no_show { background: #be123c; }
+    .weather_delay { background: #1d4ed8; }
+    .needs_followup { background: #c2410c; }
+    .needs_rework { background: #7c2d12; }
+    .draft { background: #6b7280; }
+    .quoted { background: #d97706; }
+    .approved { background: #15803d; }
+    .rejected { background: #991b1b; }
+
+    .calendar-state {
+      padding: 24px;
+      text-align: center;
+      color: var(--muted);
+      font-size: 14px;
+      border-bottom: 1px solid var(--border);
+      background: white;
+    }
+
+    .calendar-state strong {
+      display: block;
+      color: var(--text);
+      font-size: 15px;
+      margin-bottom: 4px;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    @media (max-width: 760px) {
+      .topbar {
+        padding: 12px;
+        flex-wrap: wrap;
+      }
+
+      .topbar h2 {
+        order: -1;
+        width: 100%;
+        flex: none;
+      }
+
+      .page {
+        padding: 10px;
+      }
+
+      .calendar-toolbar {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .legend {
+        justify-content: flex-start;
+      }
+
+      .topbar button {
+        flex: 1;
+      }
+    }
+  </style>
+  <script src="/js/role-guard.js"></script>
+</head>
+
+<body>
+  <script>
+(function(){
+  const token = localStorage.getItem("token");
+  let user = null;
+
+  try {
+    user = JSON.parse(localStorage.getItem("user") || "null");
+  } catch {
+    user = null;
+  }
+
+  if (!token || !user) {
+    window.top.location.href = "/login.html";
+    return;
+  }
+
+  const role = String(user.role || "").toLowerCase();
+
+  if (role === "worker") {
+    window.top.location.href = "/control.html";
+    return;
+  }
+})();
+</script>
+  
+
+<script>
+const API = "";
+
+function getToken(){
+  return localStorage.getItem("token");
+}
+
+function getUser(){
+  try {
+    return JSON.parse(localStorage.getItem("user"));
+  } catch(e){
+    return null;
+  }
+}
+
+const token = getToken();
+const user = getUser();
+
+if(!token || !user || !user.company_id){
+  localStorage.setItem("redirectAfterLogin", "calendar.html");
+  window.location.href = "/login.html";
+}
+
+function formatDateLocal(date){
+  return date.getFullYear() + "-" +
+    String(date.getMonth() + 1).padStart(2, "0") + "-" +
+    String(date.getDate()).padStart(2, "0");
+}
+
+async function apiFetch(url, options = {}){
+  const res = await fetch(url, {
+    ...options,
+    headers: {
+      ...(options.headers || {}),
+      Authorization: "Bearer " + token
+    }
+  });
+
+  if(res.status === 401){
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    localStorage.setItem("redirectAfterLogin", "calendar.html");
+    window.location.href = "/login.html";
+    throw new Error("Unauthorized");
+  }
+
+  return res;
+}
+
+let draggedJob = null;
+let currentDate = new Date();
+
+const days = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+const DEFAULT_START_HOUR = 7;
+const DEFAULT_END_HOUR = 19;
+
+function getJobHour(job) {
+  const raw = job && job.start_time ? String(job.start_time) : "";
+  const hour = parseInt(raw.split(":")[0], 10);
+  return Number.isFinite(hour) ? hour : null;
+}
+
+function getSmartHours(jobs) {
+  let startHour = DEFAULT_START_HOUR;
+  let endHour = DEFAULT_END_HOUR;
+
+  (Array.isArray(jobs) ? jobs : []).forEach(job => {
+    const hour = getJobHour(job);
+
+    if (hour === null) return;
+
+    startHour = Math.min(startHour, hour);
+    endHour = Math.max(endHour, Math.min(hour + 1, 23));
+  });
+
+  return Array.from(
+    { length: endHour - startHour + 1 },
+    (_, i) => startHour + i
+  );
+}
+
+function formatHourLabel(hour) {
+  return new Date(2000, 0, 1, hour, 0).toLocaleTimeString("en-US", {
+    hour: "numeric",
+    hour12: true
+  });
+}
+
+function normalizeDateString(dateValue){
+  if(!dateValue) return "";
+  const d = new Date(dateValue);
+  if(Number.isNaN(d.getTime())) return "";
+  return formatDateLocal(d);
+}
+
+function escapeHtml(value){
+  return String(value || "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
+function safeStatusClass(status){
+  return String(status || "scheduled")
+    .toLowerCase()
+    .replace(/[^a-z0-9_]/g, "_");
+}
+
+function getWeekStart(){
+  const date = new Date(currentDate);
+  date.setDate(currentDate.getDate() - currentDate.getDay());
+  return date;
+}
+
+function updateWeekLabel(){
+  const start = getWeekStart();
+  const end = new Date(start);
+  end.setDate(start.getDate() + 6);
+
+  const label = document.getElementById("weekLabel");
+  if(label){
+    label.textContent = formatDateLocal(start) + " to " + formatDateLocal(end);
+  }
+}
+
+function setState(type, title, message){
+  const state = document.getElementById("calendarState");
+  if(!state) return;
+
+  if(!type){
+    state.classList.add("hidden");
+    state.innerHTML = "";
+    return;
+  }
+
+  state.classList.remove("hidden");
+  state.innerHTML = `
+    <strong>${escapeHtml(title)}</strong>
+    <span>${escapeHtml(message)}</span>
+  `;
+}
+
+function buildJobHtml(j){
+  const workerText = j.worker_name || (j.worker_id ? "#" + j.worker_id : "No Worker");
+  const status = j.status || "scheduled";
+  const statusClass = safeStatusClass(status);
+
+  return `
+    <div class="job ${statusClass}" draggable="true" ondragstart="drag(${Number(j.id)})">
+      <div><b>${escapeHtml(j.client_name || "No Client")}</b></div>
+      <div>${escapeHtml(j.service || "")}</div>
+      <div class="muted">${escapeHtml(status)} • ${escapeHtml(workerText)}</div>
+    </div>
+  `;
+}
+
+async function load(){
+  updateWeekLabel();
+  setState("loading", "Loading calendar", "Please wait while jobs are being loaded.");
+
+  try {
+    const res = await apiFetch(API + "/ops/calendar");
+
+    if(!res.ok){
+      const text = await res.text();
+      setState("error", "Error loading calendar", text || "The calendar could not be loaded.");
+      return;
+    }
+
+    const data = await res.json();
+    const jobs = Array.isArray(data) ? data : (Array.isArray(data.jobs) ? data.jobs : []);
+    const smartHours = getSmartHours(jobs);
+
+    const grid = document.getElementById("calendar");
+    grid.innerHTML = "";
+
+    const empty = document.createElement("div");
+    empty.className = "header";
+    grid.appendChild(empty);
+
+    const todayStr = formatDateLocal(new Date());
+
+    days.forEach((d, i) => {
+      const date = getWeekStart();
+      date.setDate(date.getDate() + i);
+
+      const dateStr = formatDateLocal(date);
+
+      const header = document.createElement("div");
+      header.className = "header" + (dateStr === todayStr ? " today" : "");
+      header.innerHTML = `
+        ${escapeHtml(d)}<br>
+        <small>${escapeHtml(dateStr)}</small>
+      `;
+      grid.appendChild(header);
+    });
+
+    smartHours.forEach(h => {
+      const timeCell = document.createElement("div");
+      timeCell.className = "cell time";
+      timeCell.textContent = formatHourLabel(h);
+      grid.appendChild(timeCell);
+
+      for(let d = 0; d < 7; d++){
+        const date = getWeekStart();
+        date.setDate(date.getDate() + d);
+
+        const dateStr = formatDateLocal(date);
+
+        const cellJobs = jobs.filter(j => {
+          if(!j.date || !j.start_time) return false;
+
+          const jobDate = normalizeDateString(j.date);
+          const jobHour = parseInt(String(j.start_time).split(":")[0], 10);
+
+          return jobDate === dateStr && jobHour === h;
+        });
+
+        const cell = document.createElement("div");
+        cell.className = "cell";
+        cell.ondragover = allowDrop;
+        cell.ondrop = (e) => drop(e, dateStr, h);
+
+        cell.innerHTML = cellJobs.map(buildJobHtml).join("");
+        grid.appendChild(cell);
+      }
+    });
+
+    if(jobs.length === 0){
+      setState("empty", "No jobs found", "There are no jobs available on the calendar yet.");
+    } else {
+      setState(null);
+    }
+
+  } catch(err){
+    console.log("CALENDAR LOAD ERROR:", err);
+    setState("error", "Failed to load calendar", "Check the server connection and try again.");
+  }
+}
+
+function drag(id){
+  draggedJob = id;
+}
+
+function allowDrop(e){
+  e.preventDefault();
+}
+
+async function drop(e, date, hour){
+  e.preventDefault();
+
+  if(!draggedJob) return;
+
+  const start = hour.toString().padStart(2, "0") + ":00";
+  const endHour = Math.min(hour + 1, 23);
+  const end = endHour.toString().padStart(2, "0") + ":00";
+
+  try {
+    const res = await apiFetch(API + "/jobs/update/" + draggedJob, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        date,
+        start_time: start,
+        end_time: end
+      })
+    });
+
+    if(!res.ok){
+      const text = await res.text();
+      alert("Update failed: " + text);
+      return;
+    }
+
+    draggedJob = null;
+    load();
+  } catch(err){
+    console.log("DROP UPDATE ERROR:", err);
+    alert("Failed to move job");
+  }
+}
+
+function prevWeek(){
+  currentDate.setDate(currentDate.getDate() - 7);
+  load();
+}
+
+function nextWeek(){
+  currentDate.setDate(currentDate.getDate() + 7);
+  load();
+}
+
+function today(){
+  currentDate = new Date();
+  load();
+}
+
+document.addEventListener("DOMContentLoaded", load);
+</script>
+
+<div class="topbar">
+  <button onclick="prevWeek()">⬅ Prev</button>
+
+  <h2>
+    Calendar
+    <span class="sub" id="weekLabel">Loading week...</span>
+  </h2>
+
+  <button onclick="today()">Today</button>
+  <button class="primary" onclick="nextWeek()">Next ➡</button>
+</div>
+
+<div class="page">
+  <div class="calendar-shell">
+    <div class="calendar-toolbar">
+      <div>
+        <div class="calendar-title">Weekly Schedule</div>
+        <div class="calendar-note">Calendar adjusts automatically based on scheduled jobs.</div>
+      </div>
+
+      <div class="legend">
+        <span>Scheduled</span>
+        <span>Assigned</span>
+        <span>In Progress</span>
+        <span>Completed</span>
+      </div>
+    </div>
+
+    <div id="calendarState" class="calendar-state hidden"></div>
+
+    <div class="calendar-wrap">
+      <div id="calendar" class="grid"></div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

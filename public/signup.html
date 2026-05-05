@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LoneGreen Signup</title>
+  <link rel="stylesheet" href="/app-shell.css">
+  <style>
+    * {
+      box-sizing: border-box;
+      font-family: Inter, Arial, sans-serif;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at top left, rgba(46, 125, 50, 0.35), transparent 35%),
+        linear-gradient(135deg, #071b12, #0f2e1c 45%, #123f28);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      color: #102016;
+    }
+
+    .page {
+      width: 100%;
+      max-width: 1160px;
+      display: grid;
+      grid-template-columns: 1.08fr 0.92fr;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.16);
+      border-radius: 28px;
+      overflow: hidden;
+      box-shadow: 0 30px 90px rgba(0,0,0,0.35);
+      backdrop-filter: blur(18px);
+    }
+
+    .brand-panel {
+      padding: 56px;
+      color: white;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .brand-panel::after {
+      content: "";
+      position: absolute;
+      width: 290px;
+      height: 290px;
+      border-radius: 999px;
+      background: rgba(80, 200, 120, 0.18);
+      right: -100px;
+      bottom: -95px;
+    }
+
+    .brand-logo {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 800;
+      font-size: 24px;
+      margin-bottom: 70px;
+    }
+
+    .brand-mark {
+      width: 46px;
+      height: 46px;
+      border-radius: 15px;
+      background: linear-gradient(135deg, #38b66b, #d7f7df);
+      color: #0f2e1c;
+      display: grid;
+      place-items: center;
+      font-size: 24px;
+      box-shadow: 0 10px 30px rgba(56,182,107,0.35);
+    }
+
+    .brand-panel h1 {
+      margin: 0 0 18px;
+      font-size: 44px;
+      line-height: 1.06;
+      letter-spacing: -1.2px;
+      max-width: 520px;
+    }
+
+    .brand-panel p {
+      margin: 0;
+      max-width: 500px;
+      color: rgba(255,255,255,0.78);
+      font-size: 16px;
+      line-height: 1.7;
+    }
+
+    .brand-stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+      margin-top: 46px;
+      position: relative;
+      z-index: 2;
+    }
+
+    .stat {
+      padding: 18px;
+      border-radius: 20px;
+      background: rgba(255,255,255,0.10);
+      border: 1px solid rgba(255,255,255,0.12);
+    }
+
+    .stat strong {
+      display: block;
+      font-size: 21px;
+      margin-bottom: 4px;
+    }
+
+    .stat span {
+      font-size: 12px;
+      color: rgba(255,255,255,0.72);
+    }
+
+    .auth-panel {
+      background: #f8fbf8;
+      padding: 42px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .auth-card {
+      width: 100%;
+      max-width: 460px;
+    }
+
+    .mobile-logo {
+      display: none;
+      align-items: center;
+      gap: 10px;
+      font-weight: 800;
+      color: #143c27;
+      margin-bottom: 24px;
+    }
+
+    .auth-header {
+      margin-bottom: 22px;
+    }
+
+    .auth-header h2 {
+      margin: 0 0 8px;
+      font-size: 30px;
+      letter-spacing: -0.7px;
+      color: #0f2418;
+    }
+
+    .auth-header p {
+      margin: 0;
+      color: #6a756d;
+      font-size: 14px;
+      line-height: 1.55;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+
+    .field {
+      display: grid;
+      gap: 7px;
+      text-align: left;
+    }
+
+    .field.full {
+      grid-column: 1 / -1;
+    }
+
+    label {
+      font-size: 13px;
+      font-weight: 700;
+      color: #1f3528;
+    }
+
+    input,
+    textarea {
+      width: 100%;
+      padding: 14px 14px;
+      border-radius: 14px;
+      border: 1px solid #dbe5dd;
+      background: white;
+      outline: none;
+      font-size: 15px;
+      transition: 0.18s ease;
+      color: #173327;
+      resize: vertical;
+    }
+
+    input:focus,
+    textarea:focus {
+      border-color: #2c8b55;
+      box-shadow: 0 0 0 4px rgba(44,139,85,0.12);
+    }
+
+    .legal-check {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      margin: 16px 0 0;
+      color: #5f6e66;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .legal-check input {
+      width: 16px;
+      height: 16px;
+      margin-top: 3px;
+      padding: 0;
+      accent-color: #1f6f42;
+      border-radius: 4px;
+    }
+
+    .link {
+      color: #1f6f42;
+      font-weight: 700;
+      text-decoration: none;
+    }
+
+    .link:hover {
+      text-decoration: underline;
+    }
+
+    .actions {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 14px;
+      margin-top: 18px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      padding: 14px 18px;
+      border: none;
+      border-radius: 14px;
+      background: linear-gradient(135deg, #1f5c3a, #2d8b55);
+      color: white;
+      font-size: 15px;
+      font-weight: 800;
+      cursor: pointer;
+      transition: 0.18s ease;
+      box-shadow: 0 12px 28px rgba(31,92,58,0.22);
+      min-width: 180px;
+    }
+
+    .btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 16px 34px rgba(31,92,58,0.28);
+    }
+
+    .status {
+      min-height: 20px;
+      margin-top: 16px;
+      font-weight: 700;
+      font-size: 13px;
+      color: #067647;
+    }
+
+    .status.error {
+      color: #c13d39;
+    }
+
+    .legal-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 14px;
+      font-size: 12px;
+      justify-content: center;
+    }
+
+    .legal-links a {
+      color: #1f6f42;
+      font-weight: 800;
+      text-decoration: none;
+    }
+
+    .legal-links a:hover {
+      text-decoration: underline;
+    }
+
+    @media (max-width: 980px) {
+      .page {
+        grid-template-columns: 1fr;
+      }
+
+      .brand-panel {
+        display: none;
+      }
+
+      .auth-panel {
+        padding: 30px 20px;
+      }
+
+      .mobile-logo {
+        display: inline-flex;
+      }
+
+      .auth-header h2 {
+        font-size: 27px;
+      }
+    }
+
+    @media (max-width: 720px) {
+      .form-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .field.full {
+        grid-column: auto;
+      }
+
+      .actions {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .btn {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <section class="brand-panel">
+      <div class="brand-logo">
+        <div class="brand-mark">🌿</div>
+        <span>LoneGreen</span>
+      </div>
+
+      <h1>Launch your company workspace in minutes.</h1>
+      <p>
+        Create your organization, set up owner access, and start managing clients, jobs, invoices, and subscriptions in one premium control center.
+      </p>
+
+      <div class="brand-stats">
+        <div class="stat">
+          <strong>Fast Setup</strong>
+          <span>Owner + company profile</span>
+        </div>
+        <div class="stat">
+          <strong>Ops Ready</strong>
+          <span>Jobs & workflow tools</span>
+        </div>
+        <div class="stat">
+          <strong>Finance</strong>
+          <span>Invoices & payments</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="auth-panel">
+      <div class="auth-card">
+        <div class="mobile-logo">
+          <div class="brand-mark">🌿</div>
+          <span>LoneGreen</span>
+        </div>
+
+        <form id="signupForm">
+          <div class="auth-header">
+            <h2>Create Company</h2>
+            <p>Start with an owner login, then complete the company profile so customer, invoice, and portal screens have the right business details.</p>
+          </div>
+
+          <div class="form-grid">
+            <label class="field">Company Name <input id="name" required></label>
+            <label class="field">Owner Username <input id="username" required autocomplete="username"></label>
+            <label class="field">Owner Password <input id="password" type="password" required minlength="4" autocomplete="new-password"></label>
+            <label class="field">Phone <input id="phone" type="tel"></label>
+            <label class="field">Email <input id="email" type="email"></label>
+            <label class="field">Service Area <input id="service_area" placeholder="Cities, ZIPs, neighborhoods"></label>
+            <label class="field full">Address <textarea id="address" rows="2"></textarea></label>
+            <label class="field full">Business Hours <textarea id="business_hours" rows="2" placeholder="Mon-Fri 8:00 AM - 5:00 PM"></textarea></label>
+          </div>
+
+          <label class="legal-check">
+            <input id="legalAccepted" type="checkbox" required>
+            <span>I agree to the <a class="link" href="/terms.html" target="_blank" rel="noopener">Terms of Service</a> and <a class="link" href="/privacy.html" target="_blank" rel="noopener">Privacy Policy</a>.</span>
+          </label>
+
+          <div class="actions">
+            <a class="link" href="/login.html">Already have an account? Log in</a>
+            <button class="btn primary" type="submit">Create Company</button>
+          </div>
+
+          <div class="legal-links">
+            <a href="/billing-policy.html" target="_blank" rel="noopener">Billing Policy</a>
+            <a href="/refund-policy.html" target="_blank" rel="noopener">Refund Policy</a>
+          </div>
+
+          <div class="status" id="status"></div>
+        </form>
+      </div>
+    </section>
+  </main>
+
+<script>
+const API = window.location.origin;
+const form = document.getElementById("signupForm");
+const statusBox = document.getElementById("status");
+
+form.addEventListener("submit", async event => {
+  event.preventDefault();
+  if(!document.getElementById("legalAccepted").checked){
+    statusBox.textContent = "You must agree to the Terms of Service and Privacy Policy.";
+    statusBox.className = "status error";
+    return;
+  }
+  statusBox.textContent = "Creating company...";
+  statusBox.className = "status";
+  const payload = {
+    name: document.getElementById("name").value.trim(),
+    username: document.getElementById("username").value.trim(),
+    password: document.getElementById("password").value,
+    phone: document.getElementById("phone").value.trim(),
+    email: document.getElementById("email").value.trim(),
+    address: document.getElementById("address").value.trim(),
+    service_area: document.getElementById("service_area").value.trim(),
+    business_hours: document.getElementById("business_hours").value.trim(),
+    legal_accepted: document.getElementById("legalAccepted").checked
+  };
+
+  try {
+    const res = await fetch(API + "/auth/signup", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json().catch(() => ({}));
+    if(!res.ok) throw new Error(data.error || "Signup failed");
+    statusBox.textContent = "Company created. Redirecting to login...";
+    window.location = "/login.html";
+  } catch(err) {
+    statusBox.textContent = err.message || "Signup failed";
+    statusBox.className = "status error";
+  }
+});
+</script>
+</body>
+</html>

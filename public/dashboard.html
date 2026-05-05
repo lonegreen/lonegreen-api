@@ -1,0 +1,1846 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Dashboard</title>
+  <link rel="stylesheet" href="/app-shell.css">
+  <style>
+    * { box-sizing: border-box; }
+
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      background:
+        radial-gradient(circle at top left, rgba(31, 92, 58, 0.08), transparent 28%),
+        linear-gradient(180deg, #edf5f0 0%, #f6f8f7 190px, #f4f6f8 100%);
+      color: #173327;
+      padding: 22px;
+    }
+
+    .page {
+      max-width: 1240px;
+      margin: 0 auto;
+      display: grid;
+      gap: 18px;
+    }
+
+    .hero {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      gap: 18px;
+      flex-wrap: wrap;
+    }
+
+    .hero h1 {
+      margin: 0 0 6px;
+      font-size: 32px;
+      color: #1f5c3a;
+    }
+
+    .hero p {
+      margin: 0;
+      color: #5b7067;
+      font-size: 14px;
+    }
+
+    .month-badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 10px 14px;
+      background: white;
+      border: 1px solid #d7e4dc;
+      border-radius: 999px;
+      box-shadow: 0 12px 28px rgba(16, 24, 40, 0.06);
+      color: #1f5c3a;
+      font-weight: bold;
+    }
+
+    .panel {
+      background: rgba(255,255,255,0.95);
+      border: 1px solid #dbe7df;
+      border-radius: 18px;
+      box-shadow: 0 18px 40px rgba(16, 24, 40, 0.06);
+    }
+
+    .section {
+      padding: 20px;
+    }
+
+    .section-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+    }
+
+    .section h3 {
+      margin: 0;
+      color: #1f5c3a;
+      font-size: 20px;
+    }
+
+    .section-note {
+      color: #678075;
+      font-size: 13px;
+    }
+
+    .action-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .primary-action {
+      border: none;
+      border-radius: 16px;
+      padding: 20px;
+      min-height: 92px;
+      text-align: left;
+      cursor: pointer;
+      background: linear-gradient(135deg, #1f5c3a 0%, #2c7a4a 100%);
+      color: white;
+      font-weight: 700;
+      box-shadow: 0 18px 34px rgba(31, 92, 58, 0.18);
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .primary-action:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 22px 40px rgba(31, 92, 58, 0.22);
+    }
+
+    .primary-action strong {
+      display: block;
+      font-size: 22px;
+      margin-bottom: 6px;
+    }
+
+    .primary-action span {
+      display: block;
+      font-size: 13px;
+      color: rgba(255,255,255,0.86);
+      line-height: 1.45;
+      font-weight: 600;
+    }
+
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .kpi-card {
+      padding: 18px;
+      min-height: 134px;
+    }
+
+    .kpi-label {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: #648176;
+      margin-bottom: 12px;
+    }
+
+    .kpi-value {
+      font-size: 34px;
+      font-weight: 700;
+      color: #1f5c3a;
+      line-height: 1.05;
+    }
+
+    .kpi-sub {
+      margin-top: 10px;
+      font-size: 13px;
+      color: #678075;
+      line-height: 1.45;
+    }
+
+    .main-grid {
+      display: grid;
+      grid-template-columns: 0.86fr 1.14fr;
+      gap: 18px;
+      align-items: start;
+    }
+
+    .alert-list,
+    .today-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .alert-item,
+    .job-card {
+      border: 1px solid #deebe3;
+      background: #f9fbfa;
+      border-radius: 14px;
+      padding: 14px 15px;
+    }
+
+    .alert-item {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: flex-start;
+    }
+
+    .alert-title {
+      font-weight: 700;
+      margin-bottom: 4px;
+      color: #163328;
+    }
+
+    .alert-copy {
+      color: #5e766b;
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 34px;
+      padding: 7px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .pill-orange { background: #fff4e5; color: #b45309; }
+    .pill-red { background: #fef0f0; color: #b42318; }
+    .pill-green { background: #e8f8ef; color: #166534; }
+    .pill-gray { background: #eef2f0; color: #4b6358; }
+
+    .job-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: flex-start;
+      flex-wrap: wrap;
+      margin-bottom: 10px;
+    }
+
+    .job-client {
+      font-size: 18px;
+      font-weight: 700;
+      color: #163328;
+      margin: 0 0 4px;
+    }
+
+    .job-service {
+      color: #315548;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .job-meta {
+      color: #678075;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 6px 10px;
+      border-radius: 999px;
+      color: white;
+      font-size: 12px;
+      text-transform: uppercase;
+      font-weight: 700;
+      width: fit-content;
+    }
+
+    .green { background: #22c55e; }
+    .orange { background: #f59e0b; }
+    .red { background: #ef4444; }
+    .purple { background: #7c3aed; }
+    .gray { background: #6b7280; }
+
+    .job-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+      margin-top: 12px;
+    }
+
+    .btn,
+    .job-actions select {
+      border-radius: 12px;
+      padding: 10px 14px;
+      font-weight: 700;
+      font: inherit;
+    }
+
+    .btn {
+      border: none;
+      cursor: pointer;
+      background: #1f5c3a;
+      color: white;
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 12px 24px rgba(16, 24, 40, 0.12);
+    }
+
+    .btn.secondary {
+      background: #edf6f0;
+      color: #1f5c3a;
+      border: 1px solid #d0dfd5;
+      box-shadow: none;
+    }
+
+    .job-actions select {
+      min-width: 190px;
+      border: 1px solid #cfe0d5;
+      background: white;
+      color: #163328;
+    }
+
+    .empty {
+      padding: 16px;
+      color: #678075;
+      background: #f8fbf9;
+      border: 1px dashed #d8e5de;
+      border-radius: 14px;
+    }
+
+    .billing-warning-banner {
+      display: none;
+      padding: 16px 18px;
+      border: 1px solid #f4deb0;
+      border-radius: 16px;
+      background: #fffaf0;
+      color: #6f4400;
+      line-height: 1.5;
+    }
+
+    .billing-warning-banner.danger {
+      border-color: #f0c7c7;
+      background: #fff7f7;
+      color: #b42318;
+    }
+
+    .billing-warning-banner strong {
+      display: block;
+      margin-bottom: 4px;
+      color: inherit;
+    }
+
+    .billing-dash-body {
+      display: grid;
+      gap: 14px;
+    }
+
+    .billing-dash-top {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 12px;
+    }
+
+    .billing-chip {
+      border: 1px solid #dbe7df;
+      border-radius: 14px;
+      padding: 12px 14px;
+      background: #f9fbfa;
+    }
+
+    .billing-chip span {
+      display: block;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: #648176;
+      margin-bottom: 6px;
+    }
+
+    .billing-chip strong {
+      font-size: 18px;
+      color: #1f5c3a;
+    }
+
+    .usage-row {
+      display: grid;
+      gap: 6px;
+    }
+
+    .usage-row label {
+      font-size: 12px;
+      color: #5e766b;
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .usage-track {
+      height: 10px;
+      border-radius: 999px;
+      background: #e8f0eb;
+      overflow: hidden;
+    }
+
+    .usage-fill {
+      height: 100%;
+      border-radius: 999px;
+      background: linear-gradient(90deg, #1f5c3a, #3d8b5c);
+      max-width: 100%;
+    }
+
+    .usage-fill.warn {
+      background: linear-gradient(90deg, #9a5b05, #c47a12);
+    }
+
+    .usage-fill.danger {
+      background: linear-gradient(90deg, #b42318, #d94848);
+    }
+
+    .billing-warn-list {
+      display: grid;
+      gap: 8px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .billing-warn-list li {
+      border: 1px solid #f4deb0;
+      border-radius: 12px;
+      padding: 10px 12px;
+      background: #fffaf0;
+      color: #6f4400;
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    .billing-warn-list li.danger {
+      border-color: #f0c7c7;
+      background: #fff7f7;
+      color: #b42318;
+    }
+
+    .billing-pro-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.1fr) minmax(280px, 0.9fr);
+      gap: 14px;
+      align-items: start;
+    }
+
+    .billing-pro-main,
+    .billing-pro-side {
+      display: grid;
+      gap: 14px;
+      min-width: 0;
+    }
+
+    .billing-subsection {
+      border: 1px solid #dbe7df;
+      border-radius: 14px;
+      background: #fbfdfc;
+      padding: 14px;
+      display: grid;
+      gap: 12px;
+      min-width: 0;
+    }
+
+    .billing-subsection h4 {
+      margin: 0;
+      color: #1f5c3a;
+      font-size: 15px;
+    }
+
+    .billing-action-row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .billing-action-row .btn:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    .billing-plan-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .billing-plan-card {
+      border: 1px solid #dbe7df;
+      border-radius: 14px;
+      background: white;
+      padding: 13px;
+      display: grid;
+      gap: 9px;
+      min-width: 0;
+    }
+
+    .billing-plan-card.current {
+      border-color: #1f5c3a;
+      background: #f0faf4;
+    }
+
+    .billing-plan-card strong {
+      color: #163328;
+      font-size: 17px;
+    }
+
+    .billing-plan-price {
+      font-size: 24px;
+      color: #1f5c3a;
+      font-weight: 800;
+      line-height: 1;
+    }
+
+    .billing-plan-meta,
+    .billing-timeline,
+    .billing-history {
+      display: grid;
+      gap: 8px;
+    }
+
+    .billing-detail-row,
+    .billing-history-row,
+    .billing-timeline-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 10px;
+      align-items: center;
+      border-bottom: 1px solid #e6eee9;
+      padding: 8px 0;
+      min-width: 0;
+    }
+
+    .billing-detail-row:last-child,
+    .billing-history-row:last-child,
+    .billing-timeline-row:last-child {
+      border-bottom: 0;
+    }
+
+    .billing-detail-row span,
+    .billing-history-row span,
+    .billing-timeline-row span {
+      color: #678075;
+      font-size: 13px;
+      overflow-wrap: anywhere;
+    }
+
+    .billing-detail-row strong,
+    .billing-history-row strong,
+    .billing-timeline-row strong {
+      color: #173327;
+      font-size: 13px;
+      text-align: right;
+      overflow-wrap: anywhere;
+    }
+
+    .billing-status-pill {
+      display: inline-flex;
+      width: fit-content;
+      border-radius: 999px;
+      padding: 6px 9px;
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+      background: #eef7f2;
+      color: #1f5c3a;
+    }
+
+    .billing-status-pill.danger {
+      background: #fff1f1;
+      color: #b42318;
+    }
+
+    .billing-status-pill.warn {
+      background: #fff7df;
+      color: #9a5b05;
+    }
+
+    .billing-placeholder {
+      border: 1px dashed #d8e5de;
+      border-radius: 12px;
+      padding: 12px;
+      color: #678075;
+      background: #f8fbf9;
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    @media (max-width: 1020px) {
+      .kpi-grid,
+      .action-grid,
+      .main-grid,
+      .billing-pro-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .main-grid,
+      .billing-pro-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 640px) {
+      body {
+        padding: 14px;
+      }
+
+      .hero h1 {
+        font-size: 28px;
+      }
+
+      .kpi-grid,
+      .action-grid,
+      .billing-plan-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .job-actions {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .job-actions .btn,
+      .job-actions select {
+        width: 100%;
+      }
+    }
+  </style>
+  <link rel="stylesheet" href="/ui-cleanup.css">
+  <script src="/js/role-guard.js"></script>
+</head>
+
+<body>
+  <script>
+(function(){
+  const token = localStorage.getItem("token");
+  let user = null;
+
+  try {
+    user = JSON.parse(localStorage.getItem("user") || "null");
+  } catch {
+    user = null;
+  }
+
+  if (!token || !user) {
+    window.top.location.href = "/login.html";
+    return;
+  }
+
+  const role = String(user.role || "").toLowerCase();
+
+  if (role === "worker") {
+    window.top.location.href = "/control.html";
+    return;
+  }
+})();
+</script>
+  
+
+<div class="page">
+  <div class="hero">
+    <div>
+      <h1>Dashboard</h1>
+      <p>Simple daily control center for customer growth, jobs, cash flow, and urgent follow-up.</p>
+    </div>
+    <div class="month-badge" id="monthBadge">Current Month</div>
+  </div>
+
+  <div id="dashboardHint" class="page-hint" style="display:none;">
+    <strong>Start with the basics.</strong>
+    <p>Create your first client, schedule a job, and send an invoice to turn this dashboard into your daily command center.</p>
+  </div>
+
+  <div id="billingWarningBanner" class="billing-warning-banner"></div>
+
+  <div id="companyBillingPanel" class="panel section" style="display:none;">
+    <div class="section-head">
+      <h3>Plan &amp; usage</h3>
+      <div class="section-note">Company platform subscription (warning mode — limits are advisory until payments connect).</div>
+    </div>
+    <div id="companyBillingBody" class="billing-dash-body">
+      <div class="empty">Loading billing…</div>
+    </div>
+  </div>
+
+  <div class="panel section">
+    <div class="section-head">
+      <h3>Quick Actions</h3>
+      <div class="section-note">The most common actions stay above the fold.</div>
+    </div>
+    <div class="action-grid">
+      <button class="primary-action" onclick="openInControl('clients.html')">
+        <strong>+ Client</strong>
+        <span>Add a new customer and open the client workflow.</span>
+      </button>
+      <button class="primary-action" onclick="openInControl('jobs.html')">
+        <strong>+ Job</strong>
+        <span>Schedule work, assign a worker, and manage today's route.</span>
+      </button>
+      <button class="primary-action" onclick="openInControl('invoices.html')">
+        <strong>+ Invoice</strong>
+        <span>Open the finance area and continue invoicing from client records.</span>
+      </button>
+    </div>
+  </div>
+
+  <div id="dashNotificationsPanel" class="panel section">
+    <div class="section-head">
+      <h3>Notifications</h3>
+      <span id="notifUnreadBadge" class="month-badge" style="display:none;">0 unread</span>
+      <button type="button" class="btn secondary" onclick="openInControl('settings.html')">Manage in settings</button>
+    </div>
+    <p class="section-note">Recent company alerts (managers and above). Mark items read from Settings.</p>
+    <div id="dashNotificationsList" class="alert-list">Loading…</div>
+  </div>
+
+  <div class="kpi-grid">
+    <div class="panel kpi-card">
+      <div class="kpi-label">Revenue This Month</div>
+      <div class="kpi-value" id="revenueThisMonth">$0</div>
+      <div class="kpi-sub">Cash collected this month across jobs and subscriptions.</div>
+    </div>
+    <div class="panel kpi-card">
+      <div class="kpi-label">Unpaid</div>
+      <div class="kpi-value" id="unpaidAmount">$0</div>
+      <div class="kpi-sub">Outstanding balance still waiting on payment.</div>
+    </div>
+    <div class="panel kpi-card">
+      <div class="kpi-label">Jobs Today</div>
+      <div class="kpi-value" id="jobsTodayCount">0</div>
+      <div class="kpi-sub">Scheduled work for today that needs attention now.</div>
+    </div>
+    <div class="panel kpi-card">
+      <div class="kpi-label">Active Subscriptions</div>
+      <div class="kpi-value" id="activeSubscriptionsCount">0</div>
+      <div class="kpi-sub">Recurring customers currently active in the system.</div>
+    </div>
+  </div>
+
+  <div class="main-grid">
+    <div class="panel section">
+      <div class="section-head">
+        <h3>Alerts</h3>
+        <div class="section-note">Focus on the issues that need action first.</div>
+      </div>
+      <div id="alertsList" class="alert-list">Loading...</div>
+    </div>
+
+    <div class="panel section">
+      <div class="section-head">
+        <h3>Today Jobs</h3>
+        <div class="section-note">Quick actions for today's field work.</div>
+      </div>
+      <div id="todayJobsList" class="today-list">Loading...</div>
+    </div>
+  </div>
+</div>
+
+<script src="/js/ui.js"></script>
+<script src="/js/auth.js"></script>
+<script src="/js/api.js"></script>
+<script src="/js/format.js"></script>
+<script src="/js/legal-consent.js"></script>
+<script>
+const API = (window.AppAPI && window.AppAPI.base) || window.location.origin;
+
+function apiUrl(path){
+  if(/^https?:\/\//i.test(path)){
+    return path;
+  }
+  return new URL(path, API).toString();
+}
+
+function getToken(){
+  return localStorage.getItem("token");
+}
+
+function getUser(){
+  try {
+    return JSON.parse(localStorage.getItem("user"));
+  } catch(e){
+    return null;
+  }
+}
+
+async function apiFetch(url, options = {}){
+  const token = getToken();
+
+  if(!token){
+    window.top.location.href = "/login.html";
+    throw new Error("Missing token");
+  }
+
+  const headers = {
+    ...(options.headers || {}),
+    Authorization: "Bearer " + token
+  };
+
+  const finalUrl = apiUrl(url);
+  let res;
+
+  try {
+    res = await fetch(finalUrl, {
+      ...options,
+      headers
+    });
+  } catch(err) {
+    console.warn("DASHBOARD FETCH FAILED:", finalUrl, err);
+    throw err;
+  }
+
+  if(res.status === 403 && window.AppAPI){ window.AppAPI.handleForbidden(); }
+  if(res.status === 401){
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    window.top.location.href = "/login.html";
+    throw new Error("Unauthorized");
+  }
+
+  return res;
+}
+
+async function fetchDashboardJson(endpoint, fallback){
+  try {
+    const res = await apiFetch(apiUrl(endpoint));
+    if(!res.ok){
+      const text = await res.text().catch(() => "");
+      console.warn("DASHBOARD ENDPOINT FAILED:", apiUrl(endpoint), res.status, text);
+      return fallback;
+    }
+    return await res.json();
+  } catch(err){
+    console.warn("DASHBOARD ENDPOINT FETCH FAILED:", apiUrl(endpoint), err);
+    return fallback;
+  }
+}
+
+async function loadDashNotifications(){
+  const panel = document.getElementById("dashNotificationsPanel");
+  const listEl = document.getElementById("dashNotificationsList");
+  const badge = document.getElementById("notifUnreadBadge");
+  if(!panel || !listEl || !badge) return;
+
+  const role = String((user && user.role) || "").toLowerCase();
+  if(!["owner", "admin", "manager"].includes(role)){
+    panel.style.display = "none";
+    return;
+  }
+
+  try {
+    const [items, countRes] = await Promise.all([
+      fetchDashboardJson("/notifications", []),
+      fetchDashboardJson("/notifications/unread-count", { unread_count: 0 })
+    ]);
+
+    const unread = countRes && countRes.unread_count != null ? Number(countRes.unread_count) : 0;
+    if(unread > 0){
+      badge.style.display = "inline-flex";
+      badge.textContent = unread + " unread";
+    } else {
+      badge.style.display = "none";
+    }
+
+    if(!Array.isArray(items) || !items.length){
+      listEl.innerHTML = '<div class="empty">No notifications yet.</div>';
+      return;
+    }
+
+    listEl.innerHTML = items.slice(0, 8).map(function(n){
+      const readStyle = n.is_read ? "opacity:0.75" : "";
+      const when = n.created_at ? String(n.created_at).replace("T", " ").slice(0, 16) : "";
+      return '<div class="alert-card" style="' + readStyle + '">' +
+        '<div><strong>' + escapeHtml(n.title) + '</strong>' +
+        '<div class="section-note">' + escapeHtml(n.type || "") + " · " + escapeHtml(when) + "</div></div>" +
+        '<p style="margin:6px 0 0;">' + escapeHtml(n.message || "") + "</p></div>";
+    }).join("");
+  } catch(err) {
+    listEl.innerHTML = '<div class="empty">Notifications unavailable.</div>';
+  }
+}
+
+const user = getUser();
+if(!user || !user.company_id || !getToken()){
+  window.top.location.href = "/login.html";
+}
+
+let dashboardState = {
+  jobs: [],
+  workers: [],
+  subscriptions: [],
+  money: {}
+};
+
+function canViewBillingWarning(){
+  const role = String((user && user.role) || "").toLowerCase();
+  return ["owner", "admin", "manager"].includes(role);
+}
+
+function warningTitle(warning){
+  const type = String((warning && warning.type) || "").replace(/_/g, " ");
+  return type ? type.replace(/\b\w/g, char => char.toUpperCase()) : "Billing Warning";
+}
+
+function usagePercent(current, max){
+  if(max == null || max === 0) return 0;
+  const pct = Math.round((Number(current || 0) / Number(max)) * 100);
+  return Math.min(100, Math.max(0, pct));
+}
+
+function usageBarClass(pct){
+  if(pct >= 100) return "danger";
+  if(pct >= 90) return "warn";
+  return "";
+}
+
+function billingLabel(value){
+  return String(value || "-").replace(/_/g, " ").replace(/\b\w/g, char => char.toUpperCase());
+}
+
+function billingDate(value){
+  return value ? normalizeDate(value) : "-";
+}
+
+function billingLimitText(current, max){
+  return escapeHtml(String(current || 0)) + " / " + escapeHtml(max == null ? "Unlimited" : String(max));
+}
+
+function billingStatusPill(value){
+  const raw = String(value || "unknown").toLowerCase();
+  const cls = ["past_due", "cancelled", "expired", "suspended"].includes(raw)
+    ? " danger"
+    : (["trial", "trialing"].includes(raw) ? " warn" : "");
+  return '<span class="billing-status-pill' + cls + '">' + escapeHtml(billingLabel(raw)) + '</span>';
+}
+
+function billingDetailRow(label, value){
+  return '<div class="billing-detail-row"><span>' + escapeHtml(label) + '</span><strong>' + escapeHtml(value == null || value === "" ? "-" : String(value)) + '</strong></div>';
+}
+
+function planDisplayName(plan){
+  const value = String(plan || "").toLowerCase();
+  if(value === "starter") return "Basic";
+  if(value === "enterprise") return "Business";
+  return "Pro";
+}
+
+function checkoutPlanForInternal(plan){
+  const value = String(plan || "").toLowerCase();
+  if(value === "starter") return "basic";
+  if(value === "enterprise") return "business";
+  return "pro";
+}
+
+function internalPlanForCheckout(plan){
+  const value = String(plan || "").toLowerCase();
+  if(value === "basic") return "starter";
+  if(value === "business") return "enterprise";
+  return "pro";
+}
+
+function usageCard(title, current, max){
+  const pct = usagePercent(current, max);
+  return '<div class="billing-subsection">' +
+    '<div class="usage-row">' +
+      '<label><span>' + escapeHtml(title) + '</span><span>' + billingLimitText(current, max) + '</span></label>' +
+      '<div class="usage-track"><div class="usage-fill ' + escapeHtml(usageBarClass(pct)) + '" style="width:' + pct + '%"></div></div>' +
+    '</div>' +
+    '<div class="section-note">' + escapeHtml(max == null ? "Unlimited on this plan" : (pct + "% used")) + '</div>' +
+  '</div>';
+}
+
+async function loadBillingWarningBanner(){
+  const banner = document.getElementById("billingWarningBanner");
+  if(!banner || !canViewBillingWarning()){
+    if(banner) banner.style.display = "none";
+    return;
+  }
+
+  try {
+    const data = await fetchDashboardJson("/billing/me", null);
+    const warnings = data && data.warnings && Array.isArray(data.warnings.warnings)
+      ? data.warnings.warnings
+      : [];
+
+    if(data && data.is_suspended){
+      banner.className = "billing-warning-banner danger";
+      banner.innerHTML =
+        "<strong>Billing Suspended</strong>" +
+        "<span>Your subscription needs attention. Company data is preserved; contact the platform owner to reactivate.</span>";
+      banner.style.display = "block";
+      return;
+    }
+
+    if(data && data.is_past_due){
+      const days = data.grace_days_remaining;
+      banner.className = "billing-warning-banner danger";
+      banner.innerHTML =
+        "<strong>Payment Failed</strong>" +
+        "<span>" + escapeHtml(days != null && days > 0
+          ? ("Please update payment. Grace period ends in " + days + " day" + (days === 1 ? "." : "s."))
+          : "Please update payment. Grace period has expired or is not set.") + "</span>";
+      banner.style.display = "block";
+      return;
+    }
+
+    if(!warnings.length){
+      banner.style.display = "none";
+      banner.textContent = "";
+      return;
+    }
+
+    const primary = warnings.find(item => item.severity === "danger") || warnings[0];
+    banner.className = "billing-warning-banner " + (primary.severity === "danger" ? "danger" : "");
+    banner.innerHTML =
+      "<strong>" + escapeHtml(warningTitle(primary)) + "</strong>" +
+      "<span>" + escapeHtml(primary.message || "Your account has a billing warning. Please contact the platform owner.") + "</span>";
+    banner.style.display = "block";
+  } catch(err) {
+    banner.style.display = "none";
+    banner.textContent = "";
+  }
+}
+
+async function loadCompanyBillingPanel(){
+  const panel = document.getElementById("companyBillingPanel");
+  const box = document.getElementById("companyBillingBody");
+
+  if(!panel || !box || !canViewBillingWarning()){
+    if(panel) panel.style.display = "none";
+    return;
+  }
+
+  const data = await fetchDashboardJson("/billing/me", null);
+
+  if(!data || !data.billing){
+    panel.style.display = "none";
+    return;
+  }
+
+  panel.style.display = "block";
+
+  const b = data.billing;
+  const subscription = data.subscription || {};
+  const u = data.usage || {};
+  const limits = data.limits || {};
+  const trial = data.trial || {};
+  const warnPack = data.warnings && Array.isArray(data.warnings.warnings) ? data.warnings.warnings : [];
+
+  const pu = usagePercent(u.users_count, limits.max_users);
+  const pc = usagePercent(u.clients_count, limits.max_clients);
+  const pj = usagePercent(u.jobs_this_month, limits.max_jobs_per_month);
+
+  let trialLine = "No trial end date set.";
+  if(trial.trial_ends_at){
+    const days = trial.days_remaining;
+    trialLine = days != null
+      ? ("Trial ends " + escapeHtml(String(trial.trial_ends_at).split("T")[0]) + " (" + (days >= 0 ? days + " days left" : "expired") + ").")
+      : ("Trial ends " + escapeHtml(String(trial.trial_ends_at).split("T")[0]) + ".");
+  }
+
+  let billingActionLine = "";
+  if(data.is_suspended){
+    billingActionLine = '<p style="margin:0;font-size:13px;color:#9b2424;line-height:1.5;">Billing is suspended. Your company data is preserved; contact the platform owner to reactivate.</p>';
+  } else if(data.is_past_due){
+    const days = data.grace_days_remaining;
+    billingActionLine = '<p style="margin:0;font-size:13px;color:#9b2424;line-height:1.5;">Payment failed. ' +
+      escapeHtml(days != null && days > 0
+        ? ("Grace period ends in " + days + " day" + (days === 1 ? "." : "s."))
+        : "Grace period has expired or is not set.") +
+      '</p>';
+  }
+
+  const warnItems = warnPack.map(function(w){
+    const sev = w.severity === "danger" ? "danger" : "";
+    return "<li class=\"" + escapeHtml(sev) + "\">" + escapeHtml(w.message || "Billing notice.") + "</li>";
+  }).join("");
+
+  const plan = String(b.plan || "starter");
+  const state = String(subscription.status || data.subscription_state || b.status || b.billing_status || "trial");
+  const plans = ["starter", "pro", "enterprise"];
+  const planActions = plans.filter(function(item){ return item !== plan; }).map(function(item){
+    const action = plans.indexOf(item) > plans.indexOf(plan) ? "upgrade" : "downgrade";
+    return '<button type="button" class="btn secondary" onclick="changeCompanyBillingPlan(\'' + action + '\', \'' + item + '\')">' + escapeHtml(item.charAt(0).toUpperCase() + item.slice(1)) + '</button>';
+  }).join("");
+  let lifecycleActions = "";
+  if(!subscription.id){
+    lifecycleActions = '<button type="button" class="btn" onclick="subscribeCompanyBilling(\'' + plan + '\')">Start subscription</button>';
+  } else if(subscription.cancel_at_period_end || state === "cancelled"){
+    lifecycleActions = '<button type="button" class="btn" onclick="reactivateCompanyBilling()">Reactivate</button>';
+  } else if(state !== "expired"){
+    lifecycleActions = '<button type="button" class="btn secondary" onclick="cancelCompanyBilling()">Cancel at period end</button>';
+  }
+
+  box.innerHTML =
+    '<div class="billing-dash-top">' +
+      '<div class="billing-chip"><span>Plan</span><strong>' + escapeHtml(String(b.plan || "starter")) + '</strong></div>' +
+      '<div class="billing-chip"><span>Billing status</span><strong>' + escapeHtml(String(b.billing_status || "trial")) + '</strong></div>' +
+      '<div class="billing-chip"><span>Subscription state</span><strong>' + escapeHtml(state) + '</strong></div>' +
+      '<div class="billing-chip"><span>Monthly price</span><strong>' + escapeHtml(formatMoney(b.monthly_price)) + '</strong></div>' +
+      '<div class="billing-chip"><span>Renews</span><strong>' + escapeHtml(subscription.current_period_end ? normalizeDate(subscription.current_period_end) : "-") + '</strong></div>' +
+    '</div>' +
+    '<p style="margin:0;font-size:13px;color:#678075;line-height:1.5;">' + trialLine + '</p>' +
+    (subscription.cancel_at_period_end
+      ? '<p style="margin:0;font-size:13px;color:#6f4400;line-height:1.5;">Cancellation is scheduled for the end of the current period.</p>'
+      : '') +
+    billingActionLine +
+    '<div class="usage-row">' +
+      '<label><span>Users</span><span>' + escapeHtml(String(u.users_count || 0)) + " / " + escapeHtml(limits.max_users == null ? "∞" : String(limits.max_users)) + "</span></label>" +
+      '<div class="usage-track"><div class="usage-fill ' + escapeHtml(usageBarClass(pu)) + '" style="width:' + pu + '%"></div></div>' +
+    '</div>' +
+    '<div class="usage-row">' +
+      '<label><span>Clients</span><span>' + escapeHtml(String(u.clients_count || 0)) + " / " + escapeHtml(limits.max_clients == null ? "∞" : String(limits.max_clients)) + "</span></label>" +
+      '<div class="usage-track"><div class="usage-fill ' + escapeHtml(usageBarClass(pc)) + '" style="width:' + pc + '%"></div></div>' +
+    '</div>' +
+    '<div class="usage-row">' +
+      '<label><span>Jobs this month</span><span>' + escapeHtml(String(u.jobs_this_month || 0)) + " / " + escapeHtml(limits.max_jobs_per_month == null ? "∞" : String(limits.max_jobs_per_month)) + "</span></label>" +
+      '<div class="usage-track"><div class="usage-fill ' + escapeHtml(usageBarClass(pj)) + '" style="width:' + pj + '%"></div></div>' +
+    '</div>' +
+    '<div class="billing-upgrade-actions" style="margin-top:14px;display:flex;flex-wrap:wrap;gap:8px;align-items:center;">' +
+      '<span style="font-size:13px;color:#678075;">A32 plan controls:</span>' +
+      planActions +
+      lifecycleActions +
+    '</div>' +
+    (data.checkout_available
+      ? ('<div class="billing-upgrade-actions" style="margin-top:14px;display:flex;flex-wrap:wrap;gap:8px;align-items:center;">' +
+          '<span style="font-size:13px;color:#678075;">Upgrade (Stripe test):</span>' +
+          '<button type="button" class="btn secondary" onclick="startStripeCheckout(\'basic\')">Basic</button>' +
+          '<button type="button" class="btn secondary" onclick="startStripeCheckout(\'pro\')">Pro</button>' +
+          '<button type="button" class="btn secondary" onclick="startStripeCheckout(\'business\')">Business</button>' +
+          (data.portal_available ? '<button type="button" class="btn" onclick="openBillingPortal()">Manage billing</button>' : '') +
+        "</div>")
+      : ('<p style="margin:12px 0 0;font-size:12px;color:#678075;">Stripe Checkout is not configured. Add Stripe test keys and price IDs in the server environment.</p>')) +
+    (warnItems ? '<div><h4 style="margin:8px 0 6px;font-size:15px;color:#1f5c3a;">Warnings</h4><ul class="billing-warn-list">' + warnItems + "</ul></div>" : "");
+}
+
+async function loadCompanyBillingPanel(){
+  const panel = document.getElementById("companyBillingPanel");
+  const box = document.getElementById("companyBillingBody");
+
+  if(!panel || !box || !canViewBillingWarning()){
+    if(panel) panel.style.display = "none";
+    return;
+  }
+
+  const data = await fetchDashboardJson("/billing/me", null);
+
+  if(!data || !data.billing){
+    panel.style.display = "none";
+    return;
+  }
+
+  panel.style.display = "block";
+
+  const b = data.billing;
+  const subscription = data.subscription || {};
+  const u = data.usage || {};
+  const limits = data.limits || {};
+  const trial = data.trial || {};
+  const warnPack = data.warnings && Array.isArray(data.warnings.warnings) ? data.warnings.warnings : [];
+  const plan = String(b.plan || "starter");
+  const state = String(subscription.status || data.subscription_state || b.status || b.billing_status || "trial");
+  const planOrder = ["starter", "pro", "enterprise"];
+  const currentIndex = Math.max(0, planOrder.indexOf(plan));
+  const upgradeTarget = planOrder[Math.min(planOrder.length - 1, currentIndex + 1)];
+  const downgradeTarget = planOrder[Math.max(0, currentIndex - 1)];
+  const canUpgrade = currentIndex < planOrder.length - 1;
+  const canDowngrade = currentIndex > 0;
+  const canReactivate = subscription.cancel_at_period_end || state === "cancelled";
+  const canCancel = subscription.id && !subscription.cancel_at_period_end && !["cancelled", "expired"].includes(state);
+  const periodStart = subscription.current_period_start || b.current_period_start || data.current_period_start;
+  const periodEnd = subscription.current_period_end || b.current_period_end || data.current_period_end;
+  const trialEnd = trial.trial_ends_at || subscription.trial_ends_at || b.trial_ends_at;
+  const paymentHistory = Array.isArray(data.payment_history) ? data.payment_history : [];
+  const paymentHistoryAvailable = data.payment_history_available === true;
+  const currentCheckoutPlan = checkoutPlanForInternal(plan);
+  const hasStripeSubscription = Boolean(subscription.stripe_subscription_id || data.stripe_subscription_id);
+  const yearlyAvailable = data.yearly_billing_available === true;
+  const cycleControl = '<label style="display:flex;gap:8px;align-items:center;font-size:13px;color:#526b60;font-weight:700;">Billing cycle ' +
+    '<select id="billingCycleSelect" style="max-width:130px;">' +
+      '<option value="monthly">Monthly</option>' +
+      (yearlyAvailable ? '<option value="yearly">Yearly</option>' : '') +
+    '</select></label>';
+  const plans = [
+    { checkout: "basic", title: "Basic", price: 0, users: 2, clients: 50, jobs: 100 },
+    { checkout: "pro", title: "Pro", price: 49, users: 10, clients: 500, jobs: 1000 },
+    { checkout: "business", title: "Business", price: 149, users: "Unlimited", clients: "Unlimited", jobs: "Unlimited" }
+  ];
+
+  const summaryRows = [
+    billingDetailRow("Current billing period", billingDate(periodStart) + " to " + billingDate(periodEnd)),
+    billingDetailRow("Next billing date", billingDate(periodEnd)),
+    billingDetailRow("Trial end date", billingDate(trialEnd))
+  ].join("");
+
+  const warningsMarkup = warnPack.length
+    ? '<ul class="billing-warn-list">' + warnPack.map(function(w){
+        const sev = w.severity === "danger" ? "danger" : "";
+        return "<li class=\"" + escapeHtml(sev) + "\">" + escapeHtml(w.message || "Billing notice.") + "</li>";
+      }).join("") + "</ul>"
+    : '<div class="billing-placeholder">No billing warnings right now.</div>';
+
+  const planCards = plans.map(function(item){
+    const isCurrent = item.checkout === currentCheckoutPlan;
+    const internalPlan = internalPlanForCheckout(item.checkout);
+    const button = isCurrent
+      ? '<button type="button" class="btn secondary" disabled>Current plan</button>'
+      : (hasStripeSubscription
+        ? '<button type="button" class="btn" onclick="changeCompanyBillingPlan(\'change\', \'' + internalPlan + '\')">Choose ' + escapeHtml(item.title) + '</button>'
+        : '<button type="button" class="btn" onclick="startStripeCheckout(\'' + item.checkout + '\')">Choose ' + escapeHtml(item.title) + '</button>');
+
+    return '<div class="billing-plan-card ' + (isCurrent ? "current" : "") + '">' +
+      '<strong>' + escapeHtml(item.title) + '</strong>' +
+      '<div class="billing-plan-price">' + escapeHtml(formatMoney(item.price)) + '<span style="font-size:12px;color:#678075;font-weight:700;"> / mo</span></div>' +
+      '<div class="billing-plan-meta">' +
+        billingDetailRow("Users", item.users) +
+        billingDetailRow("Clients", item.clients) +
+        billingDetailRow("Jobs / month", item.jobs) +
+      '</div>' +
+      button +
+    '</div>';
+  }).join("");
+
+  const paymentHistoryMarkup = paymentHistory.length
+    ? paymentHistory.map(function(item){
+        return '<div class="billing-history-row">' +
+          '<span>' + escapeHtml(billingDate(item.payment_date || item.date || item.created_at)) + '</span>' +
+          '<strong>' + escapeHtml(formatMoney(item.amount || 0)) + ' | ' + escapeHtml(billingLabel(item.status || "unknown")) + (item.invoice_id ? ' | ' + escapeHtml(item.invoice_id) : '') + '</strong>' +
+        '</div>';
+      }).join("")
+    : '<div class="billing-placeholder">' + escapeHtml(paymentHistoryAvailable ? "No payment history found yet." : "Payment history will appear here after Stripe invoice history is exposed by the billing API.") + '</div>';
+
+  const timelineRows = [
+    ["Subscription created", subscription.created_at],
+    ["Current period started", periodStart],
+    ["Current period ending", periodEnd],
+    ["Cancellation scheduled", subscription.cancel_at_period_end ? periodEnd : null],
+    ["Cancellation date", subscription.cancelled_at || b.cancelled_at || b.billing_cancelled_at]
+  ].map(function(item){
+    return '<div class="billing-timeline-row"><span>' + escapeHtml(item[0]) + '</span><strong>' + escapeHtml(billingDate(item[1])) + '</strong></div>';
+  }).join("");
+
+  box.innerHTML =
+    '<div class="billing-pro-grid">' +
+      '<div class="billing-pro-main">' +
+        '<div class="billing-subsection">' +
+          '<div class="section-head" style="margin-bottom:0;">' +
+            '<h4>Billing summary</h4>' +
+            billingStatusPill(state) +
+          '</div>' +
+          '<div class="billing-dash-top">' +
+            '<div class="billing-chip"><span>Current plan</span><strong>' + escapeHtml(planDisplayName(plan)) + '</strong></div>' +
+            '<div class="billing-chip"><span>Billing status</span><strong>' + escapeHtml(billingLabel(b.billing_status || "trial")) + '</strong></div>' +
+            '<div class="billing-chip"><span>Subscription status</span><strong>' + escapeHtml(billingLabel(state)) + '</strong></div>' +
+            '<div class="billing-chip"><span>Monthly price</span><strong>' + escapeHtml(formatMoney(b.monthly_price || subscription.price_monthly || 0)) + '</strong></div>' +
+          '</div>' +
+          '<div class="billing-plan-meta">' + summaryRows + '</div>' +
+        '</div>' +
+        '<div class="billing-subsection">' +
+          '<h4>Usage</h4>' +
+          '<div class="billing-dash-top">' +
+            usageCard("Users", u.users_count, limits.max_users) +
+            usageCard("Clients", u.clients_count, limits.max_clients) +
+            usageCard("Jobs this month", u.jobs_this_month, limits.max_jobs_per_month) +
+          '</div>' +
+        '</div>' +
+        '<div class="billing-subsection">' +
+          '<div class="section-head" style="margin-bottom:0;"><h4>Plan selector</h4>' + cycleControl + '</div>' +
+          (data.checkout_available ? '<div class="billing-plan-grid">' + planCards + '</div>' : '<div class="billing-placeholder">Stripe Checkout is not configured. Plan changes are unavailable.</div>') +
+        '</div>' +
+      '</div>' +
+      '<div class="billing-pro-side">' +
+        '<div class="billing-subsection">' +
+          '<h4>Billing actions</h4>' +
+          '<div class="billing-action-row">' +
+            '<button type="button" class="btn" onclick="changeCompanyBillingPlan(\'change\', \'' + upgradeTarget + '\')" ' + (canUpgrade ? "" : "disabled") + '>Upgrade Plan</button>' +
+            '<button type="button" class="btn secondary" onclick="changeCompanyBillingPlan(\'change\', \'' + downgradeTarget + '\')" ' + (canDowngrade ? "" : "disabled") + '>Downgrade Plan</button>' +
+            '<button type="button" class="btn secondary" onclick="openBillingPortal()" ' + (data.portal_available ? "" : "disabled") + '>Manage Billing</button>' +
+            '<button type="button" class="btn secondary" onclick="cancelCompanyBilling()" ' + (canCancel ? "" : "disabled") + '>Cancel Subscription</button>' +
+            '<button type="button" class="btn" onclick="reactivateCompanyBilling()" ' + (canReactivate ? "" : "disabled") + '>Reactivate Subscription</button>' +
+          '</div>' +
+        '</div>' +
+        '<div class="billing-subsection"><h4>Billing warnings</h4>' + warningsMarkup + '</div>' +
+        '<div class="billing-subsection"><h4>Payment history</h4><div class="billing-history">' + paymentHistoryMarkup + '</div></div>' +
+        '<div class="billing-subsection"><h4>Billing timeline</h4><div class="billing-timeline">' + timelineRows + '</div></div>' +
+      '</div>' +
+    '</div>';
+}
+
+function clearBillingCheckoutQuery(){
+  try {
+    const u = new URL(window.location.href);
+    const billing = u.searchParams.get("billing");
+
+    if(billing === "success" || billing === "cancel"){
+      u.searchParams.delete("billing");
+      u.searchParams.delete("session_id");
+      window.history.replaceState({}, "", u.pathname + (u.search ? u.search : ""));
+    }
+  } catch(err) {
+    console.warn("BILLING QUERY CLEANUP:", err);
+  }
+}
+
+async function refreshBillingUi(){
+  await loadBillingWarningBanner();
+  await loadCompanyBillingPanel();
+}
+
+async function subscribeCompanyBilling(plan){
+  try {
+    const res = await apiFetch(apiUrl("/billing/subscribe"), {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ plan: plan || "starter", trial_days: 14, billing_cycle: getSelectedBillingCycle() })
+    });
+    const payload = await res.json().catch(() => ({}));
+
+    if(!res.ok){
+      alert(payload.error || "Unable to start subscription.");
+      return;
+    }
+
+    if(payload.url){
+      window.top.location.href = payload.url;
+      return;
+    }
+
+    await refreshBillingUi();
+  } catch(err) {
+    console.warn("COMPANY SUBSCRIBE:", err);
+    alert("Unable to start subscription.");
+  }
+}
+
+async function changeCompanyBillingPlan(action, plan){
+  try {
+    const res = await apiFetch(apiUrl("/billing/change-plan"), {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ plan, billing_cycle: getSelectedBillingCycle() })
+    });
+    const payload = await res.json().catch(() => ({}));
+
+    if(!res.ok){
+      alert(payload.error || "Unable to change plan.");
+      return;
+    }
+
+    await refreshBillingUi();
+  } catch(err) {
+    console.warn("COMPANY PLAN CHANGE:", err);
+    alert("Unable to change plan.");
+  }
+}
+
+async function cancelCompanyBilling(){
+  try {
+    const res = await apiFetch(apiUrl("/billing/cancel"), {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ cancel_at_period_end: true })
+    });
+    const payload = await res.json().catch(() => ({}));
+
+    if(!res.ok){
+      alert(payload.error || "Unable to cancel subscription.");
+      return;
+    }
+
+    await refreshBillingUi();
+  } catch(err) {
+    console.warn("COMPANY CANCEL:", err);
+    alert("Unable to cancel subscription.");
+  }
+}
+
+async function reactivateCompanyBilling(){
+  try {
+    const res = await apiFetch(apiUrl("/billing/reactivate"), {
+      method: "POST",
+      headers: { "Content-Type": "application/json" }
+    });
+    const payload = await res.json().catch(() => ({}));
+
+    if(!res.ok){
+      alert(payload.error || "Unable to reactivate subscription.");
+      return;
+    }
+
+    await refreshBillingUi();
+  } catch(err) {
+    console.warn("COMPANY REACTIVATE:", err);
+    alert("Unable to reactivate subscription.");
+  }
+}
+
+async function startStripeCheckout(plan){
+  try {
+    const res = await apiFetch(apiUrl("/billing/create-checkout-session"), {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ plan, billing_cycle: getSelectedBillingCycle() })
+    });
+    const payload = await res.json().catch(() => ({}));
+
+    if(!res.ok){
+      alert(payload.error || "Unable to start checkout.");
+      return;
+    }
+
+    if(payload.url){
+      window.top.location.href = payload.url;
+    } else {
+      alert("Checkout URL was not returned.");
+    }
+  } catch(err) {
+    console.warn("STRIPE CHECKOUT:", err);
+    alert("Unable to start checkout.");
+  }
+}
+
+function getSelectedBillingCycle(){
+  const el = document.getElementById("billingCycleSelect");
+  return el && el.value === "yearly" ? "yearly" : "monthly";
+}
+
+async function openBillingPortal(){
+  try {
+    const res = await apiFetch(apiUrl("/billing/create-portal-session"), {
+      method: "POST",
+      headers: { "Content-Type": "application/json" }
+    });
+    const payload = await res.json().catch(() => ({}));
+
+    if(!res.ok){
+      alert(payload.error || "Unable to open billing portal.");
+      return;
+    }
+
+    if(payload.url){
+      window.top.location.href = payload.url;
+    } else {
+      alert("Billing portal URL was not returned.");
+    }
+  } catch(err) {
+    console.warn("BILLING PORTAL:", err);
+    alert("Unable to open billing portal.");
+  }
+}
+
+function formatMoney(value){
+  return "$" + Number(value || 0).toLocaleString(undefined, {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0
+  });
+}
+
+function normalizeDate(value){
+  return value ? String(value).split("T")[0] : "";
+}
+
+function formatMonthLabel(date){
+  return date.toLocaleDateString(undefined, {
+    month: "long",
+    day: "numeric",
+    year: "numeric"
+  });
+}
+
+function monthKey(date){
+  return String(date.getFullYear()) + "-" + String(date.getMonth() + 1).padStart(2, "0");
+}
+
+function normalizeRevenueSummary(revenue, date){
+  const data = revenue && typeof revenue === "object" ? revenue : {};
+  const currentMonth = monthKey(date);
+  const monthlyRow = Array.isArray(data.monthly_revenue)
+    ? data.monthly_revenue.find(row => row && row.month === currentMonth)
+    : null;
+
+  return {
+    ...data,
+    total_revenue_month: Number(monthlyRow && monthlyRow.revenue ? monthlyRow.revenue : 0),
+    unpaid_amount: Number(data.unpaid_amount || 0)
+  };
+}
+
+function formatTime(value){
+  if(!value) return "";
+  return String(value).slice(0, 5);
+}
+
+function formatTimeRange(start, end){
+  const startText = formatTime(start);
+  const endText = formatTime(end);
+  if(startText && endText){
+    return `${startText} - ${endText}`;
+  }
+  return startText || endText || "";
+}
+
+function escapeHtml(value){
+  return String(value || "").replace(/[&<>\"']/g, char => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    "\"": "&quot;",
+    "'": "&#39;"
+  }[char]));
+}
+
+function openInControl(page){
+  const cleanPage = String(page || "").replace(/^\/+/, "");
+
+  if(window.parent && window.parent !== window && typeof window.parent.loadPage === "function"){
+    window.parent.loadPage(cleanPage);
+    return;
+  }
+
+  window.location.href = "/" + cleanPage;
+}
+
+function normalizePaymentStatus(job){
+  if(!job) return "unpaid";
+  if(job.type === "subscription_visit" || job.payment_status === "included" || job.payment_status === "included_in_subscription"){
+    return "included";
+  }
+  if(job.payment_status === "paid"){
+    return "paid";
+  }
+  return "unpaid";
+}
+
+function isOpenJob(job){
+  return !["completed", "cancelled"].includes(String(job.status || "").toLowerCase());
+}
+
+function isOverdue(job){
+  const todayKey = normalizeDate(new Date().toISOString());
+  const dateKey = normalizeDate(job.date);
+  return Boolean(dateKey) && dateKey < todayKey && isOpenJob(job);
+}
+
+function isRevenueJob(job){
+  return job.type !== "subscription_visit" && Number(job.price || 0) > 0;
+}
+
+function statusClass(status){
+  if(["completed", "approved", "active"].includes(status)) return "green";
+  if(["scheduled", "assigned"].includes(status)) return "orange";
+  if(["cancelled", "rejected"].includes(status)) return "red";
+  if(["in_progress"].includes(status)) return "purple";
+  return "gray";
+}
+
+function openClientProfile(clientId){
+  if(!clientId) return;
+  openInControl("client.html?id=" + encodeURIComponent(clientId));
+}
+
+async function updateJob(id, payload){
+  const res = await apiFetch(apiUrl("/workflow/jobs/" + id + "/status"), {
+    method: "PUT",
+    headers: { "Content-Type":"application/json" },
+    body: JSON.stringify(payload)
+  });
+
+  if(!res.ok){
+    throw new Error(await res.text());
+  }
+
+  return res.json();
+}
+
+async function assignWorker(jobId){
+  try {
+    const select = document.getElementById("todayWorker-" + jobId);
+    const workerId = select && select.value ? Number(select.value) : null;
+
+    if(!workerId){
+      alert("Select a worker first.");
+      return;
+    }
+
+    await updateJob(jobId, {
+      worker_id: workerId,
+      status: "assigned"
+    });
+
+    await init();
+  } catch(err){
+    console.log("ASSIGN WORKER ERROR:", err);
+    alert("Unable to assign worker.");
+  }
+}
+
+async function startJob(jobId){
+  try {
+    const select = document.getElementById("todayWorker-" + jobId);
+    const workerId = select && select.value ? Number(select.value) : null;
+    const job = dashboardState.jobs.find(item => String(item.id) === String(jobId));
+    const resolvedWorkerId = workerId || (job && job.worker_id) || null;
+
+    if(!resolvedWorkerId){
+      alert("Assign a worker first.");
+      return;
+    }
+
+    await updateJob(jobId, {
+      status: "in_progress",
+      worker_id: resolvedWorkerId
+    });
+
+    await init();
+  } catch(err){
+    console.log("START JOB ERROR:", err);
+    alert("Unable to start this job.");
+  }
+}
+
+async function completeJob(jobId){
+  try {
+    const select = document.getElementById("todayWorker-" + jobId);
+    const workerId = select && select.value ? Number(select.value) : null;
+    const job = dashboardState.jobs.find(item => String(item.id) === String(jobId));
+    const resolvedWorkerId = workerId || (job && job.worker_id) || null;
+
+    if(!resolvedWorkerId){
+      alert("Assign a worker first.");
+      return;
+    }
+
+    await updateJob(jobId, {
+      status: "completed",
+      worker_id: resolvedWorkerId
+    });
+
+    await init();
+  } catch(err){
+    console.log("COMPLETE JOB ERROR:", err);
+    alert("Unable to complete this job.");
+  }
+}
+
+function renderAlerts({ unpaidJobs, unassignedJobs, overdueJobs }) {
+  const container = document.getElementById("alertsList");
+  container.textContent = "";
+
+  const items = [
+    {
+      title: "Unpaid jobs",
+      page: "/invoices.html",
+      copy: unpaidJobs.length
+        ? `${unpaidJobs.length} job${unpaidJobs.length === 1 ? "" : "s"} still need payment follow-up.`
+        : "No unpaid jobs need attention right now.",
+      count: unpaidJobs.length,
+      pillClass: unpaidJobs.length ? "pill-red" : "pill-green"
+    },
+    {
+      title: "Unassigned jobs",
+      page: "/jobs.html",
+      copy: unassignedJobs.length
+        ? `${unassignedJobs.length} open job${unassignedJobs.length === 1 ? "" : "s"} still need a worker assigned.`
+        : "All open jobs currently have a worker assigned.",
+      count: unassignedJobs.length,
+      pillClass: unassignedJobs.length ? "pill-orange" : "pill-green"
+    },
+    {
+      title: "Overdue",
+      page: "/jobs.html",
+      copy: overdueJobs.length
+        ? `${overdueJobs.length} job${overdueJobs.length === 1 ? "" : "s"} are past due and still open.`
+        : "No overdue jobs are blocking the team right now.",
+      count: overdueJobs.length,
+      pillClass: overdueJobs.length ? "pill-red" : "pill-green"
+    }
+  ];
+
+  items.forEach(item => {
+    const el = document.createElement("button");
+    el.className = "alert-item";
+
+    el.onclick = () => {
+      openInControl(item.page);
+    };
+
+    el.style.width = "100%";
+    el.style.border = "none";
+    el.style.cursor = "pointer";
+    el.style.textAlign = "left";
+
+    el.innerHTML = `
+      <div>
+        <div class="alert-title">${item.title}</div>
+        <div class="alert-copy">${item.copy}</div>
+      </div>
+      <div class="pill ${item.pillClass}">${item.count}</div>
+    `;
+
+    container.appendChild(el);
+  });
+}
+
+function renderTodayJobs(jobsToday, workers){
+  const container = document.getElementById("todayJobsList");
+  container.textContent = "";
+
+  if(!jobsToday.length){
+    container.innerHTML = AppUI.emptyState(
+      "No jobs scheduled for today.",
+      "Use the + Job action above to create work for the team.",
+      [{ label: "Open Jobs", onClick: "openInControl('jobs.html')", className: "btn" }]
+    );
+    return;
+  }
+
+  jobsToday
+    .slice()
+    .sort((a, b) => (formatTime(a.start_time) || "99:99").localeCompare(formatTime(b.start_time) || "99:99"))
+    .forEach(job => {
+      const card = document.createElement("div");
+      card.className = "job-card";
+      const normalizedStatus = String(job.status || "scheduled").toLowerCase();
+      const isClosed = ["completed", "cancelled", "canceled"].includes(normalizedStatus);
+      const isInProgress = normalizedStatus === "in_progress";
+
+      const workerOptions = [
+        `<option value="">${job.worker_id ? "Keep current worker" : "Select worker"}</option>`,
+        ...workers.map(worker => `<option value="${worker.id}" ${String(worker.id) === String(job.worker_id) ? "selected" : ""}>${escapeHtml(worker.name || `Worker #${worker.id}`)}</option>`)
+      ].join("");
+
+      card.innerHTML = `
+        <div class="job-top">
+          <div>
+            <div class="job-client">${escapeHtml(job.client_name || "No Client")}</div>
+            <div class="job-service">${escapeHtml(job.service || "Job")}</div>
+            <div class="job-meta">
+              ${escapeHtml(formatTimeRange(job.start_time, job.end_time) || "Time not set")}
+              ${job.client_address ? `<br>${escapeHtml(job.client_address)}` : ""}
+              <br>${escapeHtml(job.worker_name || "No worker assigned")}
+            </div>
+          </div>
+          <div>
+            <span class="status-badge ${statusClass(job.status)}">${escapeHtml(job.status || "scheduled")}</span>
+          </div>
+        </div>
+        <div class="job-actions">
+          ${!isClosed ? `<select id="todayWorker-${job.id}">${workerOptions}</select>` : ""}
+          ${!isClosed ? `<button class="btn secondary" onclick="assignWorker(${job.id})">Assign</button>` : ""}
+          ${!isClosed && !isInProgress ? `<button class="btn" onclick="startJob(${job.id})">Start</button>` : ""}
+          ${!isClosed ? `<button class="btn" onclick="completeJob(${job.id})">Complete</button>` : ""}
+          <button class="btn secondary" onclick="openClientProfile(${job.client_id || 0})">Open</button>
+        </div>
+      `;
+
+      container.appendChild(card);
+    });
+}
+
+async function init(){
+  try {
+    clearBillingCheckoutQuery();
+
+    const today = new Date();
+    const todayKey = normalizeDate(today.toISOString());
+    const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+    const monthEnd = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+    const monthStartKey = normalizeDate(monthStart.toISOString());
+    const monthEndKey = normalizeDate(monthEnd.toISOString());
+
+    document.getElementById("monthBadge").textContent = formatMonthLabel(today);
+
+    loadBillingWarningBanner();
+    loadCompanyBillingPanel();
+
+    const results = await Promise.allSettled([
+      fetchDashboardJson("/workflow/jobs", []),
+      fetchDashboardJson("/ops/workers", []),
+      fetchDashboardJson("/analytics/revenue", {}),
+      fetchDashboardJson("/ops/subscriptions", [])
+    ]);
+
+    const jobs = results[0].status === "fulfilled" ? results[0].value : [];
+    const workers = results[1].status === "fulfilled" ? results[1].value : [];
+    const money = results[2].status === "fulfilled" ? results[2].value : {};
+    const subscriptions = results[3].status === "fulfilled" ? results[3].value : [];
+
+    const safeJobs = Array.isArray(jobs) ? jobs : [];
+    const safeWorkers = Array.isArray(workers) ? workers : [];
+    const safeSubscriptions = Array.isArray(subscriptions) ? subscriptions : [];
+    const safeMoney = normalizeRevenueSummary(money, today);
+
+    dashboardState = {
+      jobs: safeJobs,
+      workers: safeWorkers,
+      subscriptions: safeSubscriptions,
+      money: safeMoney
+    };
+
+    document.getElementById("dashboardHint").style.display =
+      safeJobs.length || safeSubscriptions.length ? "none" : "block";
+
+    const monthJobs = safeJobs.filter(job => {
+      const dateKey = normalizeDate(job.date);
+      return dateKey && dateKey >= monthStartKey && dateKey <= monthEndKey;
+    });
+
+    const jobsToday = safeJobs.filter(job => normalizeDate(job.date) === todayKey);
+    const unpaidJobs = monthJobs.filter(job =>
+      isRevenueJob(job) &&
+      normalizePaymentStatus(job) === "unpaid" &&
+      job.status !== "cancelled"
+    );
+    const unassignedJobs = safeJobs.filter(job => isOpenJob(job) && !job.worker_id);
+    const overdueJobs = safeJobs.filter(isOverdue);
+    const activeSubscriptions = safeSubscriptions.filter(sub => sub.status === "active");
+
+    document.getElementById("revenueThisMonth").innerText =
+      formatMoney(safeMoney.total_revenue_month || 0);
+
+    document.getElementById("unpaidAmount").innerText =
+      formatMoney(safeMoney.unpaid_amount || 0);
+
+    document.getElementById("jobsTodayCount").innerText = jobsToday.length;
+    document.getElementById("activeSubscriptionsCount").innerText = activeSubscriptions.length;
+
+    renderAlerts({
+      unpaidJobs,
+      unassignedJobs,
+      overdueJobs
+    });
+
+    renderTodayJobs(jobsToday, safeWorkers);
+
+    await loadDashNotifications();
+
+  } catch(err){
+    console.log("DASHBOARD LOAD ERROR:", err);
+    AppUI.showToast("Unable to load dashboard data.", "error");
+
+    document.getElementById("alertsList").innerHTML =
+      `<div class="empty">Error loading alerts.</div>`;
+
+    document.getElementById("todayJobsList").innerHTML =
+      `<div class="empty">Error loading today's jobs.</div>`;
+  }
+}
+
+init();
+</script>
+
+</body>
+</html>

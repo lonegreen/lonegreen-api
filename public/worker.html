@@ -1,0 +1,841 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Worker App</title>
+  <link rel="stylesheet" href="/app-shell.css">
+  <style>
+    * { box-sizing: border-box; }
+
+    body {
+      font-family: Arial, sans-serif;
+      padding: 12px;
+      background:
+        radial-gradient(circle at top left, rgba(31, 92, 58, 0.08), transparent 28%),
+        linear-gradient(180deg, #edf5f0 0%, #f7f9f8 180px, #f4f6f8 100%);
+      margin: 0;
+      color: #173327;
+    }
+
+    .page {
+      max-width: 820px;
+      margin: 0 auto;
+      display: grid;
+      gap: 14px;
+    }
+
+    .hero {
+      display: grid;
+      gap: 8px;
+      padding: 2px 2px 0;
+    }
+
+    .hero h1 {
+      margin: 0;
+      color: #1f5c3a;
+      font-size: 30px;
+      letter-spacing: -0.03em;
+    }
+
+    .hero p {
+      margin: 0;
+      color: #648076;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .worker-bar {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .worker-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 14px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.95);
+      border: 1px solid #dbe7df;
+      color: #1f5c3a;
+      font-weight: 800;
+      width: fit-content;
+      box-shadow: 0 10px 22px rgba(16,24,40,0.05);
+    }
+
+    .btn {
+      padding: 14px 16px;
+      border: none;
+      border-radius: 14px;
+      cursor: pointer;
+      font-weight: 800;
+      font-size: 16px;
+      font-family: inherit;
+      min-height: 48px;
+      transition: transform .15s ease, box-shadow .15s ease, opacity .15s ease;
+      box-shadow: 0 8px 16px rgba(16,24,40,0.06);
+    }
+
+    .btn:hover:not(:disabled) {
+      transform: translateY(-1px);
+      box-shadow: 0 12px 22px rgba(16,24,40,0.10);
+    }
+
+    .btn:disabled {
+      opacity: .55;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    .primary { background: #1f5c3a; color: white; }
+    .secondary { background: #eef2f0; color: #1f5c3a; border: 1px solid #dbe7df; }
+    .start-btn { background: #2563eb; color: white; }
+    .done-btn { background: #16a34a; color: white; }
+    .save-btn { background: #eef2f0; color: #1f5c3a; border: 1px solid #cfe0d5; }
+
+    .panel {
+      background: rgba(255,255,255,0.96);
+      border: 1px solid #dbe7df;
+      border-radius: 20px;
+      box-shadow: 0 18px 42px rgba(16,24,40,0.06);
+      padding: 14px;
+    }
+
+    .route-summary {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .summary-box {
+      padding: 12px;
+      border-radius: 16px;
+      background: #f8fbf9;
+      border: 1px solid #dbe7df;
+      min-width: 0;
+    }
+
+    .summary-label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #648076;
+      font-weight: 800;
+      margin-bottom: 4px;
+    }
+
+    .summary-value {
+      font-size: 22px;
+      color: #173327;
+      font-weight: 900;
+      letter-spacing: -0.03em;
+    }
+
+    .job-list {
+      display: grid;
+      gap: 14px;
+    }
+
+    .job {
+      border: 1px solid #dbe7df;
+      border-radius: 20px;
+      padding: 16px;
+      background: #fbfdfc;
+      display: grid;
+      gap: 14px;
+      box-shadow: 0 10px 24px rgba(16,24,40,0.04);
+    }
+
+    .job.completed-card {
+      border-color: #bfe7cc;
+      background: #f2fbf5;
+    }
+
+    .job-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+    }
+
+    .job-title {
+      margin: 0 0 6px;
+      color: #173327;
+      font-size: 23px;
+      font-weight: 900;
+      line-height: 1.15;
+      letter-spacing: -0.03em;
+      word-break: break-word;
+    }
+
+    .job-service {
+      color: #315548;
+      font-size: 16px;
+      font-weight: 800;
+      margin-bottom: 8px;
+      word-break: break-word;
+    }
+
+    .job-address,
+    .job-phone {
+      color: #5d766b;
+      font-size: 14px;
+      line-height: 1.45;
+      margin-bottom: 4px;
+      word-break: break-word;
+    }
+
+    .job-time {
+      color: #315548;
+      font-size: 15px;
+      font-weight: 900;
+      word-break: break-word;
+    }
+
+    .status {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 8px 12px;
+      border-radius: 999px;
+      color: white;
+      font-size: 12px;
+      font-weight: 900;
+      text-transform: uppercase;
+      white-space: nowrap;
+      letter-spacing: 0.02em;
+    }
+
+    .scheduled { background: #6b7280; }
+    .assigned { background: #2563eb; }
+    .in_progress { background: #f59e0b; }
+    .completed { background: #16a34a; }
+    .cancelled { background: #dc2626; }
+
+    .quick-links,
+    .actions {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .quick-link {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      min-height: 46px;
+      padding: 12px 14px;
+      border-radius: 14px;
+      background: white;
+      border: 1px solid #cfe0d5;
+      color: #1f5c3a;
+      font-weight: 900;
+      text-decoration: none;
+      transition: transform .15s ease, box-shadow .15s ease, border .15s ease;
+    }
+
+    .quick-link:hover {
+      transform: translateY(-1px);
+      border-color: #1f5c3a;
+      box-shadow: 0 10px 18px rgba(16,24,40,0.08);
+    }
+
+    .details {
+      border-top: 1px solid #e4ece7;
+      padding-top: 12px;
+      display: none;
+      gap: 12px;
+    }
+
+    .details.open {
+      display: grid;
+    }
+
+    .detail-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .detail {
+      padding: 12px;
+      border-radius: 14px;
+      background: white;
+      border: 1px solid #e4ece7;
+      min-width: 0;
+      word-break: break-word;
+      line-height: 1.45;
+    }
+
+    .detail span {
+      display: block;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #648076;
+      font-weight: 900;
+      margin-bottom: 4px;
+    }
+
+    .photo-placeholders {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .photo-placeholder {
+      min-height: 86px;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      padding: 12px;
+      border: 1px dashed #cfe0d5;
+      border-radius: 14px;
+      background: #f8fbf9;
+      color: #648076;
+      font-weight: 800;
+    }
+
+    .notes-box {
+      width: 100%;
+      min-height: 104px;
+      padding: 12px;
+      border-radius: 14px;
+      border: 1px solid #cfe0d5;
+      font: inherit;
+      resize: vertical;
+      color: #173327;
+      outline: none;
+      transition: border .15s ease, box-shadow .15s ease;
+      background: white;
+    }
+
+    .notes-box:focus {
+      border-color: #1f5c3a;
+      box-shadow: 0 0 0 4px rgba(31,92,58,0.10);
+    }
+
+    .empty {
+      padding: 18px;
+      border: 1px dashed #dbe7df;
+      border-radius: 16px;
+      background: #f8fbf9;
+      color: #688076;
+      line-height: 1.5;
+    }
+
+    .empty strong {
+      display: block;
+      color: #173327;
+      font-size: 18px;
+      margin-bottom: 6px;
+    }
+
+    select {
+      width: 100%;
+      padding: 14px 12px;
+      border-radius: 12px;
+      border: 1px solid #cfe0d5;
+      font: inherit;
+      background: white;
+      min-height: 48px;
+      color: #173327;
+      outline: none;
+      transition: border .15s ease, box-shadow .15s ease;
+    }
+
+    select:focus {
+      border-color: #1f5c3a;
+      box-shadow: 0 0 0 4px rgba(31,92,58,0.10);
+    }
+
+    .page-hint {
+      padding: 14px;
+      border-radius: 16px;
+      border: 1px solid #dbe7df;
+      background: rgba(255,255,255,0.96);
+      color: #587165;
+      box-shadow: 0 10px 22px rgba(16,24,40,0.05);
+      line-height: 1.5;
+    }
+
+    .page-hint strong {
+      display: block;
+      color: #173327;
+      margin-bottom: 4px;
+    }
+
+    .page-hint p {
+      margin: 0;
+    }
+
+    @media (max-width: 640px) {
+      body {
+        padding: 10px;
+      }
+
+      .hero h1 {
+        font-size: 28px;
+      }
+
+      .worker-bar,
+      .route-summary,
+      .actions,
+      .quick-links,
+      .detail-grid,
+      .photo-placeholders {
+        grid-template-columns: 1fr;
+      }
+
+      .job-top {
+        flex-direction: column;
+      }
+
+      .job {
+        padding: 14px;
+      }
+
+      .job-title {
+        font-size: 22px;
+      }
+    }
+  </style>
+</head>
+<body>
+<div class="page">
+  <div class="hero">
+    <h1>Worker App</h1>
+    <p>Today's assigned jobs only. Open the route, add a quick note, and tap once to start or complete work.</p>
+  </div>
+
+  <div class="worker-badge" id="workerBadge">Worker: --</div>
+
+  <div class="worker-bar" id="workerPicker">
+    <select id="workerSelect"></select>
+    <button class="btn primary" onclick="saveWorkerChoice()">Open Today's Jobs</button>
+  </div>
+
+  <div id="workerHint" class="page-hint" style="display:none;">
+    <strong>Choose a worker to begin.</strong>
+    <p>Select an active worker above to open today's assigned route.</p>
+  </div>
+
+  <div class="panel">
+    <div class="route-summary" id="routeSummary">
+      <div class="summary-box"><div class="summary-label">Assigned</div><div class="summary-value" id="assignedCount">0</div></div>
+      <div class="summary-box"><div class="summary-label">In Progress</div><div class="summary-value" id="progressCount">0</div></div>
+      <div class="summary-box"><div class="summary-label">Completed</div><div class="summary-value" id="completedCount">0</div></div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="job-list" id="list">Loading...</div>
+  </div>
+</div>
+
+<script src="/js/ui.js"></script>
+<script src="/js/auth.js"></script>
+<script src="/js/api.js"></script>
+<script src="/js/format.js"></script>
+<script>
+const API = window.location.origin;
+let jobs = [];
+let workers = [];
+
+const getToken = AppAuth.getToken;
+
+function getCurrentUser(){
+  return AppAuth.getUser() || {};
+}
+
+function isWorkerUser(){
+  return getCurrentUser().role === "worker";
+}
+
+function tokenWorkerId(){
+  const user = getCurrentUser();
+  return user.worker_id || user.workerId || "";
+}
+
+function workerStorageKey(){
+  const user = getCurrentUser();
+  return "workerId:" + (user.id || "guest");
+}
+
+async function apiFetch(url, options = {}){
+  return AppAPI.fetch(url, options);
+}
+
+function currentWorkerId(){
+  if(isWorkerUser()){
+    return String(tokenWorkerId() || "");
+  }
+
+  return localStorage.getItem(workerStorageKey()) || "";
+}
+
+function escapeHtml(value){
+  return String(value ?? "").replace(/[&<>\"']/g, char => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#39;"
+  }[char]));
+}
+
+function rawText(value, fallback = ""){
+  const text = value === undefined || value === null ? "" : String(value);
+  return text || fallback;
+}
+
+function safeText(value, fallback = ""){
+  return escapeHtml(rawText(value, fallback));
+}
+
+function safeStatusClass(status){
+  return String(status || "scheduled").replace(/[^a-z_]/g, "") || "scheduled";
+}
+
+async function safeJson(res){
+  try {
+    return await res.json();
+  } catch {
+    try {
+      const text = await res.text();
+      return { error: text || "Request failed." };
+    } catch {
+      return { error: "Request failed." };
+    }
+  }
+}
+
+function getErrorMessage(data, fallback){
+  if(data && typeof data.error === "string" && data.error.trim()) return data.error;
+  if(data && typeof data.message === "string" && data.message.trim()) return data.message;
+  return fallback;
+}
+
+function renderInlineError(title, message, actionsHtml = ""){
+  return `
+    <div class="empty">
+      <strong>${safeText(title)}</strong>
+      <div>${safeText(message)}</div>
+      ${actionsHtml ? `<div style="margin-top:12px;">${actionsHtml}</div>` : ""}
+    </div>
+  `;
+}
+
+function saveWorkerChoice(){
+  if(isWorkerUser()) return;
+
+  localStorage.setItem(workerStorageKey(), document.getElementById("workerSelect").value);
+  AppUI.showToast("Worker selected.", "success");
+  loadJobs();
+}
+
+function formatTime(value){
+  return AppFormat.formatTime(value) || "";
+}
+
+function formatTimeRange(start, end){
+  return AppFormat.formatTimeRange(start, end) || "Time not set";
+}
+
+function statusLabel(status){
+  return String(status || "scheduled").replace(/_/g, " ");
+}
+
+function callHref(phone){
+  return "tel:" + String(phone || "").replace(/[^+\d]/g, "");
+}
+
+function mapHref(address){
+  return "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(address || "");
+}
+
+function renderWorkers(){
+  const select = document.getElementById("workerSelect");
+  const picker = document.getElementById("workerPicker");
+  const active = workers.find(worker => String(worker.id) === String(currentWorkerId()));
+
+  if(isWorkerUser()){
+    picker.style.display = "none";
+  } else {
+    picker.style.display = "grid";
+
+    select.innerHTML = '<option value="">Select worker</option>' + workers
+      .filter(worker => worker.active !== false)
+      .map(worker => `
+        <option value="${escapeHtml(worker.id)}" ${String(worker.id) === String(currentWorkerId()) ? "selected" : ""}>
+          ${safeText(worker.name, "Worker #" + worker.id)}
+        </option>
+      `)
+      .join("");
+  }
+
+  document.getElementById("workerBadge").textContent = active
+    ? "Worker: " + rawText(active.name, "Worker #" + active.id)
+    : (isWorkerUser() ? "Worker route" : "Worker: --");
+
+  document.getElementById("workerHint").style.display = active || isWorkerUser() ? "none" : "block";
+}
+
+function renderSummary(){
+  document.getElementById("assignedCount").textContent = jobs.length;
+  document.getElementById("progressCount").textContent = jobs.filter(job => job.status === "in_progress").length;
+  document.getElementById("completedCount").textContent = jobs.filter(job => job.status === "completed").length;
+}
+
+function toggleDetails(id){
+  const detail = document.getElementById("details_" + id);
+  if(detail) detail.classList.toggle("open");
+}
+
+function renderJobs(){
+  renderSummary();
+
+  const list = document.getElementById("list");
+
+  if(!jobs.length){
+    list.innerHTML = AppUI.emptyState(
+      currentWorkerId() ? "No assigned jobs for today." : "Choose a worker to view today's jobs.",
+      currentWorkerId() ? "This route is clear right now." : "Select an active worker above to load today's assigned jobs.",
+      currentWorkerId()
+        ? [{ label: "Refresh", onClick: "loadJobs()", className: "btn primary" }]
+        : [{ label: "Select Worker", onClick: "document.getElementById('workerSelect').focus()", className: "btn primary" }]
+    );
+    return;
+  }
+
+  list.innerHTML = jobs.map(job => {
+    const phone = job.client_phone || "";
+    const address = job.client_address || job.address || "";
+    const isComplete = job.status === "completed";
+    const jobId = Number(job.id);
+
+    return `
+      <div class="job ${isComplete ? "completed-card" : ""}">
+        <div class="job-top">
+          <div>
+            <h3 class="job-title">${safeText(job.client_name, "Client")}</h3>
+            <div class="job-service">${safeText(job.service, "Service")}</div>
+            ${phone ? `<div class="job-phone">${safeText(phone)}</div>` : ""}
+            ${address ? `<div class="job-address">${safeText(address)}</div>` : ""}
+            <div class="job-time">${safeText(formatTimeRange(job.start_time, job.end_time))}</div>
+          </div>
+          <div class="status ${safeStatusClass(job.status)}">${safeText(statusLabel(job.status))}</div>
+        </div>
+
+        <div class="quick-links">
+          ${phone ? `<a class="quick-link" href="${escapeHtml(callHref(phone))}">Call Client</a>` : `<span class="quick-link">No Phone</span>`}
+          ${address ? `<a class="quick-link" href="${escapeHtml(mapHref(address))}" target="_blank" rel="noopener">Open Map</a>` : `<span class="quick-link">No Address</span>`}
+        </div>
+
+        <button class="btn secondary" onclick="toggleDetails(${jobId})">Job Details</button>
+
+        <div class="details" id="details_${jobId}">
+          <div class="detail-grid">
+            <div class="detail"><span>Client</span>${safeText(job.client_name, "Client")}</div>
+            <div class="detail"><span>Phone</span>${safeText(phone, "No phone")}</div>
+            <div class="detail"><span>Service</span>${safeText(job.service, "Service")}</div>
+            <div class="detail"><span>Time</span>${safeText(formatTimeRange(job.start_time, job.end_time))}</div>
+            <div class="detail"><span>Address</span>${safeText(address, "No address")}</div>
+            <div class="detail"><span>Status</span>${safeText(statusLabel(job.status))}</div>
+          </div>
+
+          <div class="photo-placeholders">
+            <div class="photo-placeholder">Before photo placeholder</div>
+            <div class="photo-placeholder">After photo placeholder</div>
+          </div>
+        </div>
+
+        <textarea id="notes_${jobId}" class="notes-box" placeholder="Add a quick note...">${safeText(job.internal_notes)}</textarea>
+
+        <div class="actions">
+          <button class="btn save-btn" onclick="saveNotes(${jobId}, this)">Save Notes</button>
+          <button class="btn start-btn" onclick="updateJob(${jobId}, 'in_progress', this)" ${isComplete ? "disabled" : ""}>Start Job</button>
+          <button class="btn done-btn" onclick="updateJob(${jobId}, 'completed', this)" ${isComplete ? "disabled" : ""}>${isComplete ? "Completed" : "Complete Job"}</button>
+        </div>
+      </div>
+    `;
+  }).join("");
+}
+
+async function saveNotes(id, button){
+  const notes = (document.getElementById("notes_" + id)?.value || "").trim();
+
+  await AppUI.withButton(button, async () => {
+    const res = await apiFetch(API + "/ops/worker-jobs/" + id, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        internal_notes: notes,
+        worker_id: currentWorkerId() ? Number(currentWorkerId()) : null
+      })
+    });
+
+    const data = await safeJson(res);
+
+    if(!res.ok){
+      AppUI.showToast(getErrorMessage(data, "Unable to save notes."), "error");
+      return;
+    }
+
+    AppUI.showToast("Notes saved.", "success");
+    await loadJobs();
+  }, { loading: "Saving..." });
+}
+
+async function updateJob(id, status, button){
+  const notes = (document.getElementById("notes_" + id)?.value || "").trim();
+
+  await AppUI.withButton(button, async () => {
+    const res = await apiFetch(API + "/ops/worker-jobs/" + id, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        status,
+        internal_notes: notes,
+        worker_id: currentWorkerId() ? Number(currentWorkerId()) : null
+      })
+    });
+
+    const data = await safeJson(res);
+
+    if(!res.ok){
+      AppUI.showToast(getErrorMessage(data, "Unable to update job."), "error");
+      return;
+    }
+
+    AppUI.showToast(status === "completed" ? "Job completed." : "Job started.", "success");
+    await loadJobs();
+  }, { loading: status === "completed" ? "Completing..." : "Starting..." });
+}
+
+async function loadJobs(){
+  if(!currentWorkerId()){
+    jobs = [];
+    renderSummary();
+
+    document.getElementById("list").innerHTML = AppUI.emptyState(
+      "Choose a worker to view today's jobs.",
+      "Select an active worker above to open today's assigned route.",
+      [{ label: "Select Worker", onClick: "document.getElementById('workerSelect').focus()", className: "btn primary" }]
+    );
+
+    renderWorkers();
+    return;
+  }
+
+  AppUI.setLoading(true, "Loading today's jobs...");
+
+  try {
+    const res = await apiFetch(API + "/ops/worker-jobs/" + encodeURIComponent(currentWorkerId()));
+    const data = await safeJson(res);
+
+    if(!res.ok){
+      jobs = [];
+      renderSummary();
+      renderWorkers();
+
+      document.getElementById("list").innerHTML = renderInlineError(
+        "Unable to load today's jobs",
+        getErrorMessage(data, "Please refresh and try again."),
+        `<button class="btn primary" onclick="loadJobs()">Refresh</button>`
+      );
+
+      AppUI.showToast(getErrorMessage(data, "Unable to load today's jobs."), "error");
+      return;
+    }
+
+    jobs = Array.isArray(data) ? data : [];
+    renderWorkers();
+    renderJobs();
+  } catch(err){
+    jobs = [];
+    renderSummary();
+    renderWorkers();
+
+    document.getElementById("list").innerHTML = renderInlineError(
+      "Unable to load today's jobs",
+      "Please refresh and try again.",
+      `<button class="btn primary" onclick="loadJobs()">Refresh</button>`
+    );
+
+    AppUI.showToast("Unable to load today's jobs.", "error");
+  } finally {
+    AppUI.setLoading(false);
+  }
+}
+
+async function load(){
+  AppUI.setLoading(true, "Loading workers...");
+
+  try {
+    if(isWorkerUser()){
+      const workerId = tokenWorkerId();
+      const user = getCurrentUser();
+
+      workers = workerId
+        ? [{
+            id: workerId,
+            name: user.worker_name || user.name || user.username || ("Worker #" + workerId),
+            active: true
+          }]
+        : [];
+
+      renderWorkers();
+      await loadJobs();
+      return;
+    }
+
+    const res = await apiFetch(API + "/ops/workers");
+    const data = await safeJson(res);
+
+    if(!res.ok){
+      workers = [];
+      jobs = [];
+      renderWorkers();
+      renderSummary();
+
+      document.getElementById("list").innerHTML = renderInlineError(
+        "Unable to load workers",
+        getErrorMessage(data, "Please refresh and try again."),
+        `<button class="btn primary" onclick="load()">Refresh</button>`
+      );
+
+      AppUI.showToast(getErrorMessage(data, "Unable to load workers."), "error");
+      return;
+    }
+
+    workers = Array.isArray(data) ? data : [];
+    renderWorkers();
+    await loadJobs();
+  } catch(err){
+    workers = [];
+    jobs = [];
+    renderWorkers();
+    renderSummary();
+
+    document.getElementById("list").innerHTML = renderInlineError(
+      "Unable to load workers",
+      "Please refresh and try again.",
+      `<button class="btn primary" onclick="load()">Refresh</button>`
+    );
+
+    AppUI.showToast("Unable to load workers.", "error");
+  } finally {
+    AppUI.setLoading(false);
+  }
+}
+
+load();
+</script>
+</body>
+</html>

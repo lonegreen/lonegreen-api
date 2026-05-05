@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>ZIP Groups</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="/app-shell.css">
+
+  <style>
+    * { box-sizing: border-box; }
+
+    :root {
+      --bg: #f5f8f6;
+      --panel: #ffffff;
+      --text: #173327;
+      --muted: #648076;
+      --border: #dbe7df;
+      --green: #1f5c3a;
+      --green-dark: #17462c;
+      --green-soft: #eaf5ee;
+      --blue: #2563eb;
+      --blue-soft: #ebf3ff;
+      --red: #dc2626;
+      --red-soft: #fff1f1;
+      --shadow: 0 18px 42px rgba(16, 24, 40, 0.07);
+      --radius: 18px;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      margin: 0;
+      background:
+        radial-gradient(circle at top left, rgba(31, 92, 58, 0.10), transparent 340px),
+        linear-gradient(180deg, #edf5f0 0%, #f7f9f8 190px, #f4f6f8 100%);
+      color: var(--text);
+    }
+
+    .page {
+      max-width: 1180px;
+      margin: 0 auto;
+    }
+
+    .hero {
+      display: flex;
+      justify-content: space-between;
+      gap: 14px;
+      align-items: flex-end;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+    }
+
+    .hero h1 {
+      margin: 0 0 6px;
+      color: var(--green);
+      font-size: 34px;
+      letter-spacing: -0.04em;
+    }
+
+    .hero p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 9px 12px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.78);
+      border: 1px solid var(--border);
+      box-shadow: 0 10px 24px rgba(16, 24, 40, 0.05);
+      color: var(--green);
+      font-weight: 800;
+      font-size: 13px;
+    }
+
+    .top {
+      display: grid;
+      grid-template-columns: 1fr 180px auto;
+      gap: 10px;
+      margin-bottom: 20px;
+      background: rgba(255,255,255,0.82);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+    }
+
+    input,
+    select {
+      width: 100%;
+      padding: 11px 12px;
+      border-radius: 12px;
+      border: 1px solid #cfe0d5;
+      font: inherit;
+      color: var(--text);
+      background: white;
+      outline: none;
+    }
+
+    input:focus,
+    select:focus {
+      border-color: var(--green);
+      box-shadow: 0 0 0 3px rgba(31, 92, 58, 0.12);
+    }
+
+    button {
+      padding: 10px 14px;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      font-weight: 800;
+      transition: transform 0.16s ease, box-shadow 0.16s ease, background 0.16s ease;
+      white-space: nowrap;
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 10px 22px rgba(16, 24, 40, 0.10);
+    }
+
+    button:disabled {
+      opacity: 0.65;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    .add {
+      background: var(--green);
+      color: white;
+    }
+
+    .add:hover {
+      background: var(--green-dark);
+    }
+
+    .edit {
+      background: var(--blue);
+      color: white;
+    }
+
+    .delete {
+      background: var(--red);
+      color: white;
+    }
+
+    .panel {
+      background: rgba(255,255,255,0.96);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 18px;
+      margin-bottom: 16px;
+    }
+
+    .panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 14px;
+    }
+
+    .day {
+      font-weight: 900;
+      color: var(--green);
+      font-size: 18px;
+      letter-spacing: -0.02em;
+      margin-bottom: 4px;
+    }
+
+    .muted {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    .row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 12px;
+      align-items: center;
+    }
+
+    .zip {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: #eef4f0;
+      border: 1px solid #dce9e1;
+      padding: 7px 10px;
+      border-radius: 999px;
+      font-weight: 800;
+      color: #244637;
+      font-size: 13px;
+    }
+
+    .zip .delete {
+      padding: 4px 8px;
+      border-radius: 999px;
+      line-height: 1;
+      font-size: 12px;
+    }
+
+    .worker-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--blue-soft);
+      border: 1px solid #d8e7ff;
+      color: #1d4ed8;
+      padding: 7px 10px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .worker-pill.inactive {
+      background: #f3f4f6;
+      border-color: #e5e7eb;
+      color: #6b7280;
+    }
+
+    .zip-form {
+      display: grid;
+      grid-template-columns: minmax(160px, 260px) auto;
+      gap: 8px;
+      align-items: center;
+      margin: 8px 0 14px;
+    }
+
+    details {
+      border: 1px solid #e0eae4;
+      border-radius: 14px;
+      background: #fbfdfc;
+      padding: 12px;
+      margin-top: 10px;
+    }
+
+    summary {
+      cursor: pointer;
+      font-weight: 900;
+      color: var(--green);
+      user-select: none;
+    }
+
+    .worker-list {
+      margin-top: 12px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+      gap: 8px;
+    }
+
+    .worker-option {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      background: white;
+      border: 1px solid #e0eae4;
+      border-radius: 12px;
+      padding: 9px 10px;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .worker-option input {
+      width: auto;
+      padding: 0;
+      box-shadow: none;
+    }
+
+    .details-actions {
+      margin-top: 12px;
+    }
+
+    .danger-row {
+      display: flex;
+      justify-content: flex-end;
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid #edf2ef;
+    }
+
+    .state {
+      text-align: center;
+      padding: 28px 18px;
+    }
+
+    .state strong {
+      display: block;
+      color: var(--text);
+      font-size: 16px;
+      margin-bottom: 5px;
+    }
+
+    .spinner {
+      width: 18px;
+      height: 18px;
+      border: 2px solid #d8e6de;
+      border-top-color: var(--green);
+      border-radius: 999px;
+      animation: spin 0.8s linear infinite;
+      display: inline-block;
+      margin-right: 8px;
+      vertical-align: middle;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    @media (max-width: 760px) {
+      body {
+        padding: 12px;
+      }
+
+      .hero {
+        align-items: flex-start;
+      }
+
+      .hero h1 {
+        font-size: 28px;
+      }
+
+      .top {
+        grid-template-columns: 1fr;
+      }
+
+      .zip-form {
+        grid-template-columns: 1fr;
+      }
+
+      .danger-row {
+        justify-content: stretch;
+      }
+
+      .danger-row button,
+      .top button,
+      .zip-form button {
+        width: 100%;
+      }
+    }
+  </style>
+  <script src="/js/role-guard.js"></script>
+</head>
+
+<body>
+  <script>
+(function(){
+  const token = localStorage.getItem("token");
+  let user = null;
+
+  try {
+    user = JSON.parse(localStorage.getItem("user") || "null");
+  } catch {
+    user = null;
+  }
+
+  if (!token || !user) {
+    window.top.location.href = "/login.html";
+    return;
+  }
+
+  const role = String(user.role || "").toLowerCase();
+
+  if (role === "worker") {
+    window.top.location.href = "/control.html";
+    return;
+  }
+})();
+</script>
+  
+<div class="page">
+  <div class="hero">
+    <div>
+      <h1>ZIP Groups</h1>
+      <p>Route territory by ZIP and link workers directly to each service zone.</p>
+    </div>
+    <div class="hero-badge">Operations Routing</div>
+  </div>
+
+  <div class="top">
+    <input id="name" placeholder="Group Name (Katy)">
+    <select id="day">
+      <option value="1">Monday</option>
+      <option value="2">Tuesday</option>
+      <option value="3">Wednesday</option>
+      <option value="4">Thursday</option>
+      <option value="5">Friday</option>
+      <option value="6">Saturday</option>
+      <option value="0">Sunday</option>
+    </select>
+    <button class="add" onclick="addGroup()">Add Group</button>
+  </div>
+
+  <div id="list"></div>
+</div>
+
+<script src="/js/ui.js"></script>
+<script src="/js/auth.js"></script>
+<script src="/js/api.js"></script>
+<script src="/js/format.js"></script>
+
+<script>
+const API = (window.AppAPI && window.AppAPI.base) || window.location.origin;
+let workers = [];
+const days = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+
+function apiUrl(path){
+  if(/^https?:\/\//i.test(path)){
+    return path;
+  }
+  return new URL(path, API).toString();
+}
+
+function getToken(){
+  return window.AppAuth ? window.AppAuth.getToken() : localStorage.getItem("token");
+}
+
+async function apiFetch(path, options = {}){
+  const token = getToken();
+  if(!token){
+    window.top.location.href = "/login.html";
+    throw new Error("Missing token");
+  }
+
+  const url = apiUrl(path);
+  const headers = {
+    ...(options.headers || {}),
+    Authorization: "Bearer " + token
+  };
+
+  try {
+    const res = await fetch(url, {
+      ...options,
+      headers
+    });
+
+    if(res.status === 403 && window.AppAPI){
+      window.AppAPI.handleForbidden();
+    }
+
+    if(res.status === 401){
+      if(window.AppAPI){
+        window.AppAPI.handleUnauthorized();
+      } else {
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+        window.top.location.href = "/login.html";
+      }
+      throw new Error("Unauthorized");
+    }
+
+    if(!res.ok){
+      const text = await res.clone().text().catch(() => "");
+      console.warn("ZIP MANAGER ENDPOINT FAILED:", url, res.status, text);
+    }
+
+    return res;
+  } catch(err){
+    console.warn("ZIP MANAGER FETCH FAILED:", url, err);
+    throw err;
+  }
+}
+
+function escapeHtml(value){
+  return String(value ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
+function selectedWorkerIds(selectedWorkers){
+  return (selectedWorkers || []).map(worker => String(worker.worker_id || worker.id));
+}
+
+function workerOptions(selectedWorkers, groupId){
+  const selected = selectedWorkerIds(selectedWorkers);
+
+  if(!workers.length){
+    return `<div class="muted">No workers available yet.</div>`;
+  }
+
+  return workers.map(worker => `
+    <label class="worker-option">
+      <input
+        type="checkbox"
+        value="${escapeHtml(worker.id)}"
+        data-group-id="${escapeHtml(groupId)}"
+        ${selected.includes(String(worker.id)) ? "checked" : ""}
+      >
+      <span>${escapeHtml(worker.name || "Worker #" + worker.id)}</span>
+    </label>
+  `).join("");
+}
+
+function renderGroup(group){
+  const groupId = Number(group.id);
+  const groupDay = Number(group.day);
+  const zips = Array.isArray(group.zips) ? group.zips : [];
+  const groupWorkers = Array.isArray(group.workers) ? group.workers : [];
+
+  return `
+    <div class="panel">
+      <div class="panel-header">
+        <div>
+          <div class="day">${escapeHtml(group.name || "Unnamed Group")} - ${escapeHtml(days[groupDay] || "Unknown Day")}</div>
+          <div class="muted">ZIP routing day and linked workers for auto-assignment.</div>
+        </div>
+      </div>
+
+      <div class="row">
+        ${
+          zips.length
+            ? zips.map(zip => `
+              <span class="zip">
+                ${escapeHtml(zip.zip)}
+                <button class="delete" onclick="delZip(${Number(zip.id)})">x</button>
+              </span>
+            `).join("")
+            : '<span class="muted">No ZIPs yet.</span>'
+        }
+      </div>
+
+      <div class="zip-form">
+        <input id="zip-${groupId}" placeholder="Add ZIP">
+        <button class="add" onclick="addZip(${groupId})">Add ZIP</button>
+      </div>
+
+      <div class="row">
+        ${
+          groupWorkers.length
+            ? groupWorkers.map(worker => `
+              <span class="worker-pill ${worker.active === false ? 'inactive' : ''}">
+                ${escapeHtml(worker.worker_name || worker.name || "Worker")}
+                ${worker.active === false ? ' (inactive)' : ''}
+              </span>
+            `).join("")
+            : '<span class="muted">No workers linked.</span>'
+        }
+      </div>
+
+      <details>
+        <summary>Assign Workers</summary>
+        <div class="worker-list">
+          ${workerOptions(groupWorkers, groupId)}
+        </div>
+        <div class="details-actions">
+          <button class="edit" onclick="saveWorkers(${groupId})">Save Workers</button>
+        </div>
+      </details>
+
+      <div class="danger-row">
+        <button class="delete" onclick="delGroup(${groupId})">Delete Group</button>
+      </div>
+    </div>
+  `;
+}
+
+function renderState(title, message, loading){
+  document.getElementById("list").innerHTML = `
+    <div class="panel state">
+      <strong>${loading ? '<span class="spinner"></span>' : ''}${escapeHtml(title)}</strong>
+      <div class="muted">${escapeHtml(message || "")}</div>
+    </div>
+  `;
+}
+
+async function load(){
+  renderState("Loading ZIP groups", "Please wait while routing data is loaded.", true);
+
+  try {
+    const [groupsRes, workersRes] = await Promise.all([
+      apiFetch("/ops/zip-groups-full"),
+      apiFetch("/ops/workers")
+    ]);
+
+    const data = groupsRes.ok ? await groupsRes.json() : { groups: [] };
+    const workerData = workersRes.ok ? await workersRes.json() : [];
+
+    workers = Array.isArray(workerData) ? workerData : [];
+
+    const groups = Array.isArray(data && data.groups) ? data.groups : [];
+
+    document.getElementById("list").innerHTML = groups.length
+      ? groups.map(renderGroup).join("")
+      : `
+        <div class="panel state">
+          <strong>No groups yet.</strong>
+          <div class="muted">Create your first ZIP group to start routing jobs by territory.</div>
+        </div>
+      `;
+  } catch(err){
+    console.log("ZIP GROUP LOAD ERROR:", err);
+    document.getElementById("list").innerHTML = `
+      <div class="panel state">
+        <strong>Unable to load ZIP groups right now.</strong>
+        <div class="muted">Check the server connection, then refresh this page.</div>
+      </div>
+    `;
+  }
+}
+
+async function addGroup(){
+  const nameInput = document.getElementById("name");
+  const dayInput = document.getElementById("day");
+
+  const name = nameInput.value.trim();
+  const day = dayInput.value;
+
+  if(!name){
+    alert("Enter group name");
+    return;
+  }
+
+  const res = await apiFetch("/ops/zip-groups", {
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body: JSON.stringify({ name, day })
+  });
+
+  if(!res.ok){
+    alert("Unable to add group");
+    return;
+  }
+
+  nameInput.value = "";
+  load();
+}
+
+async function addZip(groupId){
+  const input = document.getElementById("zip-" + groupId);
+  const zip = input ? input.value.trim() : "";
+
+  if(!zip){
+    alert("Enter ZIP");
+    return;
+  }
+
+  const res = await apiFetch("/ops/zip-codes", {
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body: JSON.stringify({ zip, group_id: groupId })
+  });
+
+  if(!res.ok){
+    alert("Unable to add ZIP");
+    return;
+  }
+
+  load();
+}
+
+async function saveWorkers(groupId){
+  const selected = Array.from(document.querySelectorAll(`input[data-group-id="${groupId}"][type="checkbox"]`))
+    .filter(box => box.checked)
+    .map(box => Number(box.value));
+
+  const res = await apiFetch("/ops/zip-groups/" + groupId + "/workers", {
+    method:"PUT",
+    headers:{"Content-Type":"application/json"},
+    body: JSON.stringify({ worker_ids: selected })
+  });
+
+  if(!res.ok){
+    alert("Unable to save workers");
+    return;
+  }
+
+  load();
+}
+
+async function delZip(id){
+  if(!confirm("Delete this ZIP code from the group?")) return;
+
+  const res = await apiFetch("/ops/zip-codes/" + id, { method:"DELETE" });
+
+  if(!res.ok){
+    alert("Unable to delete ZIP");
+    return;
+  }
+
+  load();
+}
+
+async function delGroup(id){
+  if(!confirm("Delete this ZIP group?")) return;
+
+  const res = await apiFetch("/ops/zip-groups/" + id, { method:"DELETE" });
+
+  if(!res.ok){
+    alert("Unable to delete group");
+    return;
+  }
+
+  load();
+}
+
+load();
+</script>
+</body>
+</html>

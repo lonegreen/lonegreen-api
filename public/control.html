@@ -1,0 +1,917 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>Control Panel</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="/app-shell.css">
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    :root {
+      --bg: #f6f8f7;
+      --panel: #ffffff;
+      --text: #173327;
+      --muted: #667a70;
+      --border: #dfe9e3;
+      --green: #1f5c3a;
+      --green-2: #2d6b49;
+      --green-dark: #173728;
+      --green-soft: #eaf5ee;
+      --shadow: 0 16px 40px rgba(16, 24, 40, 0.08);
+      --radius: 18px;
+    }
+
+    html,
+    body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      font-family: Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      overflow: hidden;
+    }
+
+    body {
+      display: flex;
+    }
+
+    .sidebar {
+      width: 260px;
+      height: 100vh;
+      padding: 22px 16px;
+      overflow-y: auto;
+      flex-shrink: 0;
+      background:
+        radial-gradient(circle at top left, rgba(255, 255, 255, 0.14), transparent 32%),
+        linear-gradient(180deg, #143324, #214e38);
+      color: white;
+      border-right: 1px solid rgba(255, 255, 255, 0.12);
+    }
+
+    .brand {
+      margin-bottom: 24px;
+      padding: 6px 6px 16px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+    }
+
+    .brand h2 {
+      margin: 0 0 6px;
+      font-size: 24px;
+      color: white !important;
+      letter-spacing: -0.04em;
+    }
+
+    .brand small {
+      color: rgba(255, 255, 255, 0.72);
+      display: block;
+      line-height: 1.5;
+      font-size: 12px;
+    }
+
+    .section-title {
+      font-size: 10px;
+      opacity: 0.62;
+      margin: 18px 10px 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      font-weight: 800;
+    }
+
+    .sidebar button {
+      width: 100%;
+      margin-bottom: 7px;
+      padding: 11px 13px;
+      border-radius: 14px;
+      border: 1px solid transparent;
+      background: rgba(255, 255, 255, 0.065);
+      color: white;
+      cursor: pointer;
+      text-align: left;
+      font-size: 14px;
+      font-weight: 700;
+      box-shadow: none !important;
+      transition: background 0.16s ease, color 0.16s ease, border-color 0.16s ease;
+    }
+
+    .sidebar button:hover {
+      background: rgba(255, 255, 255, 0.12);
+      transform: none !important;
+      border-color: rgba(255, 255, 255, 0.10);
+    }
+
+    .sidebar button.active {
+      background: white !important;
+      color: #1d4733 !important;
+      font-weight: 800;
+      box-shadow: 0 10px 26px rgba(0, 0, 0, 0.12) !important;
+    }
+
+    .main {
+      flex: 1;
+      min-width: 0;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      background: var(--bg);
+    }
+
+    .topbar {
+      flex-shrink: 0;
+      background: rgba(255, 255, 255, 0.94);
+      padding: 16px 22px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      border-bottom: 1px solid var(--border);
+      z-index: 10;
+      backdrop-filter: blur(14px);
+    }
+
+    .topbar h3 {
+      margin: 0;
+      font-size: 21px;
+      color: #163328;
+      letter-spacing: -0.03em;
+    }
+
+    .topbar small {
+      color: var(--muted);
+      display: block;
+      margin-top: 4px;
+      font-size: 12px;
+    }
+
+    .actions {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .topbar button {
+      padding: 10px 14px;
+      border-radius: 13px;
+      border: 1px solid transparent;
+      background: var(--green-2);
+      color: white;
+      font-weight: 800;
+      cursor: pointer;
+      transition: transform 0.16s ease, box-shadow 0.16s ease, background 0.16s ease;
+    }
+
+    .topbar button:hover {
+      background: var(--green);
+      transform: translateY(-1px);
+      box-shadow: 0 10px 24px rgba(31, 92, 58, 0.18);
+    }
+
+    .user-menu {
+      position: relative;
+    }
+
+    .user-trigger {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: white !important;
+      color: var(--green) !important;
+      border: 1px solid #d2dfd6 !important;
+      box-shadow: none !important;
+    }
+
+    .user-trigger:hover {
+      background: var(--green-soft) !important;
+    }
+
+    .user-avatar {
+      width: 29px;
+      height: 29px;
+      border-radius: 999px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--green-soft);
+      color: var(--green);
+      font-size: 12px;
+      font-weight: 900;
+    }
+
+    .dropdown {
+      position: absolute;
+      right: 0;
+      top: calc(100% + 10px);
+      min-width: 225px;
+      background: white;
+      border: 1px solid #dbe8df;
+      border-radius: 18px;
+      box-shadow: 0 18px 38px rgba(16, 24, 40, 0.12);
+      padding: 8px;
+      display: none;
+      z-index: 50;
+    }
+
+    .dropdown.open {
+      display: block;
+    }
+
+    .dropdown button {
+      width: 100%;
+      background: transparent !important;
+      color: #173327 !important;
+      box-shadow: none !important;
+      text-align: left;
+      border-radius: 11px;
+      border: none !important;
+      padding: 10px 12px;
+    }
+
+    .dropdown button:hover {
+      background: #f2f7f4 !important;
+      transform: none;
+    }
+
+    .dropdown-divider {
+      height: 1px;
+      background: #e4ece7;
+      margin: 6px 4px;
+    }
+
+    .content {
+      flex: 1;
+      min-height: 0;
+      overflow: hidden;
+      background: var(--bg);
+      position: relative;
+      padding: 14px;
+    }
+
+    .frame-shell {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      position: relative;
+    }
+
+    #frame {
+      width: 100%;
+      height: 100%;
+      border: none;
+      display: block;
+      background: #f7f8f7;
+      opacity: 1 !important;
+      visibility: visible !important;
+      filter: none !important;
+      pointer-events: auto !important;
+    }
+
+    .frame-loading {
+      position: absolute;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      background: rgba(247, 248, 247, 0.72);
+      backdrop-filter: blur(3px);
+      z-index: 5;
+      pointer-events: none;
+    }
+
+    .frame-loading.visible {
+      display: flex;
+      pointer-events: auto;
+    }
+
+    .frame-loading-card {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 16px;
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      box-shadow: 0 12px 28px rgba(16, 24, 40, 0.10);
+      color: var(--text);
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .spinner {
+      width: 16px;
+      height: 16px;
+      border: 2px solid #d8e6de;
+      border-top-color: var(--green);
+      border-radius: 999px;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    .page-loader,
+    .page-loader.visible,
+    #pageLoader {
+      display: none !important;
+      opacity: 0 !important;
+      visibility: hidden !important;
+      pointer-events: none !important;
+    }
+
+    @media (max-width: 900px) {
+
+      html,
+      body {
+        height: auto;
+        min-height: 100%;
+        overflow: auto;
+      }
+
+      body {
+        flex-direction: column;
+        overflow: auto;
+      }
+
+      .sidebar {
+        width: 100%;
+        height: auto;
+        max-height: 42vh;
+        padding: 16px;
+      }
+
+      .brand {
+        margin-bottom: 12px;
+        padding-bottom: 12px;
+      }
+
+      .section-title {
+        margin-top: 14px;
+      }
+
+      .main {
+        height: auto;
+        min-height: 100vh;
+      }
+
+      .topbar {
+        align-items: flex-start;
+        flex-direction: column;
+        padding: 14px;
+      }
+
+      .actions {
+        width: 100%;
+        justify-content: flex-start;
+      }
+
+      .topbar button {
+        flex: 1;
+      }
+
+      .user-menu {
+        flex: 1;
+      }
+
+      .user-trigger {
+        width: 100%;
+        justify-content: center;
+      }
+
+      .dropdown {
+        left: 0;
+        right: auto;
+        width: 100%;
+      }
+
+      .content {
+        height: 78vh;
+        min-height: 78vh;
+        padding: 10px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <script>
+    (function () {
+      const token = localStorage.getItem("token");
+      let user = null;
+
+      try {
+        user = JSON.parse(localStorage.getItem("user") || "null");
+      } catch {
+        user = null;
+      }
+
+      if (!token || !user) {
+        window.top.location.href = "/login.html";
+        return;
+      }
+
+      const role = String(user.role || "").toLowerCase();
+
+      if (role === "worker") {
+        localStorage.setItem("currentPage", "worker.html");
+      }
+    })();
+  </script>
+  <div class="sidebar">
+    <div class="brand">
+      <h2>LoneGreen</h2>
+      <small id="sidebarCompany">Professional field service control</small>
+    </div>
+
+    <div class="section-title">Main</div>
+    <button data-page="dashboard.html">Dashboard</button>
+    <button data-page="calendar.html">Calendar</button>
+    <button data-page="jobs.html">Jobs</button>
+    <button data-page="worker.html">Worker App</button>
+
+    <div class="section-title">Customers</div>
+    <button data-page="estimates.html?view=leads">Leads</button>
+    <button data-page="estimates.html?view=estimates">Estimates</button>
+    <button data-page="clients.html">Clients</button>
+    <button data-page="subscriptions.html">Subscriptions</button>
+
+    <div class="section-title">Operations</div>
+    <button data-page="workers.html">Workers</button>
+    <button data-page="zip-manager.html">ZIP Groups</button>
+    <button data-page="users.html">Users</button>
+    <button data-page="health.html">System Health</button>
+
+    <div class="section-title">Finance</div>
+    <button data-page="invoices.html">Invoices</button>
+    <button data-page="analytics.html">Analytics</button>
+
+    <div class="section-title" data-legal-nav>Legal</div>
+    <button data-legal-page="/terms.html" data-legal-nav>Terms of Service</button>
+    <button data-legal-page="/privacy.html" data-legal-nav>Privacy Policy</button>
+    <button data-legal-page="/billing-policy.html" data-legal-nav>Billing Policy</button>
+    <button data-legal-page="/refund-policy.html" data-legal-nav>Refund Policy</button>
+
+    <div class="section-title" data-platform-nav>Platform</div>
+    <button data-page="platform.html#overview" data-platform-nav>Overview</button>
+    <button data-page="platform.html#companies" data-platform-nav>Companies</button>
+    <button data-page="platform.html#billing" data-platform-nav>Plans & Billing</button>
+    <button data-page="platform.html#users" data-platform-nav>Platform Users</button>
+    <button data-page="platform.html#health" data-platform-nav>System Health</button>
+    <button data-page="platform.html#activity" data-platform-nav>Activity Logs</button>
+    <button data-page="platform.html#settings" data-platform-nav>Settings</button>
+  </div>
+
+  <div class="main">
+    <div class="topbar">
+      <div>
+        <h3 id="welcome">Welcome</h3>
+        <small id="subwelcome">Control Panel</small>
+      </div>
+
+      <div class="actions">
+        <button data-page="clients.html">+ New Client</button>
+        <button data-page="estimates.html?view=leads">+ New Lead</button>
+
+        <div class="user-menu">
+          <button type="button" class="user-trigger" id="userMenuButton">
+            <span class="user-avatar" id="userAvatar">LG</span>
+            <span id="userMenuLabel">Account</span>
+            <span>▼</span>
+          </button>
+
+          <div id="userDropdown" class="dropdown">
+            <button type="button" data-user-action="settings">Settings</button>
+            <div class="dropdown-divider"></div>
+            <button type="button" data-user-action="logout">Logout</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="content">
+      <div class="frame-shell">
+        <div id="frameLoading" class="frame-loading">
+          <div class="frame-loading-card">
+            <span class="spinner"></span>
+            <span>Loading page...</span>
+          </div>
+        </div>
+
+        <iframe id="frame" src="/dashboard.html"></iframe>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API = window.location.origin;
+    let frameLoadingTimer = null;
+
+    const allowedPages = [
+      "dashboard.html",
+      "clients.html",
+      "client.html",
+      "jobs.html",
+      "estimates.html",
+      "estimates.html?view=leads",
+      "estimates.html?view=estimates",
+      "subscriptions.html",
+      "calendar.html",
+      "zip-manager.html",
+      "workers.html",
+      "invoices.html",
+      "invoice.html",
+      "worker.html",
+      "settings.html",
+      "analytics.html",
+      "users.html",
+      "health.html",
+      "platform.html",
+      "platform.html#overview",
+      "platform.html#companies",
+      "platform.html#billing",
+      "platform.html#users",
+      "platform.html#health",
+      "platform.html#activity",
+      "platform.html#settings"
+    ];
+
+    const WORKER_ALLOWED_PAGE = "worker.html";
+
+    const workerBlockedPages = [
+      "dashboard.html",
+      "clients.html",
+      "client.html",
+      "estimates.html",
+      "estimates.html?view=leads",
+      "estimates.html?view=estimates",
+      "jobs.html",
+      "calendar.html",
+      "subscriptions.html",
+      "workers.html",
+      "zip-manager.html",
+      "invoices.html",
+      "invoice.html",
+      "settings.html",
+      "users.html",
+      "health.html",
+      "analytics.html",
+      "platform.html",
+      "platform.html#overview",
+      "platform.html#companies",
+      "platform.html#billing",
+      "platform.html#users",
+      "platform.html#health",
+      "platform.html#activity",
+      "platform.html#settings"
+    ];
+
+    function getUser() {
+      try {
+        return JSON.parse(localStorage.getItem("user") || "null");
+      } catch {
+        return null;
+      }
+    }
+
+    function setUser(user) {
+      localStorage.setItem("user", JSON.stringify(user || {}));
+    }
+
+    function getToken() {
+      return localStorage.getItem("token");
+    }
+
+    function currentRole() {
+      const user = getUser();
+      return String((user && user.role) || "").toLowerCase();
+    }
+
+    function isWorkerUser() {
+      return currentRole() === "worker";
+    }
+
+    function isPlatformOwnerUser() {
+      return currentRole() === "platform_owner";
+    }
+
+    function isWorkerBlockedPage(page) {
+      const cleanPage = String(page || "").replace(/^\/+/, "");
+      const basePage = cleanPage.split(/[?#]/)[0];
+      return workerBlockedPages.includes(cleanPage) || workerBlockedPages.includes(basePage);
+    }
+
+    function isAllowedPage(page) {
+      const cleanPage = String(page || "").replace(/^\/+/, "");
+      const basePage = cleanPage.split(/[?#]/)[0];
+      return allowedPages.includes(cleanPage) || allowedPages.includes(basePage);
+    }
+
+    function safePage(page) {
+      const cleanPage = String(page || "").replace(/^\/+/, "");
+
+      if (isPlatformOwnerUser()) {
+        return cleanPage.startsWith("platform.html") ? cleanPage : "platform.html#overview";
+      }
+
+      if (isWorkerUser()) {
+        return WORKER_ALLOWED_PAGE;
+      }
+
+      if (cleanPage.startsWith("platform.html")) {
+        return "dashboard.html";
+      }
+
+      return isAllowedPage(cleanPage) ? cleanPage : "dashboard.html";
+    }
+
+    function applyWorkerRoleProtection() {
+      document.querySelectorAll(".section-title:not([data-platform-nav]):not([data-legal-nav])").forEach((item) => {
+        item.style.display = isPlatformOwnerUser() ? "none" : "";
+      });
+
+      document.querySelectorAll("[data-platform-nav]").forEach((item) => {
+        const showPlatform = isPlatformOwnerUser();
+        item.style.display = showPlatform ? "" : "none";
+        if (item.tagName === "BUTTON") item.disabled = !showPlatform;
+      });
+
+      if (isPlatformOwnerUser()) {
+        document.querySelectorAll("button[data-page]").forEach((button) => {
+          const isPlatformButton = String(button.getAttribute("data-page") || "").startsWith("platform.html");
+          button.style.display = isPlatformButton ? "" : "none";
+          button.disabled = !isPlatformButton;
+        });
+        const currentPlatformPage = localStorage.getItem("currentPage") || "";
+        if (!currentPlatformPage.startsWith("platform.html")) {
+          localStorage.setItem("currentPage", "platform.html#overview");
+        }
+        return;
+      }
+
+      if (!isWorkerUser()) {
+        document.querySelectorAll("button[data-page='worker.html']").forEach((button) => {
+          button.style.display = "none";
+          button.disabled = true;
+        });
+        return;
+      }
+
+      document.querySelectorAll("button[data-page]").forEach((button) => {
+        const page = button.getAttribute("data-page");
+
+        if (isWorkerBlockedPage(page)) {
+          button.style.display = "none";
+          button.disabled = true;
+        }
+
+        if (page === WORKER_ALLOWED_PAGE) {
+          button.style.display = "";
+          button.disabled = false;
+        }
+      });
+
+      document.querySelectorAll("[data-user-action='settings']").forEach((button) => {
+        button.style.display = "none";
+        button.disabled = true;
+      });
+
+      const savedPage = localStorage.getItem("currentPage");
+
+      if (!savedPage || isWorkerBlockedPage(savedPage)) {
+        localStorage.setItem("currentPage", WORKER_ALLOWED_PAGE);
+      }
+    }
+
+    function logout() {
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      localStorage.removeItem("currentPage");
+      localStorage.removeItem("redirectAfterLogin");
+      window.location.href = "/login.html";
+    }
+
+    function requireSession() {
+      const user = getUser();
+      const token = getToken();
+
+      if (!token || !user || (!user.company_id && currentRole() !== "platform_owner")) {
+        logout();
+        return false;
+      }
+
+      return true;
+    }
+
+    function setWelcome() {
+      const user = getUser();
+
+      document.getElementById("welcome").textContent =
+        user && user.username ? "Welcome, " + user.username : "Welcome";
+
+      document.getElementById("userMenuLabel").textContent =
+        user && user.username ? user.username : "Account";
+
+      document.getElementById("userAvatar").textContent =
+        user && user.username ? user.username.slice(0, 2).toUpperCase() : "LG";
+
+      if (user && user.role) {
+        document.getElementById("subwelcome").textContent =
+          user.role.charAt(0).toUpperCase() + user.role.slice(1) + " account";
+      } else if (user && user.company_id) {
+        document.getElementById("subwelcome").textContent =
+          "Company ID: " + user.company_id;
+      } else {
+        document.getElementById("subwelcome").textContent = "Control Panel";
+      }
+    }
+
+    function setActiveButton(page) {
+      document.querySelectorAll("button[data-page]").forEach((button) => {
+        button.classList.toggle("active", button.getAttribute("data-page") === page);
+      });
+    }
+
+    function showFrameLoading() {
+      const loader = document.getElementById("frameLoading");
+      if (loader) loader.classList.add("visible");
+      clearTimeout(frameLoadingTimer);
+      frameLoadingTimer = setTimeout(hideFrameLoading, 2000);
+    }
+
+    function hideFrameLoading() {
+      const loader = document.getElementById("frameLoading");
+      if (loader) loader.classList.remove("visible");
+      clearTimeout(frameLoadingTimer);
+      frameLoadingTimer = null;
+    }
+
+    function loadPage(page) {
+      const finalPage = safePage(page);
+      const frame = document.getElementById("frame");
+      const nextSrc = "/" + finalPage;
+
+      localStorage.setItem("currentPage", finalPage);
+      setActiveButton(finalPage);
+
+      if (frame && frame.getAttribute("src") !== nextSrc) {
+        showFrameLoading();
+        frame.setAttribute("src", nextSrc);
+      } else {
+        hideFrameLoading();
+      }
+    }
+
+    function initFrameMessages() {
+      window.addEventListener("message", (event) => {
+        if (event.origin !== window.location.origin) return;
+
+        const data = event.data || {};
+        if (!data || data.type !== "openPage") return;
+
+        let page = String(data.page || "").replace(/^\/+/, "");
+
+        if (page === "clients.html" && data.clientId) {
+          page = "client.html?id=" + encodeURIComponent(data.clientId);
+        } else if (page === "invoices.html" && data.jobId) {
+          page = "invoices.html?job_id=" + encodeURIComponent(data.jobId);
+        }
+
+        loadPage(page);
+      });
+    }
+
+    async function authFetch(url) {
+      const res = await fetch(url, {
+        headers: {
+          Authorization: "Bearer " + getToken()
+        }
+      });
+
+      if (res.status === 401) {
+        logout();
+        throw new Error("Unauthorized");
+      }
+
+      return res;
+    }
+
+    async function refreshSessionSummary() {
+      try {
+        const [meRes, companyRes] = await Promise.allSettled([
+          authFetch(API + "/me"),
+          authFetch(API + "/company")
+        ]);
+
+        if (meRes.status === "fulfilled" && meRes.value.ok) {
+          const me = await meRes.value.json();
+          setUser({ ...getUser(), ...me });
+          setWelcome();
+          applyWorkerRoleProtection();
+
+          if (isWorkerUser()) {
+            loadPage(WORKER_ALLOWED_PAGE);
+          }
+        }
+
+        if (companyRes.status === "fulfilled" && companyRes.value.ok) {
+          const company = await companyRes.value.json();
+          document.getElementById("sidebarCompany").textContent =
+            company.name || "Professional field service control";
+        }
+      } catch (err) {
+        console.log("SESSION SUMMARY ERROR:", err);
+      }
+    }
+
+    function initNavigation() {
+      document.querySelectorAll("button[data-page]").forEach((button) => {
+        button.addEventListener("click", (event) => {
+          event.preventDefault();
+          loadPage(button.getAttribute("data-page"));
+        });
+      });
+
+      document.querySelectorAll("button[data-legal-page]").forEach((button) => {
+        button.addEventListener("click", (event) => {
+          event.preventDefault();
+          window.open(button.getAttribute("data-legal-page"), "_blank", "noopener");
+        });
+      });
+    }
+
+    function initUserMenu() {
+      const button = document.getElementById("userMenuButton");
+      const dropdown = document.getElementById("userDropdown");
+
+      button.addEventListener("click", (event) => {
+        event.stopPropagation();
+        dropdown.classList.toggle("open");
+      });
+
+      document.querySelectorAll("[data-user-action]").forEach((item) => {
+        item.addEventListener("click", () => {
+          const action = item.getAttribute("data-user-action");
+          dropdown.classList.remove("open");
+
+          if (action === "settings") {
+            loadPage("settings.html");
+          }
+
+          if (action === "logout") {
+            logout();
+          }
+        });
+      });
+
+      document.addEventListener("click", (event) => {
+        if (!document.querySelector(".user-menu").contains(event.target)) {
+          dropdown.classList.remove("open");
+        }
+      });
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      if (!requireSession()) return;
+
+      initNavigation();
+      initFrameMessages();
+      initUserMenu();
+      setWelcome();
+      applyWorkerRoleProtection();
+
+      const frame = document.getElementById("frame");
+
+      if (frame) {
+        frame.addEventListener("load", hideFrameLoading);
+      }
+
+      const defaultPage = isPlatformOwnerUser() ? "platform.html#overview" : (isWorkerUser() ? WORKER_ALLOWED_PAGE : "dashboard.html");
+      const savedPage = safePage(localStorage.getItem("currentPage") || defaultPage);
+
+      localStorage.setItem("currentPage", savedPage);
+      showFrameLoading();
+      document.getElementById("frame").setAttribute("src", "/" + savedPage);
+      setActiveButton(savedPage);
+
+      refreshSessionSummary();
+    });
+
+    window.loadPage = loadPage;
+    window.logout = logout;
+  </script>
+  <script src="/js/legal-consent.js"></script>
+</body>
+
+</html>
+```

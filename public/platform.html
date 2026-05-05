@@ -1,0 +1,1826 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Platform Command Center</title>
+  <link rel="stylesheet" href="/app-shell.css">
+  <style>
+    * { box-sizing: border-box; }
+
+    :root {
+      --bg: #f4f7f5;
+      --panel: #ffffff;
+      --text: #173327;
+      --muted: #64786f;
+      --border: #dce9e1;
+      --soft: #eef7f2;
+      --green: #1f5c3a;
+      --green-2: #2f6f4c;
+      --blue: #2459c8;
+      --purple: #5b2fb2;
+      --warn: #9a5b05;
+      --danger: #b42318;
+      --shadow: 0 18px 42px rgba(16, 24, 40, 0.07);
+      --radius: 16px;
+    }
+
+    html, body {
+      margin: 0;
+      min-height: 100%;
+      font-family: Arial, sans-serif;
+      background: linear-gradient(180deg, #edf5f0 0%, var(--bg) 300px, #f8faf9 100%);
+      color: var(--text);
+    }
+
+    button, input, select { font: inherit; }
+
+    .page {
+      min-height: 100vh;
+      padding: 22px;
+      display: grid;
+      gap: 16px;
+    }
+
+    .hero {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    h1 {
+      margin: 0 0 6px;
+      color: var(--green);
+      font-size: 34px;
+      letter-spacing: 0;
+    }
+
+    h2, h3, h4, p { margin-top: 0; }
+
+    p {
+      margin-bottom: 0;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    .top-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .btn {
+      border: 0;
+      border-radius: 12px;
+      padding: 10px 13px;
+      background: var(--green);
+      color: white;
+      font-weight: 850;
+      cursor: pointer;
+      min-height: 40px;
+    }
+
+    .btn.secondary {
+      background: white;
+      color: var(--green);
+      border: 1px solid var(--border);
+    }
+
+    .btn.ghost {
+      background: var(--soft);
+      color: var(--green);
+    }
+
+    .btn:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+    }
+
+    .content-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 420px;
+      gap: 16px;
+      align-items: start;
+    }
+
+    .main-content {
+      min-width: 0;
+      display: grid;
+      gap: 16px;
+    }
+
+    .panel, .drawer {
+      background: rgba(255, 255, 255, 0.97);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      min-width: 0;
+    }
+
+    .panel { padding: 16px; }
+
+    .section {
+      display: none;
+      gap: 16px;
+    }
+
+    .section.active { display: grid; }
+
+    .section-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .section-head h2 {
+      margin: 0;
+      font-size: 19px;
+    }
+
+    .count-pill {
+      border-radius: 999px;
+      padding: 6px 10px;
+      background: var(--soft);
+      color: var(--green);
+      font-size: 12px;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .kpi {
+      display: grid;
+      gap: 10px;
+      padding: 15px;
+      border: 1px solid var(--border);
+      border-radius: 15px;
+      background: #f8fbf9;
+      min-width: 0;
+    }
+
+    .kpi-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .kpi-icon {
+      width: 34px;
+      height: 34px;
+      border-radius: 11px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--soft);
+      color: var(--green);
+      font-weight: 950;
+      font-size: 12px;
+    }
+
+    .kpi span {
+      color: var(--muted);
+      font-size: 11px;
+      text-transform: uppercase;
+      font-weight: 900;
+    }
+
+    .kpi strong {
+      font-size: 27px;
+      color: var(--text);
+      overflow-wrap: anywhere;
+    }
+
+    .kpi small {
+      color: var(--muted);
+      line-height: 1.4;
+    }
+
+    .toolbar {
+      display: grid;
+      grid-template-columns: minmax(220px, 1fr) 150px 170px 160px;
+      gap: 10px;
+      align-items: end;
+    }
+
+    label {
+      display: grid;
+      gap: 6px;
+      color: var(--text);
+      font-size: 12px;
+      font-weight: 900;
+      text-transform: uppercase;
+    }
+
+    input, select {
+      width: 100%;
+      border: 1px solid #cfe0d5;
+      border-radius: 12px;
+      min-height: 42px;
+      padding: 10px 12px;
+      background: white;
+      color: var(--text);
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      max-width: 100%;
+    }
+
+    table {
+      width: 100%;
+      min-width: 1020px;
+      border-collapse: collapse;
+      background: white;
+    }
+
+    th, td {
+      padding: 12px 10px;
+      border-bottom: 1px solid #e6eee9;
+      text-align: left;
+      white-space: nowrap;
+      vertical-align: middle;
+    }
+
+    th {
+      background: #f8fbf9;
+      color: var(--muted);
+      font-size: 11px;
+      text-transform: uppercase;
+      font-weight: 950;
+    }
+
+    tbody tr { cursor: pointer; }
+
+    tbody tr:hover,
+    tbody tr.selected {
+      background: #eef7f2;
+    }
+
+    .company-name {
+      color: var(--text);
+      font-weight: 950;
+    }
+
+    .sub {
+      margin-top: 3px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .badge {
+      display: inline-flex;
+      width: fit-content;
+      border-radius: 999px;
+      padding: 6px 9px;
+      font-size: 11px;
+      font-weight: 950;
+      text-transform: uppercase;
+      background: var(--soft);
+      color: var(--green);
+      white-space: nowrap;
+    }
+
+    .badge.pro { background: #eaf1ff; color: var(--blue); }
+    .badge.enterprise { background: #f1edff; color: var(--purple); }
+    .badge.active { background: #e9f8ef; color: #166534; }
+    .badge.trial { background: #fff7df; color: var(--warn); }
+    .badge.past_due, .badge.cancelled, .badge.suspended { background: #fff1f1; color: var(--danger); }
+    .badge.warning { background: #fff7df; color: var(--warn); }
+    .badge.danger { background: #fff1f1; color: var(--danger); }
+
+    .mobile-cards {
+      display: none;
+      gap: 10px;
+    }
+
+    .company-card {
+      display: grid;
+      gap: 11px;
+      padding: 14px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: white;
+    }
+
+    .company-card.selected {
+      background: #eef7f2;
+      border-color: #c4dfce;
+    }
+
+    .company-card-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: flex-start;
+    }
+
+    .mini-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .metric {
+      padding: 10px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: #f8fbf9;
+      min-width: 0;
+    }
+
+    .metric span {
+      display: block;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 900;
+      text-transform: uppercase;
+      margin-bottom: 5px;
+    }
+
+    .metric strong {
+      display: block;
+      color: var(--text);
+      overflow-wrap: anywhere;
+    }
+
+    .drawer {
+      position: sticky;
+      top: 16px;
+      max-height: calc(100vh - 44px);
+      overflow: hidden;
+      display: grid;
+      grid-template-rows: auto auto 1fr;
+    }
+
+    .drawer.hidden {
+      display: none;
+    }
+
+    .drawer-head {
+      padding: 16px 16px 12px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .drawer-head-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: flex-start;
+    }
+
+    .drawer h3 {
+      margin: 0 0 4px;
+      font-size: 20px;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 6px;
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--border);
+      overflow-x: auto;
+    }
+
+    .tab {
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      background: white;
+      color: var(--muted);
+      padding: 8px 10px;
+      cursor: pointer;
+      font-weight: 850;
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
+    .tab.active {
+      background: var(--green);
+      border-color: var(--green);
+      color: white;
+    }
+
+    .drawer-body {
+      overflow: auto;
+      padding: 14px 16px 16px;
+      display: grid;
+      gap: 14px;
+      align-content: start;
+    }
+
+    .billing-form {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .billing-form .btn { grid-column: 1 / -1; }
+
+    .list {
+      display: grid;
+      gap: 8px;
+    }
+
+    .list-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 10px;
+      padding: 10px 0;
+      border-bottom: 1px solid #e6eee9;
+    }
+
+    .list-row:last-child { border-bottom: 0; }
+
+    .list-row span {
+      color: var(--muted);
+      overflow-wrap: anywhere;
+    }
+
+    .list-row strong {
+      color: var(--text);
+      text-align: right;
+      overflow-wrap: anywhere;
+    }
+
+    .state {
+      padding: 16px;
+      border-radius: 14px;
+      border: 1px dashed var(--border);
+      background: #f8fbf9;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    .state.error {
+      color: var(--danger);
+      background: #fff7f7;
+      border-color: #f0c7c7;
+    }
+
+    .warning-list {
+      display: grid;
+      gap: 8px;
+    }
+
+    .warning-item {
+      border: 1px solid #f4deb0;
+      background: #fffaf0;
+      color: #6f4400;
+      border-radius: 12px;
+      padding: 10px 12px;
+      line-height: 1.45;
+    }
+
+    .warning-item.danger {
+      border-color: #f0c7c7;
+      background: #fff7f7;
+      color: var(--danger);
+    }
+
+    .toast {
+      position: fixed;
+      right: 18px;
+      bottom: 18px;
+      z-index: 20;
+      min-width: 240px;
+      max-width: 360px;
+      padding: 12px 14px;
+      border-radius: 14px;
+      background: var(--green);
+      color: white;
+      box-shadow: var(--shadow);
+      font-weight: 850;
+      display: none;
+    }
+
+    .toast.error { background: var(--danger); }
+    .toast.visible { display: block; }
+
+    .health-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    @media (max-width: 1180px) {
+      .content-grid { grid-template-columns: 1fr; }
+      .drawer {
+        position: static;
+        max-height: none;
+      }
+    }
+
+    @media (max-width: 760px) {
+      .page { padding: 12px; }
+      h1 { font-size: 28px; }
+      .hero { align-items: stretch; }
+      .top-actions { justify-content: stretch; }
+      .top-actions .btn { flex: 1; }
+      .kpi-grid,
+      .toolbar,
+      .mini-grid,
+      .health-grid,
+      .billing-form {
+        grid-template-columns: 1fr;
+      }
+      .table-wrap { display: none; }
+      .mobile-cards { display: grid; }
+    }
+  </style>
+</head>
+<body>
+<div class="page">
+  <header class="hero">
+    <div>
+      <h1 id="pageTitle">Platform Command Center</h1>
+      <p id="pageSubtitle">Manage companies, plans, usage, payments, and platform health.</p>
+    </div>
+    <div class="top-actions">
+      <button class="btn" type="button" onclick="loadCurrentSection()">Refresh</button>
+      <button class="btn secondary" type="button" onclick="navigateSection('billing')">Billing & Subscriptions</button>
+      <button class="btn secondary" type="button" onclick="goControl()">Back to Control Panel</button>
+    </div>
+  </header>
+
+  <div class="content-grid">
+    <main class="main-content">
+      <section id="overviewSection" class="section active">
+        <div class="panel">
+          <div class="section-head">
+            <h2>Platform KPIs</h2>
+            <span class="count-pill" id="lastUpdated">Loading</span>
+          </div>
+          <div id="overviewGrid" class="kpi-grid">
+            <div class="state">Loading platform metrics...</div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="section-head">
+            <h2>Platform Overview</h2>
+            <span class="count-pill">Snapshot</span>
+          </div>
+          <div class="mini-grid" id="overviewPreview">
+            <div class="state">Loading summary...</div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="section-head">
+            <h2>Platform Analytics</h2>
+            <span class="count-pill">Ops + billing</span>
+          </div>
+          <p style="margin:0 0 8px;font-size:13px;color:var(--muted);">Operational metrics from <code>/platform/analytics</code>.</p>
+          <div class="mini-grid" id="analyticsGrid">
+            <div class="state">Loading analytics...</div>
+          </div>
+          <p style="margin:16px 0 8px;font-size:13px;color:var(--muted);">Billing analytics (read-only) from <code>/platform/billing/analytics</code>.</p>
+          <div class="mini-grid" id="billingAnalyticsGrid">
+            <div class="state">Loading billing analytics...</div>
+          </div>
+        </div>
+      </section>
+
+      <section id="companiesSection" class="section">
+        <div class="panel">
+          <div class="section-head">
+            <h2>Companies</h2>
+            <span class="count-pill" id="companyCount">0 companies</span>
+          </div>
+          <div class="toolbar">
+            <label>Search
+              <input id="searchInput" placeholder="Company, email, or phone" oninput="renderCompanies()">
+            </label>
+            <label>Plan
+              <select id="planFilter" onchange="renderCompanies()">
+                <option value="">All plans</option>
+                <option value="starter">Starter</option>
+                <option value="pro">Pro</option>
+                <option value="enterprise">Enterprise</option>
+              </select>
+            </label>
+            <label>Billing Status
+              <select id="statusFilter" onchange="renderCompanies()">
+                <option value="">All statuses</option>
+                <option value="trial">Trial</option>
+                <option value="active">Active</option>
+                <option value="past_due">Past Due</option>
+                <option value="cancelled">Cancelled</option>
+                <option value="suspended">Suspended</option>
+              </select>
+            </label>
+            <label>Sort
+              <select id="sortSelect" onchange="renderCompanies()">
+                <option value="newest">Newest</option>
+                <option value="users">Users</option>
+                <option value="clients">Clients</option>
+                <option value="revenue">Revenue</option>
+              </select>
+            </label>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Company</th>
+                  <th>Plan</th>
+                  <th>Status</th>
+                  <th>Platform</th>
+                  <th>Warnings</th>
+                  <th>Users</th>
+                  <th>Clients</th>
+                  <th>Jobs</th>
+                  <th>Invoices</th>
+                  <th>Payments</th>
+                  <th>Active Subs</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="companiesTable">
+                <tr><td colspan="12">Loading companies...</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div id="companiesCards" class="mobile-cards"></div>
+        </div>
+      </section>
+
+      <section id="billingSection" class="section">
+        <div class="panel">
+          <div class="section-head">
+            <h2>Plans & Billing</h2>
+            <button class="btn secondary" type="button" onclick="evaluateBillingSuspensions()">Evaluate grace periods</button>
+          </div>
+          <div class="mini-grid" id="billingSummary">
+            <div class="state">Loading billing summary...</div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="section-head">
+            <h2>Company Plan Status</h2>
+            <span class="count-pill" id="billingCount">0 companies</span>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Company</th>
+                  <th>Plan</th>
+                  <th>Status</th>
+                  <th>Platform</th>
+                  <th>Warnings</th>
+                  <th>Monthly Price</th>
+                  <th>Users</th>
+                  <th>Clients</th>
+                  <th>Jobs This Month</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="billingTable">
+                <tr><td colspan="10">Loading billing companies...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section id="usersSection" class="section">
+        <div class="panel">
+          <div class="section-head">
+            <h2>Platform Users</h2>
+            <span class="count-pill">Owner access</span>
+          </div>
+          <div id="platformUsersPanel" class="state">
+            Platform user management endpoint is not available yet. Current access is still enforced by the backend platform_owner role.
+          </div>
+        </div>
+        <div class="panel">
+          <h2>Roles & Permissions</h2>
+          <div class="mini-grid">
+            <div class="metric"><span>Platform Owner</span><strong>Platform-only access</strong></div>
+            <div class="metric"><span>Owner/Admin</span><strong>Company administration</strong></div>
+            <div class="metric"><span>Manager</span><strong>Daily operations</strong></div>
+            <div class="metric"><span>Worker</span><strong>Assigned field work</strong></div>
+          </div>
+        </div>
+      </section>
+
+      <section id="healthSection" class="section">
+        <div class="panel">
+          <div class="section-head">
+            <h2>System Health</h2>
+            <span class="count-pill" id="healthStatus">Checking</span>
+          </div>
+          <div id="healthGrid" class="health-grid">
+            <div class="state">Loading health status...</div>
+          </div>
+        </div>
+      </section>
+
+      <section id="activitySection" class="section">
+        <div class="panel">
+          <div class="section-head">
+            <h2>Activity Logs</h2>
+            <span class="count-pill">Platform-wide</span>
+          </div>
+          <div id="activityList" class="list">
+            <div class="state">Loading platform activity...</div>
+          </div>
+        </div>
+      </section>
+
+      <section id="settingsSection" class="section">
+        <div class="panel">
+          <div class="section-head">
+            <h2>Platform Settings</h2>
+            <span class="count-pill">Coming soon</span>
+          </div>
+          <div id="settingsPanel" class="state">
+            Loading platform settings...
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <aside id="drawer" class="drawer">
+      <div id="drawerHead" class="drawer-head">
+        <div class="drawer-head-row">
+          <div>
+            <h3>Company Details</h3>
+            <p>Select a company to inspect users, jobs, invoices, activity, and billing.</p>
+          </div>
+        </div>
+      </div>
+      <div class="tabs" id="detailTabs">
+        <button class="tab active" type="button" onclick="setDetailTab('overview')">Overview</button>
+        <button class="tab" type="button" onclick="setDetailTab('billing')">Billing</button>
+        <button class="tab" type="button" onclick="setDetailTab('users')">Users</button>
+        <button class="tab" type="button" onclick="setDetailTab('jobs')">Jobs</button>
+        <button class="tab" type="button" onclick="setDetailTab('invoices')">Invoices</button>
+        <button class="tab" type="button" onclick="setDetailTab('activity')">Activity</button>
+      </div>
+      <div id="drawerBody" class="drawer-body">
+        <div class="state">No company selected.</div>
+      </div>
+    </aside>
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script src="/js/format.js"></script>
+<script>
+const API = window.location.origin;
+const SECTION_META = {
+  overview: ["Platform Command Center", "Manage companies, plans, usage, payments, and platform health."],
+  companies: ["Companies", "Search, filter, inspect, and manage company billing state."],
+  billing: ["Plans & Billing", "Review internal plans, subscription state, and company usage."],
+  users: ["Platform Users", "Review platform access and role boundaries."],
+  health: ["System Health", "Check API, queue, scheduler, database, and upload readiness."],
+  activity: ["Activity Logs", "Review platform-wide logs when the endpoint is available."],
+  settings: ["Platform Settings", "Future safe settings for platform-level operations."]
+};
+
+let currentSection = "overview";
+let overviewData = null;
+let analyticsData = null;
+let companies = [];
+let selectedCompanyId = null;
+let selectedCompanyDetail = null;
+let detailTab = "overview";
+let loadingCompany = false;
+let healthData = {};
+let activityRows = [];
+let platformUsers = [];
+let platformSettings = null;
+let booted = false;
+let billingOverviewData = null;
+let billingAnalyticsData = null;
+
+function token(){ return localStorage.getItem("token"); }
+function user(){
+  try { return JSON.parse(localStorage.getItem("user") || "null"); } catch(err) { return null; }
+}
+function role(){ const u = user(); return String((u && u.role) || "").toLowerCase(); }
+function esc(value){
+  if(window.AppFormat && typeof AppFormat.escapeHtml === "function") return AppFormat.escapeHtml(value || "");
+  return String(value || "").replace(/[&<>"']/g, ch => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[ch]));
+}
+function money(value){
+  if(window.AppFormat && typeof AppFormat.formatMoney === "function") return AppFormat.formatMoney(value || 0);
+  return "$" + Number(value || 0).toFixed(2);
+}
+function num(value){ const n = Number(value || 0); return Number.isFinite(n) ? n : 0; }
+function date(value){ return value ? String(value).split("T")[0] : "-"; }
+function titleCase(value){ return String(value || "-").replace(/_/g, " ").replace(/\b\w/g, ch => ch.toUpperCase()); }
+function text(value, fallback){ return value === null || value === undefined || value === "" ? (fallback || "-") : String(value); }
+
+function requirePlatform(){
+  if(!token() || !user()){
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    window.top.location.href = "/login.html";
+    return false;
+  }
+
+  if(role() !== "platform_owner"){
+    document.body.innerHTML = '<div class="state error" style="margin:24px;">Forbidden. Platform owner access is required.</div>';
+    setTimeout(() => { window.top.location.href = "/control.html"; }, 900);
+    return false;
+  }
+
+  return true;
+}
+
+async function apiFetch(path, options){
+  const opts = options || {};
+  const headers = Object.assign({}, opts.headers || {});
+
+  if(opts.auth !== false) {
+    headers.Authorization = "Bearer " + token();
+  }
+
+  const res = await fetch(API + path, Object.assign({}, opts, { headers }));
+  let data = null;
+
+  try { data = await res.json(); } catch(err) { data = {}; }
+
+  if(res.status === 401){
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    localStorage.removeItem("currentPage");
+    window.top.location.href = "/login.html";
+    throw new Error("Unauthorized");
+  }
+
+  if(res.status === 403 && opts.allowForbidden){
+    return { forbidden: true, error: data.error || "Forbidden" };
+  }
+
+  if(res.status === 403){
+    showToast("Forbidden. Platform owner access is required.", "error");
+    throw new Error("Forbidden");
+  }
+
+  if(!res.ok) throw new Error(data.error || "Request failed");
+  return data;
+}
+
+function showToast(message, type){
+  const toast = document.getElementById("toast");
+  toast.textContent = message;
+  toast.className = "toast visible" + (type === "error" ? " error" : "");
+  clearTimeout(showToast.timer);
+  showToast.timer = setTimeout(() => { toast.className = "toast"; }, 2800);
+}
+
+function reportUiError(err, fallback){
+  const message = err && err.message ? err.message : (fallback || "Action failed.");
+  console.error(message, err || "");
+  showToast(message, "error");
+}
+
+function navigateSection(section){
+  const clean = SECTION_META[section] ? section : "overview";
+  if(location.hash.replace("#", "") === clean){
+    showSection(clean);
+    return;
+  }
+  location.hash = clean;
+}
+
+function sectionFromHash(){
+  const hash = String(location.hash || "").replace("#", "");
+  return SECTION_META[hash] ? hash : "overview";
+}
+
+function showSection(section){
+  currentSection = SECTION_META[section] ? section : "overview";
+  document.querySelectorAll(".section").forEach(item => {
+    item.classList.toggle("active", item.id === currentSection + "Section");
+  });
+
+  const meta = SECTION_META[currentSection];
+  document.getElementById("pageTitle").textContent = meta[0];
+  document.getElementById("pageSubtitle").textContent = meta[1];
+  document.getElementById("drawer").classList.toggle("hidden", !["companies", "billing"].includes(currentSection));
+
+  if(currentSection === "overview") {
+    renderOverview();
+    renderOverviewPreview();
+  }
+  if(currentSection === "companies") renderCompanies();
+  if(currentSection === "billing") {
+    renderBillingSummary();
+    renderBillingTable();
+  }
+  if(currentSection === "health") renderHealth();
+  if(currentSection === "activity") renderActivity();
+  if(currentSection === "users") renderPlatformUsers();
+  if(currentSection === "settings") renderSettings();
+}
+
+function goControl(){
+  if(window.self !== window.top){
+    showToast("You are already in the Control Panel.");
+    return;
+  }
+  window.top.location.href = "/control.html";
+}
+
+function badge(value, type){
+  const clean = String(value || "-").toLowerCase();
+  return '<span class="badge ' + esc(type || clean) + '">' + esc(titleCase(clean)) + '</span>';
+}
+
+function toDatetimeLocalValue(iso){
+  if(!iso) return "";
+  const d = new Date(iso);
+  if(Number.isNaN(d.getTime())) return "";
+  const pad = function(n){ return String(n).padStart(2, "0"); };
+  return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()) + "T" + pad(d.getHours()) + ":" + pad(d.getMinutes());
+}
+
+function billingPlanOptions(selected){
+  const sel = String(selected || "starter").toLowerCase();
+  return ["starter", "pro", "enterprise"].map(function(plan){
+    return '<option value="' + plan + '"' + (sel === plan ? " selected" : "") + ">" + esc(titleCase(plan)) + "</option>";
+  }).join("");
+}
+
+function billingStatusOptions(selected){
+  const sel = String(selected || "trial").toLowerCase();
+  const opts = ["trial", "active", "past_due", "cancelled", "suspended"];
+  return opts.map(function(st){
+    return '<option value="' + st + '"' + (sel === st ? " selected" : "") + ">" + esc(titleCase(st.replace(/_/g, " "))) + "</option>";
+  }).join("");
+}
+
+function warningBadges(row){
+  const warnings = row && row.warnings && Array.isArray(row.warnings.warnings)
+    ? row.warnings.warnings
+    : [];
+
+  if(!warnings.length){
+    return '<span class="badge">Clear</span>';
+  }
+
+  return warnings.slice(0, 3).map(warning =>
+    '<span class="badge ' + esc(warning.severity === "danger" ? "danger" : "warning") + '">' +
+      esc(titleCase(warning.type || "warning")) +
+    '</span>'
+  ).join(" ") + (warnings.length > 3 ? ' <span class="badge warning">+' + (warnings.length - 3) + '</span>' : "");
+}
+
+function limitText(current, limit){
+  return esc(num(current)) + " / " + esc(limit == null ? "Unlimited" : num(limit));
+}
+
+function warningList(warnings){
+  const list = warnings && Array.isArray(warnings.warnings) ? warnings.warnings : [];
+  if(!list.length){
+    return '<div class="state">No billing warnings for this company.</div>';
+  }
+
+  return '<div class="warning-list">' + list.map(warning =>
+    '<div class="warning-item ' + esc(warning.severity === "danger" ? "danger" : "") + '">' +
+      '<strong>' + esc(titleCase(warning.type || "warning")) + '</strong><br>' +
+      esc(warning.message || "Billing warning.") +
+      (warning.limit != null ? '<div class="sub">Current: ' + esc(warning.current) + ' | Limit: ' + esc(warning.limit) + '</div>' : '') +
+    '</div>'
+  ).join("") + '</div>';
+}
+
+function metric(label, value){
+  return '<div class="metric"><span>' + esc(label) + '</span><strong>' + esc(value) + '</strong></div>';
+}
+
+function kpi(label, value, helper, icon){
+  return '<div class="kpi">' +
+    '<div class="kpi-head"><span>' + esc(label) + '</span><span class="kpi-icon">' + esc(icon) + '</span></div>' +
+    '<strong>' + esc(value) + '</strong>' +
+    '<small>' + esc(helper) + '</small>' +
+  '</div>';
+}
+
+function renderOverview(){
+  const data = overviewData || {};
+  document.getElementById("overviewGrid").innerHTML = [
+    kpi("Total Companies", num(data.total_companies), "Companies registered on the platform.", "CO"),
+    kpi("Total Users", num(data.total_users), "All company users across tenants.", "US"),
+    kpi("Total Clients", num(data.total_clients), "Customer records managed by tenants.", "CL"),
+    kpi("Total Jobs", num(data.total_jobs), "Jobs created across all companies.", "JB"),
+    kpi("Total Invoices", num(data.total_invoices), "Invoices generated by tenants.", "IN"),
+    kpi("Payments Collected", money(data.total_payments_collected), "Recorded payments across the SaaS.", "PY"),
+    kpi("Active Subscriptions", num(data.active_subscriptions), "Currently active service plans.", "SB")
+  ].join("");
+  document.getElementById("lastUpdated").textContent = "Updated " + new Date().toLocaleTimeString();
+}
+
+function renderOverviewPreview(){
+  const rows = mergedCompanies();
+  const active = rows.filter(row => String(row.billing_status || "") === "active").length;
+  const trial = rows.filter(row => String(row.billing_status || "") === "trial").length;
+  const recentActivity = Array.isArray(activityRows) ? activityRows.length : 0;
+  const health = healthData.app && healthData.app.status === "ok" ? "Online" : "Check Health tab";
+  document.getElementById("overviewPreview").innerHTML = [
+    metric("API Health", health),
+    metric("Active Companies", active),
+    metric("Trial Companies", trial),
+    metric("Recent Activity", recentActivity ? recentActivity + " recent logs" : "No recent logs"),
+    metric("Queue", healthData.queue ? "Available" : "Health tab"),
+    metric("Scheduler", healthData.scheduler ? "Available" : "Health tab")
+  ].join("");
+}
+
+function renderAnalytics(){
+  const data = analyticsData || {};
+  const revenue = data.revenue || {};
+  const users = data.users || {};
+  const companiesData = data.companies || {};
+  const jobs = data.jobs || {};
+  document.getElementById("analyticsGrid").innerHTML = [
+    metric("Revenue Collected", money(revenue.total_collected)),
+    metric("Revenue This Month", money(revenue.collected_this_month)),
+    metric("Avg Invoice", money(revenue.average_invoice_value)),
+    metric("Total Users", num(users.total)),
+    metric("Active Users", num(users.active)),
+    metric("Companies This Month", num(companiesData.this_month)),
+    metric("Total Jobs", num(jobs.total)),
+    metric("Job Completion", num(jobs.completion_rate) + "%")
+  ].join("");
+}
+
+function renderBillingAnalytics(){
+  const el = document.getElementById("billingAnalyticsGrid");
+  if(!el) return;
+  const b = billingAnalyticsData;
+  if(!b || typeof b !== "object"){
+    el.innerHTML = '<div class="state" style="grid-column:1/-1;">Billing analytics unavailable (requires platform_owner and current billing migrations).</div>';
+    return;
+  }
+  const rbp = b.revenue_by_plan && typeof b.revenue_by_plan === "object" ? b.revenue_by_plan : {};
+  el.innerHTML = [
+    metric("MRR (internal)", money(b.mrr)),
+    metric("Active subscriptions", num(b.active_subscriptions)),
+    metric("Trialing (Stripe rows)", num(b.trialing_subscriptions)),
+    metric("Past due accounts", num(b.past_due_accounts)),
+    metric("Failed payment flags (MTD)", num(b.failed_payments_accounts_this_month)),
+    metric("Churn (cancelled MTD)", num(b.churn_count_this_month)),
+    metric("New companies (MTD)", num(b.new_companies_this_month)),
+    metric("MRR — Basic", money(rbp.Basic)),
+    metric("MRR — Pro", money(rbp.Pro)),
+    metric("MRR — Business", money(rbp.Business))
+  ].join("");
+}
+
+function mergedCompanies(){
+  return Array.isArray(companies) ? companies : [];
+}
+
+function filteredCompanies(){
+  const search = document.getElementById("searchInput").value.trim().toLowerCase();
+  const plan = document.getElementById("planFilter").value;
+  const status = document.getElementById("statusFilter").value;
+  const sort = document.getElementById("sortSelect").value;
+
+  const rows = mergedCompanies().filter(row => {
+    const haystack = [row.name, row.email, row.phone].map(v => String(v || "").toLowerCase()).join(" ");
+    if(search && !haystack.includes(search)) return false;
+    if(plan && String(row.plan || "") !== plan) return false;
+    if(status && String(row.billing_status || "") !== status) return false;
+    return true;
+  });
+
+  rows.sort((a, b) => {
+    if(sort === "users") return num(b.users_count) - num(a.users_count);
+    if(sort === "clients") return num(b.clients_count) - num(a.clients_count);
+    if(sort === "revenue") return num(b.payments_total) - num(a.payments_total);
+    return new Date(b.created_at || 0) - new Date(a.created_at || 0) || num(b.id) - num(a.id);
+  });
+
+  return rows;
+}
+
+function companyTitle(row){
+  return '<div class="company-name">' + esc(row.name || ("Company #" + row.id)) + '</div>' +
+    '<div class="sub">' + esc([row.email, row.phone].filter(Boolean).join(" | ") || "No contact on file") + '</div>';
+}
+
+function platformCell(row){
+  if(row.platform_suspended_at){
+    return '<span class="badge danger" title="' + esc(row.platform_suspension_reason || "") + '">Suspended</span>';
+  }
+  return '<span class="badge">—</span>';
+}
+
+function renderCompanies(){
+  const rows = filteredCompanies();
+  document.getElementById("companyCount").textContent = rows.length + (rows.length === 1 ? " company" : " companies");
+
+  document.getElementById("companiesTable").innerHTML = rows.length ? rows.map(row =>
+    '<tr class="' + (String(row.id) === String(selectedCompanyId) ? "selected" : "") + '" onclick="loadCompany(' + Number(row.id) + ')">' +
+      '<td>' + companyTitle(row) + '</td>' +
+      '<td>' + badge(row.plan || "starter") + '</td>' +
+      '<td>' + badge(row.billing_status || "trial") + '</td>' +
+      '<td>' + platformCell(row) + '</td>' +
+      '<td>' + warningBadges(row) + '</td>' +
+      '<td>' + num(row.users_count) + '</td>' +
+      '<td>' + num(row.clients_count) + '</td>' +
+      '<td>' + num(row.jobs_count) + '</td>' +
+      '<td>' + num(row.invoices_count) + '</td>' +
+      '<td>' + money(row.payments_total) + '</td>' +
+      '<td>' + num(row.active_subscriptions_count) + '</td>' +
+      '<td><button class="btn secondary" type="button" onclick="event.stopPropagation(); loadCompany(' + Number(row.id) + ')">View Details</button></td>' +
+    '</tr>'
+  ).join("") : '<tr><td colspan="12">No companies match the current filters.</td></tr>';
+
+  document.getElementById("companiesCards").innerHTML = rows.length ? rows.map(row =>
+    '<article class="company-card ' + (String(row.id) === String(selectedCompanyId) ? "selected" : "") + '">' +
+      '<div class="company-card-head"><div>' + companyTitle(row) + '</div><button class="btn secondary" type="button" onclick="loadCompany(' + Number(row.id) + ')">View</button></div>' +
+      '<div>' + badge(row.plan || "starter") + ' ' + badge(row.billing_status || "trial") + ' ' + platformCell(row) + ' ' + warningBadges(row) + '</div>' +
+      '<div class="mini-grid">' +
+        metric("Users", num(row.users_count)) +
+        metric("Clients", num(row.clients_count)) +
+        metric("Jobs", num(row.jobs_count)) +
+        metric("Payments", money(row.payments_total)) +
+      '</div>' +
+    '</article>'
+  ).join("") : '<div class="state">No companies match the current filters.</div>';
+}
+
+function renderBillingSummary(){
+  if(billingOverviewData && billingOverviewData.by_plan){
+    const o = billingOverviewData;
+    const st = o.by_status || {};
+    document.getElementById("billingSummary").innerHTML = [
+      metric("Companies", num(o.companies_total)),
+      metric("Starter", num(o.by_plan && o.by_plan.starter)),
+      metric("Pro", num(o.by_plan && o.by_plan.pro)),
+      metric("Enterprise", num(o.by_plan && o.by_plan.enterprise)),
+      metric("Trial", num(st.trial)),
+      metric("Active", num(st.active)),
+      metric("Past Due", num(st.past_due)),
+      metric("Cancelled", num(st.cancelled)),
+      metric("Suspended", num(st.suspended)),
+      metric("Trials ≤7d", num(o.trials_expiring_within_7_days)),
+      metric("With warnings", num(o.companies_with_warnings)),
+      metric("Mode", "Warning only")
+    ].join("");
+    return;
+  }
+
+  const rows = mergedCompanies();
+  const byPlan = rows.reduce((acc, row) => {
+    const plan = row.plan || "starter";
+    acc[plan] = (acc[plan] || 0) + 1;
+    return acc;
+  }, {});
+  const byStatus = rows.reduce((acc, row) => {
+    const status = row.billing_status || "trial";
+    acc[status] = (acc[status] || 0) + 1;
+    return acc;
+  }, {});
+  const warningsCount = rows.filter(row => row.has_billing_warning).length;
+
+  document.getElementById("billingSummary").innerHTML = [
+    metric("Starter", num(byPlan.starter)),
+    metric("Pro", num(byPlan.pro)),
+    metric("Enterprise", num(byPlan.enterprise)),
+    metric("Trial", num(byStatus.trial)),
+    metric("Active", num(byStatus.active)),
+    metric("Past Due", num(byStatus.past_due)),
+    metric("Cancelled", num(byStatus.cancelled)),
+    metric("Warnings", warningsCount),
+    metric("Mode", "Warning only")
+  ].join("");
+}
+
+function renderBillingTable(){
+  const rows = mergedCompanies();
+  document.getElementById("billingCount").textContent = rows.length + (rows.length === 1 ? " company" : " companies");
+  document.getElementById("billingTable").innerHTML = rows.length ? rows.map(row =>
+    '<tr class="' + (String(row.id) === String(selectedCompanyId) ? "selected" : "") + '" onclick="loadCompany(' + Number(row.id) + ')">' +
+      '<td>' + companyTitle(row) + '</td>' +
+      '<td>' + badge(row.plan || "starter") + '</td>' +
+      '<td>' + badge(row.billing_status || "trial") + '</td>' +
+      '<td>' + platformCell(row) + '</td>' +
+      '<td>' + warningBadges(row) + '</td>' +
+      '<td>' + money(row.monthly_price) + '</td>' +
+      '<td>' + num(row.users_count) + '</td>' +
+      '<td>' + num(row.clients_count) + '</td>' +
+      '<td>' + num(row.usage && row.usage.jobs_this_month != null ? row.usage.jobs_this_month : 0) + '</td>' +
+      '<td><button class="btn secondary" type="button" onclick="event.stopPropagation(); loadCompany(' + Number(row.id) + ')">View Company</button></td>' +
+    '</tr>'
+  ).join("") : '<tr><td colspan="10">No billing records found.</td></tr>';
+}
+
+async function loadHealth(){
+  document.getElementById("healthGrid").innerHTML = '<div class="state">Loading health status...</div>';
+  try {
+    healthData = await apiFetch("/platform/health");
+    renderHealth();
+    renderOverviewPreview();
+  } catch(err) {
+    healthData = { error: err.message };
+    renderHealth();
+    reportUiError(err, "Unable to load platform health.");
+  }
+}
+
+function healthValue(item){
+  if(!item) return "Not checked";
+  if(item.error) return item.error;
+  if(item.status) return titleCase(item.status);
+  return "Online";
+}
+
+function renderHealth(){
+  const ok = healthData.app && healthData.app.status === "ok";
+  document.getElementById("healthStatus").textContent = ok ? "API online" : "Check needed";
+  document.getElementById("healthGrid").innerHTML = [
+    metric("API", healthValue(healthData.app)),
+    metric("Database", healthValue(healthData.database)),
+    metric("Queue", healthValue(healthData.queue)),
+    metric("Scheduler", healthValue(healthData.scheduler)),
+    metric("Uploads", healthValue(healthData.uploads)),
+    metric("Server Time", healthData.app && healthData.app.checked_at ? date(healthData.app.checked_at) : "-")
+  ].join("");
+}
+
+function renderActivity(){
+  const container = document.getElementById("activityList");
+  if(!Array.isArray(activityRows) || !activityRows.length){
+    container.innerHTML = '<div class="state">No platform activity has been logged yet.</div>';
+    return;
+  }
+
+  container.innerHTML = activityRows.map(item =>
+    '<div class="list-row">' +
+      '<span>' +
+        '<strong>' + esc(titleCase(item.action || "activity")) + '</strong>' +
+        '<div class="sub">' + esc((item.company_name || "Unknown company") + " | " + (item.username || "system") + " | " + date(item.created_at)) + '</div>' +
+      '</span>' +
+      '<strong>' + esc((item.entity_type || "system") + " #" + (item.entity_id || "-")) + '</strong>' +
+    '</div>'
+  ).join("");
+}
+
+async function loadActivity(){
+  document.getElementById("activityList").innerHTML = '<div class="state">Loading platform activity...</div>';
+  try {
+    activityRows = await apiFetch("/platform/activity");
+    if(!Array.isArray(activityRows)) activityRows = [];
+    renderActivity();
+    renderOverviewPreview();
+  } catch(err) {
+    activityRows = [];
+    document.getElementById("activityList").innerHTML = '<div class="state error">' + esc(err.message || "Unable to load activity.") + '</div>';
+    reportUiError(err, "Unable to load platform activity.");
+  }
+}
+
+function renderPlatformUsers(){
+  const container = document.getElementById("platformUsersPanel");
+  if(!Array.isArray(platformUsers) || !platformUsers.length){
+    container.className = "state";
+    container.innerHTML = "No platform owner users found.";
+    return;
+  }
+
+  container.className = "list";
+  container.innerHTML = platformUsers.map(item =>
+    '<div class="list-row">' +
+      '<span><strong>' + esc(item.username || ("User #" + item.id)) + '</strong><div class="sub">#' + esc(item.id) + '</div></span>' +
+      '<strong>' + esc(titleCase(item.role || "platform_owner")) + ' | ' + esc(item.active === false ? "Inactive" : "Active") + '</strong>' +
+    '</div>'
+  ).join("");
+}
+
+async function loadPlatformUsers(){
+  document.getElementById("platformUsersPanel").className = "state";
+  document.getElementById("platformUsersPanel").innerHTML = "Loading platform users...";
+  try {
+    platformUsers = await apiFetch("/platform/users");
+    if(!Array.isArray(platformUsers)) platformUsers = [];
+    renderPlatformUsers();
+  } catch(err) {
+    platformUsers = [];
+    document.getElementById("platformUsersPanel").innerHTML = '<span class="state error">' + esc(err.message || "Unable to load platform users.") + '</span>';
+    reportUiError(err, "Unable to load platform users.");
+  }
+}
+
+function renderSettings(){
+  const container = document.getElementById("settingsPanel");
+  if(!platformSettings){
+    container.className = "state";
+    container.innerHTML = "Loading platform settings...";
+    return;
+  }
+
+  const notes = Array.isArray(platformSettings.notes) ? platformSettings.notes : [];
+  container.className = "list";
+  container.innerHTML =
+    listRow("Mode", titleCase(platformSettings.mode || "read_only")) +
+    listRow("Editable", platformSettings.editable ? "Yes" : "No") +
+    listRow("Environment", platformSettings.environment || "-") +
+    listRow("Maintenance Routes", platformSettings.maintenance_routes_enabled ? "Enabled" : "Disabled") +
+    listRow("Allowed Origins", num(platformSettings.allowed_origins_count)) +
+    (notes.length ? '<div class="state">' + notes.map(esc).join("<br>") + '</div>' : '');
+}
+
+async function loadSettings(){
+  document.getElementById("settingsPanel").className = "state";
+  document.getElementById("settingsPanel").innerHTML = "Loading platform settings...";
+  try {
+    platformSettings = await apiFetch("/platform/settings");
+    renderSettings();
+  } catch(err) {
+    platformSettings = null;
+    document.getElementById("settingsPanel").innerHTML = '<span class="state error">' + esc(err.message || "Unable to load settings.") + '</span>';
+    reportUiError(err, "Unable to load platform settings.");
+  }
+}
+
+function setDetailTab(tab){
+  detailTab = tab;
+  document.querySelectorAll("#detailTabs .tab").forEach(item => {
+    item.classList.toggle("active", item.textContent.trim().toLowerCase() === tab);
+  });
+  renderDrawer();
+}
+
+async function submitCompanyBilling(ev){
+  ev.preventDefault();
+  if(!selectedCompanyId) return;
+
+  const plan = document.getElementById("pfPlan").value;
+  const billing_status = document.getElementById("pfStatus").value;
+  const trialRaw = document.getElementById("pfTrial").value;
+  const graceRaw = document.getElementById("pfGrace").value;
+  const failureReason = document.getElementById("pfFailureReason").value;
+  const payload = { plan, billing_status };
+
+  if(trialRaw){
+    payload.trial_ends_at = new Date(trialRaw).toISOString();
+  } else {
+    payload.trial_ends_at = null;
+  }
+
+  if(graceRaw){
+    payload.billing_grace_until = new Date(graceRaw).toISOString();
+  } else {
+    payload.billing_grace_until = null;
+  }
+
+  payload.billing_failure_reason = failureReason || null;
+
+  if(billing_status === "active"){
+    payload.clear_suspended_at = true;
+  }
+
+  try {
+    await apiFetch("/platform/billing/companies/" + encodeURIComponent(selectedCompanyId), {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+    showToast("Billing updated.");
+    await loadData();
+    await loadCompany(selectedCompanyId);
+    detailTab = "billing";
+    renderDrawer();
+  } catch(err) {
+    reportUiError(err, "Unable to update billing.");
+  }
+}
+
+async function billingQuick(kind){
+  if(!selectedCompanyId) return;
+  const patch = {};
+
+  if(kind === "suspend"){
+    patch.billing_status = "suspended";
+  }
+
+  if(kind === "active"){
+    patch.billing_status = "active";
+    patch.billing_grace_until = null;
+    patch.billing_failure_reason = null;
+    patch.clear_suspended_at = true;
+  }
+
+  if(kind === "grace7"){
+    const d = new Date();
+    d.setDate(d.getDate() + 7);
+    patch.billing_status = "past_due";
+    patch.billing_grace_until = d.toISOString();
+  }
+
+  if(kind === "trial14"){
+    const d = new Date();
+    d.setDate(d.getDate() + 14);
+    patch.billing_status = "trial";
+    patch.trial_ends_at = d.toISOString();
+  }
+
+  try {
+    await apiFetch("/platform/billing/companies/" + encodeURIComponent(selectedCompanyId), {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(patch)
+    });
+    showToast("Billing updated.");
+    await loadData();
+    await loadCompany(selectedCompanyId);
+    detailTab = "billing";
+    renderDrawer();
+  } catch(err) {
+    reportUiError(err, "Unable to update billing.");
+  }
+}
+
+async function evaluateBillingSuspensions(){
+  try {
+    const result = await apiFetch("/platform/billing/evaluate-suspensions", {
+      method: "POST"
+    });
+    showToast("Suspension evaluation complete: " + num(result.suspended_count) + " suspended.");
+    await loadData();
+    if(selectedCompanyId) await loadCompany(selectedCompanyId);
+    renderDrawer();
+  } catch(err) {
+    reportUiError(err, "Unable to evaluate billing suspensions.");
+  }
+}
+
+async function platformSuspendCompany(){
+  if(!selectedCompanyId) return;
+  const reason = window.prompt("Platform suspension reason (optional):", "") || "";
+  try {
+    await apiFetch("/platform/companies/" + encodeURIComponent(selectedCompanyId) + "/suspend", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ reason: reason.trim() || null })
+    });
+    showToast("Company suspended at platform level.");
+    await loadData();
+    await loadCompany(selectedCompanyId);
+    detailTab = "billing";
+    renderDrawer();
+  } catch(err) {
+    reportUiError(err, "Unable to suspend company.");
+  }
+}
+
+async function platformUnsuspendCompany(){
+  if(!selectedCompanyId) return;
+  try {
+    await apiFetch("/platform/companies/" + encodeURIComponent(selectedCompanyId) + "/unsuspend", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({})
+    });
+    showToast("Platform suspension cleared.");
+    await loadData();
+    await loadCompany(selectedCompanyId);
+    detailTab = "billing";
+    renderDrawer();
+  } catch(err) {
+    reportUiError(err, "Unable to unsuspend company.");
+  }
+}
+
+async function billingExtendTrialDays(){
+  if(!selectedCompanyId) return;
+  const input = document.getElementById("pfExtendDays");
+  const days = Math.max(1, Math.min(3650, num(input && input.value)));
+  try {
+    await apiFetch("/platform/billing/companies/" + encodeURIComponent(selectedCompanyId), {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ extend_trial_days: days })
+    });
+    showToast("Trial extended by " + days + " days.");
+    await loadData();
+    await loadCompany(selectedCompanyId);
+    detailTab = "billing";
+    renderDrawer();
+  } catch(err) {
+    reportUiError(err, "Unable to extend trial.");
+  }
+}
+
+async function billingClearFlags(){
+  if(!selectedCompanyId) return;
+  if(!window.confirm("Clear billing grace, failure reason, and billing suspended timestamp for this company?")) return;
+  try {
+    await apiFetch("/platform/billing/companies/" + encodeURIComponent(selectedCompanyId), {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ clear_billing_flags: true })
+    });
+    showToast("Billing flags cleared.");
+    await loadData();
+    await loadCompany(selectedCompanyId);
+    detailTab = "billing";
+    renderDrawer();
+  } catch(err) {
+    reportUiError(err, "Unable to clear billing flags.");
+  }
+}
+
+async function billingPlatformUnlock(){
+  if(!selectedCompanyId) return;
+  if(!window.confirm("Remove platform-level suspension for this company?")) return;
+  try {
+    await apiFetch("/platform/billing/companies/" + encodeURIComponent(selectedCompanyId), {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ platform_unlock: true })
+    });
+    showToast("Platform suspension cleared (override).");
+    await loadData();
+    await loadCompany(selectedCompanyId);
+    detailTab = "billing";
+    renderDrawer();
+  } catch(err) {
+    reportUiError(err, "Unable to platform-unlock company.");
+  }
+}
+
+function listRow(label, value){
+  return '<div class="list-row"><span>' + esc(label) + '</span><strong>' + esc(value) + '</strong></div>';
+}
+
+function renderDrawer(){
+  const head = document.getElementById("drawerHead");
+  const body = document.getElementById("drawerBody");
+
+  if(loadingCompany){
+    body.innerHTML = '<div class="state">Loading company detail...</div>';
+    return;
+  }
+
+  if(!selectedCompanyDetail){
+    head.innerHTML = '<div class="drawer-head-row"><div><h3>Company Details</h3><p>Select a company to inspect users, jobs, invoices, activity, and billing.</p></div></div>';
+    body.innerHTML = '<div class="state">No company selected.</div>';
+    return;
+  }
+
+  const data = selectedCompanyDetail;
+  const c = data.company || {};
+  const m = data.metrics || {};
+  const usage = data.usage || {};
+  const warnings = data.warnings || {};
+  const users = data.users || [];
+  const jobs = data.recent_jobs || [];
+  const invoices = data.recent_invoices || [];
+  const activity = data.recent_activity || [];
+
+  head.innerHTML =
+    '<div class="drawer-head-row">' +
+      '<div><h3>' + esc(c.name || ("Company #" + c.id)) + '</h3><p>' + esc([c.email, c.phone].filter(Boolean).join(" | ") || "No contact on file") + '</p></div>' +
+      '<div>' + badge(c.plan || "starter") + '</div>' +
+    '</div>';
+
+  if(detailTab === "overview"){
+    body.innerHTML =
+      '<div class="mini-grid">' +
+        metric("Billing", titleCase(c.billing_status || "trial")) +
+        metric("Monthly Price", money(c.monthly_price)) +
+        metric("Warnings", num(data.warnings_count)) +
+        metric("Users", num(m.users_count)) +
+        metric("Clients", num(m.clients_count)) +
+        metric("Jobs", num(m.jobs_count)) +
+        metric("Invoices", num(m.invoices_count)) +
+        metric("Payments", money(m.payments_total)) +
+        metric("Active Subs", num(m.active_subscriptions_count)) +
+      '</div>' +
+      '<h4>Trial &amp; subscription</h4>' +
+      '<div class="mini-grid">' +
+        metric("Trial ends", date(c.trial_ends_at)) +
+        metric("Billing status", titleCase(String(c.billing_status || "trial").replace(/_/g, " "))) +
+        metric("Grace until", date(c.billing_grace_until)) +
+        metric("Suspended", date(c.billing_suspended_at)) +
+        metric("Platform suspended", c.platform_suspended_at ? date(c.platform_suspended_at) : "No") +
+        metric("Platform reason", text(c.platform_suspension_reason)) +
+      '</div>' +
+      '<h4>Usage vs Plan Limits</h4>' +
+      '<div class="mini-grid">' +
+        metric("Users", limitText(usage.users_count, usage.max_users)) +
+        metric("Clients", limitText(usage.clients_count, usage.max_clients)) +
+        metric("Jobs This Month", limitText(usage.jobs_this_month, usage.max_jobs_per_month)) +
+        metric("Warning Mode", data.warning_mode ? "Active" : "Off") +
+      '</div>' +
+      '<h4>Billing Warnings</h4>' +
+      warningList(warnings) +
+      '<h4>Plan Status</h4>' +
+      '<div class="state">Warning mode only. Usage is not blocked.</div>' +
+      '<h4>Company Info</h4>' +
+      '<div class="list">' +
+        listRow("Created", date(c.created_at)) +
+        listRow("Phone", text(c.phone)) +
+        listRow("Email", text(c.email)) +
+        listRow("Address", text(c.address)) +
+        listRow("Service Area", text(c.service_area)) +
+        listRow("Business Hours", text(c.business_hours)) +
+      '</div>';
+    return;
+  }
+
+  if(detailTab === "billing"){
+    const c = data.company || {};
+    body.innerHTML =
+      '<form class="billing-form" id="platformBillingForm" onsubmit="submitCompanyBilling(event)">' +
+        '<label style="grid-column:1/-1">Plan<select id="pfPlan">' + billingPlanOptions(c.plan) + '</select></label>' +
+        '<label style="grid-column:1/-1">Billing status<select id="pfStatus">' + billingStatusOptions(c.billing_status) + '</select></label>' +
+        '<label style="grid-column:1/-1">Trial ends (local)<input id="pfTrial" type="datetime-local" value="' + esc(toDatetimeLocalValue(c.trial_ends_at)) + '" /></label>' +
+        '<label style="grid-column:1/-1">Grace until (local)<input id="pfGrace" type="datetime-local" value="' + esc(toDatetimeLocalValue(c.billing_grace_until)) + '" /></label>' +
+        '<label style="grid-column:1/-1">Failure reason<input id="pfFailureReason" type="text" value="' + esc(c.billing_failure_reason || "") + '" /></label>' +
+        '<button class="btn" type="submit">Save billing</button>' +
+        '<div style="grid-column:1/-1;display:flex;gap:8px;flex-wrap:wrap;">' +
+          '<button type="button" class="btn secondary" onclick="billingQuick(\'suspend\')">Suspend billing</button>' +
+          '<button type="button" class="btn secondary" onclick="billingQuick(\'active\')">Activate / reactivate</button>' +
+          '<button type="button" class="btn secondary" onclick="billingQuick(\'grace7\')">Grace +7 days</button>' +
+          '<button type="button" class="btn secondary" onclick="billingQuick(\'trial14\')">Trial +14 days</button>' +
+        '</div>' +
+        '<h4 style="grid-column:1/-1;margin:12px 0 4px;">Platform suspension</h4>' +
+        '<p style="grid-column:1/-1;margin:0;color:var(--muted);font-size:12px;line-height:1.45;">Blocks company staff from creating, updating, or deleting data (reads still allowed). Separate from billing suspension.</p>' +
+        '<div style="grid-column:1/-1;display:flex;gap:8px;flex-wrap:wrap;align-items:center;">' +
+          '<button type="button" class="btn secondary" onclick="platformSuspendCompany()">Suspend company (platform)</button>' +
+          '<button type="button" class="btn secondary" onclick="platformUnsuspendCompany()">Unsuspend company</button>' +
+        '</div>' +
+        '<h4 style="grid-column:1/-1;margin:12px 0 4px;">Manual overrides</h4>' +
+        '<div style="grid-column:1/-1;display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;">' +
+          '<label>Extend trial (days)<input id="pfExtendDays" type="number" min="1" max="3650" value="7" style="max-width:100px;margin-left:6px;" /></label>' +
+          '<button type="button" class="btn secondary" onclick="billingExtendTrialDays()">Apply extension</button>' +
+          '<button type="button" class="btn secondary" onclick="billingClearFlags()">Clear billing flags</button>' +
+          '<button type="button" class="btn secondary" onclick="billingPlatformUnlock()">Platform unlock</button>' +
+        '</div>' +
+      '</form>' +
+      '<div class="list" style="margin-top:12px;">' +
+        listRow("Last failed payment", date(c.billing_last_payment_failed_at)) +
+        listRow("Last successful payment", date(c.billing_last_payment_succeeded_at)) +
+        listRow("Suspended at", date(c.billing_suspended_at)) +
+        listRow("Cancelled at", date(c.billing_cancelled_at)) +
+        listRow("Failure reason", text(c.billing_failure_reason)) +
+        listRow("Platform suspended at", date(c.platform_suspended_at)) +
+        listRow("Platform suspension reason", text(c.platform_suspension_reason)) +
+      '</div>' +
+      '<p style="margin:0;color:var(--muted);font-size:13px;line-height:1.45;">Changes apply to company platform subscription fields only (no Stripe). Trial date uses your browser local time.</p>';
+    return;
+  }
+
+  if(detailTab === "users"){
+    body.innerHTML = users.length ? '<div class="list">' + users.map(item =>
+      listRow(item.username || ("User #" + item.id), (item.role || "-") + " | " + (item.active === false ? "inactive" : "active") + (item.worker_id ? " | worker #" + item.worker_id : ""))
+    ).join("") + '</div>' : '<div class="state">No users found.</div>';
+    return;
+  }
+
+  if(detailTab === "jobs"){
+    body.innerHTML = jobs.length ? '<div class="list">' + jobs.map(job =>
+      listRow(job.service || ("Job #" + job.id), (job.status || "-") + " | " + date(job.date) + " | " + (job.client_name || "No client") + " | " + (job.worker_name || "Unassigned"))
+    ).join("") + '</div>' : '<div class="state">No recent jobs found.</div>';
+    return;
+  }
+
+  if(detailTab === "invoices"){
+    body.innerHTML = invoices.length ? '<div class="list">' + invoices.map(inv =>
+      listRow(inv.invoice_number || ("Invoice #" + inv.id), (inv.status || "-") + " | " + money(inv.amount) + " | " + (inv.client_name || "No client"))
+    ).join("") + '</div>' : '<div class="state">No recent invoices found.</div>';
+    return;
+  }
+
+  body.innerHTML = activity.length ? '<div class="list">' + activity.map(item =>
+    listRow(item.action || "activity", (item.entity_type || "-") + " #" + (item.entity_id || "-") + " | " + date(item.created_at))
+  ).join("") + '</div>' : '<div class="state">No recent activity found.</div>';
+}
+
+async function loadCompany(id){
+  try {
+    const tabBefore = detailTab;
+    selectedCompanyId = id;
+    loadingCompany = true;
+    selectedCompanyDetail = null;
+    renderCompanies();
+    renderBillingTable();
+    renderDrawer();
+    selectedCompanyDetail = await apiFetch("/platform/companies/" + encodeURIComponent(id));
+    detailTab = tabBefore === "billing" ? "billing" : "overview";
+    document.querySelectorAll("#detailTabs .tab").forEach(item => item.classList.toggle("active", item.textContent.trim().toLowerCase() === detailTab));
+  } catch(err) {
+    reportUiError(err, "Unable to load company detail.");
+    document.getElementById("drawerBody").innerHTML = '<div class="state error">' + esc(err.message || "Unable to load company detail.") + '</div>';
+  } finally {
+    loadingCompany = false;
+    renderCompanies();
+    renderBillingTable();
+    renderDrawer();
+  }
+}
+
+async function loadData(){
+  const [overview, analytics, companyRows, billingOv, billingAnalytics] = await Promise.all([
+    apiFetch("/platform/overview"),
+    apiFetch("/platform/analytics"),
+    apiFetch("/platform/companies"),
+    apiFetch("/platform/billing/overview").catch(() => null),
+    apiFetch("/platform/billing/analytics").catch(() => null)
+  ]);
+
+  overviewData = overview;
+  analyticsData = analytics;
+  companies = Array.isArray(companyRows) ? companyRows : [];
+  billingOverviewData = billingOv && typeof billingOv === "object" ? billingOv : null;
+  billingAnalyticsData = billingAnalytics && typeof billingAnalytics === "object" ? billingAnalytics : null;
+  renderOverview();
+  renderOverviewPreview();
+  renderAnalytics();
+  renderBillingAnalytics();
+  renderCompanies();
+  renderBillingSummary();
+  renderBillingTable();
+}
+
+async function loadCurrentSection(){
+  if(!requirePlatform()) return;
+
+  try {
+    if(!booted || ["overview", "companies", "billing"].includes(currentSection)){
+      await loadData();
+    }
+    if(currentSection === "overview"){
+      await Promise.allSettled([loadHealth(), loadActivity()]);
+    }
+    if(currentSection === "health"){
+      await loadHealth();
+    }
+    if(currentSection === "activity"){
+      await loadActivity();
+    }
+    if(currentSection === "users"){
+      await loadPlatformUsers();
+    }
+    if(currentSection === "settings"){
+      await loadSettings();
+    }
+    if(selectedCompanyId && ["companies", "billing"].includes(currentSection)){
+      await loadCompany(selectedCompanyId);
+    }
+    booted = true;
+  } catch(err) {
+    showToast(err.message || "Unable to load platform data.", "error");
+    if(currentSection === "overview"){
+      document.getElementById("overviewGrid").innerHTML = '<div class="state error">' + esc(err.message || "Unable to load platform data.") + '</div>';
+    }
+    if(currentSection === "companies"){
+      document.getElementById("companiesTable").innerHTML = '<tr><td colspan="12">Unable to load companies.</td></tr>';
+    }
+  }
+}
+
+window.addEventListener("hashchange", () => {
+  try {
+    showSection(sectionFromHash());
+    loadCurrentSection();
+  } catch(err) {
+    reportUiError(err, "Unable to switch platform section.");
+  }
+});
+
+document.addEventListener("DOMContentLoaded", () => {
+  if(!requirePlatform()) return;
+  if(!location.hash) location.hash = "overview";
+  try {
+    showSection(sectionFromHash());
+    loadCurrentSection();
+  } catch(err) {
+    reportUiError(err, "Unable to initialize platform dashboard.");
+  }
+});
+
+window.addEventListener("error", event => {
+  reportUiError(event.error || new Error(event.message), "Platform action failed.");
+});
+
+window.addEventListener("unhandledrejection", event => {
+  reportUiError(event.reason || new Error("Platform request failed."), "Platform request failed.");
+});
+</script>
+</body>
+</html>

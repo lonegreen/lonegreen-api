@@ -1,0 +1,1455 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Estimates</title>
+  <link rel="stylesheet" href="/app-shell.css">
+  <style>
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: linear-gradient(180deg, #edf6f0 0%, #f6f9f7 180px, #f4f6f8 100%);
+      color: #163328;
+    }
+
+    .page {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 26px 20px 40px;
+    }
+
+    .hero {
+      display: flex;
+      justify-content: space-between;
+      gap: 18px;
+      align-items: flex-end;
+      flex-wrap: wrap;
+      margin-bottom: 18px;
+    }
+
+    .hero h1 {
+      margin: 0 0 6px;
+      color: #1f5c3a;
+      font-size: 32px;
+      letter-spacing: -0.03em;
+    }
+
+    .hero p {
+      margin: 0;
+      color: #5b7368;
+      line-height: 1.5;
+    }
+
+    .page-note {
+      margin: 10px 0 0;
+      color: #4f6c61;
+      font-size: 15px;
+    }
+
+    .btn {
+      border: none;
+      border-radius: 12px;
+      padding: 11px 16px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform .15s ease, box-shadow .15s ease, opacity .15s ease, background .15s ease;
+      box-shadow: 0 8px 16px rgba(16, 24, 40, 0.06);
+    }
+
+    .btn:hover:not(:disabled) {
+      transform: translateY(-1px);
+      box-shadow: 0 12px 22px rgba(16, 24, 40, 0.10);
+    }
+
+    .btn:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    .primary { background: #1f5c3a; color: white; }
+    .blue { background: #2563eb; color: white; }
+    .orange { background: #f59e0b; color: white; }
+    .red { background: #dc2626; color: white; }
+    .gray {
+      background: #edf2ef;
+      color: #1f5c3a;
+      border: 1px solid #dbe8df;
+    }
+
+    .panel {
+      background: rgba(255,255,255,0.96);
+      border: 1px solid #dbe8df;
+      border-radius: 18px;
+      box-shadow: 0 18px 38px rgba(16, 24, 40, 0.06);
+    }
+
+    .toolbar {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 18px;
+    }
+
+    .toolbar input {
+      flex: 1;
+      min-width: 260px;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+    }
+
+    .filters {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 10px;
+      margin-bottom: 18px;
+    }
+
+    .tab,
+    .filter-chip {
+      border: 1px solid #dbe8df;
+      background: white;
+      color: #35584b;
+      border-radius: 999px;
+      padding: 10px 15px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: .15s ease;
+    }
+
+    .filter-chip.active {
+      background: #1f5c3a;
+      color: white;
+      border-color: #1f5c3a;
+      box-shadow: 0 10px 20px rgba(31, 92, 58, 0.18);
+    }
+
+    .section-block {
+      margin-bottom: 24px;
+    }
+
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: center;
+      padding: 16px 20px;
+      border-radius: 18px;
+      background: #f5fbf7;
+      border: 1px solid #dbe8df;
+      margin-bottom: 14px;
+    }
+
+    .section-header strong {
+      font-size: 16px;
+      color: #173327;
+    }
+
+    .section-count {
+      font-size: 14px;
+      font-weight: 800;
+      color: #1f5c3a;
+    }
+
+    .section-body {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+    }
+
+    .card.urgent {
+      border-color: #f59e0b;
+      box-shadow: 0 18px 38px rgba(245, 158, 11, 0.14);
+    }
+
+    .highlight-quote {
+      color: #b45309;
+      font-weight: 800;
+    }
+
+    .status-quoted {
+      background: #fff7ed;
+      color: #c2410c;
+    }
+
+    .status-converted {
+      background: #ecfdf3;
+      color: #027a48;
+    }
+
+    .tab:hover {
+      border-color: #1f5c3a;
+    }
+
+    .tab.active {
+      background: #1f5c3a;
+      color: white;
+      border-color: #1f5c3a;
+      box-shadow: 0 10px 20px rgba(31, 92, 58, 0.18);
+    }
+
+    .summary {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 14px;
+      margin-bottom: 18px;
+    }
+
+    .summary .panel {
+      padding: 18px;
+    }
+
+    .label {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #6b7f75;
+      margin-bottom: 8px;
+    }
+
+    .value {
+      font-size: 28px;
+      font-weight: 800;
+      color: #173327;
+      letter-spacing: -0.03em;
+    }
+
+    input, select, textarea {
+      width: 100%;
+      padding: 11px 13px;
+      border-radius: 12px;
+      border: 1px solid #cfe0d5;
+      background: white;
+      color: #163328;
+      font: inherit;
+      outline: none;
+      transition: border .15s ease, box-shadow .15s ease;
+    }
+
+    input:focus, select:focus, textarea:focus {
+      border-color: #1f5c3a;
+      box-shadow: 0 0 0 4px rgba(31, 92, 58, 0.10);
+    }
+
+    textarea {
+      resize: vertical;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 18px;
+    }
+
+    .card {
+      padding: 20px;
+      overflow: hidden;
+    }
+
+    .card-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: flex-start;
+      margin-bottom: 14px;
+    }
+
+    .title {
+      margin: 0 0 5px;
+      font-size: 22px;
+      color: #143326;
+      letter-spacing: -0.02em;
+      word-break: break-word;
+    }
+
+    .sub {
+      color: #587165;
+      font-size: 14px;
+      line-height: 1.45;
+      word-break: break-word;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 7px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 800;
+      text-transform: uppercase;
+      white-space: nowrap;
+      letter-spacing: 0.02em;
+    }
+
+    .status-new, .status-draft {
+      background: #eef2f0;
+      color: #4d6359;
+    }
+
+    .status-contacted, .status-sent {
+      background: #ebf3ff;
+      color: #1d4ed8;
+    }
+
+    .status-approved, .status-converted, .status-paid {
+      background: #ecfdf3;
+      color: #027a48;
+    }
+
+    .status-rejected, .status-cancelled, .status-overdue {
+      background: #fef2f2;
+      color: #b42318;
+    }
+
+    .status-quoted, .status-unpaid {
+      background: #fff7ed;
+      color: #c2410c;
+    }
+
+    .meta {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .meta-item {
+      padding: 12px;
+      border-radius: 14px;
+      background: #f7faf8;
+      border: 1px solid #dbe8df;
+      min-width: 0;
+      word-break: break-word;
+    }
+
+    .meta-item .label {
+      margin-bottom: 4px;
+    }
+
+    .notes {
+      padding: 14px;
+      border-radius: 14px;
+      background: #f8fbf9;
+      border: 1px solid #dbe8df;
+      color: #50665c;
+      min-height: 62px;
+      margin-bottom: 14px;
+      line-height: 1.5;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .empty {
+      padding: 34px 24px;
+      text-align: center;
+      color: #5c756a;
+      grid-column: 1 / -1;
+      line-height: 1.5;
+    }
+
+    .empty strong {
+      display: block;
+      color: #173327;
+      font-size: 18px;
+      margin-bottom: 6px;
+    }
+
+    .modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.52);
+      justify-content: center;
+      align-items: center;
+      padding: 18px;
+      z-index: 999;
+    }
+
+    .modal-box {
+      width: 720px;
+      max-width: 100%;
+      max-height: 92vh;
+      overflow: auto;
+      background: white;
+      border-radius: 22px;
+      padding: 22px;
+      box-shadow: 0 24px 54px rgba(16, 24, 40, 0.22);
+    }
+
+    .modal-box h3 {
+      margin-top: 0;
+      color: #1f5c3a;
+      font-size: 22px;
+      letter-spacing: -0.02em;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .wide {
+      grid-column: 1 / -1;
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 16px;
+      flex-wrap: wrap;
+    }
+
+    @media (max-width: 980px) {
+      .summary, .grid, .form-grid, .meta {
+        grid-template-columns: 1fr;
+      }
+
+      .page {
+        padding: 22px 14px 34px;
+      }
+
+      .hero {
+        align-items: stretch;
+      }
+
+      .hero .btn {
+        width: 100%;
+      }
+
+      .actions .btn {
+        flex: 1 1 160px;
+      }
+
+      .card-top {
+        flex-direction: column;
+      }
+    }
+  </style>
+  <link rel="stylesheet" href="/ui-cleanup.css">
+  <script src="/js/role-guard.js"></script>
+</head>
+<body>
+  <script>
+(function(){
+  const token = localStorage.getItem("token");
+  let user = null;
+
+  try {
+    user = JSON.parse(localStorage.getItem("user") || "null");
+  } catch {
+    user = null;
+  }
+
+  if (!token || !user) {
+    window.top.location.href = "/login.html";
+    return;
+  }
+
+  const role = String(user.role || "").toLowerCase();
+
+  if (role === "worker") {
+    window.top.location.href = "/control.html";
+    return;
+  }
+})();
+</script>
+  
+<div class="page">
+  <div class="hero">
+    <div>
+      <h1 id="pageTitle">Estimates</h1>
+      <p id="pageSubtitle">Review estimates, approve quoted work, and convert approved estimates into clients or jobs.</p>
+      <p class="page-note">Archive only duplicates, tests, or inactive records. Active leads and estimates should remain available for conversion or follow-up.</p>
+    </div>
+    <button class="btn primary" id="newLeadButton" onclick="openLeadModal()">+ New Lead</button>
+  </div>
+
+  <div class="toolbar">
+    <input id="searchInput" placeholder="Search by customer, phone, address, service, or status">
+    <div class="filters" id="filterBar"></div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" id="leadTab" onclick="setTab('leads')">Leads</button>
+    <button class="tab" id="estimateTab" onclick="setTab('estimates')">Estimates</button>
+  </div>
+
+  <div class="summary">
+    <div class="panel" id="leadTotalCard"><div class="label">Total Leads</div><div class="value" id="leadCount">0</div></div>
+    <div class="panel" id="leadOpenCard"><div class="label">Open Leads</div><div class="value" id="leadOpenCount">0</div></div>
+    <div class="panel" id="estimateTotalCard"><div class="label">Total Estimates</div><div class="value" id="estimateCount">0</div></div>
+    <div class="panel" id="estimateApprovedCard"><div class="label">Approved Estimates</div><div class="value" id="estimateApprovedCount">0</div></div>
+  </div>
+
+  <div id="list" class="grid"></div>
+</div>
+
+<div id="leadModal" class="modal">
+  <div class="modal-box">
+    <h3 id="leadModalTitle">New Lead</h3>
+    <div class="form-grid">
+      <input id="lead_name" placeholder="Customer name">
+      <input id="lead_phone" placeholder="Phone">
+      <input id="lead_service" placeholder="Service needed">
+      <input id="lead_visit_date" type="date">
+      <input id="lead_price" type="number" placeholder="Quoted price">
+      <select id="lead_status">
+        <option value="new">New</option>
+        <option value="contacted">Contacted</option>
+        <option value="quoted">Quoted</option>
+        <option value="approved">Approved</option>
+        <option value="rejected">Rejected</option>
+      </select>
+      <input id="lead_zip" placeholder="ZIP">
+      <input id="lead_address" class="wide" placeholder="Address">
+      <textarea id="lead_notes" class="wide" rows="4" placeholder="Lead notes"></textarea>
+    </div>
+    <div class="modal-actions">
+      <button type="button" class="btn primary" onclick="saveLead(event)">Save Lead</button>
+      <button type="button" class="btn gray" onclick="closeModal('leadModal')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<div id="estimateModal" class="modal">
+  <div class="modal-box">
+    <h3>Edit Estimate</h3>
+    <div class="form-grid">
+      <input id="estimate_name" placeholder="Customer name">
+      <input id="estimate_phone" placeholder="Phone">
+      <input id="estimate_service" placeholder="Service">
+      <input id="estimate_visit_date" type="date">
+      <input id="estimate_price" type="number" placeholder="Quoted price">
+      <select id="estimate_status">
+        <option value="draft">Draft</option>
+        <option value="sent">Sent</option>
+        <option value="approved">Approved</option>
+        <option value="rejected">Rejected</option>
+      </select>
+      <input id="estimate_zip" placeholder="ZIP">
+      <input id="estimate_address" class="wide" placeholder="Address">
+      <textarea id="estimate_notes" class="wide" rows="4" placeholder="Estimate notes"></textarea>
+    </div>
+    <div class="modal-actions">
+      <button type="button" class="btn primary" onclick="saveEstimate(event)">Save Estimate</button>
+      <button type="button" class="btn gray" onclick="closeModal('estimateModal')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<div id="convertJobModal" class="modal">
+  <div class="modal-box">
+    <h3>Convert To Job</h3>
+    <div class="form-grid">
+      <input id="convert_job_date" type="date">
+      <input id="convert_job_price" type="number" placeholder="Price">
+      <input id="convert_job_start" type="time">
+      <input id="convert_job_end" type="time">
+      <input id="convert_job_worker_id" placeholder="Worker ID (optional)">
+      <select id="convert_job_status">
+        <option value="scheduled">Scheduled</option>
+        <option value="assigned">Assigned</option>
+        <option value="in_progress">In Progress</option>
+        <option value="completed">Completed</option>
+        <option value="cancelled">Cancelled</option>
+      </select>
+      <textarea id="convert_job_notes" class="wide" rows="4" placeholder="Internal notes"></textarea>
+    </div>
+    <div class="modal-actions">
+      <button type="button" class="btn primary" onclick="submitConvertToJob()">Create Job</button>
+      <button type="button" class="btn gray" onclick="closeModal('convertJobModal')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<div id="archiveModal" class="modal">
+  <div class="modal-box">
+    <h3>Archive Record</h3>
+    <p id="archiveModalMessage">This will archive the record and hide it from active workflow. Use this only for test, duplicate, or inactive records.</p>
+    <div class="modal-actions">
+      <button type="button" class="btn gray" onclick="closeArchiveModal()">Cancel</button>
+      <button type="button" class="btn red" onclick="confirmArchive(event)">Archive</button>
+    </div>
+  </div>
+</div>
+
+<div id="deleteModal" class="modal">
+  <div class="modal-box">
+    <h3 id="deleteModalTitle">Delete Record</h3>
+    <p id="deleteModalMessage">Are you sure you want to permanently delete this record? This should only be used for test or incorrect records.</p>
+    <div class="modal-actions">
+      <button type="button" class="btn gray" onclick="closeDeleteModal()">Cancel</button>
+      <button type="button" class="btn red" onclick="confirmDelete(event)">Delete</button>
+    </div>
+  </div>
+</div>
+
+<script src="/js/ui.js"></script>
+<script src="/js/auth.js"></script>
+<script src="/js/api.js"></script>
+<script src="/js/format.js"></script>
+<script>
+const API = window.location.origin;
+let currentTab = new URLSearchParams(window.location.search).get("view") === "leads" ? "leads" : "estimates";
+let currentFilter = "All";
+const leadFilters = ["All", "Today", "This Week", "Open Leads", "Quoted"];
+const estimateFilters = ["All", "Today", "This Week", "Quoted", "Approved", "Converted"];
+let leads = [];
+let estimates = [];
+let editingLeadId = null;
+let editingEstimateId = null;
+let converting = null;
+let pendingArchiveItem = null;
+let pendingArchiveType = "";
+let pendingDeleteItem = null;
+let pendingDeleteType = "";
+let isLoading = false;
+let pageError = "";
+
+function getUser(){
+  try {
+    return JSON.parse(localStorage.getItem("user"));
+  } catch {
+    return null;
+  }
+}
+
+const getToken = AppAuth.getToken;
+
+if(!getToken() || !getUser() || !getUser().company_id){
+  localStorage.setItem("redirectAfterLogin", "estimates.html");
+  window.top.location.href = "/login.html";
+}
+
+const apiFetch = AppAPI.fetch;
+
+function escapeHtml(value){
+  return String(value ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
+function getUserRole(){
+  return String(getUser()?.role || "").toLowerCase();
+}
+
+function canDeleteRecords(){
+  return ["owner", "admin", "manager"].includes(getUserRole());
+}
+
+function openModal(id){
+  const modal = document.getElementById(id);
+  if(modal) modal.style.display = "flex";
+}
+
+function closeModal(id){
+  const modal = document.getElementById(id);
+  if(modal) modal.style.display = "none";
+}
+
+function money(value){
+  const amount = Number(value || 0);
+  return "$" + amount.toLocaleString(undefined, {
+    minimumFractionDigits: amount % 1 === 0 ? 0 : 2,
+    maximumFractionDigits: 2
+  });
+}
+
+async function safeJson(res){
+  try {
+    return await res.json();
+  } catch {
+    try {
+      const text = await res.text();
+      return { error: text || "Request failed." };
+    } catch {
+      return { error: "Request failed." };
+    }
+  }
+}
+
+function errorMessage(data, fallback){
+  if(data && typeof data.error === "string" && data.error.trim()) return data.error;
+  if(data && typeof data.message === "string" && data.message.trim()) return data.message;
+  return fallback;
+}
+
+function setButtonLoading(button, loadingText){
+  if(!button) return function(){};
+  const oldText = button.textContent;
+  button.disabled = true;
+  button.textContent = loadingText;
+  return function(){
+    button.disabled = false;
+    button.textContent = oldText;
+  };
+}
+
+function setTab(tab){
+  currentTab = tab;
+  currentFilter = "All";
+  const url = new URL(window.location.href);
+  url.searchParams.set("view", tab);
+  window.history.replaceState({}, "", url);
+  document.getElementById("leadTab").classList.toggle("active", tab === "leads");
+  document.getElementById("estimateTab").classList.toggle("active", tab === "estimates");
+  render();
+}
+
+function setFilter(filter){
+  currentFilter = filter;
+  renderFilters();
+  render();
+}
+
+function renderFilters(){
+  const bar = document.getElementById("filterBar");
+  if(!bar) return;
+  const quickFilters = currentTab === "leads" ? leadFilters : estimateFilters;
+  bar.innerHTML = quickFilters.map(filter => `
+    <button class="filter-chip ${filter === currentFilter ? "active" : ""}" onclick="setFilter('${filter}')">${escapeHtml(filter)}</button>
+  `).join("");
+}
+
+function syncPageMode(){
+  const isLeads = currentTab === "leads";
+  document.title = isLeads ? "Leads" : "Estimates";
+  document.getElementById("pageTitle").textContent = isLeads ? "Leads" : "Estimates";
+  document.getElementById("pageSubtitle").textContent = isLeads
+    ? "Track new inquiries and convert qualified leads into estimates."
+    : "Review estimates, approve quoted work, and convert approved estimates into clients or jobs.";
+  document.getElementById("newLeadButton").style.display = isLeads ? "inline-flex" : "none";
+  document.getElementById("leadTab").classList.toggle("active", isLeads);
+  document.getElementById("estimateTab").classList.toggle("active", !isLeads);
+  document.getElementById("leadTotalCard").style.display = isLeads ? "block" : "none";
+  document.getElementById("leadOpenCard").style.display = isLeads ? "block" : "none";
+  document.getElementById("estimateTotalCard").style.display = isLeads ? "none" : "block";
+  document.getElementById("estimateApprovedCard").style.display = isLeads ? "none" : "block";
+}
+
+function getDateOnly(value){
+  if(!value) return null;
+  const parsed = new Date(value);
+  if(Number.isNaN(parsed.getTime())) return null;
+  return new Date(parsed.getFullYear(), parsed.getMonth(), parsed.getDate());
+}
+
+function isSameDay(a, b){
+  return a && b && a.getTime() === b.getTime();
+}
+
+function getWeekRange(date){
+  const working = new Date(date);
+  const day = working.getDay();
+  const monday = new Date(working);
+  monday.setDate(working.getDate() - ((day + 6) % 7));
+  monday.setHours(0,0,0,0);
+  const sunday = new Date(monday);
+  sunday.setDate(monday.getDate() + 6);
+  sunday.setHours(23,59,59,999);
+  return { monday, sunday };
+}
+
+function groupRecords(items){
+  const today = getDateOnly(new Date());
+  const groups = {
+    "Needs Follow-Up": [],
+    Active: [],
+    Converted: [],
+    "Archived/Inactive": []
+  };
+
+  items.forEach(item => {
+    const status = String(item.status || "").toLowerCase();
+    const recordDate = getDateOnly(item.visit_date);
+    const convertedFlag = status === "converted" || Boolean(item.converted_client_id) || Boolean(item.converted_job_id);
+    const archivedFlag = Boolean(item.archived) || status === "archived";
+    const isOpen = !["rejected", "converted", "archived"].includes(status);
+    const needsFollowUp = isOpen && recordDate && recordDate < today;
+
+    if(archivedFlag){
+      groups["Archived/Inactive"].push(item);
+      return;
+    }
+
+    if(convertedFlag){
+      groups.Converted.push(item);
+      return;
+    }
+
+    if(needsFollowUp){
+      groups["Needs Follow-Up"].push(item);
+      return;
+    }
+
+    groups.Active.push(item);
+  });
+
+  return groups;
+}
+
+function filterByQuickFilter(items){
+  const filter = String(currentFilter || "All");
+  const today = getDateOnly(new Date());
+  const { monday, sunday } = getWeekRange(today);
+
+  return items.filter(item => {
+    const status = String(item.status || "").toLowerCase();
+    const recordDate = getDateOnly(item.visit_date);
+    const convertedFlag = status === "converted" || Boolean(item.converted_client_id) || Boolean(item.converted_job_id);
+
+    switch(filter){
+      case "Today":
+        return recordDate && isSameDay(recordDate, today);
+      case "This Week":
+        return recordDate && recordDate > today && recordDate <= sunday;
+      case "Open Leads":
+        return !["rejected", "converted", "approved"].includes(status);
+      case "Quoted":
+        return status === "quoted";
+      case "Approved":
+        return status === "approved";
+      case "Converted":
+        return convertedFlag;
+      default:
+        return true;
+    }
+  });
+}
+
+function renderSection(title, items){
+  if(!items || items.length === 0) return "";
+  return `<div class="section-block">
+    <div class="section-header">
+      <strong>${escapeHtml(title)}</strong>
+      <span class="section-count">${items.length}</span>
+    </div>
+    <div class="section-body">
+      ${items.map(item => currentTab === "leads" ? renderLeadCard(item) : renderEstimateCard(item)).join("")}
+    </div>
+  </div>`;
+}
+
+function render(){
+  syncPageMode();
+  renderSummary();
+  renderFilters();
+
+  const list = document.getElementById("list");
+
+  if(isLoading){
+    list.innerHTML = `<div class="panel empty"><strong>Loading ${escapeHtml(currentTab)}...</strong>Please wait while the latest records are loaded.</div>`;
+    return;
+  }
+
+  if(pageError){
+    list.innerHTML = `<div class="panel empty"><strong>Unable to load data</strong>${escapeHtml(pageError)}</div>`;
+    return;
+  }
+
+  const activeLeads = leads.filter(item => {
+    const status = String(item.status || "").toLowerCase();
+    return status !== "converted" && !item.converted_client_id && !item.converted_job_id;
+  });
+  const rawItems = currentTab === "leads" ? filtered(activeLeads) : filtered(estimates);
+  const items = filterByQuickFilter(rawItems);
+  const grouped = groupRecords(items);
+  const sectionOrder = ["Needs Follow-Up", "Active", "Converted", "Archived/Inactive"];
+  const content = sectionOrder.map(section => renderSection(section, grouped[section])).join("");
+
+  if(!content.trim()){
+    list.innerHTML = `<div class="panel empty"><strong>No ${escapeHtml(currentTab)} found</strong>No records match the current search and filters.</div>`;
+    return;
+  }
+
+  list.innerHTML = content;
+}
+
+function openLeadModal(lead = null){
+  editingLeadId = lead ? lead.id : null;
+  document.getElementById("leadModalTitle").textContent = lead ? "Edit Lead" : "New Lead";
+  document.getElementById("lead_name").value = lead ? (lead.customer_name || "") : "";
+  document.getElementById("lead_phone").value = lead ? (lead.phone || "") : "";
+  document.getElementById("lead_service").value = lead ? (lead.service || "") : "";
+  document.getElementById("lead_visit_date").value = lead ? formatDate(lead.visit_date) : new Date().toISOString().split("T")[0];
+  document.getElementById("lead_price").value = lead ? (lead.quoted_price || 0) : "";
+  document.getElementById("lead_status").value = lead ? (lead.status || "new") : "new";
+  document.getElementById("lead_zip").value = lead ? (lead.zip || "") : "";
+  document.getElementById("lead_address").value = lead ? (lead.address || "") : "";
+  document.getElementById("lead_notes").value = lead ? (lead.notes || "") : "";
+  document.getElementById("leadModal").style.display = "flex";
+}
+
+function openEstimateModal(estimate){
+  if(!estimate) return;
+  editingEstimateId = estimate.id;
+  document.getElementById("estimate_name").value = estimate.customer_name || "";
+  document.getElementById("estimate_phone").value = estimate.phone || "";
+  document.getElementById("estimate_service").value = estimate.service || "";
+  document.getElementById("estimate_visit_date").value = formatDate(estimate.visit_date);
+  document.getElementById("estimate_price").value = estimate.quoted_price || 0;
+  document.getElementById("estimate_status").value = estimate.status || "draft";
+  document.getElementById("estimate_zip").value = estimate.zip || "";
+  document.getElementById("estimate_address").value = estimate.address || "";
+  document.getElementById("estimate_notes").value = estimate.notes || "";
+  document.getElementById("estimateModal").style.display = "flex";
+}
+
+function openConvertToJob(item, type){
+  if(!item) return;
+  converting = { id: item.id, type };
+  document.getElementById("convert_job_date").value = formatDate(item.visit_date) || new Date().toISOString().split("T")[0];
+  document.getElementById("convert_job_price").value = item.quoted_price || 0;
+  document.getElementById("convert_job_start").value = "08:00";
+  document.getElementById("convert_job_end").value = "09:00";
+  document.getElementById("convert_job_worker_id").value = "";
+  document.getElementById("convert_job_status").value = "scheduled";
+  document.getElementById("convert_job_notes").value = item.notes || "";
+  document.getElementById("convertJobModal").style.display = "flex";
+}
+
+function formatDate(value){
+  return value ? String(value).split("T")[0] : "";
+}
+
+function statusClass(status){
+  return "status-" + String(status || "draft").replace(/[^a-z_]/g, "");
+}
+
+function filtered(list){
+  const q = (document.getElementById("searchInput").value || "").trim().toLowerCase();
+  if(!q) return list;
+
+  return list.filter(item =>
+    [
+      item.customer_name,
+      item.phone,
+      item.address,
+      item.service,
+      item.status,
+      item.client_name
+    ].join(" ").toLowerCase().includes(q)
+  );
+}
+
+function renderSummary(){
+  document.getElementById("leadCount").textContent = leads.length;
+  document.getElementById("leadOpenCount").textContent = leads.filter(item => !["rejected", "converted"].includes(item.status)).length;
+  document.getElementById("estimateCount").textContent = estimates.length;
+  document.getElementById("estimateApprovedCount").textContent = estimates.filter(item => item.status === "approved").length;
+}
+
+function cardMeta(fields){
+  return `<div class="meta">${fields.map(field => `
+    <div class="meta-item">
+      <div class="label">${escapeHtml(field.label)}</div>
+      <div>${field.raw ? field.value : escapeHtml(field.value)}</div>
+    </div>
+  `).join("")}</div>`;
+}
+
+function renderLeadCard(item){
+  const status = String(item.status || "").toLowerCase();
+  const isConvertedLead = status === "converted";
+  const recordDate = getDateOnly(item.visit_date);
+  const today = getDateOnly(new Date());
+  const ageDays = recordDate ? Math.floor((today - recordDate) / 86400000) : null;
+  const needsFollowUp = !["rejected", "converted", "approved"].includes(status) && ageDays !== null && ageDays > 2;
+
+  return `<div class="panel card${needsFollowUp ? " urgent" : ""}">
+    <div class="card-top">
+      <div>
+        <h3 class="title">${escapeHtml(item.customer_name || "Lead")}</h3>
+        <div class="sub">${escapeHtml(item.service || "")}</div>
+      </div>
+      <div class="badge ${statusClass(item.status)}">${escapeHtml(item.status || "new")}</div>
+    </div>
+
+    ${cardMeta([
+      { label: "Phone", value: item.phone || "-" },
+      { label: "Visit Date", value: formatDate(item.visit_date) || "-" },
+      { label: "Address", value: item.address || "-" },
+      { label: "Quoted", raw: true, value: `<span class="${Number(item.quoted_price || 0) > 1000 ? "highlight-quote" : ""}">${escapeHtml(money(item.quoted_price || 0))}</span>` }
+    ])}
+
+    <div class="notes">${escapeHtml(item.notes || "No notes yet.")}</div>
+
+    <div class="actions">
+      <button class="btn blue" onclick="openLeadModalById(${Number(item.id)})">Edit</button>
+      ${!isConvertedLead ? `<button class="btn orange" onclick="convertLeadToEstimate(${Number(item.id)})">Convert to Estimate</button>` : ""}
+      ${!isConvertedLead ? `<button class="btn gray" onclick="convertLeadToClient(${Number(item.id)})">Convert to Client</button>` : ""}
+      ${isConvertedLead && item.converted_client_id ? `<button class="btn primary" onclick="window.top.location.href='/client.html?id=${encodeURIComponent(item.converted_client_id)}'">Open Client</button>` : ""}
+      ${canDeleteRecords() ? `<button class="btn red" onclick="deleteLead(${Number(item.id)})">Delete</button>` : ""}
+      <button class="btn red" onclick="archiveLead(${Number(item.id)})">Archive</button>
+    </div>
+  </div>`;
+}
+
+function renderEstimateCard(item){
+  const status = String(item.status || "draft");
+  const recordDate = getDateOnly(item.visit_date);
+  const today = getDateOnly(new Date());
+  const ageDays = recordDate ? Math.floor((today - recordDate) / 86400000) : null;
+  const needsFollowUp = !["rejected", "converted", "approved"].includes(status) && ageDays !== null && ageDays > 2;
+  const isDraftSentQuoted = ["draft", "sent", "quoted"].includes(status);
+  const isApproved = status === "approved";
+  const isConvertedEstimate = status === "converted";
+
+  return `<div class="panel card${needsFollowUp ? " urgent" : ""}">
+    <div class="card-top">
+      <div>
+        <h3 class="title">${escapeHtml(item.customer_name || "Estimate")}</h3>
+        <div class="sub">${escapeHtml(item.service || "")}</div>
+        <div class="sub">Client: ${escapeHtml(item.client_name || "Not attached yet")}</div>
+      </div>
+      <div class="badge ${statusClass(item.status)}">${escapeHtml(item.status || "draft")}</div>
+    </div>
+
+    ${cardMeta([
+      { label: "Phone", value: item.phone || "-" },
+      { label: "Visit Date", value: formatDate(item.visit_date) || "-" },
+      { label: "Source Lead", value: item.source_lead_id || "-" },
+      { label: "Amount", raw: true, value: `<span class="${Number(item.quoted_price || 0) > 1000 ? "highlight-quote" : ""}">${escapeHtml(money(item.quoted_price || 0))}</span>` }
+    ])}
+
+    <div class="notes">${escapeHtml(item.notes || "No notes yet.")}</div>
+
+    <div class="actions">
+      <button class="btn blue" onclick="openEstimateModalById(${Number(item.id)})">Edit</button>
+      ${isDraftSentQuoted ? `<button class="btn blue" onclick="setEstimateStatus(${Number(item.id)}, 'approved')">Approve</button>` : ""}
+      ${isDraftSentQuoted ? `<button class="btn red" onclick="setEstimateStatus(${Number(item.id)}, 'rejected')">Reject</button>` : ""}
+      ${isApproved ? `<button class="btn gray" onclick="convertEstimateToClient(${Number(item.id)})">Convert to Client</button>` : ""}
+      ${isApproved ? `<button class="btn primary" onclick="openConvertEstimateJob(${Number(item.id)})">Convert to Job</button>` : ""}
+      ${isConvertedEstimate && item.converted_client_id ? `<button class="btn gray" onclick="window.top.location.href='/client.html?id=${encodeURIComponent(item.converted_client_id)}'">Open Client</button>` : ""}
+      ${isConvertedEstimate && item.converted_job_id ? `<button class="btn primary" onclick="window.top.location.href='/jobs.html?job_id=${encodeURIComponent(item.converted_job_id)}'">Open Job</button>` : ""}
+      ${canDeleteRecords() ? `<button class="btn red" onclick="deleteEstimate(${Number(item.id)})">Delete</button>` : ""}
+      <button class="btn red" onclick="archiveEstimate(${Number(item.id)})">Archive</button>
+    </div>
+  </div>`;
+}
+
+async function loadData(){
+  isLoading = true;
+  pageError = "";
+  render();
+
+  try {
+    const [leadRes, estimateRes] = await Promise.all([
+      apiFetch(API + "/workflow/leads"),
+      apiFetch(API + "/workflow/estimates")
+    ]);
+
+    const leadData = await safeJson(leadRes);
+    const estimateData = await safeJson(estimateRes);
+
+    if(!leadRes.ok){
+      throw new Error(errorMessage(leadData, "Unable to load leads."));
+    }
+
+    if(!estimateRes.ok){
+      throw new Error(errorMessage(estimateData, "Unable to load estimates."));
+    }
+
+    leads = Array.isArray(leadData) ? leadData : [];
+    estimates = Array.isArray(estimateData) ? estimateData : [];
+  } catch(err) {
+    leads = [];
+    estimates = [];
+    pageError = err && err.message ? err.message : "Unable to load leads and estimates.";
+  } finally {
+    isLoading = false;
+    render();
+  }
+}
+
+function openLeadModalById(id){
+  const lead = leads.find(item => Number(item.id) === Number(id));
+  if(lead) openLeadModal(lead);
+}
+
+function openEstimateModalById(id){
+  const estimate = estimates.find(item => Number(item.id) === Number(id));
+  if(estimate) openEstimateModal(estimate);
+}
+
+async function saveLead(event){
+  const restoreButton = setButtonLoading(event && event.target ? event.target : null, "Saving...");
+
+  try {
+    const payload = {
+      customer_name: lead_name.value.trim(),
+      phone: lead_phone.value.trim(),
+      address: lead_address.value.trim(),
+      zip: lead_zip.value.trim(),
+      service: lead_service.value.trim(),
+      visit_date: lead_visit_date.value,
+      quoted_price: lead_price.value ? Number(lead_price.value) : 0,
+      notes: lead_notes.value.trim(),
+      status: lead_status.value
+    };
+
+    if(!payload.customer_name || !payload.phone || !payload.address || !payload.service || !payload.visit_date){
+      alert("Please fill the required lead fields.");
+      return;
+    }
+
+    const url = editingLeadId ? API + "/workflow/leads/" + editingLeadId : API + "/workflow/leads";
+    const method = editingLeadId ? "PUT" : "POST";
+
+    const res = await apiFetch(url, {
+      method,
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+
+    const data = await safeJson(res);
+
+    if(!res.ok){
+      alert(errorMessage(data, "Unable to save lead."));
+      return;
+    }
+
+    closeModal("leadModal");
+    await loadData();
+  } finally {
+    restoreButton();
+  }
+}
+
+async function saveEstimate(event){
+  const restoreButton = setButtonLoading(event && event.target ? event.target : null, "Saving...");
+
+  try {
+    const payload = {
+      customer_name: estimate_name.value.trim(),
+      phone: estimate_phone.value.trim(),
+      address: estimate_address.value.trim(),
+      zip: estimate_zip.value.trim(),
+      service: estimate_service.value.trim(),
+      visit_date: estimate_visit_date.value,
+      quoted_price: estimate_price.value ? Number(estimate_price.value) : 0,
+      notes: estimate_notes.value.trim(),
+      status: estimate_status.value
+    };
+
+    const res = await apiFetch(API + "/workflow/estimates/" + editingEstimateId, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+
+    const data = await safeJson(res);
+
+    if(!res.ok){
+      alert(errorMessage(data, "Unable to save estimate."));
+      return;
+    }
+
+    closeModal("estimateModal");
+    await loadData();
+  } finally {
+    restoreButton();
+  }
+}
+
+async function convertLeadToEstimate(id){
+  const restoreButton = setButtonLoading(event && event.target ? event.target : null, "Converting...");
+
+  try {
+    const res = await apiFetch(API + "/workflow/leads/" + id + "/convert-to-estimate", { method: "POST" });
+    const data = await safeJson(res);
+
+    if(!res.ok){
+      alert(errorMessage(data, "Unable to convert lead."));
+      return;
+    }
+
+    await loadData();
+    setTab("estimates");
+  } finally {
+    restoreButton();
+  }
+}
+
+async function convertLeadToClient(id){
+  const restoreButton = setButtonLoading(event && event.target ? event.target : null, "Converting...");
+
+  try {
+    const res = await apiFetch(API + "/workflow/leads/" + id + "/convert-to-client", { method: "POST" });
+    const data = await safeJson(res);
+
+    if(!res.ok){
+      alert(errorMessage(data, "Unable to convert lead."));
+      return;
+    }
+
+    await loadData();
+
+    if(data && data.id){
+      window.top.location.href = "/client.html?id=" + encodeURIComponent(data.id);
+    } else {
+      alert("Lead converted, but client ID was not returned.");
+    }
+  } finally {
+    restoreButton();
+  }
+}
+
+function openConvertLeadJob(id){
+  const item = leads.find(entry => Number(entry.id) === Number(id));
+  if(item) openConvertToJob(item, "lead");
+}
+
+function openConvertEstimateJob(id){
+  const item = estimates.find(entry => Number(entry.id) === Number(id));
+  if(item) openConvertToJob(item, "estimate");
+}
+
+async function submitConvertToJob(){
+  const restoreButton = setButtonLoading(event && event.target ? event.target : null, "Creating...");
+
+  try {
+    if(!converting || !converting.id || !converting.type){
+      alert("Please select a lead or estimate before creating a job.");
+      return;
+    }
+
+    const payload = {
+      date: convert_job_date.value,
+      price: convert_job_price.value ? Number(convert_job_price.value) : 0,
+      start_time: convert_job_start.value || "08:00",
+      end_time: convert_job_end.value || "09:00",
+      worker_id: convert_job_worker_id.value ? Number(convert_job_worker_id.value) : null,
+      status: convert_job_status.value,
+      internal_notes: convert_job_notes.value.trim()
+    };
+
+    const url = converting.type === "lead"
+      ? API + "/workflow/leads/" + converting.id + "/convert-to-job"
+      : API + "/workflow/estimates/" + converting.id + "/convert-to-job";
+
+    const res = await apiFetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+
+    const data = await safeJson(res);
+
+    if(!res.ok){
+      alert(errorMessage(data, "Unable to convert to job."));
+      return;
+    }
+
+    closeModal("convertJobModal");
+    await loadData();
+
+    if(data && data.client && data.client.id){
+      window.top.location.href = "/client.html?id=" + encodeURIComponent(data.client.id);
+    } else {
+      alert("Job created, but client ID was not returned.");
+    }
+  } finally {
+    restoreButton();
+  }
+}
+
+async function setEstimateStatus(id, status){
+  const restoreButton = setButtonLoading(event && event.target ? event.target : null, "Updating...");
+
+  try {
+    const estimate = estimates.find(item => Number(item.id) === Number(id));
+    if(!estimate) return;
+
+    const res = await apiFetch(API + "/workflow/estimates/" + id, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ...estimate, status })
+    });
+
+    const data = await safeJson(res);
+
+    if(!res.ok){
+      alert(errorMessage(data, "Unable to update estimate."));
+      return;
+    }
+
+    await loadData();
+  } finally {
+    restoreButton();
+  }
+}
+
+async function convertEstimateToClient(id){
+  const restoreButton = setButtonLoading(event && event.target ? event.target : null, "Converting...");
+
+  try {
+    const res = await apiFetch(API + "/workflow/estimates/" + id + "/convert-to-client", { method: "POST" });
+    const data = await safeJson(res);
+
+    if(!res.ok){
+      alert(errorMessage(data, "Unable to convert estimate."));
+      return;
+    }
+
+    await loadData();
+
+    if(data && data.client && data.client.id){
+      window.top.location.href = "/client.html?id=" + encodeURIComponent(data.client.id);
+    } else {
+      alert("Estimate converted, but client ID was not returned.");
+    }
+  } finally {
+    restoreButton();
+  }
+}
+
+function archiveLead(id){
+  openArchiveModal("lead", id);
+}
+
+function archiveEstimate(id){
+  openArchiveModal("estimate", id);
+}
+
+function openArchiveModal(type, id){
+  pendingArchiveType = type;
+  pendingArchiveItem = { id };
+  document.getElementById("archiveModalMessage").textContent = "This will archive the record and hide it from active workflow. Use this only for test, duplicate, or inactive records.";
+  document.getElementById("archiveModal").style.display = "flex";
+}
+
+function closeArchiveModal(){
+  pendingArchiveType = "";
+  pendingArchiveItem = null;
+  closeModal("archiveModal");
+}
+
+async function confirmArchive(event){
+  if(!pendingArchiveType || !pendingArchiveItem){
+    closeArchiveModal();
+    return;
+  }
+
+  const restoreButton = setButtonLoading(event && event.target ? event.target : null, "Archiving...");
+  const type = pendingArchiveType;
+  const id = pendingArchiveItem.id;
+
+  closeArchiveModal();
+
+  try {
+    const endpoint = type === "lead" ? "/workflow/leads/" + id + "/archive" : "/workflow/estimates/" + id + "/archive";
+    const res = await apiFetch(API + endpoint, { method: "PUT" });
+    const data = await safeJson(res);
+
+    if(!res.ok){
+      alert(errorMessage(data, `Unable to archive ${type}.`));
+      return;
+    }
+
+    await loadData();
+  } finally {
+    restoreButton();
+  }
+}
+
+function deleteLead(id){
+  openDeleteModal("lead", id);
+}
+
+function deleteEstimate(id){
+  openDeleteModal("estimate", id);
+}
+
+function openDeleteModal(type, id){
+  pendingDeleteType = type;
+  pendingDeleteItem = { id };
+  document.getElementById("deleteModalTitle").textContent = type === "estimate" ? "Delete Estimate?" : "Delete Lead?";
+  document.getElementById("deleteModalMessage").textContent = "This will safely archive, cancel, deactivate, or delete only when safe.";
+  openModal("deleteModal");
+}
+
+function closeDeleteModal(){
+  pendingDeleteType = "";
+  pendingDeleteItem = null;
+  closeModal("deleteModal");
+}
+
+async function confirmDelete(event){
+  if(!pendingDeleteType || !pendingDeleteItem){
+    closeDeleteModal();
+    return;
+  }
+
+  const restoreButton = setButtonLoading(event && event.target ? event.target : null, "Deleting...");
+  const type = pendingDeleteType;
+  const id = pendingDeleteItem.id;
+
+  closeDeleteModal();
+
+  try {
+    const endpoint = type === "lead" ? "/workflow/leads/" + id : "/workflow/estimates/" + id;
+    const res = await apiFetch(API + endpoint, { method: "DELETE" });
+    const data = await safeJson(res);
+
+    if(!res.ok){
+      alert(errorMessage(data, `Unable to delete ${type}.`));
+      return;
+    }
+
+    const message = data && (data.message || data.notice || data.error);
+    if(message){
+      if(window.AppUI && typeof window.AppUI.showToast === "function"){
+        window.AppUI.showToast(message, "success");
+      } else {
+        alert(message);
+      }
+    }
+
+    await loadData();
+  } finally {
+    restoreButton();
+  }
+}
+
+document.getElementById("searchInput").addEventListener("input", render);
+
+window.onclick = function(e){
+  ["leadModal", "estimateModal", "convertJobModal", "archiveModal", "deleteModal"].forEach(id => {
+    const modal = document.getElementById(id);
+    if(e.target === modal) closeModal(id);
+  });
+};
+
+document.addEventListener("keydown", function(e){
+  if(e.key === "Escape"){
+    ["leadModal", "estimateModal", "convertJobModal", "archiveModal", "deleteModal"].forEach(closeModal);
+  }
+});
+
+loadData();
+</script>
+</body>
+</html>

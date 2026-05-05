@@ -1,0 +1,182 @@
+/* Shared UI cleanup for operations pages. */
+.btn,
+.add,
+.edit-btn,
+.delete,
+.primary-action,
+button.btn {
+  min-height: 40px;
+  border-radius: 10px;
+  font-weight: 800;
+  line-height: 1.15;
+  white-space: normal;
+}
+
+.btn.primary,
+.primary,
+.add,
+.primary-action {
+  background: #1f5c3a;
+  color: #fff;
+}
+
+.btn.red,
+.red,
+.delete,
+.danger,
+.btn.danger {
+  background: #dc2626;
+  color: #fff;
+}
+
+.btn.gray,
+.gray,
+.edit-btn,
+.soft,
+.btn.soft {
+  background: #eef2f0;
+  color: #1f5c3a;
+  border: 1px solid #dbe7df;
+}
+
+.actions,
+.job-actions,
+.card-actions,
+.hero-actions,
+.modal-actions,
+.filter-row,
+.toolbar,
+.quick-filters {
+  gap: 10px;
+}
+
+.actions,
+.job-actions,
+.card-actions,
+.modal-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.modal-actions {
+  justify-content: flex-end;
+}
+
+.badge,
+.status,
+.status-badge,
+.payment-pill {
+  border-radius: 999px;
+  font-weight: 900;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.status-scheduled,
+.status-assigned,
+.status-unpaid,
+.status-draft {
+  background: #fff7ed;
+  color: #c2410c;
+}
+
+.status-in_progress,
+.status-paused {
+  background: #f4f0ff;
+  color: #7c3aed;
+}
+
+.status-completed,
+.status-paid,
+.status-active,
+.badge.active {
+  background: #ecfdf3;
+  color: #027a48;
+}
+
+.status-cancelled,
+.status-canceled,
+.status-overdue,
+.status-hidden {
+  background: #fef2f2;
+  color: #b42318;
+}
+
+.badge.inactive {
+  background: #eef2f0;
+  color: #4b5563;
+}
+
+.empty,
+.empty-state {
+  line-height: 1.55;
+}
+
+.empty strong,
+.empty-state strong,
+.client-name,
+.card-title,
+.subscription-title {
+  overflow-wrap: anywhere;
+}
+
+.value,
+.value-strong,
+.money-box strong,
+.amount,
+.total {
+  font-variant-numeric: tabular-nums;
+}
+
+.table-wrap {
+  overflow-x: auto;
+}
+
+.table-wrap table {
+  min-width: 640px;
+}
+
+input[id*="search"],
+.search-input {
+  min-height: 42px;
+}
+
+@media (max-width: 720px) {
+  body {
+    padding: 14px;
+  }
+
+  .btn,
+  .add,
+  .edit-btn,
+  .delete,
+  .primary-action {
+    width: 100%;
+  }
+
+  .modal-actions .btn,
+  .modal-actions .add,
+  .modal-actions .edit-btn,
+  .modal-actions .delete {
+    width: 100%;
+  }
+
+  .actions,
+  .job-actions,
+  .card-actions,
+  .modal-actions,
+  .hero-actions {
+    align-items: stretch;
+  }
+
+  .summary,
+  .meta,
+  .money-grid,
+  .invoice-list,
+  .section-body,
+  .cards,
+  .grid {
+    grid-template-columns: 1fr !important;
+  }
+}

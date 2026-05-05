@@ -1,0 +1,1076 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LoneGreen SaaS | Landscaping Business Management Software</title>
+  <meta name="description" content="LoneGreen SaaS helps landscaping and outdoor service businesses manage leads, clients, estimates, jobs, invoices, subscriptions, workers, and analytics." />
+
+  <style>
+    :root {
+      --green-950: #071b12;
+      --green-900: #0f2e1c;
+      --green-800: #143c27;
+      --green-700: #1f5c3a;
+      --green-600: #2d8b55;
+      --green-500: #38b66b;
+      --green-100: #e9f8ee;
+      --green-50: #f5fbf7;
+      --text: #102016;
+      --muted: #647067;
+      --line: #dce8df;
+      --white: #ffffff;
+      --shadow: 0 24px 70px rgba(7, 27, 18, 0.14);
+      --radius: 24px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: Inter, Arial, sans-serif;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      background: var(--green-50);
+      color: var(--text);
+      line-height: 1.6;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    .container {
+      width: min(1160px, calc(100% - 40px));
+      margin: 0 auto;
+    }
+
+    .navbar {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(245, 251, 247, 0.86);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid rgba(220, 232, 223, 0.8);
+    }
+
+    .nav-inner {
+      height: 78px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 900;
+      font-size: 21px;
+      color: var(--green-900);
+    }
+
+    .logo-mark {
+      width: 42px;
+      height: 42px;
+      display: grid;
+      place-items: center;
+      border-radius: 14px;
+      background: linear-gradient(135deg, var(--green-500), #d8f7df);
+      box-shadow: 0 12px 30px rgba(56, 182, 107, 0.28);
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 26px;
+      color: #405146;
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .nav-links a:hover {
+      color: var(--green-700);
+    }
+
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      min-height: 46px;
+      padding: 12px 18px;
+      border-radius: 999px;
+      border: 1px solid transparent;
+      font-size: 14px;
+      font-weight: 900;
+      cursor: pointer;
+      transition: 0.2s ease;
+      white-space: nowrap;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--green-700), var(--green-600));
+      color: white;
+      box-shadow: 0 14px 32px rgba(31, 92, 58, 0.26);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 18px 38px rgba(31, 92, 58, 0.32);
+    }
+
+    .btn-secondary {
+      background: white;
+      border-color: var(--line);
+      color: var(--green-800);
+    }
+
+    .btn-secondary:hover {
+      border-color: var(--green-600);
+      color: var(--green-700);
+    }
+
+    .menu-btn {
+      display: none;
+      border: 1px solid var(--line);
+      background: white;
+      border-radius: 14px;
+      width: 46px;
+      height: 46px;
+      font-size: 24px;
+      cursor: pointer;
+      color: var(--green-900);
+    }
+
+    .hero {
+      position: relative;
+      overflow: hidden;
+      padding: 86px 0 70px;
+      background:
+        radial-gradient(circle at 12% 15%, rgba(56, 182, 107, 0.20), transparent 30%),
+        radial-gradient(circle at 90% 12%, rgba(31, 92, 58, 0.16), transparent 28%);
+    }
+
+    .hero-grid {
+      display: grid;
+      grid-template-columns: 1.02fr 0.98fr;
+      gap: 54px;
+      align-items: center;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: var(--green-100);
+      color: var(--green-700);
+      font-size: 13px;
+      font-weight: 900;
+      margin-bottom: 22px;
+      border: 1px solid rgba(45, 139, 85, 0.16);
+    }
+
+    .hero h1 {
+      font-size: clamp(42px, 6vw, 72px);
+      line-height: 0.98;
+      letter-spacing: -2.7px;
+      color: var(--green-950);
+      margin-bottom: 24px;
+    }
+
+    .hero p {
+      font-size: 18px;
+      color: var(--muted);
+      max-width: 620px;
+      margin-bottom: 30px;
+    }
+
+    .hero-actions {
+      display: flex;
+      gap: 14px;
+      flex-wrap: wrap;
+      margin-bottom: 34px;
+    }
+
+    .hero-points {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 14px;
+      color: #506056;
+      font-size: 14px;
+      font-weight: 800;
+    }
+
+    .hero-points span {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+    }
+
+    .mockup {
+      background: var(--white);
+      border: 1px solid var(--line);
+      border-radius: 30px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .mockup-top {
+      height: 58px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px;
+      border-bottom: 1px solid var(--line);
+      background: #fbfdfb;
+    }
+
+    .dots {
+      display: flex;
+      gap: 7px;
+    }
+
+    .dots span {
+      width: 11px;
+      height: 11px;
+      border-radius: 999px;
+      background: #cad8ce;
+    }
+
+    .mockup-body {
+      padding: 24px;
+    }
+
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 14px;
+      margin-bottom: 18px;
+    }
+
+    .mini-card {
+      padding: 18px;
+      border-radius: 20px;
+      background: var(--green-50);
+      border: 1px solid var(--line);
+    }
+
+    .mini-card small {
+      color: var(--muted);
+      font-weight: 800;
+    }
+
+    .mini-card strong {
+      display: block;
+      font-size: 28px;
+      color: var(--green-900);
+      margin-top: 4px;
+    }
+
+    .route-card {
+      padding: 20px;
+      border-radius: 22px;
+      background: linear-gradient(135deg, var(--green-900), var(--green-700));
+      color: white;
+    }
+
+    .route-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 12px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.14);
+      font-size: 14px;
+    }
+
+    .route-row:last-child {
+      border-bottom: none;
+    }
+
+    section {
+      padding: 86px 0;
+    }
+
+    .section-head {
+      max-width: 720px;
+      margin: 0 auto 42px;
+      text-align: center;
+    }
+
+    .section-head h2 {
+      font-size: clamp(32px, 4vw, 48px);
+      line-height: 1.05;
+      letter-spacing: -1.5px;
+      color: var(--green-950);
+      margin-bottom: 14px;
+    }
+
+    .section-head p {
+      color: var(--muted);
+      font-size: 16px;
+    }
+
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 18px;
+    }
+
+    .feature-card {
+      background: white;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 24px;
+      box-shadow: 0 16px 40px rgba(7, 27, 18, 0.06);
+      transition: 0.2s ease;
+    }
+
+    .feature-card:hover {
+      transform: translateY(-4px);
+      box-shadow: var(--shadow);
+    }
+
+    .icon {
+      width: 48px;
+      height: 48px;
+      display: grid;
+      place-items: center;
+      border-radius: 16px;
+      background: var(--green-100);
+      margin-bottom: 18px;
+      font-size: 22px;
+    }
+
+    .feature-card h3 {
+      font-size: 17px;
+      color: var(--green-950);
+      margin-bottom: 8px;
+    }
+
+    .feature-card p {
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .workflow {
+      background: white;
+    }
+
+    .workflow-line {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 12px;
+    }
+
+    .step {
+      position: relative;
+      padding: 20px 16px;
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      background: var(--green-50);
+      text-align: center;
+      font-weight: 900;
+      color: var(--green-900);
+    }
+
+    .step span {
+      display: grid;
+      place-items: center;
+      width: 34px;
+      height: 34px;
+      margin: 0 auto 10px;
+      border-radius: 999px;
+      background: var(--green-700);
+      color: white;
+      font-size: 13px;
+    }
+
+    .operations-grid {
+      display: grid;
+      grid-template-columns: 0.9fr 1.1fr;
+      gap: 26px;
+      align-items: center;
+    }
+
+    .benefit-list {
+      display: grid;
+      gap: 16px;
+    }
+
+    .benefit {
+      display: flex;
+      gap: 14px;
+      background: white;
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      padding: 18px;
+      box-shadow: 0 12px 34px rgba(7, 27, 18, 0.05);
+    }
+
+    .check {
+      width: 30px;
+      height: 30px;
+      flex: 0 0 auto;
+      border-radius: 999px;
+      display: grid;
+      place-items: center;
+      background: var(--green-100);
+      color: var(--green-700);
+      font-weight: 900;
+    }
+
+    .benefit h3 {
+      font-size: 16px;
+      margin-bottom: 4px;
+    }
+
+    .benefit p {
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .ops-panel {
+      background: var(--green-950);
+      color: white;
+      border-radius: 30px;
+      padding: 28px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .ops-panel h3 {
+      font-size: 26px;
+      letter-spacing: -0.8px;
+      margin-bottom: 18px;
+    }
+
+    .ops-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 16px;
+      border-radius: 18px;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.12);
+      margin-bottom: 12px;
+      font-size: 14px;
+    }
+
+    .ops-row strong {
+      color: #d8f7df;
+    }
+
+    .pricing-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+    }
+
+    .price-card {
+      position: relative;
+      background: white;
+      border: 1px solid var(--line);
+      border-radius: 28px;
+      padding: 30px;
+      box-shadow: 0 16px 42px rgba(7, 27, 18, 0.07);
+    }
+
+    .price-card.featured {
+      border-color: rgba(45, 139, 85, 0.45);
+      box-shadow: var(--shadow);
+      transform: translateY(-8px);
+    }
+
+    .pill {
+      position: absolute;
+      top: 22px;
+      right: 22px;
+      font-size: 12px;
+      font-weight: 900;
+      color: var(--green-700);
+      background: var(--green-100);
+      padding: 6px 10px;
+      border-radius: 999px;
+    }
+
+    .price-card h3 {
+      font-size: 24px;
+      margin-bottom: 8px;
+    }
+
+    .price {
+      font-size: 42px;
+      font-weight: 950;
+      color: var(--green-950);
+      margin: 18px 0 4px;
+    }
+
+    .price small {
+      font-size: 14px;
+      color: var(--muted);
+      font-weight: 700;
+    }
+
+    .price-card p {
+      color: var(--muted);
+      margin-bottom: 20px;
+      font-size: 14px;
+    }
+
+    .price-card ul {
+      list-style: none;
+      display: grid;
+      gap: 12px;
+      margin: 22px 0;
+      color: #415147;
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .price-card li::before {
+      content: "✓";
+      color: var(--green-600);
+      font-weight: 900;
+      margin-right: 8px;
+    }
+
+    .cta {
+      padding: 76px 0;
+      background: linear-gradient(135deg, var(--green-950), var(--green-700));
+      color: white;
+      text-align: center;
+    }
+
+    .cta h2 {
+      font-size: clamp(32px, 5vw, 52px);
+      line-height: 1.08;
+      letter-spacing: -1.6px;
+      max-width: 760px;
+      margin: 0 auto 18px;
+    }
+
+    .cta p {
+      color: rgba(255,255,255,0.78);
+      max-width: 640px;
+      margin: 0 auto 28px;
+    }
+
+    .cta .btn-secondary {
+      background: rgba(255,255,255,0.12);
+      border-color: rgba(255,255,255,0.18);
+      color: white;
+    }
+
+    footer {
+      background: var(--green-950);
+      color: white;
+      padding: 34px 0;
+      border-top: 1px solid rgba(255,255,255,0.12);
+    }
+
+    .footer-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+
+    .footer-links {
+      display: flex;
+      gap: 18px;
+      color: rgba(255,255,255,0.72);
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .footer-links a:hover {
+      color: white;
+    }
+
+    @media (max-width: 980px) {
+      .hero-grid,
+      .operations-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .features-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .workflow-line {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .pricing-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .price-card.featured {
+        transform: none;
+      }
+    }
+
+    @media (max-width: 760px) {
+      .container {
+        width: min(100% - 28px, 1160px);
+      }
+
+      .nav-inner {
+        height: 70px;
+      }
+
+      .menu-btn {
+        display: block;
+      }
+
+      .nav-links,
+      .nav-actions {
+        display: none;
+      }
+
+      .navbar.open .nav-links,
+      .navbar.open .nav-actions {
+        display: flex;
+      }
+
+      .navbar.open .nav-inner {
+        height: auto;
+        padding: 16px 0;
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .navbar.open .nav-links,
+      .navbar.open .nav-actions {
+        width: 100%;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+      }
+
+      .navbar.open .nav-links a,
+      .navbar.open .nav-actions a {
+        width: 100%;
+      }
+
+      .mobile-top {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+
+      .hero {
+        padding: 56px 0;
+      }
+
+      .hero h1 {
+        letter-spacing: -1.6px;
+      }
+
+      .hero p {
+        font-size: 16px;
+      }
+
+      .hero-actions .btn {
+        width: 100%;
+      }
+
+      section {
+        padding: 62px 0;
+      }
+
+      .features-grid,
+      .dashboard-grid,
+      .workflow-line {
+        grid-template-columns: 1fr;
+      }
+
+      .mockup-body {
+        padding: 16px;
+      }
+
+      .footer-inner {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+    }
+
+    @media (min-width: 761px) {
+      .mobile-top {
+        display: contents;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <header class="navbar" id="navbar">
+    <div class="container nav-inner">
+      <div class="mobile-top">
+        <a href="/" class="logo" aria-label="LoneGreen Home">
+          <span class="logo-mark">🌿</span>
+          <span>LoneGreen</span>
+        </a>
+
+        <button class="menu-btn" id="menuBtn" aria-label="Open menu">☰</button>
+      </div>
+
+      <nav class="nav-links" aria-label="Main navigation">
+        <a href="#features">Features</a>
+        <a href="#workflow">Workflow</a>
+        <a href="#operations">Operations</a>
+        <a href="#pricing">Pricing</a>
+      </nav>
+
+      <div class="nav-actions">
+        <a class="btn btn-secondary" href="/login.html">Login</a>
+        <a class="btn btn-primary" href="/signup.html">Sign Up</a>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="container hero-grid">
+        <div>
+          <div class="badge">Built for landscaping and outdoor service teams</div>
+
+          <h1>Run your service business from one clean dashboard.</h1>
+
+          <p>
+            LoneGreen helps you manage leads, clients, estimates, jobs, recurring subscriptions,
+            invoices, payments, workers, and daily operations without complicated software.
+          </p>
+
+          <div class="hero-actions">
+            <a class="btn btn-primary" href="/signup.html">Start Free</a>
+            <a class="btn btn-secondary" href="/login.html">Login</a>
+          </div>
+
+          <div class="hero-points">
+            <span>✓ Mobile friendly</span>
+            <span>✓ Fast workflow</span>
+            <span>✓ Built for field operations</span>
+          </div>
+        </div>
+
+        <div class="mockup" aria-label="Dashboard preview">
+          <div class="mockup-top">
+            <div class="dots">
+              <span></span>
+              <span></span>
+              <span></span>
+            </div>
+            <strong>Operations Dashboard</strong>
+          </div>
+
+          <div class="mockup-body">
+            <div class="dashboard-grid">
+              <div class="mini-card">
+                <small>Today Jobs</small>
+                <strong>12</strong>
+              </div>
+              <div class="mini-card">
+                <small>Open Estimates</small>
+                <strong>7</strong>
+              </div>
+              <div class="mini-card">
+                <small>Monthly Revenue</small>
+                <strong>$18k</strong>
+              </div>
+              <div class="mini-card">
+                <small>Active Clients</small>
+                <strong>84</strong>
+              </div>
+            </div>
+
+            <div class="route-card">
+              <div class="route-row">
+                <span>8:00 AM · Lawn Care</span>
+                <strong>Assigned</strong>
+              </div>
+              <div class="route-row">
+                <span>10:30 AM · Tree Trimming</span>
+                <strong>In Progress</strong>
+              </div>
+              <div class="route-row">
+                <span>2:00 PM · Pressure Washing</span>
+                <strong>Scheduled</strong>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="features">
+      <div class="container">
+        <div class="section-head">
+          <h2>Everything your outdoor service business needs.</h2>
+          <p>
+            A simple system for daily operations, customer management, scheduling, and revenue tracking.
+          </p>
+        </div>
+
+        <div class="features-grid">
+          <div class="feature-card">
+            <div class="icon">📥</div>
+            <h3>Lead Management</h3>
+            <p>Track new leads from first contact to estimate and conversion.</p>
+          </div>
+
+          <div class="feature-card">
+            <div class="icon">👥</div>
+            <h3>Client CRM</h3>
+            <p>Keep customer profiles, jobs, notes, invoices, and subscriptions organized.</p>
+          </div>
+
+          <div class="feature-card">
+            <div class="icon">📝</div>
+            <h3>Estimates</h3>
+            <p>Create estimates and move approved work into jobs faster.</p>
+          </div>
+
+          <div class="feature-card">
+            <div class="icon">📅</div>
+            <h3>Job Scheduling</h3>
+            <p>Plan daily work, assign workers, and track job progress.</p>
+          </div>
+
+          <div class="feature-card">
+            <div class="icon">🔁</div>
+            <h3>Subscriptions</h3>
+            <p>Manage weekly, biweekly, or monthly recurring service visits.</p>
+          </div>
+
+          <div class="feature-card">
+            <div class="icon">💳</div>
+            <h3>Invoices & Payments</h3>
+            <p>Track unpaid invoices, payments, revenue, and customer balances.</p>
+          </div>
+
+          <div class="feature-card">
+            <div class="icon">🧑‍🔧</div>
+            <h3>Worker Management</h3>
+            <p>Assign jobs, monitor work status, and keep crews organized.</p>
+          </div>
+
+          <div class="feature-card">
+            <div class="icon">📊</div>
+            <h3>Analytics</h3>
+            <p>See business performance, revenue trends, worker activity, and growth.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="workflow" id="workflow">
+      <div class="container">
+        <div class="section-head">
+          <h2>A complete workflow from lead to recurring revenue.</h2>
+          <p>
+            Built around the real process of landscaping and outdoor service businesses.
+          </p>
+        </div>
+
+        <div class="workflow-line">
+          <div class="step"><span>1</span>Lead</div>
+          <div class="step"><span>2</span>Estimate</div>
+          <div class="step"><span>3</span>Client</div>
+          <div class="step"><span>4</span>Job</div>
+          <div class="step"><span>5</span>Invoice</div>
+          <div class="step"><span>6</span>Payment</div>
+          <div class="step"><span>7</span>Subscription</div>
+        </div>
+      </div>
+    </section>
+
+    <section id="operations">
+      <div class="container operations-grid">
+        <div>
+          <div class="section-head" style="text-align:left; margin:0 0 28px;">
+            <h2>Designed for real daily operations.</h2>
+            <p>
+              Keep the office, field workers, and customer workflow connected from one simple control panel.
+            </p>
+          </div>
+
+          <div class="benefit-list">
+            <div class="benefit">
+              <div class="check">✓</div>
+              <div>
+                <h3>Mobile friendly</h3>
+                <p>Workers and managers can use the system from phones, tablets, or desktops.</p>
+              </div>
+            </div>
+
+            <div class="benefit">
+              <div class="check">✓</div>
+              <div>
+                <h3>Fast scheduling</h3>
+                <p>See today’s work, upcoming jobs, assigned jobs, and recurring visits.</p>
+              </div>
+            </div>
+
+            <div class="benefit">
+              <div class="check">✓</div>
+              <div>
+                <h3>Simple business control</h3>
+                <p>Manage customers, operations, finance, and team access from one place.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="ops-panel">
+          <h3>Today Operations</h3>
+
+          <div class="ops-row">
+            <span>Unassigned Jobs</span>
+            <strong>3</strong>
+          </div>
+
+          <div class="ops-row">
+            <span>In Progress</span>
+            <strong>5</strong>
+          </div>
+
+          <div class="ops-row">
+            <span>Invoices Due</span>
+            <strong>$2,450</strong>
+          </div>
+
+          <div class="ops-row">
+            <span>Recurring Visits</span>
+            <strong>18</strong>
+          </div>
+
+          <div class="ops-row">
+            <span>New Leads</span>
+            <strong>9</strong>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="pricing">
+      <div class="container">
+        <div class="section-head">
+          <h2>Simple plans for growing service businesses.</h2>
+          <p>
+            Start lean, then upgrade as your team, clients, and operations grow.
+          </p>
+        </div>
+
+        <div class="pricing-grid">
+          <div class="price-card">
+            <h3>Starter</h3>
+            <p>For small crews getting organized.</p>
+            <div class="price">$0 <small>/ demo</small></div>
+            <ul>
+              <li>Lead and client tracking</li>
+              <li>Basic jobs dashboard</li>
+              <li>Estimate workflow</li>
+              <li>Mobile access</li>
+            </ul>
+            <a class="btn btn-secondary" href="/signup.html" style="width:100%;">Get Started</a>
+          </div>
+
+          <div class="price-card featured">
+            <div class="pill">Popular</div>
+            <h3>Pro</h3>
+            <p>For active service businesses.</p>
+            <div class="price">$49 <small>/ month</small></div>
+            <ul>
+              <li>Jobs and scheduling</li>
+              <li>Invoices and payments</li>
+              <li>Recurring subscriptions</li>
+              <li>Worker assignment</li>
+            </ul>
+            <a class="btn btn-primary" href="/signup.html" style="width:100%;">Start Pro</a>
+          </div>
+
+          <div class="price-card">
+            <h3>Business</h3>
+            <p>For teams that need more control.</p>
+            <div class="price">Custom</div>
+            <ul>
+              <li>Advanced operations</li>
+              <li>Analytics dashboard</li>
+              <li>Team roles and permissions</li>
+              <li>Flexible business setup</li>
+            </ul>
+            <a class="btn btn-secondary" href="/signup.html" style="width:100%;">Contact Sales</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="cta">
+      <div class="container">
+        <h2>Ready to manage your service business like a real SaaS operation?</h2>
+        <p>
+          Create your account, set up your company, and start managing daily operations from one clean system.
+        </p>
+
+        <div class="hero-actions" style="justify-content:center; margin-bottom:0;">
+          <a class="btn btn-primary" href="/signup.html">Create Account</a>
+          <a class="btn btn-secondary" href="/login.html">Login</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="container footer-inner">
+      <a href="/" class="logo" style="color:white;">
+        <span class="logo-mark">🌿</span>
+        <span>LoneGreen</span>
+      </a>
+
+      <div class="footer-links">
+        <a href="#features">Features</a>
+        <a href="#workflow">Workflow</a>
+        <a href="#pricing">Pricing</a>
+        <a href="/login.html">Login</a>
+        <a href="/signup.html">Sign Up</a>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    const navbar = document.getElementById("navbar");
+    const menuBtn = document.getElementById("menuBtn");
+
+    menuBtn.addEventListener("click", function () {
+      navbar.classList.toggle("open");
+      menuBtn.textContent = navbar.classList.contains("open") ? "×" : "☰";
+    });
+
+    document.querySelectorAll('a[href^="#"]').forEach(function (link) {
+      link.addEventListener("click", function () {
+        navbar.classList.remove("open");
+        menuBtn.textContent = "☰";
+      });
+    });
+  </script>
+</body>
+</html>

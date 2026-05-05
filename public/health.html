@@ -1,0 +1,133 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>System Health</title>
+  <link rel="stylesheet" href="/app-shell.css">
+  <style>
+    body { margin:0; font-family:Arial,sans-serif; background:#f4f7f5; padding:22px; color:#173327; }
+    .page { max-width:1100px; margin:0 auto; }
+    .hero { display:flex; justify-content:space-between; gap:16px; align-items:center; padding:22px; margin-bottom:18px; }
+    h1 { margin:0; font-size:30px; }
+    .grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:18px; }
+    .panel { padding:20px; }
+    .status-line { display:flex; justify-content:space-between; gap:12px; padding:10px 0; border-bottom:1px solid #dce6df; }
+    .status-line:last-child { border-bottom:none; }
+    .muted { color:#667d73; }
+    ul { margin:10px 0 0; padding-left:20px; color:#667d73; }
+    @media (max-width:800px){ .grid{grid-template-columns:1fr;} }
+  </style>
+  <script src="/js/role-guard.js"></script>
+</head>
+<body>
+  <script>
+(function(){
+  const token = localStorage.getItem("token");
+  let user = null;
+
+  try {
+    user = JSON.parse(localStorage.getItem("user") || "null");
+  } catch {
+    user = null;
+  }
+
+  if (!token || !user) {
+    window.top.location.href = "/login.html";
+    return;
+  }
+
+  const role = String(user.role || "").toLowerCase();
+
+  if (role === "worker") {
+    window.top.location.href = "/control.html";
+    return;
+  }
+})();
+</script>
+  
+<div class="page">
+  <div class="hero">
+    <div>
+      <h1>System Health</h1>
+      <p>Launch readiness checks for database, migrations, billing, Stripe, email, uploads, scheduler, and environment blockers.</p>
+    </div>
+    <button class="btn gray" onclick="load()">Refresh</button>
+  </div>
+  <div id="healthBox" class="grid"></div>
+</div>
+
+<script src="/js/ui.js"></script>
+<script src="/js/auth.js"></script>
+<script src="/js/api.js"></script>
+<script>
+function esc(value){ return String(value || "").replace(/[&<>"']/g, ch => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[ch])); }
+function currentUser(){ return AppAuth.getUser() || {}; }
+function allowed(){ return ["owner","admin"].includes(String(currentUser().role || "").toLowerCase()); }
+function badge(status){
+  const good = ["ok", "complete", "configured", "running"].includes(String(status || "").toLowerCase());
+  return '<span class="badge ' + (good ? "active" : "status-orange") + '">' + esc(status || "-") + '</span>';
+}
+function listBlockers(items){
+  const list = Array.isArray(items) ? items.filter(Boolean) : [];
+  return list.length ? '<ul>' + list.map(item => '<li>' + esc(item) + '</li>').join("") + '</ul>' : '<p class="muted">None reported.</p>';
+}
+function card(title, html){
+  return '<div class="panel"><h2>' + esc(title) + '</h2>' + html + '</div>';
+}
+
+function render(data){
+  const runtime = data.runtime || data || {};
+  const system = data.system || {};
+  const pending = runtime.migrations && runtime.migrations.pending ? runtime.migrations.pending : [];
+  const env = runtime.environment || {};
+  const envBlockers = []
+    .concat(env.missing_critical || [])
+    .concat(env.missing_launch_required || []);
+  const queue = runtime.queue || {};
+  const scheduler = runtime.scheduler || {};
+  const operational = runtime.operational || {};
+
+  document.getElementById("healthBox").innerHTML =
+    card("Readiness", '<div class="status-line"><span>Status</span>' + badge(runtime.ok ? "ok" : "blocked") + '</div><div class="status-line"><span>Environment</span><span class="muted">' + esc(runtime.env || "-") + '</span></div><div class="status-line"><span>Checked</span><span class="muted">' + esc(runtime.time || "-") + '</span></div>') +
+    card("Environment", '<div class="status-line"><span>Status</span>' + badge(env.status || "-") + '</div><div class="status-line"><span>Blockers</span><strong>' + esc(envBlockers.length) + '</strong></div>' + listBlockers(envBlockers.concat(env.warnings || []))) +
+    card("Database", '<div class="status-line"><span>Status</span>' + badge(runtime.database && runtime.database.status) + '</div>') +
+    card("Migrations", '<div class="status-line"><span>Status</span>' + badge(runtime.migrations && runtime.migrations.status) + '</div><div class="status-line"><span>Pending</span><strong>' + esc(pending.length) + '</strong></div>' + (pending.length ? listBlockers(pending) : '<p class="muted">All migrations applied.</p>')) +
+    card("Billing", '<div class="status-line"><span>Status</span>' + badge(runtime.billing && runtime.billing.status) + '</div><div class="status-line"><span>Past Due</span><strong>' + esc(runtime.billing && runtime.billing.past_due_companies) + '</strong></div><div class="status-line"><span>Suspended</span><strong>' + esc(runtime.billing && runtime.billing.suspended_companies) + '</strong></div><div class="status-line"><span>Lifecycle Automation</span>' + badge(operational.billing_lifecycle_automation_enabled ? "running" : "stopped") + '</div>') +
+    card("Stripe", '<div class="status-line"><span>Status</span>' + badge(runtime.stripe && runtime.stripe.status) + '</div><div class="status-line"><span>Checkout</span>' + badge(runtime.stripe && runtime.stripe.checkout_configured ? "configured" : "missing") + '</div><div class="status-line"><span>Webhook Secret</span>' + badge(runtime.stripe && runtime.stripe.webhook_secret_configured ? "configured" : "missing") + '</div><div class="status-line"><span>Portal</span>' + badge(runtime.stripe && runtime.stripe.portal_configured ? "configured" : "missing") + '</div>') +
+    card("Email", '<div class="status-line"><span>Status</span>' + badge(runtime.email && runtime.email.status) + '</div><div class="status-line"><span>Missing</span><strong>' + esc((runtime.email && runtime.email.missing || []).length) + '</strong></div>') +
+    card("Uploads", '<div class="status-line"><span>Status</span>' + badge(runtime.uploads && runtime.uploads.status) + '</div><div class="status-line"><span>Storage</span><span class="muted">' + esc(runtime.uploads && runtime.uploads.storage) + '</span></div><div class="status-line"><span>Ephemeral Warning</span>' + badge(runtime.uploads && runtime.uploads.ephemeral_storage_warning ? "warning" : "ok") + '</div>') +
+    card("Queue", '<div class="status-line"><span>Status</span>' + badge(queue.started ? "running" : "stopped") + '</div><div class="status-line"><span>Pending</span><strong>' + esc(queue.pending || 0) + '</strong></div><div class="status-line"><span>Failed</span><strong>' + esc(queue.failed || 0) + '</strong></div>') +
+    card("Scheduler", '<div class="status-line"><span>Status</span>' + badge(scheduler.started ? "running" : "stopped") + '</div><div class="status-line"><span>Tasks</span><strong>' + esc((scheduler.tasks || []).length || 0) + '</strong></div>') +
+    card("Company Setup", '<div class="status-line"><span>Status</span>' + badge(system.company && system.company.status) + '</div><div class="status-line"><span>Missing Fields</span><strong>' + esc((system.company && system.company.missing_fields || []).length) + '</strong></div>');
+}
+
+async function load(){
+  if(!AppAuth.requireAuth()) return;
+  if(!allowed()){
+    document.querySelector(".page").innerHTML = '<div class="page-forbidden">You do not have permission to view system health.</div>';
+    return;
+  }
+  AppUI.setLoading(true, "Loading system health...");
+  try {
+    const systemHealth = {};
+    try {
+      systemHealth.system = await AppAPI.safeFetch("/system/health");
+    } catch(systemErr) {
+      systemHealth.system = {};
+    }
+    const runtimeRes = await AppAPI.fetch("/health");
+    systemHealth.runtime = await runtimeRes.json();
+    render(systemHealth);
+  } catch(err) {
+    AppUI.showToast(err.message || "Unable to load system health.", "error");
+  } finally {
+    AppUI.setLoading(false);
+  }
+}
+
+load();
+</script>
+</body>
+</html>

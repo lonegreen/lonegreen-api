@@ -1,0 +1,818 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Subscriptions</title>
+  <link rel="stylesheet" href="/app-shell.css">
+  <style>
+    * { box-sizing: border-box; }
+
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      background: linear-gradient(180deg, #edf6f0 0%, #f7faf8 180px, #f4f6f8 100%);
+      color: #173327;
+    }
+
+    .container {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 24px 20px 40px;
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      color: #1f5c3a;
+      font-size: 32px;
+      letter-spacing: -0.03em;
+    }
+
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      margin-bottom: 20px;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+
+    .panel {
+      background: rgba(255,255,255,0.96);
+      padding: 18px;
+      border-radius: 16px;
+      border: 1px solid #dbe8df;
+      box-shadow: 0 14px 32px rgba(16,24,40,0.06);
+      margin-bottom: 15px;
+    }
+
+    .earn {
+      font-size: 18px;
+      font-weight: 800;
+      color: #1f5c3a;
+      line-height: 1.5;
+    }
+
+    .btn {
+      padding: 10px 14px;
+      border-radius: 10px;
+      border: none;
+      cursor: pointer;
+      font-weight: 700;
+      transition: transform .15s ease, box-shadow .15s ease, opacity .15s ease;
+      box-shadow: 0 8px 16px rgba(16,24,40,0.06);
+    }
+
+    .btn:hover:not(:disabled) {
+      transform: translateY(-1px);
+      box-shadow: 0 12px 22px rgba(16,24,40,0.10);
+    }
+
+    .btn:disabled {
+      opacity: .5;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    .add {
+      background: #1f5c3a;
+      color: white;
+    }
+
+    .edit {
+      background: #2563eb;
+      color: white;
+    }
+
+    .pause {
+      background: #f59e0b;
+      color: white;
+    }
+
+    .activate {
+      background: #1f5c3a;
+      color: white;
+    }
+
+    .danger {
+      background: #dc2626;
+      color: white;
+    }
+
+    .soft {
+      background: #eef2f0;
+      color: #1f5c3a;
+      border: 1px solid #dbe8df;
+    }
+
+    .row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .subscription-title {
+      font-size: 18px;
+      color: #143326;
+      line-height: 1.35;
+      word-break: break-word;
+    }
+
+    .subscription-service {
+      margin-top: 3px;
+      color: #35584b;
+      line-height: 1.45;
+      word-break: break-word;
+    }
+
+    .status {
+      padding: 6px 11px;
+      border-radius: 999px;
+      color: white;
+      font-size: 12px;
+      text-transform: uppercase;
+      font-weight: 800;
+      letter-spacing: 0.02em;
+      white-space: nowrap;
+    }
+
+    .green { background: #22c55e; }
+    .red { background: #ef4444; }
+    .orange { background: #f59e0b; }
+    .gray { background: #6b7280; }
+
+    .muted {
+      color: #587165;
+      font-size: 13px;
+      line-height: 1.45;
+      word-break: break-word;
+    }
+
+    .details-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .detail-box {
+      padding: 12px;
+      border-radius: 14px;
+      border: 1px solid #dbe8df;
+      background: #f8fbf9;
+      min-width: 0;
+      word-break: break-word;
+    }
+
+    .detail-label {
+      font-size: 11px;
+      color: #6b7f75;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+      margin-bottom: 5px;
+    }
+
+    .detail-value {
+      font-size: 14px;
+      color: #173327;
+      font-weight: 700;
+      line-height: 1.35;
+    }
+
+    .history {
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid #e5ece8;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: #ecf5ef;
+      color: #1f5c3a;
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .empty {
+      padding: 34px 24px;
+      text-align: center;
+      color: #587165;
+      line-height: 1.5;
+    }
+
+    .empty strong {
+      display: block;
+      color: #173327;
+      font-size: 18px;
+      margin-bottom: 6px;
+    }
+
+    .modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.52);
+      justify-content: center;
+      align-items: center;
+      padding: 18px;
+      z-index: 999;
+    }
+
+    .modal-box {
+      width: 720px;
+      max-width: 100%;
+      max-height: 92vh;
+      overflow: auto;
+      background: white;
+      border-radius: 20px;
+      padding: 22px;
+      box-shadow: 0 24px 54px rgba(16,24,40,0.22);
+    }
+
+    .modal-box h3 {
+      margin: 0 0 16px;
+      color: #1f5c3a;
+      font-size: 22px;
+      letter-spacing: -0.02em;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .field.wide {
+      grid-column: 1 / -1;
+    }
+
+    .field label {
+      font-size: 12px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #587165;
+    }
+
+    input,
+    select {
+      width: 100%;
+      padding: 11px 13px;
+      border-radius: 12px;
+      border: 1px solid #cfe0d5;
+      background: white;
+      color: #163328;
+      font: inherit;
+      outline: none;
+      transition: border .15s ease, box-shadow .15s ease;
+    }
+
+    input:focus,
+    select:focus {
+      border-color: #1f5c3a;
+      box-shadow: 0 0 0 4px rgba(31,92,58,0.10);
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 16px;
+    }
+
+    @media (max-width: 980px) {
+      .details-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 860px) {
+      .container {
+        padding: 22px 14px 34px;
+      }
+
+      .form-grid,
+      .details-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .top-bar {
+        align-items: stretch;
+      }
+
+      .top-bar .btn {
+        width: 100%;
+      }
+
+      .row {
+        align-items: flex-start;
+      }
+
+      .row .btn {
+        flex: 1 1 150px;
+      }
+    }
+  </style>
+  <link rel="stylesheet" href="/ui-cleanup.css">
+  <script src="/js/role-guard.js"></script>
+</head>
+<body>
+  <script>
+(function(){
+  const token = localStorage.getItem("token");
+
+  let user = null;
+
+  try {
+    user = JSON.parse(localStorage.getItem("user") || "null");
+  } catch (e) {
+    user = null;
+  }
+
+  if (!token || !user) {
+    window.location.href = "/login.html";
+    return;
+  }
+
+  const role = String(user.role || "").toLowerCase();
+
+  if (role === "worker") {
+    window.location.href = "/control.html";
+    return;
+  }
+})();
+</script>
+<div class="container">
+  <div class="top-bar">
+    <div>
+      <h1>Subscriptions</h1>
+      <div class="muted">Pause/resume subscriptions, track billing history, and review upcoming visits at a glance.</div>
+    </div>
+    <button class="btn add" onclick="load()">Refresh</button>
+  </div>
+
+  <div id="earn" class="panel earn">Loading...</div>
+  <div id="list"></div>
+</div>
+
+<div id="subscriptionEditModal" class="modal">
+  <div class="modal-box">
+    <h3>Edit Subscription</h3>
+    <div class="form-grid">
+      <div class="field">
+        <label for="edit_service">Service</label>
+        <input id="edit_service" placeholder="Service">
+      </div>
+      <div class="field">
+        <label for="edit_frequency">Frequency</label>
+        <select id="edit_frequency">
+          <option value="weekly">Weekly</option>
+          <option value="biweekly">Biweekly</option>
+          <option value="monthly">Monthly</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="edit_start_date">Start Date</label>
+        <input id="edit_start_date" type="date">
+      </div>
+      <div class="field">
+        <label for="edit_next_date">Next Visit</label>
+        <input id="edit_next_date" type="date">
+      </div>
+      <div class="field">
+        <label for="edit_price">Price</label>
+        <input id="edit_price" type="number" min="0" step="0.01" placeholder="Price">
+      </div>
+      <div class="field">
+        <label for="edit_worker_id">Worker</label>
+        <select id="edit_worker_id">
+          <option value="">Auto / unassigned</option>
+        </select>
+      </div>
+      <div class="field wide">
+        <label for="edit_status">Status</label>
+        <select id="edit_status">
+          <option value="draft">Draft</option>
+          <option value="active">Active</option>
+          <option value="paused">Paused</option>
+          <option value="cancelled">Cancelled</option>
+          <option value="completed">Completed</option>
+          <option value="expired">Expired</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn add" onclick="saveSubscriptionEdit()">Save</button>
+      <button class="btn soft" onclick="closeSubscriptionEdit()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<div id="deleteSubscriptionModal" class="modal">
+  <div class="modal-box">
+    <h3>Delete Subscription</h3>
+    <p>This will safely archive, cancel, deactivate, or delete only when safe.</p>
+    <div class="modal-actions">
+      <button class="btn soft" onclick="closeDeleteSubscription()">Cancel</button>
+      <button class="btn danger" onclick="confirmDeleteSubscription(this)">Delete</button>
+    </div>
+  </div>
+</div>
+
+<script src="/js/ui.js"></script>
+<script src="/js/auth.js"></script>
+<script src="/js/api.js"></script>
+<script src="/js/format.js"></script>
+<script>
+const API = window.location.origin;
+let subscriptions = [];
+let workers = [];
+let editingSubscription = null;
+let deletingSubscriptionId = null;
+let isLoading = false;
+
+const getToken = AppAuth.getToken;
+const apiFetch = AppAPI.fetch;
+
+function statusColor(status){
+  if(status === "active") return "green";
+  if(status === "paused") return "orange";
+  if(status === "completed") return "green";
+  if(status === "cancelled" || status === "expired") return "red";
+  return "gray";
+}
+
+function formatDate(value){
+  if(!value) return "";
+  const d = new Date(value);
+  return Number.isNaN(d.getTime()) ? "" : d.toLocaleDateString();
+}
+
+const formatMoney = AppFormat.formatMoney;
+
+function formatDateInput(value){
+  return value ? String(value).split("T")[0] : "";
+}
+
+function escapeHtml(value){
+  return String(value ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
+async function safeJson(res){
+  try {
+    return await res.json();
+  } catch {
+    try {
+      const text = await res.text();
+      return { error: text || "Request failed." };
+    } catch {
+      return { error: "Request failed." };
+    }
+  }
+}
+
+function getErrorMessage(data, fallback){
+  if(data && typeof data.error === "string" && data.error.trim()) return data.error;
+  if(data && typeof data.message === "string" && data.message.trim()) return data.message;
+  return fallback;
+}
+
+function setButtonLoading(button, text){
+  if(!button) return function(){};
+  const oldText = button.textContent;
+  button.disabled = true;
+  button.textContent = text;
+  return function(){
+    button.disabled = false;
+    button.textContent = oldText;
+  };
+}
+
+function currentRole(){
+  try {
+    return String((JSON.parse(localStorage.getItem("user") || "{}").role) || "").toLowerCase();
+  } catch {
+    return "";
+  }
+}
+
+function canDeleteSubscriptions(){
+  return ["owner", "admin", "manager"].includes(currentRole());
+}
+
+function canBillSubscriptions(){
+  return ["owner", "admin"].includes(currentRole());
+}
+
+function fillWorkerOptions(selectedWorkerId = ""){
+  const select = document.getElementById("edit_worker_id");
+
+  select.innerHTML =
+    `<option value="">Auto / unassigned</option>` +
+    workers.map(worker => `
+      <option value="${escapeHtml(worker.id)}" ${String(selectedWorkerId || "") === String(worker.id) ? "selected" : ""}>
+        ${escapeHtml(worker.name || ("Worker #" + worker.id))}
+      </option>
+    `).join("");
+}
+
+function detail(label, value){
+  return `
+    <div class="detail-box">
+      <div class="detail-label">${escapeHtml(label)}</div>
+      <div class="detail-value">${escapeHtml(value || "-")}</div>
+    </div>
+  `;
+}
+
+function renderSubscription(sub){
+  const status = sub.status || "draft";
+  const normalizedStatus = String(status || "").toLowerCase();
+  const workerDisplay = sub.worker_name || (sub.worker_id ? "#" + sub.worker_id : "Auto / unassigned");
+
+  return `<div class="panel">
+    <div class="row">
+      <div>
+        <div class="subscription-title"><b>${escapeHtml(sub.client_name || ("Client #" + (sub.client_id || "")))}</b></div>
+        <div class="subscription-service">${escapeHtml(sub.service || "")}</div>
+        <div class="muted">Worker: ${escapeHtml(workerDisplay)}</div>
+      </div>
+      <div class="status ${statusColor(status)}">${escapeHtml(status)}</div>
+    </div>
+
+    <div class="details-grid">
+      ${detail("Frequency", sub.frequency || "-")}
+      ${detail("Next Visit", formatDate(sub.next_date) || "-")}
+      ${detail("Upcoming Visits", sub.upcoming_visit_count || 0)}
+      ${detail("Nearest Scheduled", formatDate(sub.next_upcoming_visit) || "-")}
+      ${detail("Client ZIP", sub.client_zip || "-")}
+      ${detail("Monthly Price", formatMoney(sub.price || 0))}
+      ${detail("Next Billing", formatDate(sub.next_billing_date) || "-")}
+      ${detail("Last Billed", formatDate(sub.last_billed_date || sub.last_billing_date || sub.last_billed_at) || "-")}
+      ${detail("Billing Count", sub.billing_history_count || 0)}
+      ${detail("Latest Invoice", sub.latest_invoice_number || "-")}
+    </div>
+
+    ${sub.pause_reason ? `<div class="muted" style="margin-top:10px;">Pause reason: ${escapeHtml(sub.pause_reason)}</div>` : ""}
+    ${sub.cancel_reason ? `<div class="muted" style="margin-top:6px;">Cancel reason: ${escapeHtml(sub.cancel_reason)}</div>` : ""}
+
+    <div class="history"><span class="badge">MRR ${escapeHtml(formatMoney(sub.price || 0))}</span></div>
+
+    <div class="row" style="margin-top:14px;">
+      <button class="btn edit" onclick="openSubscriptionEdit(${Number(sub.id)})">Edit</button>
+      ${normalizedStatus === "active" ? `<button class="btn pause" onclick="setStatus(${Number(sub.id)}, 'paused')">Pause</button>` : ""}
+      ${normalizedStatus === "paused" ? `<button class="btn activate" onclick="setStatus(${Number(sub.id)}, 'active')">Resume</button>` : ""}
+      ${normalizedStatus === "cancelled" ? "" : `<button class="btn danger" onclick="setStatus(${Number(sub.id)}, 'cancelled')">Cancel</button>`}
+      ${canBillSubscriptions() ? `<button class="btn edit" onclick="markPaid(${Number(sub.id)})">Bill & Mark Paid</button>` : ""}
+      ${canDeleteSubscriptions() ? `<button class="btn danger" onclick="openDeleteSubscription(${Number(sub.id)})">Delete</button>` : ""}
+    </div>
+  </div>`;
+}
+
+function openSubscriptionEdit(id){
+  const subscription = subscriptions.find(item => String(item.id) === String(id));
+  if(!subscription) return;
+
+  editingSubscription = subscription;
+
+  document.getElementById("edit_service").value = subscription.service || "";
+  document.getElementById("edit_frequency").value = subscription.frequency || "weekly";
+  document.getElementById("edit_start_date").value = formatDateInput(subscription.start_date || subscription.next_date);
+  document.getElementById("edit_next_date").value = formatDateInput(subscription.next_date);
+  document.getElementById("edit_price").value = Number(subscription.price || 0);
+  document.getElementById("edit_status").value = subscription.status || "active";
+
+  fillWorkerOptions(subscription.worker_id || "");
+
+  document.getElementById("subscriptionEditModal").style.display = "flex";
+}
+
+function closeSubscriptionEdit(){
+  editingSubscription = null;
+  document.getElementById("subscriptionEditModal").style.display = "none";
+}
+
+function openDeleteSubscription(id){
+  deletingSubscriptionId = id;
+  document.getElementById("deleteSubscriptionModal").style.display = "flex";
+}
+
+function closeDeleteSubscription(){
+  deletingSubscriptionId = null;
+  document.getElementById("deleteSubscriptionModal").style.display = "none";
+}
+
+async function saveSubscriptionEdit(){
+  if(!editingSubscription) return;
+
+  const restoreButton = setButtonLoading(event && event.target ? event.target : null, "Saving...");
+
+  try {
+    const payload = {
+      client_id: editingSubscription.client_id,
+      service: document.getElementById("edit_service").value.trim(),
+      frequency: document.getElementById("edit_frequency").value,
+      start_date: document.getElementById("edit_start_date").value,
+      next_date: document.getElementById("edit_next_date").value,
+      price: Number(document.getElementById("edit_price").value || 0),
+      worker_id: document.getElementById("edit_worker_id").value ? Number(document.getElementById("edit_worker_id").value) : null,
+      status: document.getElementById("edit_status").value,
+      rebuild_future_jobs: false
+    };
+
+    if(!payload.client_id || !payload.service || !payload.frequency || !payload.start_date || !payload.next_date){
+      alert("Please fill the required subscription fields.");
+      return;
+    }
+
+    const res = await apiFetch(API + "/ops/subscriptions/" + editingSubscription.id, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+
+    const data = await safeJson(res);
+
+    if(!res.ok){
+      alert(getErrorMessage(data, "Unable to update subscription."));
+      return;
+    }
+
+    closeSubscriptionEdit();
+    load();
+  } finally {
+    restoreButton();
+  }
+}
+
+async function setStatus(id, status){
+  const restoreButton = setButtonLoading(event && event.target ? event.target : null, status === "cancelled" ? "Cancelling..." : "Updating...");
+
+  try {
+    const pause_reason = status === "paused" ? (prompt("Pause reason (optional):") || "") : "";
+    const cancel_reason = status === "cancelled" ? (prompt("Cancel reason (optional):") || "") : "";
+
+    const res = await apiFetch(API + "/ops/subscriptions/" + id + "/status", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status, pause_reason, cancel_reason })
+    });
+
+    const data = await safeJson(res);
+
+    if(!res.ok){
+      alert(getErrorMessage(data, "Unable to update subscription."));
+      return;
+    }
+
+    load();
+  } finally {
+    restoreButton();
+  }
+}
+
+async function markPaid(id){
+  const restoreButton = setButtonLoading(event && event.target ? event.target : null, "Billing...");
+
+  try {
+    const method = (prompt("Payment method: cash, zelle, or card", "cash") || "cash").trim().toLowerCase();
+    const notes = prompt("Billing note (optional):") || "";
+
+    const res = await apiFetch(API + "/ops/subscriptions/" + id + "/mark-paid", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ method, notes })
+    });
+
+    const data = await safeJson(res);
+
+    if(!res.ok){
+      alert(getErrorMessage(data, "Unable to bill subscription."));
+      return;
+    }
+
+    alert(`Subscription billed. Invoice ${data.invoice_id || ""} recorded as paid.`);
+    load();
+  } finally {
+    restoreButton();
+  }
+}
+
+async function confirmDeleteSubscription(button){
+  if(!deletingSubscriptionId) return;
+
+  await AppUI.withButton(button, async () => {
+    const res = await apiFetch(API + "/ops/subscriptions/" + encodeURIComponent(deletingSubscriptionId) + "/permanent", {
+      method: "DELETE"
+    });
+
+    const data = await safeJson(res);
+
+    if(!res.ok){
+      AppUI.showToast(getErrorMessage(data, "Unable to delete subscription."), "error");
+      return;
+    }
+
+    closeDeleteSubscription();
+    AppUI.showToast(data.message || "Subscription updated safely.", "success");
+    await load();
+  }, { loading: "Deleting..." });
+}
+
+function renderLoading(){
+  document.getElementById("earn").textContent = "Loading subscription summary...";
+  document.getElementById("list").innerHTML = `<div class="panel empty"><strong>Loading subscriptions...</strong>Please wait while the latest subscription data is loaded.</div>`;
+}
+
+function renderData(){
+  const safeSubs = Array.isArray(subscriptions) ? subscriptions : [];
+
+  const activeCount = safeSubs.filter(sub => sub.status === "active").length;
+  const pausedCount = safeSubs.filter(sub => sub.status === "paused").length;
+  const monthlyValue = safeSubs
+    .filter(sub => sub.status === "active")
+    .reduce((sum, sub) => sum + Number(sub.price || 0), 0);
+  const lastBilledCount = safeSubs.filter(sub => sub.last_billed_date || sub.last_billed_at).length;
+
+  document.getElementById("earn").textContent =
+    `Active: ${activeCount} | Paused: ${pausedCount} | MRR: ${formatMoney(monthlyValue)} | Billed subscriptions: ${lastBilledCount}`;
+
+  document.getElementById("list").innerHTML = safeSubs.length
+    ? safeSubs.map(renderSubscription).join("")
+    : `<div class="panel empty"><strong>No subscriptions found</strong>Create subscriptions from the client workflow when recurring work is approved.</div>`;
+}
+
+async function load(){
+  isLoading = true;
+  renderLoading();
+
+  try {
+    const [res, workersRes] = await Promise.all([
+      apiFetch(API + "/ops/subscriptions"),
+      apiFetch(API + "/ops/workers")
+    ]);
+
+    const subs = await safeJson(res);
+    const workerData = await safeJson(workersRes);
+
+    if(!res.ok){
+      throw new Error(getErrorMessage(subs, "Unable to load subscriptions."));
+    }
+
+    if(!workersRes.ok){
+      workers = [];
+    } else {
+      workers = Array.isArray(workerData) ? workerData : [];
+    }
+
+    subscriptions = Array.isArray(subs) ? subs : [];
+
+    renderData();
+  } catch(err){
+    console.log("SUBSCRIPTIONS LOAD ERROR:", err);
+    subscriptions = [];
+    document.getElementById("earn").textContent = "Unable to load subscription summary.";
+    document.getElementById("list").innerHTML =
+      `<div class="panel empty"><strong>Unable to load subscriptions</strong>${escapeHtml(err && err.message ? err.message : "Please refresh and try again.")}</div>`;
+  } finally {
+    isLoading = false;
+  }
+}
+
+window.addEventListener("click", event => {
+  if(event.target === document.getElementById("subscriptionEditModal")){
+    closeSubscriptionEdit();
+  }
+  if(event.target === document.getElementById("deleteSubscriptionModal")){
+    closeDeleteSubscription();
+  }
+});
+
+document.addEventListener("keydown", event => {
+  if(event.key === "Escape"){
+    closeSubscriptionEdit();
+    closeDeleteSubscription();
+  }
+});
+
+load();
+</script>
+</body>
+</html>

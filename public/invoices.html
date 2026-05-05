@@ -1,0 +1,886 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Invoices</title>
+  <link rel="stylesheet" href="/app-shell.css">
+  <style>
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background:
+        radial-gradient(circle at top left, rgba(31, 92, 58, 0.08), transparent 26%),
+        linear-gradient(180deg, #edf5f0 0%, #f7f9f8 190px, #f4f6f8 100%);
+      color: #163328;
+      padding: 22px;
+    }
+
+    .page {
+      max-width: 1180px;
+      margin: 0 auto;
+      display: grid;
+      gap: 18px;
+    }
+
+    .hero {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      gap: 18px;
+      flex-wrap: wrap;
+    }
+
+    .hero h1 {
+      margin: 0 0 6px;
+      color: #1f5c3a;
+      font-size: 32px;
+      letter-spacing: -0.03em;
+    }
+
+    .hero p {
+      margin: 0;
+      color: #648076;
+      line-height: 1.5;
+    }
+
+    .panel {
+      background: rgba(255,255,255,0.96);
+      border: 1px solid #dbe7df;
+      border-radius: 20px;
+      box-shadow: 0 18px 42px rgba(16,24,40,0.06);
+    }
+
+    .toolbar {
+      padding: 18px;
+      display: grid;
+      gap: 14px;
+    }
+
+    .filter-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .filter-chip {
+      border: 1px solid #dbe7df;
+      background: white;
+      color: #365a4c;
+      border-radius: 999px;
+      padding: 10px 14px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: .15s ease;
+    }
+
+    .filter-chip:hover {
+      border-color: #1f5c3a;
+      transform: translateY(-1px);
+    }
+
+    .filter-chip.active {
+      background: #1f5c3a;
+      color: white;
+      border-color: #1f5c3a;
+      box-shadow: 0 10px 20px rgba(31,92,58,0.18);
+    }
+
+    .summary {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .summary-card {
+      padding: 16px;
+    }
+
+    .label {
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #6b8278;
+      margin-bottom: 8px;
+    }
+
+    .value {
+      font-size: 30px;
+      font-weight: 800;
+      color: #1f5c3a;
+      letter-spacing: -0.03em;
+      word-break: break-word;
+    }
+
+    .invoice-list {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+    }
+
+    .invoice-card {
+      padding: 18px;
+      border: 1px solid #dbe7df;
+      border-radius: 18px;
+      background: rgba(255,255,255,0.97);
+      box-shadow: 0 14px 30px rgba(16,24,40,0.06);
+      min-width: 0;
+    }
+
+    .card-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+    }
+
+    .card-title {
+      margin: 0 0 6px;
+      color: #173327;
+      font-size: 22px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      word-break: break-word;
+    }
+
+    .card-sub {
+      color: #648076;
+      font-size: 13px;
+      line-height: 1.5;
+      word-break: break-word;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 7px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 800;
+      text-transform: uppercase;
+      white-space: nowrap;
+      letter-spacing: 0.02em;
+    }
+
+    .status-unpaid { background: #fff7ed; color: #c2410c; }
+    .status-paid { background: #ecfdf3; color: #027a48; }
+    .status-overdue { background: #fef2f2; color: #b42318; }
+    .status-draft { background: #eef2f0; color: #4b5563; }
+    .status-cancelled { background: #fef2f2; color: #b42318; }
+
+    .money-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .money-box {
+      padding: 12px;
+      border-radius: 14px;
+      background: #f7faf8;
+      border: 1px solid #deebe3;
+      min-width: 0;
+    }
+
+    .money-box strong {
+      display: block;
+      margin-top: 5px;
+      color: #173327;
+      font-size: 18px;
+      word-break: break-word;
+    }
+
+    .actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.52);
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+      padding: 18px;
+    }
+
+    .modal-box {
+      background: white;
+      width: 760px;
+      max-width: 100%;
+      max-height: 92vh;
+      overflow: auto;
+      border-radius: 20px;
+      padding: 22px;
+      box-shadow: 0 24px 54px rgba(0,0,0,0.22);
+    }
+
+    .modal-box h3 {
+      margin: 0 0 16px;
+      color: #1f5c3a;
+      font-size: 22px;
+      letter-spacing: -0.02em;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .field.wide {
+      grid-column: 1 / -1;
+    }
+
+    .field label {
+      font-size: 12px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #6b8278;
+    }
+
+    input,
+    select,
+    textarea {
+      width: 100%;
+      padding: 11px 13px;
+      border-radius: 12px;
+      border: 1px solid #cfe0d5;
+      background: white;
+      color: #163328;
+      font: inherit;
+      outline: none;
+      transition: border .15s ease, box-shadow .15s ease;
+    }
+
+    input:focus,
+    select:focus,
+    textarea:focus {
+      border-color: #1f5c3a;
+      box-shadow: 0 0 0 4px rgba(31,92,58,0.10);
+    }
+
+    textarea {
+      resize: vertical;
+    }
+
+    .line-items-editor {
+      display: grid;
+      gap: 10px;
+    }
+
+    .line-item-row {
+      display: grid;
+      grid-template-columns: minmax(0, 2fr) 110px 130px;
+      gap: 10px;
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 16px;
+    }
+
+    .btn {
+      border: none;
+      border-radius: 12px;
+      padding: 11px 16px;
+      font-weight: 800;
+      cursor: pointer;
+      font-family: inherit;
+      transition: transform .15s ease, box-shadow .15s ease, opacity .15s ease;
+      box-shadow: 0 8px 16px rgba(16,24,40,0.06);
+    }
+
+    .btn:hover:not(:disabled) {
+      transform: translateY(-1px);
+      box-shadow: 0 12px 22px rgba(16,24,40,0.10);
+    }
+
+    .btn:disabled {
+      opacity: .55;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    .primary { background: #1f5c3a; color: white; }
+    .gray { background: #eef2f0; color: #1f5c3a; border: 1px solid #dbe7df; }
+    .red { background: #dc2626; color: white; }
+
+    .empty {
+      padding: 24px;
+      border: 1px dashed #dbe7df;
+      border-radius: 18px;
+      background: #f8fbf9;
+      color: #688076;
+      grid-column: 1 / -1;
+      line-height: 1.5;
+    }
+
+    .empty strong {
+      display: block;
+      color: #173327;
+      font-size: 18px;
+      margin-bottom: 6px;
+    }
+
+    @media (max-width: 900px) {
+      body {
+        padding: 14px;
+      }
+
+      .summary,
+      .invoice-list,
+      .money-grid,
+      .form-grid,
+      .line-item-row {
+        grid-template-columns: 1fr;
+      }
+
+      .actions .btn,
+      .modal-actions .btn {
+        flex: 1 1 150px;
+      }
+    }
+  </style>
+  <link rel="stylesheet" href="/ui-cleanup.css">
+  <script src="/js/role-guard.js"></script>
+</head>
+<body>
+  <script>
+(function(){
+  const token = localStorage.getItem("token");
+
+  let user = null;
+
+  try {
+    user = JSON.parse(localStorage.getItem("user") || "null");
+  } catch (e) {
+    user = null;
+  }
+
+  if (!token || !user) {
+    window.location.href = "/login.html";
+    return;
+  }
+
+  const role = String(user.role || "").toLowerCase();
+
+  if (role === "worker") {
+    window.location.href = "/control.html";
+    return;
+  }
+})();
+</script>
+<div class="page">
+  <div class="hero">
+    <div>
+      <h1>Invoices</h1>
+      <p>Clear financial view of invoice status, paid amounts, and remaining balances.</p>
+    </div>
+  </div>
+
+  <div class="panel toolbar">
+    <div class="filter-row">
+      <button class="filter-chip active" id="filter-all" onclick="setFilter('all')">All</button>
+      <button class="filter-chip" id="filter-unpaid" onclick="setFilter('unpaid')">Unpaid</button>
+      <button class="filter-chip" id="filter-paid" onclick="setFilter('paid')">Paid</button>
+      <button class="filter-chip" id="filter-overdue" onclick="setFilter('overdue')">Overdue</button>
+    </div>
+
+    <div class="summary">
+      <div class="panel summary-card"><div class="label">Invoices</div><div class="value" id="invoiceCount">0</div></div>
+      <div class="panel summary-card"><div class="label">Total</div><div class="value" id="totalAmount">$0</div></div>
+      <div class="panel summary-card"><div class="label">Paid</div><div class="value" id="paidAmount">$0</div></div>
+      <div class="panel summary-card"><div class="label">Remaining</div><div class="value" id="remainingAmount">$0</div></div>
+    </div>
+  </div>
+
+  <div id="list" class="invoice-list"></div>
+</div>
+
+<script src="/js/ui.js"></script>
+<script src="/js/auth.js"></script>
+<script src="/js/api.js"></script>
+<script src="/js/format.js"></script>
+<script>
+const API = window.location.origin;
+let invoices = [];
+let activeFilter = "all";
+let editingInvoiceId = null;
+let deletingInvoiceId = null;
+
+const getToken = AppAuth.getToken;
+
+async function apiFetch(url, options = {}){
+  const res = await fetch(url, {
+    ...options,
+    headers: {
+      ...(options.headers || {}),
+      Authorization: "Bearer " + getToken()
+    }
+  });
+
+  if(res.status === 403 && window.AppAPI){
+    window.AppAPI.handleForbidden();
+  }
+
+  if(res.status === 401){
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    window.top.location.href = "/login.html";
+    throw new Error("Unauthorized");
+  }
+
+  return res;
+}
+
+function escapeHtml(value){
+  return String(value ?? "").replace(/[&<>\"']/g, char => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#39;"
+  }[char]));
+}
+
+async function safeJson(res){
+  try {
+    return await res.json();
+  } catch {
+    try {
+      const text = await res.text();
+      return { error: text || "Request failed." };
+    } catch {
+      return { error: "Request failed." };
+    }
+  }
+}
+
+function getErrorMessage(data, fallback){
+  if(data && typeof data.error === "string" && data.error.trim()) return data.error;
+  if(data && typeof data.message === "string" && data.message.trim()) return data.message;
+  return fallback;
+}
+
+function currentRole(){
+  try {
+    return String((JSON.parse(localStorage.getItem("user") || "{}").role) || "").toLowerCase();
+  } catch {
+    return "";
+  }
+}
+
+function canDeleteInvoices(){
+  return ["owner", "admin", "manager"].includes(currentRole());
+}
+
+function money(value){
+  return "$" + Number(value || 0).toLocaleString(undefined, {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  });
+}
+
+function formatDate(value){
+  return value ? String(value).split("T")[0] : "-";
+}
+
+function badge(status){
+  const safeStatus = String(status || "draft");
+  return `<span class="badge status-${safeStatus.replace(/[^a-z_]/g, "")}">${escapeHtml(safeStatus)}</span>`;
+}
+
+function paidAmount(invoice){
+  if(invoice.paid_amount !== undefined && invoice.paid_amount !== null){
+    return Number(invoice.paid_amount || 0);
+  }
+
+  return invoice.status === "paid" ? Number(invoice.amount || 0) : 0;
+}
+
+function remainingAmount(invoice){
+  return Number(
+    invoice.remaining_balance !== undefined
+      ? invoice.remaining_balance
+      : (invoice.status === "paid" ? 0 : Number(invoice.amount || 0))
+  );
+}
+
+function setFilter(filter){
+  activeFilter = filter;
+
+  ["all","unpaid","paid","overdue"].forEach(name => {
+    document.getElementById("filter-" + name).classList.toggle("active", name === filter);
+  });
+
+  render();
+}
+
+function getFilteredInvoices(){
+  if(activeFilter === "all") return invoices;
+  return invoices.filter(invoice => invoice.status === activeFilter);
+}
+
+function renderSummary(list){
+  document.getElementById("invoiceCount").textContent = list.length;
+  document.getElementById("totalAmount").textContent = money(list.reduce((sum, invoice) => sum + Number(invoice.amount || 0), 0));
+  document.getElementById("paidAmount").textContent = money(list.reduce((sum, invoice) => sum + paidAmount(invoice), 0));
+  document.getElementById("remainingAmount").textContent = money(list.reduce((sum, invoice) => sum + remainingAmount(invoice), 0));
+}
+
+function render(){
+  const list = getFilteredInvoices();
+  renderSummary(list);
+
+  const wrap = document.getElementById("list");
+
+  if(!list.length){
+    wrap.innerHTML = `<div class="empty"><strong>No invoices yet</strong>Create an invoice from a client profile.</div>`;
+    return;
+  }
+
+  wrap.innerHTML = list.map(invoice => `
+    <div class="invoice-card">
+      <div class="card-top">
+        <div>
+          <h3 class="card-title">${escapeHtml(invoice.invoice_number || ("Invoice #" + invoice.id))}</h3>
+          <div class="card-sub">${escapeHtml(invoice.client_name || "Client")} • Issued ${escapeHtml(formatDate(invoice.issued_date))}</div>
+          <div class="card-sub">${escapeHtml(invoice.job_service || "Service")}${invoice.job_date ? " • " + escapeHtml(formatDate(invoice.job_date)) : ""}</div>
+        </div>
+        ${badge(invoice.status)}
+      </div>
+
+      <div class="money-grid">
+        <div class="money-box"><div class="label">Total</div><strong>${escapeHtml(money(invoice.amount || 0))}</strong></div>
+        <div class="money-box"><div class="label">Paid</div><strong>${escapeHtml(money(paidAmount(invoice)))}</strong></div>
+        <div class="money-box"><div class="label">Remaining</div><strong>${escapeHtml(money(remainingAmount(invoice)))}</strong></div>
+      </div>
+
+      <div class="actions">
+        <button class="btn gray" onclick="openEditInvoice(${Number(invoice.id)})">Edit</button>
+        ${invoice.status === "cancelled" ? "" : `<button class="btn red" onclick="setInvoiceStatus(${Number(invoice.id)}, 'cancelled', this)">Void / Cancel</button>`}
+        <button class="btn primary" onclick="window.open('/invoice.html?id=${encodeURIComponent(invoice.id)}', '_blank')">Open Invoice</button>
+        ${canDeleteInvoices() ? `<button class="btn red" onclick="openDeleteInvoice(${Number(invoice.id)})">Delete</button>` : ""}
+      </div>
+    </div>
+  `).join("");
+}
+
+function renderInvoiceEditorRows(lineItems){
+  const safeItems = Array.isArray(lineItems) && lineItems.length
+    ? lineItems
+    : [{ description: "", quantity: 1, price: 0 }];
+
+  document.getElementById("invoiceLineItems").innerHTML = safeItems.map((item, index) => `
+    <div class="line-item-row">
+      <input data-line="description" data-index="${index}" placeholder="Description" value="${escapeHtml(item.description || "")}">
+      <input data-line="quantity" data-index="${index}" type="number" min="0" step="1" placeholder="Qty" value="${Number(item.quantity || 1)}">
+      <input data-line="price" data-index="${index}" type="number" min="0" step="0.01" placeholder="Price" value="${Number(item.price || 0)}">
+    </div>
+  `).join("");
+}
+
+function prefillInvoiceEditor(invoice){
+  if(!invoice) return;
+
+  editingInvoiceId = invoice.id;
+
+  document.getElementById("invoiceEditTitle").textContent = "Edit Invoice";
+  document.getElementById("edit_invoice_status").value = invoice.status || "draft";
+  document.getElementById("edit_invoice_due_date").value = formatDate(invoice.due_date) === "-" ? "" : formatDate(invoice.due_date);
+  document.getElementById("edit_invoice_notes").value = invoice.notes || "";
+
+  renderInvoiceEditorRows(invoice.line_items);
+}
+
+async function openEditInvoice(invoiceId){
+  const currentInvoice = invoices.find(item => String(item.id) === String(invoiceId));
+
+  if(currentInvoice){
+    prefillInvoiceEditor({
+      ...currentInvoice,
+      line_items: Array.isArray(currentInvoice.line_items) && currentInvoice.line_items.length
+        ? currentInvoice.line_items
+        : [{
+            description: currentInvoice.job_service || "Service",
+            quantity: 1,
+            price: Number(currentInvoice.amount || 0)
+          }]
+    });
+
+    document.getElementById("invoiceEditModal").style.display = "flex";
+  }
+
+  AppUI.setLoading(true, "Loading invoice...");
+
+  try {
+    const res = await apiFetch(API + "/workflow/invoices/" + encodeURIComponent(invoiceId));
+    const invoice = await safeJson(res);
+
+    if(!res.ok){
+      AppUI.showToast(getErrorMessage(invoice, "Unable to load invoice."), "error");
+      return;
+    }
+
+    prefillInvoiceEditor(invoice);
+    document.getElementById("invoiceEditModal").style.display = "flex";
+  } catch(err){
+    AppUI.showToast("Unable to load invoice.", "error");
+  } finally {
+    AppUI.setLoading(false);
+  }
+}
+
+function closeEditInvoice(){
+  editingInvoiceId = null;
+  document.getElementById("invoiceEditModal").style.display = "none";
+}
+
+function openDeleteInvoice(id){
+  deletingInvoiceId = id;
+  document.getElementById("deleteInvoiceModal").style.display = "flex";
+}
+
+function closeDeleteInvoice(){
+  deletingInvoiceId = null;
+  document.getElementById("deleteInvoiceModal").style.display = "none";
+}
+
+function collectInvoiceLineItems(){
+  const rows = Array.from(document.querySelectorAll("#invoiceLineItems .line-item-row"));
+
+  return rows.map(row => ({
+    description: row.querySelector('[data-line="description"]').value.trim(),
+    quantity: Number(row.querySelector('[data-line="quantity"]').value || 0),
+    price: Number(row.querySelector('[data-line="price"]').value || 0)
+  })).filter(item => item.description || item.quantity || item.price);
+}
+
+async function saveInvoiceEdit(button){
+  if(!editingInvoiceId){
+    AppUI.showToast("Invoice edit is not ready.", "error");
+    return;
+  }
+
+  const payload = {
+    status: document.getElementById("edit_invoice_status").value,
+    due_date: document.getElementById("edit_invoice_due_date").value || null,
+    notes: document.getElementById("edit_invoice_notes").value.trim(),
+    line_items: collectInvoiceLineItems()
+  };
+
+  if(!payload.line_items.length){
+    AppUI.showToast("Add at least one line item.", "error");
+    return;
+  }
+
+  await AppUI.withButton(button, async () => {
+    const res = await apiFetch(API + "/workflow/invoices/" + encodeURIComponent(editingInvoiceId), {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+
+    const data = await safeJson(res);
+
+    if(!res.ok){
+      AppUI.showToast(getErrorMessage(data, "Unable to save invoice."), "error");
+      return;
+    }
+
+    closeEditInvoice();
+    AppUI.showToast("Invoice updated.", "success");
+    await load();
+  }, { loading: "Saving..." });
+}
+
+async function setInvoiceStatus(id, status, button){
+  await AppUI.withButton(button, async () => {
+    const res = await apiFetch(API + "/workflow/invoices/" + encodeURIComponent(id) + "/status", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status })
+    });
+
+    const data = await safeJson(res);
+
+    if(!res.ok){
+      AppUI.showToast(getErrorMessage(data, "Unable to update invoice."), "error");
+      return;
+    }
+
+    AppUI.showToast(status === "cancelled" ? "Invoice cancelled." : "Invoice updated.", "success");
+    await load();
+  }, { loading: "Updating..." });
+}
+
+async function confirmDeleteInvoice(button){
+  if(!deletingInvoiceId) return;
+
+  await AppUI.withButton(button, async () => {
+    const res = await apiFetch(API + "/workflow/invoices/" + encodeURIComponent(deletingInvoiceId), {
+      method: "DELETE"
+    });
+
+    const data = await safeJson(res);
+
+    if(!res.ok){
+      AppUI.showToast(getErrorMessage(data, "Unable to delete invoice."), "error");
+      return;
+    }
+
+    closeDeleteInvoice();
+    AppUI.showToast(data.message || "Invoice updated safely.", "success");
+    await load();
+  }, { loading: "Deleting..." });
+}
+
+async function load(){
+  AppUI.setLoading(true, "Loading invoices...");
+
+  try {
+    const clientsRes = await apiFetch(API + "/clients");
+    const clientsData = await safeJson(clientsRes);
+
+    if(!clientsRes.ok){
+      throw new Error(getErrorMessage(clientsData, "Unable to load clients."));
+    }
+
+    const clients = Array.isArray(clientsData) ? clientsData : [];
+
+    const timelines = await Promise.all(clients.map(async client => {
+      try {
+        const res = await apiFetch(API + "/workflow/clients/" + client.id + "/timeline");
+        const data = await safeJson(res);
+
+        if(!res.ok) return null;
+        return data;
+      } catch(err){
+        return null;
+      }
+    }));
+
+    invoices = timelines
+      .filter(Boolean)
+      .flatMap(item => {
+        const jobs = Array.isArray(item.jobs) ? item.jobs : [];
+
+        return Array.isArray(item.invoices)
+          ? item.invoices.map(invoice => {
+              const job = jobs.find(job => String(job.id) === String(invoice.job_id));
+
+              return {
+                ...invoice,
+                client_name: item.client && item.client.name ? item.client.name : "Client",
+                job_service: job ? (job.service || "") : "",
+                job_date: job ? (job.date || "") : ""
+              };
+            })
+          : [];
+      })
+      .sort((a, b) => {
+        const aDate = formatDate(a.issued_date);
+        const bDate = formatDate(b.issued_date);
+        return bDate.localeCompare(aDate) || Number(b.id || 0) - Number(a.id || 0);
+      });
+
+    render();
+  } catch(err){
+    AppUI.showToast("Unable to load invoices.", "error");
+    document.getElementById("list").innerHTML =
+      `<div class="empty"><strong>Unable to load invoices</strong>${escapeHtml(err && err.message ? err.message : "Please refresh and try again.")}</div>`;
+  } finally {
+    AppUI.setLoading(false);
+  }
+}
+
+window.addEventListener("click", event => {
+  if(event.target === document.getElementById("invoiceEditModal")){
+    closeEditInvoice();
+  }
+  if(event.target === document.getElementById("deleteInvoiceModal")){
+    closeDeleteInvoice();
+  }
+});
+
+document.addEventListener("keydown", event => {
+  if(event.key === "Escape"){
+    closeEditInvoice();
+    closeDeleteInvoice();
+  }
+});
+
+load();
+</script>
+
+<div id="invoiceEditModal" class="modal">
+  <div class="modal-box">
+    <h3 id="invoiceEditTitle">Edit Invoice</h3>
+
+    <div class="form-grid">
+      <div class="field">
+        <label for="edit_invoice_status">Status</label>
+        <select id="edit_invoice_status">
+          <option value="draft">Draft</option>
+          <option value="unpaid">Unpaid</option>
+          <option value="paid">Paid</option>
+          <option value="overdue">Overdue</option>
+          <option value="cancelled">Cancelled</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label for="edit_invoice_due_date">Due Date</label>
+        <input id="edit_invoice_due_date" type="date">
+      </div>
+
+      <div class="field wide">
+        <label>Line Items</label>
+        <div id="invoiceLineItems" class="line-items-editor"></div>
+      </div>
+
+      <div class="field wide">
+        <label for="edit_invoice_notes">Notes</label>
+        <textarea id="edit_invoice_notes" rows="4" placeholder="Invoice notes"></textarea>
+      </div>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn primary" onclick="saveInvoiceEdit(this)">Save</button>
+      <button class="btn gray" onclick="closeEditInvoice()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<div id="deleteInvoiceModal" class="modal">
+  <div class="modal-box">
+    <h3>Delete Invoice</h3>
+    <p>This will safely archive, cancel, deactivate, or delete only when safe.</p>
+    <div class="modal-actions">
+      <button class="btn gray" onclick="closeDeleteInvoice()">Cancel</button>
+      <button class="btn red" onclick="confirmDeleteInvoice(this)">Delete</button>
+    </div>
+  </div>
+</div>
+</body>
+</html>

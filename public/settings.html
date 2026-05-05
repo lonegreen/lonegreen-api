@@ -1,0 +1,1221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Account</title>
+  <link rel="stylesheet" href="/app-shell.css">
+  <style>
+    * { box-sizing: border-box; }
+
+    :root {
+      --bg: #f5f7f6;
+      --panel: #ffffff;
+      --panel-soft: #f8fbf9;
+      --border: #dce7df;
+      --border-strong: #c8d8ce;
+      --text: #172b22;
+      --muted: #64776d;
+      --muted-2: #7b8e84;
+      --green: #1f5c3a;
+      --green-2: #2f7a50;
+      --green-soft: #edf7f0;
+      --red: #b42318;
+      --red-soft: #fff1f0;
+      --yellow: #9a6700;
+      --yellow-soft: #fff7e6;
+      --blue: #175cd3;
+      --blue-soft: #eff6ff;
+      --shadow: 0 16px 40px rgba(16, 24, 40, 0.07);
+      --radius: 18px;
+    }
+
+    body {
+      margin: 0;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top left, rgba(31, 92, 58, 0.10), transparent 28%),
+        radial-gradient(circle at top right, rgba(47, 122, 80, 0.08), transparent 24%),
+        linear-gradient(180deg, #edf4ef 0%, var(--bg) 42%, #fbfcfb 100%);
+      padding: 24px;
+    }
+
+    .page {
+      max-width: 1320px;
+      margin: 0 auto;
+      display: grid;
+      gap: 18px;
+    }
+
+    .hero {
+      background: rgba(255, 255, 255, 0.94);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      box-shadow: var(--shadow);
+      padding: 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 18px;
+      flex-wrap: wrap;
+    }
+
+    .eyebrow {
+      color: var(--green);
+      font-size: 12px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.10em;
+      margin-bottom: 8px;
+    }
+
+    .hero h1 {
+      margin: 0 0 8px;
+      font-size: clamp(28px, 3vw, 38px);
+      color: var(--text);
+      letter-spacing: -0.04em;
+    }
+
+    .hero p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.6;
+      max-width: 680px;
+    }
+
+    .hero-card {
+      min-width: 240px;
+      background: linear-gradient(135deg, #f0f8f2, #ffffff);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 14px 16px;
+    }
+
+    .hero-card-label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted-2);
+      font-weight: 800;
+      margin-bottom: 6px;
+    }
+
+    .hero-card-value {
+      color: var(--green);
+      font-weight: 900;
+      line-height: 1.35;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1.08fr) minmax(380px, 0.92fr);
+      gap: 18px;
+      align-items: start;
+    }
+
+    .stack { display: grid; gap: 18px; }
+
+    .panel {
+      background: rgba(255, 255, 255, 0.96);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 20px;
+    }
+
+    .panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .panel h2 {
+      margin: 0 0 6px;
+      font-size: 20px;
+      letter-spacing: -0.02em;
+      color: var(--text);
+    }
+
+    .note {
+      margin: 0;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.55;
+    }
+
+    .account-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .metric {
+      border: 1px solid var(--border);
+      background: var(--panel-soft);
+      border-radius: 16px;
+      padding: 15px;
+    }
+
+    .metric-label {
+      font-size: 11px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted-2);
+      margin-bottom: 8px;
+    }
+
+    .metric-value {
+      font-size: 19px;
+      font-weight: 900;
+      color: var(--text);
+      word-break: break-word;
+    }
+
+    form { display: grid; gap: 14px; }
+
+    .field-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .field { display: grid; gap: 7px; }
+    .field.full { grid-column: 1 / -1; }
+
+    label {
+      font-size: 13px;
+      font-weight: 800;
+      color: #345247;
+    }
+
+    input,
+    textarea {
+      width: 100%;
+      border: 1px solid #d4e1d8;
+      border-radius: 13px;
+      padding: 12px 13px;
+      font: inherit;
+      background: white;
+      color: var(--text);
+      outline: none;
+      transition: border-color 0.16s ease, box-shadow 0.16s ease, background 0.16s ease;
+    }
+
+    input:focus,
+    textarea:focus {
+      border-color: var(--green);
+      box-shadow: 0 0 0 4px rgba(31, 92, 58, 0.12);
+    }
+
+    input:disabled,
+    textarea:disabled,
+    button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    textarea {
+      min-height: 92px;
+      resize: vertical;
+    }
+
+    .toolbar {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    button {
+      border: none;
+      border-radius: 13px;
+      padding: 12px 16px;
+      background: var(--green);
+      color: white;
+      font-weight: 900;
+      cursor: pointer;
+      box-shadow: 0 12px 22px rgba(31, 92, 58, 0.18);
+      transition: transform 0.14s ease, box-shadow 0.14s ease, background 0.14s ease;
+    }
+
+    button:hover:not(:disabled) {
+      background: var(--green-2);
+      transform: translateY(-1px);
+      box-shadow: 0 16px 28px rgba(31, 92, 58, 0.22);
+    }
+
+    button.secondary {
+      background: white;
+      color: var(--green);
+      border: 1px solid var(--border-strong);
+      box-shadow: none;
+    }
+
+    button.secondary:hover:not(:disabled) {
+      background: var(--green-soft);
+      box-shadow: none;
+    }
+
+    button.small {
+      padding: 8px 12px;
+      border-radius: 11px;
+      font-size: 13px;
+      box-shadow: none;
+    }
+
+    .status {
+      min-height: 20px;
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .status.ok { color: #166534; }
+    .status.error { color: var(--red); }
+    .status.muted { color: var(--muted); }
+
+    .list { display: grid; gap: 12px; }
+
+    .item {
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 14px;
+      background: var(--panel-soft);
+      transition: border-color 0.15s ease, transform 0.15s ease, background 0.15s ease;
+    }
+
+    .item:hover {
+      border-color: var(--border-strong);
+      background: #ffffff;
+      transform: translateY(-1px);
+    }
+
+    .item-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+      margin-bottom: 10px;
+      flex-wrap: wrap;
+    }
+
+    .item-title {
+      font-weight: 900;
+      color: var(--text);
+      line-height: 1.35;
+    }
+
+    .item-meta {
+      color: var(--muted-2);
+      font-size: 12px;
+      margin-top: 3px;
+    }
+
+    .item-body {
+      color: #52675d;
+      font-size: 14px;
+      line-height: 1.6;
+      word-break: break-word;
+    }
+
+    .details-grid {
+      display: grid;
+      gap: 7px;
+      margin-top: 2px;
+    }
+
+    .detail-row {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      background: #ffffff;
+      border: 1px solid #e4eee8;
+      border-radius: 11px;
+      padding: 8px 10px;
+    }
+
+    .detail-key {
+      color: #60766b;
+      font-size: 12px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      white-space: nowrap;
+    }
+
+    .detail-value {
+      color: var(--text);
+      font-weight: 700;
+      text-align: right;
+      overflow-wrap: anywhere;
+    }
+
+    .change-row {
+      display: grid;
+      grid-template-columns: 120px minmax(0, 1fr);
+      gap: 10px;
+      background: #ffffff;
+      border: 1px solid #e4eee8;
+      border-radius: 11px;
+      padding: 9px 10px;
+    }
+
+    .change-label {
+      color: #60766b;
+      font-size: 12px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .change-values {
+      color: var(--text);
+      font-weight: 700;
+      overflow-wrap: anywhere;
+    }
+
+    .muted-value { color: var(--muted-2); font-weight: 700; }
+    .arrow { color: var(--green); font-weight: 900; padding: 0 6px; }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 900;
+      background: var(--green-soft);
+      color: var(--green);
+      border: 1px solid #d6e5db;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      white-space: nowrap;
+    }
+
+    .pill.unread {
+      background: var(--yellow-soft);
+      color: var(--yellow);
+      border-color: #f4deb0;
+    }
+
+    .pill.blue {
+      background: var(--blue-soft);
+      color: var(--blue);
+      border-color: #cfe0ff;
+    }
+
+    .pill.red {
+      background: var(--red-soft);
+      color: var(--red);
+      border-color: #ffd2cc;
+    }
+
+    .empty {
+      padding: 16px;
+      color: var(--muted);
+      background: var(--panel-soft);
+      border: 1px dashed #d8e5de;
+      border-radius: 14px;
+      line-height: 1.5;
+    }
+
+    .section-divider {
+      height: 1px;
+      background: var(--border);
+      margin: 4px 0;
+    }
+
+    .legal-link-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .legal-link-grid a {
+      display: block;
+      border: 1px solid var(--border);
+      border-radius: 13px;
+      padding: 11px 12px;
+      background: var(--panel-soft);
+      color: var(--green);
+      font-weight: 900;
+      text-decoration: none;
+    }
+
+    @media (max-width: 1040px) {
+      .layout,
+      .field-grid,
+      .account-grid,
+      .legal-link-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 620px) {
+      body { padding: 14px; }
+      .hero, .panel { border-radius: 18px; padding: 16px; }
+      .change-row { grid-template-columns: 1fr; }
+      .detail-row { display: grid; }
+      .detail-value { text-align: left; }
+    }
+  </style>
+  <script src="/js/role-guard.js"></script>
+</head>
+<body>
+  <script>
+(function(){
+  const token = localStorage.getItem("token");
+  let user = null;
+
+  try {
+    user = JSON.parse(localStorage.getItem("user") || "null");
+  } catch {
+    user = null;
+  }
+
+  if (!token || !user) {
+    window.top.location.href = "/login.html";
+    return;
+  }
+
+  const role = String(user.role || "").toLowerCase();
+
+  if (role === "worker" && window === window.top) {
+    window.top.location.href = "/control.html";
+    return;
+  }
+})();
+</script>
+  
+<div class="page">
+  <header class="hero">
+    <div>
+      <div class="eyebrow">Workspace Settings</div>
+      <h1>My Account</h1>
+      <p>Manage your user profile, company settings, password, notifications, and workspace activity in one clean control center.</p>
+    </div>
+    <div class="hero-card">
+      <div class="hero-card-label">Current Workspace</div>
+      <div class="hero-card-value" id="heroBadge">Loading account...</div>
+    </div>
+  </header>
+
+  <main class="layout">
+    <section class="stack">
+      <div class="panel">
+        <div class="panel-header">
+          <div>
+            <h2>Account Summary</h2>
+            <p class="note">Your current username, role, and company workspace identity.</p>
+          </div>
+          <span class="pill blue" id="rolePill">Loading</span>
+        </div>
+
+        <div class="account-grid">
+          <div class="metric">
+            <div class="metric-label">Username</div>
+            <div class="metric-value" id="metricUsername">-</div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">Role</div>
+            <div class="metric-value" id="metricRole">-</div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">Company</div>
+            <div class="metric-value" id="metricCompany">-</div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">Company ID</div>
+            <div class="metric-value" id="metricCompanyId">-</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header">
+          <div>
+            <h2>Company Information</h2>
+            <p class="note">Update the company profile used across your SaaS workspace.</p>
+          </div>
+        </div>
+
+        <form id="companyForm">
+          <div class="field-grid">
+            <div class="field">
+              <label for="company_name">Company Name</label>
+              <input id="company_name" name="company_name" required>
+            </div>
+            <div class="field">
+              <label for="company_phone">Phone</label>
+              <input id="company_phone" name="company_phone">
+            </div>
+            <div class="field">
+              <label for="company_email">Email</label>
+              <input id="company_email" name="company_email" type="email">
+            </div>
+            <div class="field">
+              <label for="company_service_area">Service Area</label>
+              <input id="company_service_area" name="company_service_area" placeholder="City, ZIP groups, neighborhoods...">
+            </div>
+            <div class="field full">
+              <label for="company_address">Address</label>
+              <textarea id="company_address" name="company_address"></textarea>
+            </div>
+            <div class="field full">
+              <label for="company_hours">Business Hours</label>
+              <textarea id="company_hours" name="company_hours" placeholder="Mon-Fri 8:00 AM - 5:00 PM"></textarea>
+            </div>
+          </div>
+
+          <div class="toolbar">
+            <button type="submit" id="saveCompanyBtn">Save Company Info</button>
+            <div class="status muted" id="companyStatus"></div>
+          </div>
+        </form>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header">
+          <div>
+            <h2>Change Password</h2>
+            <p class="note">This updates only your own login password.</p>
+          </div>
+        </div>
+
+        <form id="passwordForm">
+          <div class="field-grid">
+            <div class="field">
+              <label for="current_password">Current Password</label>
+              <input id="current_password" type="password" autocomplete="current-password" required>
+            </div>
+            <div class="field">
+              <label for="new_password">New Password</label>
+              <input id="new_password" type="password" autocomplete="new-password" required>
+            </div>
+          </div>
+          <div class="toolbar">
+            <button type="submit">Update Password</button>
+            <div class="status muted" id="passwordStatus"></div>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <aside class="stack">
+      <div class="panel">
+        <div class="panel-header">
+          <div>
+            <h2>Notifications</h2>
+            <p class="note">Recent system updates for your company and account.</p>
+          </div>
+          <button class="secondary small" onclick="loadNotifications()">Refresh</button>
+        </div>
+        <div id="notificationsList" class="list"></div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header">
+          <div>
+            <h2>Legal &amp; Compliance</h2>
+            <p class="note">Review current legal versions and your acceptance status.</p>
+          </div>
+        </div>
+        <div class="account-grid">
+          <div class="metric">
+            <div class="metric-label">Terms Accepted</div>
+            <div class="metric-value" id="termsAcceptedAt">-</div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">Privacy Accepted</div>
+            <div class="metric-value" id="privacyAcceptedAt">-</div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">Terms Version</div>
+            <div class="metric-value" id="termsVersion">-</div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">Privacy Version</div>
+            <div class="metric-value" id="privacyVersion">-</div>
+          </div>
+        </div>
+        <div class="legal-link-grid" style="margin-top:14px;">
+          <a href="/terms.html" target="_blank" rel="noopener">Terms of Service</a>
+          <a href="/privacy.html" target="_blank" rel="noopener">Privacy Policy</a>
+          <a href="/billing-policy.html" target="_blank" rel="noopener">Billing Policy</a>
+          <a href="/refund-policy.html" target="_blank" rel="noopener">Refund Policy</a>
+          <a href="/company-ownership.html" target="_blank" rel="noopener">Company Ownership Policy</a>
+          <a href="/cookie-policy.html" target="_blank" rel="noopener">Cookie Policy</a>
+          <a href="/data-processing.html" target="_blank" rel="noopener">Data Processing Policy</a>
+        </div>
+        <div class="toolbar" style="margin-top:14px;">
+          <button type="button" id="acceptLegalBtn" onclick="acceptLegalTerms()">Accept Current Legal Terms</button>
+          <div class="status muted" id="legalStatus"></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header">
+          <div>
+            <h2>Activity Log</h2>
+            <p class="note">Important workspace actions, displayed in a readable format.</p>
+          </div>
+          <button class="secondary small" onclick="loadActivity()">Refresh</button>
+        </div>
+        <div id="activityList" class="list"></div>
+      </div>
+    </aside>
+  </main>
+</div>
+
+<script src="/js/ui.js"></script>
+<script src="/js/auth.js"></script>
+<script src="/js/api.js"></script>
+<script src="/js/format.js"></script>
+<script src="/js/legal-consent.js"></script>
+<script>
+const API = window.location.origin;
+let currentUser = null;
+let currentCompany = null;
+
+function getToken(){
+  return localStorage.getItem("token");
+}
+
+function getStoredUser(){
+  try {
+    return JSON.parse(localStorage.getItem("user"));
+  } catch (err) {
+    return null;
+  }
+}
+
+function setStoredUser(user){
+  localStorage.setItem("user", JSON.stringify(user));
+}
+
+async function safeJson(res){
+  try {
+    return await res.json();
+  } catch (err) {
+    return {};
+  }
+}
+
+async function apiFetch(url, options = {}){
+  const token = getToken();
+
+  if(!token){
+    window.top.location.href = "/login.html";
+    throw new Error("Missing token");
+  }
+
+  const res = await fetch(url, {
+    ...options,
+    headers: {
+      ...(options.headers || {}),
+      Authorization: "Bearer " + token
+    }
+  });
+
+  if(res.status === 403 && window.AppAPI){
+    window.AppAPI.handleForbidden();
+  }
+
+  if(res.status === 401){
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    window.top.location.href = "/login.html";
+    throw new Error("Unauthorized");
+  }
+
+  return res;
+}
+
+function setStatus(id, message, type = "muted"){
+  const el = document.getElementById(id);
+  if(!el) return;
+  el.className = "status " + type;
+  el.textContent = message;
+}
+
+function formatRole(role){
+  if(!role) return "-";
+  return String(role).charAt(0).toUpperCase() + String(role).slice(1);
+}
+
+function formatDateTime(value){
+  if(!value) return "";
+  const date = new Date(value);
+  if(Number.isNaN(date.getTime())) return "";
+  return date.toLocaleString();
+}
+
+function escapeHtml(value){
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/\"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function humanKey(key){
+  return String(key || "")
+    .replace(/_/g, " ")
+    .replace(/\b\w/g, char => char.toUpperCase());
+}
+
+function cleanValue(value){
+  if(value === null || value === undefined || value === "") return "-";
+  if(typeof value === "object") return JSON.stringify(value);
+  return String(value);
+}
+
+function detailRows(rows){
+  const filtered = rows.filter(row => row && row.value !== undefined && row.value !== null && row.value !== "");
+  if(filtered.length === 0){
+    return '<div class="muted-value">No extra details.</div>';
+  }
+
+  return `
+    <div class="details-grid">
+      ${filtered.map(row => `
+        <div class="detail-row">
+          <div class="detail-key">${escapeHtml(row.label)}</div>
+          <div class="detail-value">${escapeHtml(cleanValue(row.value))}</div>
+        </div>
+      `).join("")}
+    </div>
+  `;
+}
+
+function companyChangeRows(details){
+  const before = details.before || {};
+  const after = details.after || {};
+  const keys = Array.from(new Set([...Object.keys(before), ...Object.keys(after)]));
+
+  const changes = keys
+    .filter(key => cleanValue(before[key]) !== cleanValue(after[key]))
+    .map(key => `
+      <div class="change-row">
+        <div class="change-label">${escapeHtml(humanKey(key))}</div>
+        <div class="change-values">
+          <span class="muted-value">${escapeHtml(cleanValue(before[key]))}</span>
+          <span class="arrow">→</span>
+          <span>${escapeHtml(cleanValue(after[key]))}</span>
+        </div>
+      </div>
+    `);
+
+  if(changes.length === 0){
+    return '<div class="muted-value">No visible changes.</div>';
+  }
+
+  return `<div class="details-grid">${changes.join("")}</div>`;
+}
+
+function formatActivityTitle(action){
+  const map = {
+    company_updated: "Company updated",
+    job_status_changed: "Job status changed",
+    job_updated: "Job updated",
+    job_created: "Job created",
+    subscription_created: "Subscription created",
+    subscription_cancelled: "Subscription cancelled",
+    subscription_paused: "Subscription paused",
+    subscription_active: "Subscription activated",
+    lead_created: "Lead created",
+    lead_updated: "Lead updated",
+    lead_archived: "Lead archived",
+    lead_converted_to_client: "Lead converted to client",
+    lead_converted_to_job: "Lead converted to job",
+    estimate_archived: "Estimate archived",
+    estimate_updated: "Estimate updated",
+    worker_created: "Worker created",
+    worker_updated: "Worker updated",
+    client_created: "Client created",
+    client_archived: "Client archived",
+    invoice_created: "Invoice created",
+    payment_recorded: "Payment recorded",
+    legal_terms_accepted: "Terms accepted",
+    legal_privacy_accepted: "Privacy policy accepted"
+  };
+
+  return map[action] || humanKey(action || "Activity");
+}
+
+function activityPillClass(action){
+  const danger = ["cancelled", "archived", "deleted"];
+  const positive = ["created", "active", "completed", "paid"];
+  const text = String(action || "").toLowerCase();
+
+  if(danger.some(word => text.includes(word))) return "red";
+  if(positive.some(word => text.includes(word))) return "";
+  return "blue";
+}
+
+function formatActivityDetails(action, details){
+  if(!details || typeof details !== "object"){
+    return escapeHtml(details || "No details.");
+  }
+
+  switch(action){
+    case "company_updated":
+      return companyChangeRows(details);
+
+    case "job_status_changed":
+      return detailRows([
+        { label: "Status", value: `${cleanValue(details.from)} → ${cleanValue(details.to)}` },
+        { label: "Payment", value: details.payment_status }
+      ]);
+
+    case "job_updated":
+      return detailRows([
+        { label: "Status", value: details.status },
+        { label: "Estimate ID", value: details.estimate_id }
+      ]);
+
+    case "job_created":
+      return detailRows([
+        { label: "Client ID", value: details.client_id },
+        { label: "Status", value: details.status },
+        { label: "Estimate ID", value: details.estimate_id }
+      ]);
+
+    case "subscription_created":
+      return detailRows([
+        { label: "Service", value: details.service },
+        { label: "Client ID", value: details.client_id },
+        { label: "Frequency", value: details.frequency }
+      ]);
+
+    case "subscription_cancelled":
+    case "subscription_paused":
+    case "subscription_active":
+      return detailRows([
+        { label: "Status", value: details.status },
+        { label: "Pause Reason", value: details.pause_reason || "-" },
+        { label: "Cancel Reason", value: details.cancel_reason || "-" }
+      ]);
+
+    case "lead_created":
+      return detailRows([
+        { label: "Customer", value: details.customer_name },
+        { label: "Service", value: details.service }
+      ]);
+
+    case "lead_updated":
+    case "lead_archived":
+      return detailRows([
+        { label: "Status", value: details.status },
+        { label: "Service", value: details.service }
+      ]);
+
+    case "lead_converted_to_client":
+      return detailRows([
+        { label: "Client ID", value: details.client_id },
+        { label: "Customer", value: details.customer_name }
+      ]);
+
+    case "lead_converted_to_job":
+      return detailRows([
+        { label: "Job ID", value: details.job_id },
+        { label: "Client ID", value: details.client_id },
+        { label: "Service", value: details.service }
+      ]);
+
+    case "worker_created":
+    case "worker_updated":
+      return detailRows([
+        { label: "Worker", value: details.name },
+        { label: "Active", value: details.active }
+      ]);
+
+    default:
+      return detailRows(Object.entries(details).map(([key, value]) => ({
+        label: humanKey(key),
+        value
+      })));
+  }
+}
+
+function updateSummary(){
+  document.getElementById("metricUsername").textContent = currentUser && currentUser.username ? currentUser.username : "-";
+  document.getElementById("metricRole").textContent = formatRole(currentUser && currentUser.role);
+  document.getElementById("metricCompany").textContent = currentCompany && currentCompany.name ? currentCompany.name : "-";
+  document.getElementById("metricCompanyId").textContent = currentUser && currentUser.company_id ? currentUser.company_id : "-";
+
+  const roleText = formatRole(currentUser && currentUser.role);
+  document.getElementById("rolePill").textContent = roleText;
+
+  const badgeParts = [];
+  if(currentCompany && currentCompany.name) badgeParts.push(currentCompany.name);
+  if(currentUser && currentUser.role) badgeParts.push(roleText);
+  document.getElementById("heroBadge").textContent = badgeParts.join(" • ") || "Account ready";
+
+  const canEditCompany = ["owner", "admin"].includes((currentUser && currentUser.role) || "");
+  Array.from(document.querySelectorAll("#companyForm input, #companyForm textarea, #saveCompanyBtn")).forEach(el => {
+    el.disabled = !canEditCompany;
+  });
+
+  if(!canEditCompany){
+    setStatus("companyStatus", "Only owner/admin can update company settings.", "muted");
+  } else {
+    setStatus("companyStatus", "", "muted");
+  }
+}
+
+function fillCompanyForm(company){
+  document.getElementById("company_name").value = company && company.name ? company.name : "";
+  document.getElementById("company_phone").value = company && company.phone ? company.phone : "";
+  document.getElementById("company_email").value = company && company.email ? company.email : "";
+  document.getElementById("company_address").value = company && company.address ? company.address : "";
+  document.getElementById("company_service_area").value = company && company.service_area ? company.service_area : "";
+  document.getElementById("company_hours").value = company && company.business_hours ? company.business_hours : "";
+}
+
+async function loadProfile(){
+  const meRes = await apiFetch(API + "/me");
+  const meData = await safeJson(meRes);
+  if(!meRes.ok){
+    throw new Error(meData.error || "Unable to load account profile");
+  }
+
+  currentUser = meData;
+  setStoredUser({ ...getStoredUser(), ...currentUser });
+
+  const companyRes = await apiFetch(API + "/company");
+  const companyData = await safeJson(companyRes);
+
+  if(companyRes.ok){
+    currentCompany = companyData;
+    fillCompanyForm(currentCompany);
+  } else {
+    currentCompany = { name: "Restricted" };
+    fillCompanyForm({});
+    setStatus("companyStatus", "Only owner/admin can view and update company settings.", "muted");
+  }
+
+  updateSummary();
+}
+
+function renderLegalConsent(consent){
+  document.getElementById("termsAcceptedAt").textContent = consent && consent.terms_accepted_at ? formatDateTime(consent.terms_accepted_at) : "Not accepted";
+  document.getElementById("privacyAcceptedAt").textContent = consent && consent.privacy_accepted_at ? formatDateTime(consent.privacy_accepted_at) : "Not accepted";
+  document.getElementById("termsVersion").textContent = consent && consent.current_terms_version ? consent.current_terms_version : "-";
+  document.getElementById("privacyVersion").textContent = consent && consent.current_privacy_version ? consent.current_privacy_version : "-";
+  setStatus("legalStatus", consent && consent.accepted ? "Current legal terms accepted." : "Current legal terms need acceptance.", consent && consent.accepted ? "ok" : "muted");
+}
+
+async function loadLegalConsent(){
+  try {
+    const res = await apiFetch(API + "/auth/legal-consent");
+    const data = await safeJson(res);
+    if(!res.ok){
+      throw new Error(data.error || "Unable to load legal consent");
+    }
+    renderLegalConsent(data);
+  } catch (err) {
+    setStatus("legalStatus", err.message || "Unable to load legal consent.", "error");
+  }
+}
+
+async function acceptLegalTerms(){
+  const btn = document.getElementById("acceptLegalBtn");
+  if(btn) btn.disabled = true;
+  setStatus("legalStatus", "Saving legal acceptance...", "muted");
+
+  try {
+    const res = await apiFetch(API + "/auth/legal-consent", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ accepted: true })
+    });
+    const data = await safeJson(res);
+    if(!res.ok){
+      throw new Error(data.error || "Unable to accept legal terms");
+    }
+    renderLegalConsent(data);
+    const banner = document.getElementById("legalConsentBanner");
+    if(banner) banner.remove();
+    await loadActivity();
+  } catch (err) {
+    setStatus("legalStatus", err.message || "Unable to accept legal terms.", "error");
+  } finally {
+    if(btn) btn.disabled = false;
+  }
+}
+
+async function saveCompany(event){
+  event.preventDefault();
+  setStatus("companyStatus", "Saving company settings...", "muted");
+
+  try {
+    const res = await apiFetch(API + "/company", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name: document.getElementById("company_name").value.trim(),
+        phone: document.getElementById("company_phone").value.trim(),
+        email: document.getElementById("company_email").value.trim(),
+        address: document.getElementById("company_address").value.trim(),
+        service_area: document.getElementById("company_service_area").value.trim(),
+        business_hours: document.getElementById("company_hours").value.trim()
+      })
+    });
+
+    const data = await safeJson(res);
+    if(!res.ok){
+      throw new Error(data.error || "Unable to update company");
+    }
+
+    currentCompany = data;
+    updateSummary();
+    setStatus("companyStatus", "Company settings updated.", "ok");
+    await Promise.all([loadNotifications(), loadActivity()]);
+  } catch (err) {
+    setStatus("companyStatus", err.message || "Unable to update company.", "error");
+  }
+}
+
+async function changePassword(event){
+  event.preventDefault();
+  setStatus("passwordStatus", "Updating password...", "muted");
+
+  try {
+    const res = await apiFetch(API + "/me/password", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        current_password: document.getElementById("current_password").value,
+        new_password: document.getElementById("new_password").value
+      })
+    });
+
+    const data = await safeJson(res);
+    if(!res.ok){
+      throw new Error(data.error || "Unable to change password");
+    }
+
+    document.getElementById("passwordForm").reset();
+    setStatus("passwordStatus", "Password updated successfully.", "ok");
+    await Promise.all([loadNotifications(), loadActivity()]);
+  } catch (err) {
+    setStatus("passwordStatus", err.message || "Unable to change password.", "error");
+  }
+}
+
+async function markNotificationRead(id){
+  try {
+    const res = await apiFetch(API + "/notifications/" + encodeURIComponent(id) + "/read", {
+      method: "PUT"
+    });
+
+    const data = await safeJson(res);
+    if(!res.ok){
+      throw new Error(data.error || "Unable to mark notification as read");
+    }
+
+    await Promise.all([loadNotifications(), loadActivity()]);
+  } catch (err) {
+    alert(err.message || "Unable to mark notification as read.");
+  }
+}
+
+async function loadNotifications(){
+  const container = document.getElementById("notificationsList");
+  container.innerHTML = '<div class="empty">Loading notifications...</div>';
+
+  try {
+    const res = await apiFetch(API + "/notifications");
+    const data = await safeJson(res);
+    if(!res.ok){
+      throw new Error(data.error || "Unable to load notifications");
+    }
+
+    if(!Array.isArray(data) || data.length === 0){
+      container.innerHTML = '<div class="empty">No notifications yet.</div>';
+      return;
+    }
+
+    container.innerHTML = data.map(item => `
+      <div class="item">
+        <div class="item-head">
+          <div>
+            <div class="item-title">${escapeHtml(item.title || "Notification")}</div>
+            <div class="item-meta">${escapeHtml(item.type || "system")} • ${escapeHtml(formatDateTime(item.created_at))}</div>
+          </div>
+          <div class="toolbar">
+            <span class="pill ${item.is_read ? "" : "unread"}">${item.is_read ? "Read" : "Unread"}</span>
+            ${item.is_read ? "" : `<button class="secondary small" onclick="markNotificationRead(${Number(item.id)})">Mark Read</button>`}
+          </div>
+        </div>
+        <div class="item-body">${escapeHtml(item.message || "")}</div>
+      </div>
+    `).join("");
+  } catch (err) {
+    container.innerHTML = '<div class="empty">Unable to load notifications.</div>';
+  }
+}
+
+async function loadActivity(){
+  const container = document.getElementById("activityList");
+  container.innerHTML = '<div class="empty">Loading activity log...</div>';
+
+  try {
+    const res = await apiFetch(API + "/activity-log");
+
+    if(res.status === 403){
+      container.innerHTML = '<div class="empty">Your role cannot view the activity log.</div>';
+      return;
+    }
+
+    const data = await safeJson(res);
+    if(!res.ok){
+      throw new Error(data.error || "Unable to load activity log");
+    }
+
+    if(!Array.isArray(data) || data.length === 0){
+      container.innerHTML = '<div class="empty">No activity has been logged yet.</div>';
+      return;
+    }
+
+    container.innerHTML = data.map(item => `
+      <div class="item">
+        <div class="item-head">
+          <div>
+            <div class="item-title">${escapeHtml(formatActivityTitle(item.action))}</div>
+            <div class="item-meta">
+              ${escapeHtml(item.entity_type || "system")} #${escapeHtml(item.entity_id || "-")} • ${escapeHtml(formatDateTime(item.created_at))}
+            </div>
+          </div>
+          <span class="pill ${activityPillClass(item.action)}">User ${escapeHtml(item.user_id || "system")}</span>
+        </div>
+        <div class="item-body">${formatActivityDetails(item.action, item.details)}</div>
+      </div>
+    `).join("");
+  } catch (err) {
+    container.innerHTML = '<div class="empty">Unable to load activity log.</div>';
+  }
+}
+
+async function init(){
+  try {
+    await loadProfile();
+    await Promise.all([loadNotifications(), loadActivity(), loadLegalConsent()]);
+  } catch (err) {
+    console.log("SETTINGS LOAD ERROR:", err);
+  }
+}
+
+document.getElementById("companyForm").addEventListener("submit", saveCompany);
+document.getElementById("passwordForm").addEventListener("submit", changePassword);
+init();
+</script>
+</body>
+</html>

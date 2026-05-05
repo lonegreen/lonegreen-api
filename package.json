@@ -1,0 +1,39 @@
+{
+  "name": "lonegreen-dashboard",
+  "version": "1.0.0",
+  "description": "",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js",
+    "backup:db": "node scripts/backup-db.js",
+    "backup:validate": "node scripts/validate-backup.js",
+    "restore:db": "node scripts/restore-db.js",
+    "isolation:repair": "node scripts/repair-company-isolation.js",
+    "integrity:audit": "node scripts/integrity-audit.js",
+    "smoke:test": "node scripts/smoke-test.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "overrides": {
+    "uuid": "^14.0.0"
+  },
+  "dependencies": {
+    "bcrypt": "^6.0.0",
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "express-rate-limit": "^7.0.0",
+    "helmet": "^8.1.0",
+    "jsonwebtoken": "^9.0.3",
+    "multer": "^2.1.1",
+    "node-cron": "^4.2.1",
+    "nodemailer": "^8.0.6",
+    "pdfkit": "^0.18.0",
+    "pg": "^8.20.0",
+    "resend": "^6.12.0",
+    "stripe": "^17.7.0"
+  }
+}
