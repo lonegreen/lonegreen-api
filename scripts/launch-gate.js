@@ -1,0 +1,245 @@
+#!/usr/bin/env node
+/**
+ * Safe launch-gate checks for local and CI runs.
+ *
+ * Default mode is filesystem/static only and does not connect to a database.
+ * DB checks require ALLOW_DB_TESTS=true and TEST_DATABASE_URL.
+ */
+"use strict";
+
+const fs = require("fs");
+const path = require("path");
+const vm = require("vm");
+const { spawnSync } = require("child_process");
+
+const root = path.join(__dirname, "..");
+
+const syntaxFiles = [
+  "server.js",
+  "routes/auth.js",
+  "routes/jobs.js",
+  "routes/subscriptions.js",
+  "routes/invoices.js",
+  "routes/payments.js",
+  "routes/billing.js",
+  "routes/customer.js",
+  "routes/workers.js",
+  "services/subscriptionEngine.js",
+  "services/billingService.js",
+  "services/stripeWebhookService.js",
+  "services/financialIntegrityService.js",
+  "services/backgroundTasks.js",
+  "services/jobQueue.js",
+  "middleware/auth.js",
+  "middleware/requireCompanyBillingForMutations.js",
+  "scripts/integrity-audit.js",
+  "scripts/repair-integrity-drift.js"
+];
+
+const sourceExpectations = [
+  {
+    name: "subscription worker ownership validation exists",
+    file: "routes/subscriptions.js",
+    patterns: [
+      "async function resolveCompanyWorkerId",
+      "SELECT id FROM workers WHERE id=$1 AND company_id=$2 LIMIT 1",
+      "Worker not found in this company"
+    ]
+  },
+  {
+    name: "subscription update preserves omitted fields",
+    file: "routes/subscriptions.js",
+    patterns: [
+      "function hasBodyField",
+      "const updates = []",
+      "if (updates.length === 0)",
+      "if (hasBodyField(req, \"worker_id\"))"
+    ],
+    absent: [
+      "service || \"\",\n      frequency || \"\",\n      start_date || null,\n      next_date || null,\n      price || 0,\n      worker_id || null,\n      status || \"active\""
+    ]
+  },
+  {
+    name: "worker users are restricted to assigned jobs",
+    file: "routes/workers.js",
+    patterns: [
+      "async function requireWorkerJobMutationAccess",
+      "SELECT id FROM jobs WHERE id=$1 AND company_id=$2 AND worker_id=$3 LIMIT 1",
+      "req.body.worker_id = workerId"
+    ]
+  },
+  {
+    name: "worker job admin updates validate worker company",
+    file: "routes/workers.js",
+    patterns: [
+      "SELECT id FROM workers WHERE id=$1 AND company_id=$2 LIMIT 1",
+      "Worker not found in this company"
+    ]
+  },
+  {
+    name: "subscription engine has DB advisory lock",
+    file: "services/subscriptionEngine.js",
+    patterns: [
+      "pg_try_advisory_lock",
+      "pg_advisory_unlock",
+      "lock_unavailable"
+    ]
+  },
+  {
+    name: "duplicate subscription visits are DB-guarded",
+    file: "db/migrations/026_subscription_visit_uniqueness.sql",
+    patterns: [
+      "CREATE UNIQUE INDEX IF NOT EXISTS idx_jobs_unique_subscription_visit",
+      "ON jobs (company_id, source_subscription_id, date, type)",
+      "type = 'subscription_visit'"
+    ]
+  },
+  {
+    name: "integrity audit checks launch-critical drift",
+    file: "scripts/integrity-audit.js",
+    patterns: [
+      "jobs_worker_company_mismatch",
+      "subscriptions_worker_company_mismatch",
+      "duplicate_subscription_visits",
+      "worker_zip_groups_worker_company_mismatch"
+    ]
+  },
+  {
+    name: "repair script is dry-run by default and apply-gated",
+    file: "scripts/repair-integrity-drift.js",
+    patterns: [
+      "const apply = process.argv.includes(\"--apply\")",
+      "BEGIN",
+      "integrity_repair_backups",
+      "ROLLBACK"
+    ]
+  }
+];
+
+let failures = 0;
+let skips = 0;
+
+function rel(file) {
+  return path.join(root, file);
+}
+
+function pass(message) {
+  console.log(`PASS ${message}`);
+}
+
+function fail(message) {
+  failures += 1;
+  console.error(`FAIL ${message}`);
+}
+
+function skip(message) {
+  skips += 1;
+  console.log(`SKIP ${message}`);
+}
+
+function run(command, args, options = {}) {
+  const result = spawnSync(command, args, {
+    cwd: root,
+    stdio: "pipe",
+    encoding: "utf8",
+    shell: /^win/.test(process.platform),
+    ...options
+  });
+
+  return result;
+}
+
+function checkSyntax() {
+  for (const file of syntaxFiles) {
+    const filePath = rel(file);
+    if (!fs.existsSync(filePath)) {
+      fail(`missing syntax target ${file}`);
+      continue;
+    }
+
+    try {
+      new vm.Script(fs.readFileSync(filePath, "utf8"), { filename: filePath });
+      pass(`syntax parse ${file}`);
+    } catch (err) {
+      fail(`syntax parse ${file}\n${err && err.message}`);
+    }
+  }
+}
+
+function checkSourceExpectations() {
+  for (const check of sourceExpectations) {
+    const filePath = rel(check.file);
+    if (!fs.existsSync(filePath)) {
+      fail(`${check.name}: missing ${check.file}`);
+      continue;
+    }
+
+    const source = fs.readFileSync(filePath, "utf8");
+    const missing = (check.patterns || []).filter(pattern => !source.includes(pattern));
+    const presentButForbidden = (check.absent || []).filter(pattern => source.includes(pattern));
+
+    if (missing.length || presentButForbidden.length) {
+      fail(`${check.name}: missing=${JSON.stringify(missing)} forbidden=${JSON.stringify(presentButForbidden)}`);
+    } else {
+      pass(check.name);
+    }
+  }
+}
+
+function checkPackageScripts() {
+  const pkg = JSON.parse(fs.readFileSync(rel("package.json"), "utf8"));
+  const scripts = pkg.scripts || {};
+
+  if (scripts.test === "npm run check") {
+    pass("npm test delegates to launch gate");
+  } else {
+    fail("npm test must delegate to npm run check");
+  }
+
+  if (scripts.check === "node scripts/launch-gate.js") {
+    pass("npm run check is wired");
+  } else {
+    fail("npm run check must run scripts/launch-gate.js");
+  }
+}
+
+function checkDbGate() {
+  const allowDbTests = String(process.env.ALLOW_DB_TESTS || "").toLowerCase() === "true";
+  const testDatabaseUrl = String(process.env.TEST_DATABASE_URL || "").trim();
+
+  if (!allowDbTests) {
+    skip("DB-dependent integrity audit (set ALLOW_DB_TESTS=true and TEST_DATABASE_URL)");
+    return;
+  }
+
+  if (!testDatabaseUrl) {
+    fail("ALLOW_DB_TESTS=true requires TEST_DATABASE_URL");
+    return;
+  }
+
+  const env = {
+    ...process.env,
+    DATABASE_URL: testDatabaseUrl,
+    RUN_STARTUP_MIGRATIONS: "false"
+  };
+  const result = run(/^win/.test(process.platform) ? "npm.cmd" : "npm", ["run", "integrity:audit", "--", "--strict"], { env });
+
+  if (result.status === 0) {
+    pass("DB integrity audit strict on TEST_DATABASE_URL");
+  } else {
+    fail(`DB integrity audit strict failed\n${result.stdout}\n${result.stderr}`);
+  }
+}
+
+console.log("LoneGreen launch gate");
+checkSyntax();
+checkSourceExpectations();
+checkPackageScripts();
+checkDbGate();
+
+if (failures > 0) {
+  console.error(`Launch gate failed: ${failures} failure(s), ${skips} skipped.`);
+  process.exit(1);
+}
+
+console.log(`Launch gate passed: ${skips} skipped.`);

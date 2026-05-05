@@ -4,7 +4,8 @@
   "description": "",
   "main": "server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "npm run check",
+    "check": "node scripts/launch-gate.js",
     "start": "node server.js",
     "backup:db": "node scripts/backup-db.js",
     "backup:validate": "node scripts/validate-backup.js",
