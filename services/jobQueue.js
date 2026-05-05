@@ -160,6 +160,7 @@ function stopQueue() {
 
 function getQueueStatus() {
   return {
+    durability: "in_memory_best_effort",
     pending: queue.length,
     running: processing,
     started: running,

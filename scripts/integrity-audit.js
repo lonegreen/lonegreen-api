@@ -284,6 +284,21 @@ const checks = [
     `
   },
   {
+    id: "duplicate_subscription_visits",
+    title: "Duplicate subscription visits for the same company/subscription/date/type",
+    sql: `
+      SELECT company_id, source_subscription_id, date, type, COUNT(*)::int AS duplicate_count,
+             ARRAY_AGG(id ORDER BY id) AS job_ids
+      FROM jobs
+      WHERE source_subscription_id IS NOT NULL
+        AND type = 'subscription_visit'
+      GROUP BY company_id, source_subscription_id, date, type
+      HAVING COUNT(*) > 1
+      ORDER BY company_id, source_subscription_id, date
+      LIMIT 100
+    `
+  },
+  {
     id: "subscriptions_worker_company_mismatch",
     title: "Subscriptions where subscription.company_id differs from assigned worker.company_id",
     sql: `

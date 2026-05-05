@@ -71,13 +71,7 @@ function registerTask(name, schedule, handler) {
 }
 
 async function runSubscriptionProcessing() {
-  if (typeof backgroundTasks.enqueueSubscriptionProcessingTask === "function") {
-    logger.info("Scheduler subscription_processing: dispatched to job queue");
-    backgroundTasks.enqueueSubscriptionProcessingTask();
-    return;
-  }
-
-  logger.info("Scheduler subscription_processing: running processSubscriptions inline (no queue enqueue hook)");
+  logger.info("Scheduler subscription_processing: running DB-locked processor inline");
   await processSubscriptions();
 }
 

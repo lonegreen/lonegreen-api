@@ -318,7 +318,7 @@ app.use((err, req, res, next) => {
 
     startScheduler();
 
-    console.log("Scheduler started (cron includes subscription_processing via queue or inline processor)");
+    console.log("Scheduler started (cron includes DB-locked subscription_processing)");
 
     if (SUBSCRIPTION_INTERVAL_ENGINE) {
       startSubscriptionEngine();

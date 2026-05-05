@@ -1,8 +1,11 @@
 ﻿const pool = require("../db/pool");
 const logger = require("./logger");
 
-async function suggestWorkerForSubscription(subscription) {
-  const workerSuggestion = await pool.query(`
+const SUBSCRIPTION_ENGINE_LOCK_KEY_1 = 742011;
+const SUBSCRIPTION_ENGINE_LOCK_KEY_2 = 202602;
+
+async function suggestWorkerForSubscription(subscription, db = pool) {
+  const workerSuggestion = await db.query(`
     SELECT workers.id
     FROM clients
     JOIN zip_codes ON zip_codes.zip = clients.zip AND zip_codes.company_id = clients.company_id
@@ -33,8 +36,22 @@ function advanceSubscriptionDate(date, frequency) {
 }
 
 async function processSubscriptions() {
+  const client = await pool.connect();
+  let lockAcquired = false;
+
   try {
-    const subs = await pool.query(`
+    const lockResult = await client.query(
+      "SELECT pg_try_advisory_lock($1, $2) AS acquired",
+      [SUBSCRIPTION_ENGINE_LOCK_KEY_1, SUBSCRIPTION_ENGINE_LOCK_KEY_2]
+    );
+
+    lockAcquired = lockResult.rows[0] && lockResult.rows[0].acquired === true;
+    if (!lockAcquired) {
+      logger.info("Subscription engine pass skipped; another process holds the generation lock");
+      return { skipped: true, reason: "lock_unavailable" };
+    }
+
+    const subs = await client.query(`
       SELECT * FROM subscriptions
       WHERE status = 'active'
     `);
@@ -58,7 +75,7 @@ async function processSubscriptions() {
       while (currentDate <= limitDate) {
         const dateStr = currentDate.toISOString().split("T")[0];
 
-        const exists = await pool.query(`
+        const exists = await client.query(`
           SELECT id FROM jobs
           WHERE source_subscription_id = $1
             AND date = $2
@@ -67,12 +84,21 @@ async function processSubscriptions() {
         `, [subscription.id, dateStr, subscription.company_id]);
 
         if (exists.rows.length === 0) {
-          const assignedWorkerId = subscription.worker_id || await suggestWorkerForSubscription(subscription);
+          const assignedWorkerId = subscription.worker_id || await suggestWorkerForSubscription(subscription, client);
 
-          await pool.query(`
+          const inserted = await client.query(`
             INSERT INTO jobs
             (client_id, service, type, date, start_time, end_time, status, worker_id, price, company_id, source_subscription_id, payment_status)
-            VALUES ($1,$2,'subscription_visit',$3,'08:00','09:00','scheduled',$4,0,$5,$6,'included')
+            SELECT $1,$2,'subscription_visit',$3,'08:00','09:00','scheduled',$4,0,$5,$6,'included'
+            WHERE NOT EXISTS (
+              SELECT 1
+              FROM jobs
+              WHERE source_subscription_id = $6
+                AND date = $3
+                AND type = 'subscription_visit'
+                AND company_id = $5
+            )
+            RETURNING id
           `, [
             subscription.client_id,
             subscription.service,
@@ -82,12 +108,14 @@ async function processSubscriptions() {
             subscription.id
           ]);
 
-          logger.info("Subscription visit created", {
-            client_id: subscription.client_id,
-            date: dateStr,
-            subscription_id: subscription.id,
-            company_id: subscription.company_id
-          });
+          if (inserted.rows.length > 0) {
+            logger.info("Subscription visit created", {
+              client_id: subscription.client_id,
+              date: dateStr,
+              subscription_id: subscription.id,
+              company_id: subscription.company_id
+            });
+          }
         }
 
         advanceSubscriptionDate(currentDate, subscription.frequency);
@@ -95,8 +123,30 @@ async function processSubscriptions() {
     }
 
     logger.info("Subscription engine pass completed");
+    return { skipped: false, processed: subs.rows.length };
   } catch (err) {
+    if (err && err.code === "23505") {
+      logger.warn("Subscription engine duplicate insert skipped by database uniqueness guard", {
+        error: err.message
+      });
+      return { skipped: false, duplicate_skipped: true };
+    }
+
     logger.error("SUBSCRIPTION ENGINE ERROR", err);
+    return { skipped: false, error: err && (err.message || String(err)) };
+  } finally {
+    if (lockAcquired) {
+      try {
+        await client.query(
+          "SELECT pg_advisory_unlock($1, $2)",
+          [SUBSCRIPTION_ENGINE_LOCK_KEY_1, SUBSCRIPTION_ENGINE_LOCK_KEY_2]
+        );
+      } catch (unlockErr) {
+        logger.error("SUBSCRIPTION ENGINE UNLOCK ERROR", unlockErr);
+      }
+    }
+
+    client.release();
   }
 }
 
