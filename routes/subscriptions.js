@@ -52,6 +52,11 @@ const { sendSafeServerError } = require("../services/safeServerError");
 const { enqueueEmailTask } = require("../services/backgroundTasks");
 const { buildSubscriptionReminderPayload } = require("../services/emailService");
 const logger = require("../services/logger");
+const {
+  appendPaymentLedgerEntry,
+  createPaymentRecord,
+  getNetPaidForInvoice
+} = require("../services/financialIntegrityService");
 
 const router = express.Router();
 
@@ -583,6 +588,11 @@ router.put("/subscriptions/:id/mark-paid", auth, requireCompanyBillingForMutatio
       let invoiceAmount = Number(subscription.price || 0);
       let invoiceNumber = null;
 
+      if (!Number.isFinite(invoiceAmount) || invoiceAmount < 0) {
+        await client.query("ROLLBACK");
+        return res.status(400).json({ error: "Subscription price cannot be negative" });
+      }
+
       if (!invoiceId) {
         invoiceNumber = await nextInvoiceNumber(company_id, client);
         const invoiceInsert = await client.query(`
@@ -608,19 +618,14 @@ router.put("/subscriptions/:id/mark-paid", auth, requireCompanyBillingForMutatio
         invoiceId = invoiceInsert.rows[0].id;
       }
 
-      const existingPaid = await client.query(`
-        SELECT COALESCE(SUM(amount),0)::numeric AS total
-        FROM payments
-        WHERE invoice_id = $1 AND company_id = $2
-      `, [invoiceId, company_id]);
-
-      const alreadyPaid = Number(existingPaid.rows[0].total || 0);
-      const remaining = Math.max(invoiceAmount - alreadyPaid, 0);
+      const alreadyPaid = await getNetPaidForInvoice(client, company_id, invoiceId);
+      const remaining = Number(Math.max(invoiceAmount - alreadyPaid, 0).toFixed(2));
 
       if (remaining > 0) {
-        await client.query(`
+        const paymentInsert = await client.query(`
           INSERT INTO payments (invoice_id, amount, method, date, notes, company_id)
           VALUES ($1,$2,$3,CURRENT_DATE,$4,$5)
+          RETURNING *
         `, [
           invoiceId,
           remaining,
@@ -628,6 +633,20 @@ router.put("/subscriptions/:id/mark-paid", auth, requireCompanyBillingForMutatio
           notes || `Subscription payment for ${billedMonth}`,
           company_id
         ]);
+
+        await appendPaymentLedgerEntry(client, {
+          company_id,
+          event_type: "payment_received",
+          invoice_id: Number(invoiceId),
+          payment_id: paymentInsert.rows[0].id,
+          amount: remaining,
+          metadata: {
+            method,
+            source: "subscription_mark_paid",
+            billing_month: billedMonth
+          },
+          created_by: req.user.id
+        });
       }
 
       if (existingBilling.rows.length === 0) {
@@ -1199,6 +1218,11 @@ router.put("/ops/subscriptions/:id/mark-paid", auth, requireCompanyBillingForMut
     }
 
     const subscription = subscriptionResult.rows[0];
+    const invoiceTotal = Number(subscription.price || 0);
+    if (!Number.isFinite(invoiceTotal) || invoiceTotal < 0) {
+      return res.status(400).json({ error: "Subscription price cannot be negative" });
+    }
+
     const billingDate = normalizeDateOnly(subscription.next_billing_date || subscription.next_date || new Date().toISOString());
     const billingMonth = billingDate.slice(0, 7);
 
@@ -1234,13 +1258,13 @@ router.put("/ops/subscriptions/:id/mark-paid", auth, requireCompanyBillingForMut
         subscriptionId,
         invoiceNumber,
         billingDate,
-        Number(subscription.price || 0),
+        invoiceTotal,
         notes || "",
         JSON.stringify([{
           description: subscription.service || "Subscription billing",
           quantity: 1,
-          price: Number(subscription.price || 0),
-          amount: Number(subscription.price || 0)
+          price: invoiceTotal,
+          amount: invoiceTotal
         }])
       ]);
 
@@ -1253,20 +1277,23 @@ router.put("/ops/subscriptions/:id/mark-paid", auth, requireCompanyBillingForMut
       `, [invoiceId, companyId]);
     }
 
-    const invoiceTotal = Number(subscription.price || 0);
-    const paidResult = await pool.query(`
-      SELECT COALESCE(SUM(amount),0)::numeric AS total
-      FROM payments
-      WHERE invoice_id = $1 AND company_id = $2
-    `, [invoiceId, companyId]);
-    const alreadyPaid = Number(paidResult.rows[0] && paidResult.rows[0].total ? paidResult.rows[0].total : 0);
+    const alreadyPaid = await getNetPaidForInvoice(null, companyId, invoiceId);
     const paymentAmount = Number(Math.max(invoiceTotal - alreadyPaid, 0).toFixed(2));
 
     if (paymentAmount > 0) {
-      await pool.query(`
-        INSERT INTO payments (invoice_id, amount, method, date, notes, company_id)
-        VALUES ($1,$2,$3,CURRENT_DATE,$4,$5)
-      `, [invoiceId, paymentAmount, method, notes || "", companyId]);
+      await createPaymentRecord({
+        companyId,
+        invoiceId,
+        amount: paymentAmount,
+        method: normalizePaymentMethod(method),
+        date: billingDate,
+        notes: notes || "",
+        userId: req.user.id,
+        metadata: {
+          source: "ops_subscription_mark_paid",
+          billing_month: billingMonth
+        }
+      });
     }
 
     if (existingBilling.rows.length === 0) {
@@ -1279,7 +1306,7 @@ router.put("/ops/subscriptions/:id/mark-paid", auth, requireCompanyBillingForMut
         invoiceId,
         billingMonth,
         billingDate,
-        Number(subscription.price || 0),
+        invoiceTotal,
         notes || "",
         companyId
       ]);
@@ -1323,7 +1350,7 @@ router.put("/ops/subscriptions/:id/mark-paid", auth, requireCompanyBillingForMut
         subscription_id: subscriptionId,
         invoice_id: invoiceId,
         billing_month: billingMonth,
-        amount: Number(subscription.price || 0),
+        amount: invoiceTotal,
         method
       }
     });

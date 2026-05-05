@@ -55,7 +55,34 @@ async function main() {
     if (!("ok" in body)) {
       fail("/health JSON missing `ok` field");
     }
+    if (body.database && body.database.status !== "ok") {
+      fail(`/health database.status expected ok, got ${body.database.status}`);
+    }
+    if (body.migrations && body.migrations.status !== "current") {
+      fail(`/health migrations.status expected current, got ${body.migrations.status}`);
+    }
     ok("/health returns JSON with ok field");
+  }
+
+  {
+    const { res, body } = await fetchJson(`${baseUrl}/health/ready`);
+    if (res.status === 404) {
+      console.log("SMOKE SKIP: /health/ready is not available");
+    } else {
+      if (!res.ok) {
+        fail(`/health/ready returned ${res.status}`);
+      }
+      if (!body || body.ok !== true) {
+        fail("/health/ready should return JSON with ok=true");
+      }
+      if (body.database && body.database.status !== "ok") {
+        fail(`/health/ready database.status expected ok, got ${body.database.status}`);
+      }
+      if (body.migrations && body.migrations.status !== "current") {
+        fail(`/health/ready migrations.status expected current, got ${body.migrations.status}`);
+      }
+      ok("/health/ready confirms DB and migration readiness");
+    }
   }
 
   {

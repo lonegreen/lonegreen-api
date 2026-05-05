@@ -36,15 +36,25 @@ function createStatus(name, schedule) {
 async function runTask(status, handler) {
   status.last_run = nowIso();
   status.run_count += 1;
+  const startedAt = Date.now();
+  logger.info("SCHEDULER_TASK_STARTED", {
+    task: status.name,
+    run_count: status.run_count
+  });
 
   try {
     await handler();
     status.last_success = nowIso();
     status.last_error = null;
+    logger.info("SCHEDULER_TASK_COMPLETED", {
+      task: status.name,
+      duration_ms: Date.now() - startedAt
+    });
   } catch (err) {
     status.last_error = err && (err.message || String(err));
     logger.error("SCHEDULER TASK ERROR", {
       task: status.name,
+      duration_ms: Date.now() - startedAt,
       error: err
     });
   }

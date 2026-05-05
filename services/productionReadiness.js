@@ -11,15 +11,28 @@ const { getEmailReadiness } = require("./emailService");
 const { getQueueStatus } = require("./jobQueue");
 const { getSchedulerStatus } = require("./schedulerService");
 const { getUploadReadiness } = require("./uploadService");
+const logger = require("./logger");
+
+function getProcessReadiness() {
+  return {
+    status: "ok",
+    uptime_seconds: Math.round(process.uptime()),
+    pid: process.pid
+  };
+}
 
 async function getDatabaseReadiness() {
   try {
     const result = await pool.query("SELECT NOW() AS checked_at");
     return {
       status: "ok",
-      checked_at: result.rows[0].checked_at
+      checked_at: result.rows[0].checked_at,
+      pool: typeof pool.getPoolReadinessInfo === "function"
+        ? pool.getPoolReadinessInfo()
+        : null
     };
   } catch (err) {
+    logger.error("HEALTH_DATABASE_READINESS_FAILED", err);
     return {
       status: "error",
       error: err.message || "Database check failed"
@@ -45,6 +58,7 @@ async function getBillingReadiness() {
       warning_mode: true
     };
   } catch (err) {
+    logger.error("HEALTH_BILLING_READINESS_FAILED", err);
     return {
       status: "error",
       error: err.message || "Billing readiness check failed",
@@ -65,13 +79,17 @@ function getStripeReadiness() {
 async function getHealthReadiness() {
   const [database, migrations, billing] = await Promise.all([
     getDatabaseReadiness(),
-    getMigrationStatus().catch(err => ({
-      status: "error",
-      error: err.message || "Migration status unavailable"
-    })),
+    getMigrationStatus().catch(err => {
+      logger.error("HEALTH_MIGRATION_READINESS_FAILED", err);
+      return {
+        status: "error",
+        error: err.message || "Migration status unavailable"
+      };
+    }),
     getBillingReadiness()
   ]);
 
+  const processStatus = getProcessReadiness();
   const stripe = getStripeReadiness();
   const environment = getProductionEnvReadiness();
   const email = getEmailReadiness();
@@ -88,6 +106,7 @@ async function getHealthReadiness() {
   return {
     ok,
     app: "LoneGreen SaaS",
+    process: processStatus,
     database,
     migrations,
     billing,

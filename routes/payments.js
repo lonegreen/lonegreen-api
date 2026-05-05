@@ -149,8 +149,7 @@ const { buildPaymentReceiptPayload } = require("../services/emailService");
 const logger = require("../services/logger");
 
 const {
-  assertPaymentWithinRemaining,
-  appendPaymentLedgerEntrySafe,
+  createPaymentRecord,
   createRefundRecord
 } = require("../services/financialIntegrityService");
 
@@ -197,12 +196,17 @@ router.post("/workflow/invoices/:id/payments", auth, requireCompanyBillingForMut
 
     const amount = Number(req.body.amount || 0);
 
+    let paymentRow;
     try {
-      await assertPaymentWithinRemaining({
+      paymentRow = await createPaymentRecord({
         companyId: req.user.company_id,
-        invoiceId: req.params.id,
-        proposedPaymentAmount: amount,
-        invoiceTotalAmount: invoice.amount
+        invoiceId: Number(req.params.id),
+        amount,
+        method: normalizePaymentMethod(req.body.method),
+        date: req.body.date || new Date().toISOString().split("T")[0],
+        notes: req.body.notes || "",
+        userId: req.user.id,
+        metadata: { source: "workflow_payment" }
       });
     } catch (payErr) {
       if (payErr && payErr.statusCode) {
@@ -214,39 +218,6 @@ router.post("/workflow/invoices/:id/payments", auth, requireCompanyBillingForMut
       }
       throw payErr;
     }
-
-    const payment = await pool.query(`
-      INSERT INTO payments (invoice_id, amount, method, date, notes, company_id)
-
-
-      VALUES ($1,$2,$3,$4,$5,$6)
-
-
-      RETURNING *
-
-
-    `, [
-
-
-      req.params.id,
-
-
-      amount,
-
-
-      normalizePaymentMethod(req.body.method),
-
-
-      req.body.date || new Date().toISOString().split("T")[0],
-
-
-      req.body.notes || "",
-
-
-      req.user.company_id
-
-
-    ]);
 
 
 
@@ -300,7 +271,7 @@ router.post("/workflow/invoices/:id/payments", auth, requireCompanyBillingForMut
       entityType: "payment",
 
 
-      entityId: payment.rows[0].id,
+      entityId: paymentRow.id,
 
 
       details: {
@@ -315,7 +286,7 @@ router.post("/workflow/invoices/:id/payments", auth, requireCompanyBillingForMut
         amount,
 
 
-        method: payment.rows[0].method,
+        method: paymentRow.method,
 
 
         remaining_balance: updatedInvoice ? updatedInvoice.remaining_balance : null
@@ -326,23 +297,10 @@ router.post("/workflow/invoices/:id/payments", auth, requireCompanyBillingForMut
 
     });
 
-    await appendPaymentLedgerEntrySafe(null, {
-      company_id: req.user.company_id,
-      event_type: "payment_received",
-      invoice_id: Number(req.params.id),
-      payment_id: payment.rows[0].id,
-      amount,
-      metadata: {
-        method: payment.rows[0].method,
-        source: "workflow_payment"
-      },
-      created_by: req.user.id
-    });
-
     try {
       const mailPayload = buildPaymentReceiptPayload({
         invoice: updatedInvoice,
-        payment: payment.rows[0],
+        payment: paymentRow,
         companyName: updatedInvoice && updatedInvoice.company_name,
         overrideTo: req.body && req.body.notify_email
       });
@@ -367,7 +325,7 @@ router.post("/workflow/invoices/:id/payments", auth, requireCompanyBillingForMut
         message: `Invoice ${updatedInvoice && updatedInvoice.invoice_number ? updatedInvoice.invoice_number : ("#" + req.params.id)}: $${Number(amount).toFixed(2)} recorded.`,
         metadata: {
           invoice_id: Number(req.params.id),
-          payment_id: payment.rows[0].id
+          payment_id: paymentRow.id
         }
       });
     } catch (notifErr) {
@@ -380,10 +338,10 @@ router.post("/workflow/invoices/:id/payments", auth, requireCompanyBillingForMut
       payment: {
 
 
-        ...payment.rows[0],
+        ...paymentRow,
 
 
-        amount: Number(payment.rows[0].amount || 0)
+        amount: Number(paymentRow.amount || 0)
 
 
       },

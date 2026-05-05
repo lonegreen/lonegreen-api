@@ -44,6 +44,27 @@ function assertInvoiceStatusTransition(fromStatus, toStatus) {
 function validateLineItemsMatchAmount(normalizedLineItems, amount) {
   const total = num(normalizedLineItems && normalizedLineItems.total);
   const target = num(amount);
+  const items = Array.isArray(normalizedLineItems && normalizedLineItems.line_items)
+    ? normalizedLineItems.line_items
+    : [];
+
+  if (target < 0 || total < 0) {
+    const err = new Error("Invoice amount cannot be negative.");
+    err.code = "INVOICE_NEGATIVE_TOTAL";
+    err.statusCode = 400;
+    err.details = { computed_total: total, stored_amount: target };
+    return err;
+  }
+
+  const invalidItem = items.find(item => num(item.amount) < 0 || num(item.price) < 0 || num(item.quantity) < 0);
+  if (invalidItem) {
+    const err = new Error("Invoice line items cannot contain negative amounts.");
+    err.code = "INVOICE_NEGATIVE_LINE_ITEM";
+    err.statusCode = 400;
+    err.details = { line_item: invalidItem };
+    return err;
+  }
+
   const diff = Math.abs(total - target);
   if (diff > 0.009) {
     const err = new Error("Invoice amount does not match line item totals.");
@@ -181,9 +202,10 @@ async function assertPaymentWithinRemaining({
   companyId,
   invoiceId,
   proposedPaymentAmount,
-  invoiceTotalAmount
+  invoiceTotalAmount,
+  client = null
 }) {
-  const netPaid = await getNetPaidForInvoice(null, companyId, invoiceId);
+  const netPaid = await getNetPaidForInvoice(client, companyId, invoiceId);
   const total = num(invoiceTotalAmount);
   const remaining = Number(Math.max(total - netPaid, 0).toFixed(2));
   const pay = num(proposedPaymentAmount);
@@ -204,6 +226,95 @@ async function assertPaymentWithinRemaining({
   }
 
   return { netPaid, remaining, total };
+}
+
+async function createPaymentRecord({
+  companyId,
+  invoiceId,
+  amount,
+  method,
+  date,
+  notes,
+  userId,
+  metadata = {}
+}) {
+  const client = await pool.connect();
+
+  try {
+    await client.query("BEGIN");
+
+    const invoice = await client.query(
+      `
+      SELECT id, company_id, amount, status
+      FROM invoices
+      WHERE id = $1 AND company_id = $2
+      LIMIT 1
+      FOR UPDATE
+      `,
+      [invoiceId, companyId]
+    );
+
+    if (!invoice.rows.length) {
+      const err = new Error("Invoice not found");
+      err.code = "INVOICE_NOT_FOUND";
+      err.statusCode = 404;
+      throw err;
+    }
+
+    if (invoice.rows[0].status === "cancelled") {
+      const err = new Error("Cannot add payment to cancelled invoice");
+      err.code = "INVOICE_CANCELLED";
+      err.statusCode = 400;
+      throw err;
+    }
+
+    await assertPaymentWithinRemaining({
+      companyId,
+      invoiceId,
+      proposedPaymentAmount: amount,
+      invoiceTotalAmount: invoice.rows[0].amount,
+      client
+    });
+
+    const payment = await client.query(
+      `
+      INSERT INTO payments (invoice_id, amount, method, date, notes, company_id)
+      VALUES ($1, $2, $3, $4, $5, $6)
+      RETURNING *
+      `,
+      [
+        invoiceId,
+        num(amount),
+        method,
+        date || new Date().toISOString().split("T")[0],
+        notes || "",
+        companyId
+      ]
+    );
+
+    const paymentRow = payment.rows[0];
+
+    await appendPaymentLedgerEntry(client, {
+      company_id: companyId,
+      event_type: "payment_received",
+      invoice_id: Number(invoiceId),
+      payment_id: paymentRow.id,
+      amount: num(amount),
+      metadata: {
+        ...metadata,
+        method: paymentRow.method
+      },
+      created_by: userId || null
+    });
+
+    await client.query("COMMIT");
+    return paymentRow;
+  } catch (err) {
+    await client.query("ROLLBACK");
+    throw err;
+  } finally {
+    client.release();
+  }
 }
 
 async function assertNewInvoiceTotalCoversNetPaid(client, companyId, invoiceId, newTotal) {
@@ -251,13 +362,14 @@ async function runInvoiceIntegrityChecks(companyId, invoiceId) {
 
   const netPaid = await getNetPaidForInvoice(null, companyId, invoiceId);
   const total = num(row.amount);
-  const remaining = Number(Math.max(total - netPaid, 0).toFixed(2));
+  const impliedRemaining = Number((total - netPaid).toFixed(2));
+  const remaining = Number(Math.max(impliedRemaining, 0).toFixed(2));
 
-  if (remaining < -0.009) {
+  if (impliedRemaining < -0.009) {
     issues.push({
       code: "NEGATIVE_REMAINING",
       message: "Net payments and refunds exceed invoice total",
-      details: { invoice_total: total, net_paid: netPaid, implied_remaining: remaining }
+      details: { invoice_total: total, net_paid: netPaid, implied_remaining: impliedRemaining }
     });
   }
 
@@ -445,6 +557,7 @@ module.exports = {
   getRefundedTotalForPayment,
   assertPaymentWithinRemaining,
   assertNewInvoiceTotalCoversNetPaid,
+  createPaymentRecord,
   runInvoiceIntegrityChecks,
   createRefundRecord
 };

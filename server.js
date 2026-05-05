@@ -58,6 +58,7 @@ app.set("trust proxy", 1);
 const PORT = Number(process.env.PORT || 4000);
 const RUN_STARTUP_MIGRATIONS = String(process.env.RUN_STARTUP_MIGRATIONS || "").trim().toLowerCase() === "true";
 let hasLoggedCanonicalRouteNotice = false;
+let lastHealthWarningAt = 0;
 
 app.disable("x-powered-by");
 
@@ -142,9 +143,31 @@ const apiLimiter = rateLimit({
 app.use(apiLimiter);
 
 /* Health */
+app.get("/health/live", (req, res) => {
+  res.json({
+    ok: true,
+    app: "LoneGreen SaaS",
+    process: {
+      status: "ok",
+      uptime_seconds: Math.round(process.uptime()),
+      pid: process.pid
+    },
+    time: new Date().toISOString()
+  });
+});
+
 app.get("/health", async (req, res) => {
   try {
     const readiness = await getHealthReadiness();
+    if (!readiness.ok && Date.now() - lastHealthWarningAt > 60000) {
+      lastHealthWarningAt = Date.now();
+      logger.warn("HEALTH_READINESS_NOT_READY", {
+        database_status: readiness.database && readiness.database.status,
+        migrations_status: readiness.migrations && readiness.migrations.status,
+        environment_status: readiness.environment && readiness.environment.status
+      });
+    }
+
     res.status(readiness.ok ? 200 : 503).json({
       ...readiness,
       env: NODE_ENV,
@@ -159,6 +182,31 @@ app.get("/health", async (req, res) => {
       app: "LoneGreen SaaS",
       env: NODE_ENV,
       error: "Health check failed",
+      time: new Date().toISOString()
+    });
+  }
+});
+
+app.get("/health/ready", async (req, res) => {
+  try {
+    const readiness = await getHealthReadiness();
+    res.status(readiness.ok ? 200 : 503).json({
+      ok: readiness.ok,
+      app: readiness.app,
+      process: readiness.process,
+      database: readiness.database,
+      migrations: readiness.migrations,
+      environment: readiness.environment,
+      queue: readiness.queue,
+      scheduler: readiness.scheduler,
+      time: new Date().toISOString()
+    });
+  } catch (err) {
+    logger.error("HEALTH_READY_CHECK_ERROR", err);
+    res.status(503).json({
+      ok: false,
+      app: "LoneGreen SaaS",
+      error: "Readiness check failed",
       time: new Date().toISOString()
     });
   }
@@ -287,11 +335,13 @@ app.use((err, req, res, next) => {
 /* Start */
 (async () => {
   try {
-    console.log("Starting LoneGreen server...");
-    console.log("Environment:", NODE_ENV);
-    console.log("server.js loaded from:", __filename);
-    console.log("Stripe checkout configured:", isStripeCheckoutConfigured() ? "yes" : "no");
-    console.log("Stripe webhook secret configured:", process.env.STRIPE_WEBHOOK_SECRET ? "yes" : "no");
+    logger.info("SERVER_STARTUP_BEGIN", {
+      env: NODE_ENV,
+      port: PORT,
+      startup_migrations_requested: RUN_STARTUP_MIGRATIONS,
+      stripe_checkout_configured: isStripeCheckoutConfigured(),
+      stripe_webhook_configured: Boolean(process.env.STRIPE_WEBHOOK_SECRET)
+    });
     const envReadiness = getProductionEnvReadiness();
     if (envReadiness.status !== "ready") {
       logger.warn("Production readiness environment warnings", envReadiness);
@@ -299,14 +349,16 @@ app.use((err, req, res, next) => {
 
     const shouldRunStartupMigrations = NODE_ENV !== "production" || RUN_STARTUP_MIGRATIONS;
     if (shouldRunStartupMigrations) {
-      console.log("Database setup on boot: enabled");
+      logger.info("STARTUP_MIGRATIONS_ENABLED", {
+        production: NODE_ENV === "production"
+      });
       if (NODE_ENV === "production") {
         console.warn("WARNING: RUN_STARTUP_MIGRATIONS=true in production. Use controlled deploy migrations whenever possible.");
       }
       await setupDatabase({
         runMigrations: true
       });
-      console.log("Database setup complete");
+      logger.info("STARTUP_MIGRATIONS_COMPLETE");
     } else {
       console.warn("WARNING: Startup migrations skipped in production.");
       console.warn("Run migrations explicitly with: node db/setup.js");
@@ -314,11 +366,11 @@ app.use((err, req, res, next) => {
 
     startQueue();
 
-    console.log("Job queue started");
+    logger.info("JOB_QUEUE_STARTED", getQueueStatus());
 
     startScheduler();
 
-    console.log("Scheduler started (cron includes DB-locked subscription_processing)");
+    logger.info("SCHEDULER_STARTED", getSchedulerStatus());
 
     if (SUBSCRIPTION_INTERVAL_ENGINE) {
       startSubscriptionEngine();
@@ -328,16 +380,14 @@ app.use((err, req, res, next) => {
     }
 
     app.listen(PORT, () => {
-      console.log(
-        `Server running on http://localhost:${PORT}`
-      );
+      logger.info("SERVER_LISTENING", {
+        port: PORT,
+        env: NODE_ENV
+      });
     });
 
   } catch (err) {
-    console.error(
-      "STARTUP ERROR:",
-      err && (err.stack || err.message || err)
-    );
+    logger.error("STARTUP_ERROR", err);
 
     process.exit(1);
   }

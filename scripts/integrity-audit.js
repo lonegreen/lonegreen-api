@@ -324,6 +324,140 @@ const checks = [
       ORDER BY sb.id
       LIMIT 100
     `
+  },
+  {
+    id: "invoices_negative_totals",
+    title: "Invoices with negative amount or subtotal",
+    sql: `
+      SELECT id, company_id, invoice_number, status, amount, subtotal
+      FROM invoices
+      WHERE COALESCE(amount, 0) < 0
+         OR COALESCE(subtotal, 0) < 0
+      ORDER BY id
+      LIMIT 100
+    `
+  },
+  {
+    id: "invoice_line_item_total_mismatch",
+    title: "Invoices where line item total differs from invoice amount",
+    sql: `
+      WITH invoice_lines AS (
+        SELECT
+          i.id,
+          i.company_id,
+          i.invoice_number,
+          i.amount,
+          COALESCE(SUM(
+            CASE
+              WHEN item.value ? 'amount'
+               AND (item.value->>'amount') ~ '^-?[0-9]+(\\.[0-9]+)?$'
+              THEN (item.value->>'amount')::numeric
+              ELSE 0
+            END
+          ), 0)::numeric AS line_total,
+          COUNT(item.value)::int AS line_count
+        FROM invoices i
+        LEFT JOIN LATERAL jsonb_array_elements(
+          CASE WHEN jsonb_typeof(i.line_items) = 'array' THEN i.line_items ELSE '[]'::jsonb END
+        ) AS item(value) ON TRUE
+        GROUP BY i.id, i.company_id, i.invoice_number, i.amount
+      )
+      SELECT id, company_id, invoice_number, amount, line_total
+      FROM invoice_lines
+      WHERE line_count > 0
+        AND ABS(COALESCE(amount, 0) - line_total) > 0.01
+      ORDER BY id
+      LIMIT 100
+    `
+  },
+  {
+    id: "payments_nonpositive_amount",
+    title: "Payments with non-positive amount",
+    sql: `
+      SELECT id, company_id, invoice_id, amount
+      FROM payments
+      WHERE COALESCE(amount, 0) <= 0
+      ORDER BY id
+      LIMIT 100
+    `
+  },
+  {
+    id: "refunds_nonpositive_amount",
+    title: "Refunds with non-positive amount",
+    sql: `
+      SELECT id, company_id, invoice_id, payment_id, amount
+      FROM refunds
+      WHERE COALESCE(amount, 0) <= 0
+      ORDER BY id
+      LIMIT 100
+    `
+  },
+  {
+    id: "refunds_exceed_payment_amount",
+    title: "Refund totals exceeding original payment amount",
+    sql: `
+      SELECT
+        p.id AS payment_id,
+        p.company_id,
+        p.invoice_id,
+        p.amount AS payment_amount,
+        COALESCE(SUM(r.amount), 0)::numeric AS refunded_amount
+      FROM payments p
+      INNER JOIN refunds r
+        ON r.payment_id = p.id
+       AND r.company_id = p.company_id
+      GROUP BY p.id, p.company_id, p.invoice_id, p.amount
+      HAVING COALESCE(SUM(r.amount), 0) > p.amount + 0.01
+      ORDER BY p.id
+      LIMIT 100
+    `
+  },
+  {
+    id: "invoice_net_paid_exceeds_total",
+    title: "Invoices where net payments exceed invoice total",
+    sql: `
+      WITH balances AS (
+        SELECT
+          i.id,
+          i.company_id,
+          i.invoice_number,
+          i.status,
+          COALESCE(i.amount, 0)::numeric AS invoice_total,
+          COALESCE((SELECT SUM(p.amount)::numeric FROM payments p WHERE p.invoice_id = i.id AND p.company_id = i.company_id), 0)
+            - COALESCE((SELECT SUM(r.amount)::numeric FROM refunds r WHERE r.invoice_id = i.id AND r.company_id = i.company_id), 0) AS net_paid
+        FROM invoices i
+      )
+      SELECT id, company_id, invoice_number, status, invoice_total, net_paid
+      FROM balances
+      WHERE status <> 'cancelled'
+        AND net_paid > invoice_total + 0.01
+      ORDER BY id
+      LIMIT 100
+    `
+  },
+  {
+    id: "invoice_paid_status_balance_mismatch",
+    title: "Paid invoices with remaining balance",
+    sql: `
+      WITH balances AS (
+        SELECT
+          i.id,
+          i.company_id,
+          i.invoice_number,
+          i.status,
+          COALESCE(i.amount, 0)::numeric AS invoice_total,
+          COALESCE((SELECT SUM(p.amount)::numeric FROM payments p WHERE p.invoice_id = i.id AND p.company_id = i.company_id), 0)
+            - COALESCE((SELECT SUM(r.amount)::numeric FROM refunds r WHERE r.invoice_id = i.id AND r.company_id = i.company_id), 0) AS net_paid
+        FROM invoices i
+      )
+      SELECT id, company_id, invoice_number, status, invoice_total, net_paid,
+             invoice_total - net_paid AS remaining_balance
+      FROM balances
+      WHERE status = 'paid'
+        AND invoice_total - net_paid > 0.01
+      ORDER BY id
+      LIMIT 100
+    `
   }
 ];
 

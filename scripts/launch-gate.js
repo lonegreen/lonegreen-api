@@ -17,6 +17,8 @@ const root = path.join(__dirname, "..");
 const syntaxFiles = [
   "server.js",
   "config/env.js",
+  "db/pool.js",
+  "db/setup.js",
   "routes/auth.js",
   "routes/jobs.js",
   "routes/subscriptions.js",
@@ -29,12 +31,15 @@ const syntaxFiles = [
   "services/billingService.js",
   "services/stripeWebhookService.js",
   "services/financialIntegrityService.js",
+  "services/productionReadiness.js",
   "services/backgroundTasks.js",
+  "services/schedulerService.js",
   "services/jobQueue.js",
   "middleware/auth.js",
   "middleware/requireCompanyBillingForMutations.js",
   "scripts/integrity-audit.js",
-  "scripts/repair-integrity-drift.js"
+  "scripts/repair-integrity-drift.js",
+  "scripts/smoke-test.js"
 ];
 
 const sourceExpectations = [
@@ -166,6 +171,108 @@ const sourceExpectations = [
       "function isStripeTestSecretKey",
       "STRIPE_SECRET_KEY must not be a Stripe test key in production",
       "STRIPE_SECRET_KEY appears to be a placeholder value"
+    ]
+  },
+  {
+    name: "health endpoints distinguish live and ready",
+    file: "server.js",
+    patterns: [
+      "app.get(\"/health/live\"",
+      "app.get(\"/health/ready\"",
+      "HEALTH_READINESS_NOT_READY",
+      "getHealthReadiness()"
+    ]
+  },
+  {
+    name: "maintenance routes are production-gated",
+    file: "config/env.js",
+    patterns: [
+      "ALLOW_MAINTENANCE_ROUTES must be false in production",
+      "ALLOW_SEED_ADMIN must be false in production"
+    ]
+  },
+  {
+    name: "Neon pool readiness is configurable and exposed safely",
+    file: "db/pool.js",
+    patterns: [
+      "PG_POOL_MAX",
+      "getPoolReadinessInfo",
+      "POSTGRES_POOL_ERROR",
+      "neon_detected"
+    ]
+  },
+  {
+    name: "production readiness reports process database migrations queue scheduler",
+    file: "services/productionReadiness.js",
+    patterns: [
+      "function getProcessReadiness",
+      "getDatabaseReadiness",
+      "getMigrationStatus",
+      "getQueueStatus",
+      "getSchedulerStatus"
+    ]
+  },
+  {
+    name: "smoke test covers health ready and safe credential-gated probes",
+    file: "scripts/smoke-test.js",
+    patterns: [
+      "/health/ready",
+      "SMOKE_USERNAME",
+      "SMOKE_PASSWORD",
+      "billing probe"
+    ]
+  },
+  {
+    name: "Phase 5 production runbook exists",
+    file: "docs/PHASE5_PRODUCTION_RUNBOOK.md",
+    patterns: [
+      "Deploy Checklist",
+      "Neon Backup And Restore",
+      "Migration Checklist",
+      "Smoke Test Checklist",
+      "Before Marketplace"
+    ]
+  },
+  {
+    name: "financial service blocks negative totals and transactional overpayments",
+    file: "services/financialIntegrityService.js",
+    patterns: [
+      "INVOICE_NEGATIVE_TOTAL",
+      "INVOICE_NEGATIVE_LINE_ITEM",
+      "async function createPaymentRecord",
+      "FOR UPDATE",
+      "OVERPAYMENT"
+    ]
+  },
+  {
+    name: "payments route uses transactional financial payment helper",
+    file: "routes/payments.js",
+    patterns: [
+      "createPaymentRecord",
+      "source: \"workflow_payment\"",
+      "Cannot add payment to cancelled invoice"
+    ]
+  },
+  {
+    name: "subscription mark-paid paths use net payments and ledger helpers",
+    file: "routes/subscriptions.js",
+    patterns: [
+      "getNetPaidForInvoice",
+      "appendPaymentLedgerEntry",
+      "createPaymentRecord",
+      "Subscription price cannot be negative"
+    ]
+  },
+  {
+    name: "integrity audit checks financial balance drift",
+    file: "scripts/integrity-audit.js",
+    patterns: [
+      "invoices_negative_totals",
+      "invoice_line_item_total_mismatch",
+      "payments_nonpositive_amount",
+      "refunds_exceed_payment_amount",
+      "invoice_net_paid_exceeds_total",
+      "invoice_paid_status_balance_mismatch"
     ]
   }
 ];

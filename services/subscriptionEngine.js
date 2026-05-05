@@ -38,6 +38,7 @@ function advanceSubscriptionDate(date, frequency) {
 async function processSubscriptions() {
   const client = await pool.connect();
   let lockAcquired = false;
+  const startedAt = Date.now();
 
   try {
     const lockResult = await client.query(
@@ -47,9 +48,16 @@ async function processSubscriptions() {
 
     lockAcquired = lockResult.rows[0] && lockResult.rows[0].acquired === true;
     if (!lockAcquired) {
-      logger.info("Subscription engine pass skipped; another process holds the generation lock");
+      logger.info("SUBSCRIPTION_ENGINE_RUN_SKIPPED", {
+        reason: "lock_unavailable",
+        duration_ms: Date.now() - startedAt
+      });
       return { skipped: true, reason: "lock_unavailable" };
     }
+
+    logger.info("SUBSCRIPTION_ENGINE_RUN_STARTED", {
+      lock_acquired: true
+    });
 
     const subs = await client.query(`
       SELECT * FROM subscriptions
@@ -122,17 +130,24 @@ async function processSubscriptions() {
       }
     }
 
-    logger.info("Subscription engine pass completed");
+    logger.info("SUBSCRIPTION_ENGINE_RUN_COMPLETED", {
+      processed: subs.rows.length,
+      duration_ms: Date.now() - startedAt
+    });
     return { skipped: false, processed: subs.rows.length };
   } catch (err) {
     if (err && err.code === "23505") {
       logger.warn("Subscription engine duplicate insert skipped by database uniqueness guard", {
-        error: err.message
+        error: err.message,
+        duration_ms: Date.now() - startedAt
       });
       return { skipped: false, duplicate_skipped: true };
     }
 
-    logger.error("SUBSCRIPTION ENGINE ERROR", err);
+    logger.error("SUBSCRIPTION_ENGINE_RUN_ERROR", {
+      duration_ms: Date.now() - startedAt,
+      error: err
+    });
     return { skipped: false, error: err && (err.message || String(err)) };
   } finally {
     if (lockAcquired) {
