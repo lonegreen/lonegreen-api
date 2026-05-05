@@ -1445,7 +1445,7 @@ async function syncCompanyBillingFromStripe(companyId, patch = {}) {
     const stripe_plan_key = Object.prototype.hasOwnProperty.call(patch, "stripe_plan_key")
       ? patch.stripe_plan_key
       : row.stripe_plan_key;
-    const billing_grace_until = Object.prototype.hasOwnProperty.call(patch, "billing_grace_until")
+    let billing_grace_until = Object.prototype.hasOwnProperty.call(patch, "billing_grace_until")
       ? isoDateOrNull(patch.billing_grace_until, row.billing_grace_until)
       : row.billing_grace_until;
     const billing_last_payment_failed_at = Object.prototype.hasOwnProperty.call(patch, "billing_last_payment_failed_at")
@@ -1463,6 +1463,14 @@ async function syncCompanyBillingFromStripe(companyId, patch = {}) {
     const billing_cycle = patch.billing_cycle !== undefined
       ? normalizeBillingCycle(patch.billing_cycle)
       : null;
+
+    if ((billing_status === "past_due" || billing_status === "unpaid") && !billing_grace_until) {
+      billing_grace_until = addDaysIso(BILLING_GRACE_PERIOD_DAYS);
+    }
+
+    if (billing_status === "active") {
+      billing_grace_until = null;
+    }
 
     let stripe_period_end_iso = null;
     if (stripe_current_period_end !== null && stripe_current_period_end !== undefined) {

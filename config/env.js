@@ -101,6 +101,28 @@ const BILLING_LIFECYCLE_AUTOMATION = booleanEnv(
   NODE_ENV === "production"
 );
 
+function isStripeTestSecretKey(value) {
+  return /^(sk|rk)_test_/.test(String(value || "").trim());
+}
+
+function isStripeLiveSecretKey(value) {
+  return /^(sk|rk)_live_/.test(String(value || "").trim());
+}
+
+function isPlaceholderSecret(value) {
+  return /(placeholder|changeme|change_me|your_)/i.test(String(value || "").trim());
+}
+
+if (NODE_ENV === "production") {
+  if (isStripeTestSecretKey(STRIPE_SECRET_KEY)) {
+    throw new Error("STRIPE_SECRET_KEY must not be a Stripe test key in production");
+  }
+
+  if (STRIPE_SECRET_KEY && isPlaceholderSecret(STRIPE_SECRET_KEY)) {
+    throw new Error("STRIPE_SECRET_KEY appears to be a placeholder value");
+  }
+}
+
 /**
  * Legacy setInterval subscription poll. Off in production unless explicitly true.
  * Non-production defaults to true for faster local feedback (set SUBSCRIPTION_INTERVAL_ENGINE=false to disable).
@@ -145,6 +167,18 @@ function getProductionEnvReadiness() {
 
   if (NODE_ENV === "production" && !BILLING_LIFECYCLE_AUTOMATION) {
     warnings.push("BILLING_LIFECYCLE_AUTOMATION is disabled in production");
+  }
+
+  if (NODE_ENV === "production" && isStripeTestSecretKey(STRIPE_SECRET_KEY)) {
+    warnings.push("STRIPE_SECRET_KEY is a Stripe test key in production");
+  }
+
+  if (NODE_ENV !== "production" && isStripeLiveSecretKey(STRIPE_SECRET_KEY)) {
+    warnings.push("STRIPE_SECRET_KEY is a Stripe live key outside production");
+  }
+
+  if (STRIPE_SECRET_KEY && isPlaceholderSecret(STRIPE_SECRET_KEY)) {
+    warnings.push("STRIPE_SECRET_KEY appears to be a placeholder value");
   }
 
   return {

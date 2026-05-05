@@ -16,6 +16,7 @@ const root = path.join(__dirname, "..");
 
 const syntaxFiles = [
   "server.js",
+  "config/env.js",
   "routes/auth.js",
   "routes/jobs.js",
   "routes/subscriptions.js",
@@ -113,6 +114,59 @@ const sourceExpectations = [
       "integrity_repair_backups",
       "ROLLBACK"
     ]
+  },
+  {
+    name: "Stripe webhook raw body is mounted before JSON parser",
+    file: "server.js",
+    patterns: [
+      "handleStripeWebhookRequest",
+      "express.raw({ type: \"application/json\" })",
+      "app.use(express.json({"
+    ],
+    ordered: [
+      ["express.raw({ type: \"application/json\" })", "app.use(express.json({"]
+    ]
+  },
+  {
+    name: "Stripe webhook processing is signature-verified and idempotent",
+    file: "services/stripeWebhookService.js",
+    patterns: [
+      "stripe.webhooks.constructEvent(rawBody, sig, STRIPE_WEBHOOK_SECRET)",
+      "const claimed = await tryClaimEvent(event.id, event.type)",
+      "await markEventProcessed(event, audit || {})",
+      "await markEventFailed(event, err, err.safeDetails || {})",
+      "STRIPE_WEBHOOK_DUPLICATE_SKIPPED"
+    ]
+  },
+  {
+    name: "Stripe past-due sync preserves or seeds grace",
+    file: "services/billingService.js",
+    patterns: [
+      "if ((billing_status === \"past_due\" || billing_status === \"unpaid\") && !billing_grace_until)",
+      "billing_grace_until = addDaysIso(BILLING_GRACE_PERIOD_DAYS)",
+      "if (billing_status === \"active\")",
+      "billing_grace_until = null"
+    ]
+  },
+  {
+    name: "billing mutation gate blocks grace-expired and suspended companies",
+    file: "services/billingService.js",
+    patterns: [
+      "async function getStaffMutationBillingBlock",
+      "BILLING_GRACE_EXPIRED",
+      "BILLING_SUSPENDED",
+      "PLAN_LIMIT_EXCEEDED",
+      "mutationLimitForRequest"
+    ]
+  },
+  {
+    name: "production Stripe key safety guard exists",
+    file: "config/env.js",
+    patterns: [
+      "function isStripeTestSecretKey",
+      "STRIPE_SECRET_KEY must not be a Stripe test key in production",
+      "STRIPE_SECRET_KEY appears to be a placeholder value"
+    ]
   }
 ];
 
@@ -177,9 +231,14 @@ function checkSourceExpectations() {
     const source = fs.readFileSync(filePath, "utf8");
     const missing = (check.patterns || []).filter(pattern => !source.includes(pattern));
     const presentButForbidden = (check.absent || []).filter(pattern => source.includes(pattern));
+    const unordered = (check.ordered || []).filter(([before, after]) => {
+      const beforeIndex = source.indexOf(before);
+      const afterIndex = source.indexOf(after);
+      return beforeIndex === -1 || afterIndex === -1 || beforeIndex >= afterIndex;
+    });
 
-    if (missing.length || presentButForbidden.length) {
-      fail(`${check.name}: missing=${JSON.stringify(missing)} forbidden=${JSON.stringify(presentButForbidden)}`);
+    if (missing.length || presentButForbidden.length || unordered.length) {
+      fail(`${check.name}: missing=${JSON.stringify(missing)} forbidden=${JSON.stringify(presentButForbidden)} unordered=${JSON.stringify(unordered)}`);
     } else {
       pass(check.name);
     }
