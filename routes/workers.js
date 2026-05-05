@@ -531,6 +531,18 @@ router.get("/ops/worker-jobs/:workerId", auth, requireWorkerRouteAccess, async (
 router.put("/ops/worker-jobs/:jobId", auth, requireCompanyBillingForMutations, requireWorkerJobMutationAccess, async (req, res) => {
   try {
     const { status, internal_notes, worker_id } = req.body;
+
+    if (worker_id) {
+      const workerCheck = await pool.query(
+        "SELECT id FROM workers WHERE id=$1 AND company_id=$2 LIMIT 1",
+        [worker_id, req.user.company_id]
+      );
+
+      if (workerCheck.rows.length === 0) {
+        return res.status(400).json({ error: "Worker not found in this company" });
+      }
+    }
+
     const result = await pool.query(`
       UPDATE jobs
       SET

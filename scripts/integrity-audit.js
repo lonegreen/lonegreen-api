@@ -46,6 +46,22 @@ const checks = [
     `
   },
   {
+    id: "jobs_worker_company_mismatch",
+    title: "Jobs where job.company_id differs from assigned worker.company_id",
+    sql: `
+      SELECT j.id AS job_id, j.company_id AS job_company_id, j.worker_id,
+             w.company_id AS worker_company_id
+      FROM jobs j
+      INNER JOIN workers w ON w.id = j.worker_id
+      WHERE j.worker_id IS NOT NULL
+        AND j.company_id IS NOT NULL
+        AND w.company_id IS NOT NULL
+        AND j.company_id <> w.company_id
+      ORDER BY j.id
+      LIMIT 100
+    `
+  },
+  {
     id: "jobs_missing_company",
     title: "Jobs with NULL company_id",
     sql: `
@@ -89,6 +105,67 @@ const checks = [
         AND COALESCE(u.role, '') <> 'platform_owner'
         AND NOT EXISTS (SELECT 1 FROM companies co WHERE co.id = u.company_id)
       ORDER BY u.id
+      LIMIT 100
+    `
+  },
+  {
+    id: "users_worker_company_mismatch",
+    title: "Users where user.company_id differs from linked worker.company_id",
+    sql: `
+      SELECT u.id AS user_id, u.username, u.role, u.company_id AS user_company_id,
+             u.worker_id, w.company_id AS worker_company_id
+      FROM users u
+      INNER JOIN workers w ON w.id = u.worker_id
+      WHERE u.worker_id IS NOT NULL
+        AND u.company_id IS NOT NULL
+        AND w.company_id IS NOT NULL
+        AND u.company_id <> w.company_id
+      ORDER BY u.id
+      LIMIT 100
+    `
+  },
+  {
+    id: "worker_zip_groups_worker_company_mismatch",
+    title: "Worker ZIP group links where link.company_id differs from worker.company_id",
+    sql: `
+      SELECT wzg.company_id AS link_company_id, wzg.worker_id, w.company_id AS worker_company_id,
+             wzg.group_id
+      FROM worker_zip_groups wzg
+      INNER JOIN workers w ON w.id = wzg.worker_id
+      WHERE wzg.company_id IS NOT NULL
+        AND w.company_id IS NOT NULL
+        AND wzg.company_id <> w.company_id
+      ORDER BY wzg.worker_id, wzg.group_id
+      LIMIT 100
+    `
+  },
+  {
+    id: "worker_zip_groups_group_company_mismatch",
+    title: "Worker ZIP group links where link.company_id differs from zip_group.company_id",
+    sql: `
+      SELECT wzg.company_id AS link_company_id, wzg.group_id, zg.company_id AS group_company_id,
+             wzg.worker_id
+      FROM worker_zip_groups wzg
+      INNER JOIN zip_groups zg ON zg.id = wzg.group_id
+      WHERE wzg.company_id IS NOT NULL
+        AND zg.company_id IS NOT NULL
+        AND wzg.company_id <> zg.company_id
+      ORDER BY wzg.group_id, wzg.worker_id
+      LIMIT 100
+    `
+  },
+  {
+    id: "zip_codes_group_company_mismatch",
+    title: "ZIP codes where zip_code.company_id differs from zip_group.company_id",
+    sql: `
+      SELECT zc.id AS zip_code_id, zc.company_id AS zip_code_company_id,
+             zc.group_id, zg.company_id AS group_company_id
+      FROM zip_codes zc
+      INNER JOIN zip_groups zg ON zg.id = zc.group_id
+      WHERE zc.company_id IS NOT NULL
+        AND zg.company_id IS NOT NULL
+        AND zc.company_id <> zg.company_id
+      ORDER BY zc.id
       LIMIT 100
     `
   },
@@ -203,6 +280,22 @@ const checks = [
         AND s.company_id IS NOT NULL
         AND j.company_id <> s.company_id
       ORDER BY j.id
+      LIMIT 100
+    `
+  },
+  {
+    id: "subscriptions_worker_company_mismatch",
+    title: "Subscriptions where subscription.company_id differs from assigned worker.company_id",
+    sql: `
+      SELECT s.id AS subscription_id, s.company_id AS subscription_company_id,
+             s.worker_id, w.company_id AS worker_company_id
+      FROM subscriptions s
+      INNER JOIN workers w ON w.id = s.worker_id
+      WHERE s.worker_id IS NOT NULL
+        AND s.company_id IS NOT NULL
+        AND w.company_id IS NOT NULL
+        AND s.company_id <> w.company_id
+      ORDER BY s.id
       LIMIT 100
     `
   },

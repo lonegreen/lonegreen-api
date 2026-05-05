@@ -55,6 +55,32 @@ const logger = require("../services/logger");
 
 const router = express.Router();
 
+function hasBodyField(req, field) {
+  return Object.prototype.hasOwnProperty.call(req.body || {}, field);
+}
+
+async function resolveCompanyWorkerId(companyId, workerId, queryRunner = pool) {
+  if (workerId === undefined || workerId === null || String(workerId).trim() === "") {
+    return { ok: true, workerId: null };
+  }
+
+  const parsedWorkerId = Number(workerId);
+  if (!Number.isInteger(parsedWorkerId) || parsedWorkerId <= 0) {
+    return { ok: false };
+  }
+
+  const worker = await queryRunner.query(
+    "SELECT id FROM workers WHERE id=$1 AND company_id=$2 LIMIT 1",
+    [parsedWorkerId, companyId]
+  );
+
+  if (worker.rows.length === 0) {
+    return { ok: false };
+  }
+
+  return { ok: true, workerId: parsedWorkerId };
+}
+
 /* ================= SUBSCRIPTIONS ================= */
 
 router.post("/subscriptions", auth, requireCompanyBillingForMutations, requireMinimumRole("admin"), async (req, res) => {
@@ -77,6 +103,11 @@ router.post("/subscriptions", auth, requireCompanyBillingForMutations, requireMi
       return res.status(400).json({ error: "Client is archived or not found" });
     }
 
+    const workerLookup = await resolveCompanyWorkerId(company_id, worker_id);
+    if (!workerLookup.ok) {
+      return res.status(400).json({ error: "Worker not found in this company" });
+    }
+
     const subResult = await pool.query(`
       INSERT INTO subscriptions 
       (client_id, service, frequency, next_date, price, worker_id, status, company_id, start_date, next_billing_date)
@@ -88,7 +119,7 @@ router.post("/subscriptions", auth, requireCompanyBillingForMutations, requireMi
       frequency,
       next_date,
       price || 0,
-      worker_id || null,
+      workerLookup.workerId,
       company_id,
       next_date,
       next_date
@@ -116,7 +147,7 @@ router.post("/subscriptions", auth, requireCompanyBillingForMutations, requireMi
           client_id,
           service,
           visitDate,
-          worker_id || null,
+          workerLookup.workerId,
           company_id,
           createdSub.id
         ]);
@@ -325,6 +356,11 @@ router.put("/subscriptions/:id", auth, requireCompanyBillingForMutations, requir
       return res.status(400).json({ error: "Client not found in this company" });
     }
 
+    const workerLookup = await resolveCompanyWorkerId(company_id, worker_id, client);
+    if (!workerLookup.ok) {
+      return res.status(400).json({ error: "Worker not found in this company" });
+    }
+
     await client.query("BEGIN");
 
     const existing = await client.query(`
@@ -359,7 +395,7 @@ router.put("/subscriptions/:id", auth, requireCompanyBillingForMutations, requir
       start_date,
       next_date,
       price || 0,
-      worker_id || null,
+      workerLookup.workerId,
       status,
       id,
       company_id
@@ -389,7 +425,7 @@ router.put("/subscriptions/:id", auth, requireCompanyBillingForMutations, requir
           client_id,
           service,
           visitDate,
-          worker_id || null,
+          workerLookup.workerId,
           company_id,
           id
         ]);
@@ -878,6 +914,11 @@ router.post("/ops/subscriptions", auth, requireCompanyBillingForMutations, requi
       return res.status(400).json({ error: "Client is archived or not found" });
     }
 
+    const workerLookup = await resolveCompanyWorkerId(req.user.company_id, worker_id);
+    if (!workerLookup.ok) {
+      return res.status(400).json({ error: "Worker not found in this company" });
+    }
+
     const result = await pool.query(`
       INSERT INTO subscriptions
       (client_id, service, frequency, next_date, price, worker_id, status, company_id, start_date, next_billing_date)
@@ -889,7 +930,7 @@ router.post("/ops/subscriptions", auth, requireCompanyBillingForMutations, requi
       frequency,
       next_date,
       price || 0,
-      worker_id || null,
+      workerLookup.workerId,
       req.user.company_id,
       next_date,
       next_date
@@ -919,7 +960,7 @@ router.post("/ops/subscriptions", auth, requireCompanyBillingForMutations, requi
           client_id,
           service,
           visitDate,
-          worker_id || null,
+          workerLookup.workerId,
           req.user.company_id,
           createdSubscription.id
         ]);
@@ -985,38 +1026,51 @@ router.put("/ops/subscriptions/:id", auth, requireCompanyBillingForMutations, re
       return res.status(400).json({ error: "Invalid status" });
     }
 
-    const result = await pool.query(`
-      UPDATE subscriptions
-      SET
-        service = $1,
-        frequency = $2,
-        start_date = $3,
-        next_date = $4,
-        price = $5,
-        worker_id = $6,
-        status = $7,
-        pause_reason = $8,
-        cancel_reason = $9
-      WHERE id = $10
-        AND company_id = $11
-      RETURNING *
-    `, [
-      service || "",
-      frequency || "",
-      start_date || null,
-      next_date || null,
-      price || 0,
-      worker_id || null,
-      status || "active",
-      pause_reason || "",
-      cancel_reason || "",
-      req.params.id,
-      req.user.company_id
-    ]);
+    const existing = await pool.query(
+      "SELECT * FROM subscriptions WHERE id=$1 AND company_id=$2 LIMIT 1",
+      [req.params.id, req.user.company_id]
+    );
 
-    if (result.rows.length === 0) {
+    if (existing.rows.length === 0) {
       return res.status(404).json({ error: "Subscription not found" });
     }
+
+    const updates = [];
+    const values = [];
+    const addUpdate = (column, value) => {
+      values.push(value);
+      updates.push(`${column} = $${values.length}`);
+    };
+
+    if (client_id !== undefined) addUpdate("client_id", client_id);
+    if (service !== undefined) addUpdate("service", service || "");
+    if (frequency !== undefined) addUpdate("frequency", frequency);
+    if (start_date !== undefined) addUpdate("start_date", start_date || null);
+    if (next_date !== undefined) addUpdate("next_date", next_date || null);
+    if (price !== undefined) addUpdate("price", price || 0);
+    if (hasBodyField(req, "worker_id")) {
+      const workerLookup = await resolveCompanyWorkerId(req.user.company_id, worker_id);
+      if (!workerLookup.ok) {
+        return res.status(400).json({ error: "Worker not found in this company" });
+      }
+      addUpdate("worker_id", workerLookup.workerId);
+    }
+    if (status !== undefined) addUpdate("status", status);
+    if (pause_reason !== undefined) addUpdate("pause_reason", pause_reason || "");
+    if (cancel_reason !== undefined) addUpdate("cancel_reason", cancel_reason || "");
+
+    if (updates.length === 0) {
+      return res.json(existing.rows[0]);
+    }
+
+    values.push(req.params.id, req.user.company_id);
+    const result = await pool.query(`
+      UPDATE subscriptions
+      SET ${updates.join(", ")}
+      WHERE id = $${values.length - 1}
+        AND company_id = $${values.length}
+      RETURNING *
+    `, values);
 
     res.json(result.rows[0]);
   } catch (err) {

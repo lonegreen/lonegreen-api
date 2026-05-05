@@ -53,6 +53,28 @@ const { sendSafeServerError } = require("../services/safeServerError");
 
 const router = express.Router();
 
+async function resolveCompanyWorkerId(companyId, workerId) {
+  if (workerId === undefined || workerId === null || String(workerId).trim() === "") {
+    return { ok: true, workerId: null };
+  }
+
+  const parsedWorkerId = Number(workerId);
+  if (!Number.isInteger(parsedWorkerId) || parsedWorkerId <= 0) {
+    return { ok: false };
+  }
+
+  const worker = await pool.query(
+    "SELECT id FROM workers WHERE id=$1 AND company_id=$2 LIMIT 1",
+    [parsedWorkerId, companyId]
+  );
+
+  if (worker.rows.length === 0) {
+    return { ok: false };
+  }
+
+  return { ok: true, workerId: parsedWorkerId };
+}
+
 router.get("/workflow/leads", auth, requireCompanyBillingForMutations, requireMinimumRole("manager"), async (req, res) => {
   try {
     await ensureWorkflowSchema();
@@ -447,6 +469,11 @@ router.post("/workflow/leads/:id/convert-to-job", auth, requireCompanyBillingFor
     }
 
     const status = normalizeJobStatus(req.body.status || "scheduled");
+    const workerLookup = await resolveCompanyWorkerId(req.user.company_id, req.body.worker_id);
+    if (!workerLookup.ok) {
+      return res.status(400).json({ error: "Worker not found in this company" });
+    }
+
     const job = await pool.query(`
       INSERT INTO jobs
       (client_id, service, type, date, start_time, end_time, status, worker_id, price, company_id, payment_status, internal_notes, status_reason, estimate_id)
@@ -459,7 +486,7 @@ router.post("/workflow/leads/:id/convert-to-job", auth, requireCompanyBillingFor
       req.body.start_time || "08:00",
       req.body.end_time || "09:00",
       status,
-      req.body.worker_id || null,
+      workerLookup.workerId,
       req.body.price || lead.quoted_price || 0,
       req.user.company_id,
       normalizePaymentStatus(req.body.payment_status, "one_time_job"),

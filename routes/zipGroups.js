@@ -133,6 +133,15 @@ router.post("/zip-codes", auth, requireCompanyBillingForMutations, requireMinimu
       return res.status(400).json({ error: "Missing data" });
     }
 
+    const group = await pool.query(
+      "SELECT id FROM zip_groups WHERE id=$1 AND company_id=$2 LIMIT 1",
+      [group_id, company_id]
+    );
+
+    if (group.rows.length === 0) {
+      return res.status(400).json({ error: "Zip group not found" });
+    }
+
     const result = await pool.query(
       "INSERT INTO zip_codes (zip, group_id, company_id) VALUES ($1,$2,$3) RETURNING *",
       [zip, group_id, company_id]
@@ -214,12 +223,44 @@ router.put("/ops/zip-groups/:id/workers", auth, requireCompanyBillingForMutation
     const companyId = req.user.company_id;
     const groupId = Number(req.params.id);
 
+    if (!Number.isInteger(groupId) || groupId <= 0) {
+      return res.status(400).json({ error: "Invalid zip group id" });
+    }
+
+    const groupLookup = await pool.query(
+      "SELECT id FROM zip_groups WHERE id=$1 AND company_id=$2 LIMIT 1",
+      [groupId, companyId]
+    );
+
+    if (groupLookup.rows.length === 0) {
+      return res.status(404).json({ error: "Zip group not found" });
+    }
+
+    const resolvedWorkerIds = [];
+    for (const workerId of workerIds) {
+      const parsedWorkerId = Number(workerId);
+      if (!Number.isInteger(parsedWorkerId) || parsedWorkerId <= 0) {
+        return res.status(400).json({ error: "Worker not found in this company" });
+      }
+
+      const workerLookup = await pool.query(
+        "SELECT id FROM workers WHERE id=$1 AND company_id=$2 LIMIT 1",
+        [parsedWorkerId, companyId]
+      );
+
+      if (workerLookup.rows.length === 0) {
+        return res.status(400).json({ error: "Worker not found in this company" });
+      }
+
+      resolvedWorkerIds.push(parsedWorkerId);
+    }
+
     await pool.query(`
       DELETE FROM worker_zip_groups
       WHERE company_id = $1 AND group_id = $2
     `, [companyId, groupId]);
 
-    for (const workerId of workerIds) {
+    for (const workerId of resolvedWorkerIds) {
       await pool.query(`
         INSERT INTO worker_zip_groups (company_id, worker_id, group_id)
         VALUES ($1,$2,$3)
@@ -232,7 +273,7 @@ router.put("/ops/zip-groups/:id/workers", auth, requireCompanyBillingForMutation
       action: "zip_group_workers_updated",
       entityType: "zip_group",
       entityId: groupId,
-      details: { worker_ids: workerIds }
+      details: { worker_ids: resolvedWorkerIds }
     });
 
     res.json({ success: true });
@@ -285,6 +326,15 @@ router.post("/ops/zip-codes", auth, requireCompanyBillingForMutations, requireMi
 
     if (!zip || !group_id) {
       return res.status(400).json({ error: "Missing data" });
+    }
+
+    const group = await pool.query(
+      "SELECT id FROM zip_groups WHERE id=$1 AND company_id=$2 LIMIT 1",
+      [group_id, req.user.company_id]
+    );
+
+    if (group.rows.length === 0) {
+      return res.status(400).json({ error: "Zip group not found" });
     }
 
     const result = await pool.query(

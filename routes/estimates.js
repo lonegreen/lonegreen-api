@@ -54,6 +54,28 @@ const { sendSafeServerError } = require("../services/safeServerError");
 
 const router = express.Router();
 
+async function resolveCompanyWorkerId(companyId, workerId) {
+  if (workerId === undefined || workerId === null || String(workerId).trim() === "") {
+    return { ok: true, workerId: null };
+  }
+
+  const parsedWorkerId = Number(workerId);
+  if (!Number.isInteger(parsedWorkerId) || parsedWorkerId <= 0) {
+    return { ok: false };
+  }
+
+  const worker = await pool.query(
+    "SELECT id FROM workers WHERE id=$1 AND company_id=$2 LIMIT 1",
+    [parsedWorkerId, companyId]
+  );
+
+  if (worker.rows.length === 0) {
+    return { ok: false };
+  }
+
+  return { ok: true, workerId: parsedWorkerId };
+}
+
 router.get("/workflow/estimates", auth, requireCompanyBillingForMutations, requireMinimumRole("manager"), async (req, res) => {
   try {
     await ensureWorkflowSchema();
@@ -447,6 +469,11 @@ router.post("/workflow/estimates/:id/convert-to-job", auth, requireCompanyBillin
       });
     }
 
+    const workerLookup = await resolveCompanyWorkerId(req.user.company_id, req.body.worker_id);
+    if (!workerLookup.ok) {
+      return res.status(400).json({ error: "Worker not found in this company" });
+    }
+
     const job = await pool.query(`
       INSERT INTO jobs
       (client_id, service, type, date, start_time, end_time, status, worker_id, price, company_id, payment_status, internal_notes, status_reason, estimate_id)
@@ -459,7 +486,7 @@ router.post("/workflow/estimates/:id/convert-to-job", auth, requireCompanyBillin
       req.body.start_time || "08:00",
       req.body.end_time || "09:00",
       normalizeJobStatus(req.body.status || "scheduled"),
-      req.body.worker_id || null,
+      workerLookup.workerId,
       req.body.price || estimate.quoted_price || 0,
       req.user.company_id,
       normalizePaymentStatus(req.body.payment_status, "one_time_job"),
@@ -866,6 +893,11 @@ router.post("/estimates/:id/convert-to-job", auth, requireCompanyBillingForMutat
       return res.status(400).json({ error: "Client is archived or not found" });
     }
 
+    const workerLookup = await resolveCompanyWorkerId(company_id, worker_id);
+    if (!workerLookup.ok) {
+      return res.status(400).json({ error: "Worker not found in this company" });
+    }
+
     const jobResult = await pool.query(`
       INSERT INTO jobs
       (client_id, service, type, date, start_time, end_time, status, worker_id, price, company_id, payment_status, internal_notes, estimate_id)
@@ -877,7 +909,7 @@ router.post("/estimates/:id/convert-to-job", auth, requireCompanyBillingForMutat
       date,
       start_time || "08:00",
       end_time || "09:00",
-      worker_id || null,
+      workerLookup.workerId,
       price || e.quoted_price || 0,
       company_id,
       e.notes || "",
@@ -951,6 +983,11 @@ router.post("/estimates/:id/convert-to-subscription", auth, requireCompanyBillin
       return res.status(400).json({ error: "Client is archived or not found" });
     }
 
+    const workerLookup = await resolveCompanyWorkerId(company_id, worker_id);
+    if (!workerLookup.ok) {
+      return res.status(400).json({ error: "Worker not found in this company" });
+    }
+
     const subResult = await pool.query(`
       INSERT INTO subscriptions
       (client_id, service, frequency, next_date, price, worker_id, status, company_id, start_date, next_billing_date)
@@ -962,7 +999,7 @@ router.post("/estimates/:id/convert-to-subscription", auth, requireCompanyBillin
       frequency,
       next_date,
       price || e.quoted_price || 0,
-      worker_id || null,
+      workerLookup.workerId,
       company_id,
       start_date || next_date,
       next_date
@@ -990,7 +1027,7 @@ router.post("/estimates/:id/convert-to-subscription", auth, requireCompanyBillin
           resolvedClientId,
           e.service,
           visitDate,
-          worker_id || null,
+          workerLookup.workerId,
           company_id,
           createdSub.id
         ]);
