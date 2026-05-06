@@ -276,6 +276,7 @@
 
     .money-card.remaining strong {
       color: #b42318;
+      font-size: 24px;
     }
 
     .money-card.paid strong {
@@ -635,8 +636,8 @@
       }
 
       .summary {
-        break-inside: auto;
-        page-break-inside: auto;
+        break-inside: avoid;
+        page-break-inside: avoid;
       }
 
       .totals-grid {
@@ -652,6 +653,13 @@
         background: #fff !important;
         border: 1px solid #999 !important;
         box-shadow: none !important;
+      }
+
+      .grid.three,
+      .table-wrap,
+      .footer-message {
+        break-inside: avoid;
+        page-break-inside: avoid;
       }
 
       #notesBox {
@@ -836,11 +844,11 @@
   <div class="body">
     <div class="grid">
       <div class="box"><div class="label">Bill To</div><div id="clientBlock" class="client-lines"></div></div>
-      <div class="box"><div class="label">Invoice Details</div><div id="invoiceBlock" class="detail-lines"></div></div>
+      <div class="box"><div class="label">Work Order Details</div><div id="invoiceBlock" class="detail-lines"></div></div>
     </div>
 
     <div class="grid three">
-      <div class="box"><div class="label">Service</div><div id="serviceBlock" class="detail-lines">-</div></div>
+      <div class="box"><div class="label">Service Type</div><div id="serviceBlock" class="detail-lines">-</div></div>
       <div class="box"><div class="label">Payment Status</div><div id="paymentStatusBlock" class="detail-lines">-</div></div>
       <div class="box"><div class="label">Service Address</div><div id="serviceAddressBlock" class="detail-lines">-</div></div>
     </div>
@@ -848,7 +856,7 @@
     <div class="table-wrap">
       <table>
         <thead>
-          <tr><th>Description</th><th>Qty</th><th class="amount">Unit Price</th><th class="amount">Amount</th></tr>
+          <tr><th>Service / Description</th><th>Qty</th><th class="amount">Rate</th><th class="amount">Amount</th></tr>
         </thead>
         <tbody id="lineItems"></tbody>
       </table>
@@ -871,11 +879,11 @@
           <strong id="invoiceTotal">$0.00</strong>
         </div>
         <div class="money-card paid">
-          <div class="label">Paid</div>
+          <div class="label">Net paid</div>
           <strong id="paidAmount">$0.00</strong>
         </div>
         <div class="money-card remaining">
-          <div class="label">Remaining</div>
+          <div class="label">Remaining balance</div>
           <strong id="remainingBalance">$0.00</strong>
         </div>
       </div>
@@ -1237,7 +1245,7 @@ async function load(){
         "Number: " + invoiceNumber,
         "Issued: " + formatDate(currentInvoice.issued_date),
         "Due: " + formatDate(currentInvoice.due_date),
-        "Source: " + (currentInvoice.source_type || (currentInvoice.source_subscription_id ? "subscription" : "job"))
+        "Work order: " + (currentInvoice.source_subscription_id ? "Subscription Service" : "Field Service")
       ], "No invoice details available.");
 
     document.getElementById("serviceBlock").innerHTML = contactLines([
@@ -1247,7 +1255,7 @@ async function load(){
     ], "No service details available.");
 
     document.getElementById("paymentStatusBlock").innerHTML =
-      `${statusBadge(displayStatus)}<div style="margin-top:8px;">Paid ${formatMoney(currentInvoice.paid_amount || 0)} of ${formatMoney(currentInvoice.amount || 0)}</div>`;
+      `${statusBadge(displayStatus)}<div style="margin-top:8px;">Net paid ${formatMoney(currentInvoice.paid_amount || 0)} of ${formatMoney(currentInvoice.amount || 0)}</div>`;
 
     document.getElementById("serviceAddressBlock").innerHTML =
       contactLines([currentInvoice.client_address, currentInvoice.client_zip], "No service address available.");
@@ -1300,7 +1308,7 @@ async function load(){
         `).join("") + refunds.map(refund => `
           <div class="payment-row">
             <div>
-              <strong>Refund</strong>
+              <strong>Refunded</strong>
               <span>${formatDate(refund.created_at)}</span>
               ${refund.notes || refund.reason ? `<div class="muted">${escapeHtml(refund.notes || refund.reason)}</div>` : ""}
             </div>
@@ -1324,19 +1332,23 @@ async function load(){
     const footerBox = document.getElementById("footerMessage");
 
     const paymentParts = [];
-    if(branding.payment_instructions || currentInvoice.payment_instructions){
-      paymentParts.push(branding.payment_instructions || currentInvoice.payment_instructions);
+    const instructionText = branding.payment_instructions || currentInvoice.payment_instructions || "";
+    const zelleName = branding.zelle_name || currentInvoice.zelle_name || "";
+    const zelleContact = branding.zelle_contact || currentInvoice.zelle_contact || "";
+
+    if(instructionText){
+      paymentParts.push(instructionText);
     }
-    if(branding.zelle_name || currentInvoice.zelle_name){
-      paymentParts.push("Zelle name: " + (branding.zelle_name || currentInvoice.zelle_name));
+    if(zelleName){
+      paymentParts.push("Zelle name: " + zelleName);
     }
-    if(branding.zelle_contact || currentInvoice.zelle_contact){
-      paymentParts.push("Zelle contact: " + (branding.zelle_contact || currentInvoice.zelle_contact));
+    if(zelleContact){
+      paymentParts.push("Zelle contact: " + zelleContact);
     }
     if(paymentParts.length){
       instructionsBox.style.display = "block";
       instructionsBox.innerHTML =
-        `<div class="label">Payment Instructions</div><div class="payment-copy">${escapeHtml(paymentParts.join("\n"))}</div>`;
+        `<div class="label">How to Pay</div><div class="payment-copy">${escapeHtml(paymentParts.join("\n"))}\nInvoice memo: ${escapeHtml(invoiceNumber)}</div>`;
     } else {
       instructionsBox.style.display = "none";
       instructionsBox.innerHTML = "";
@@ -1350,7 +1362,16 @@ async function load(){
       notesBox.innerHTML = "";
     }
 
-    const footerMessage = branding.footer || currentInvoice.invoice_footer || "";
+    const footerParts = [];
+    footerParts.push("Payment is due by " + formatDate(currentInvoice.due_date) + ".");
+    footerParts.push("Thank you for your business.");
+    if(branding.footer || currentInvoice.invoice_footer){
+      footerParts.push(branding.footer || currentInvoice.invoice_footer);
+    }
+    if(companyWebsite){
+      footerParts.push(companyWebsite);
+    }
+    const footerMessage = footerParts.filter(Boolean).join(" ");
     if(footerMessage){
       footerBox.style.display = "block";
       footerBox.innerHTML = escapeHtml(footerMessage);
