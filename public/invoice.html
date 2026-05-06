@@ -888,16 +888,16 @@
 
   <div class="actions">
     <div class="action-group">
-      <button class="btn gray" onclick="openEditInvoice()">Edit Invoice</button>
-      <button class="btn blue" id="recordPaymentButton" onclick="recordPayment(this)">Record Payment</button>
-      <button class="btn primary" id="markPaidButton" onclick="markAsPaid(this)">Mark as Paid</button>
+      <button type="button" class="btn gray" id="editInvoiceBtn">Edit Invoice</button>
+      <button type="button" class="btn blue" id="recordPaymentButton">Record Payment</button>
+      <button type="button" class="btn primary" id="markPaidButton">Mark as Paid</button>
     </div>
     <div class="action-group">
-      <button class="btn red" onclick="cancelInvoice(this)">Void / Cancel</button>
-      <button class="btn red" id="deleteInvoiceButton" onclick="openDeleteInvoice()">Delete</button>
-      <button class="btn gray" onclick="window.close()">Close</button>
+      <button type="button" class="btn red" id="cancelInvoiceBtn">Void / Cancel</button>
+      <button type="button" class="btn red" id="deleteInvoiceButton">Delete</button>
+      <button type="button" class="btn gray" id="closeInvoiceBtn">Close</button>
       <div class="print-action-wrap">
-        <button class="btn primary" onclick="window.print()">Print Invoice</button>
+        <button type="button" class="btn primary" id="printInvoiceBtn">Print Invoice</button>
         <span class="invoice-print-hint">Use Print, then choose Save as PDF.</span>
       </div>
     </div>
@@ -937,8 +937,8 @@
     </div>
 
     <div class="modal-actions">
-      <button class="btn primary" onclick="saveInvoiceEdit(this)">Save</button>
-      <button class="btn gray" onclick="closeEditInvoice()">Cancel</button>
+      <button type="button" class="btn primary" id="saveInvoiceEditBtn">Save</button>
+      <button type="button" class="btn gray" id="cancelEditInvoiceBtn">Cancel</button>
     </div>
   </div>
 </div>
@@ -948,8 +948,8 @@
     <h3>Delete Invoice</h3>
     <p>This will safely archive, cancel, deactivate, or delete only when safe.</p>
     <div class="modal-actions">
-      <button class="btn red" onclick="confirmDeleteInvoice(this)">Delete</button>
-      <button class="btn gray" onclick="closeDeleteInvoice()">Cancel</button>
+      <button type="button" class="btn red" id="confirmDeleteInvoiceBtn">Delete</button>
+      <button type="button" class="btn gray" id="cancelDeleteInvoiceBtn">Cancel</button>
     </div>
   </div>
 </div>
@@ -1310,7 +1310,7 @@ async function load(){
       : AppUI.emptyState(
           "No payments recorded yet.",
           "Record a payment or mark this invoice as paid to update the remaining balance.",
-          canRecordPayments() ? [{ label: "Record Payment", onClick: "recordPayment()", className: "btn blue" }] : []
+          []
         );
 
     document.getElementById("subtotalAmount").textContent =
@@ -1521,6 +1521,21 @@ document.addEventListener("keydown", event => {
   }
 });
 
+function bindInvoiceUiHandlers(){
+  document.getElementById("editInvoiceBtn")?.addEventListener("click", () => openEditInvoice());
+  document.getElementById("recordPaymentButton")?.addEventListener("click", e => recordPayment(e.currentTarget));
+  document.getElementById("markPaidButton")?.addEventListener("click", e => markAsPaid(e.currentTarget));
+  document.getElementById("cancelInvoiceBtn")?.addEventListener("click", e => cancelInvoice(e.currentTarget));
+  document.getElementById("deleteInvoiceButton")?.addEventListener("click", () => openDeleteInvoice());
+  document.getElementById("closeInvoiceBtn")?.addEventListener("click", () => window.close());
+  document.getElementById("printInvoiceBtn")?.addEventListener("click", () => window.print());
+  document.getElementById("saveInvoiceEditBtn")?.addEventListener("click", e => saveInvoiceEdit(e.currentTarget));
+  document.getElementById("cancelEditInvoiceBtn")?.addEventListener("click", () => closeEditInvoice());
+  document.getElementById("confirmDeleteInvoiceBtn")?.addEventListener("click", e => confirmDeleteInvoice(e.currentTarget));
+  document.getElementById("cancelDeleteInvoiceBtn")?.addEventListener("click", () => closeDeleteInvoice());
+}
+
+bindInvoiceUiHandlers();
 load();
 </script>
 </body>
