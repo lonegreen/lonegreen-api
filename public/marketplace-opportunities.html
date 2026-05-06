@@ -1,0 +1,775 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LoneGreen | Marketplace Opportunities</title>
+  <link rel="stylesheet" href="/app-shell.css">
+  <link rel="stylesheet" href="/ui-cleanup.css">
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Inter, Arial, sans-serif;
+      color: #173327;
+      background:
+        radial-gradient(circle at top left, rgba(31, 92, 58, 0.08), transparent 28%),
+        linear-gradient(180deg, #edf5f0 0%, #f6f8f7 210px, #f4f6f8 100%);
+      padding: 22px;
+    }
+    .page {
+      width: min(1240px, 100%);
+      margin: 0 auto;
+      display: grid;
+      gap: 16px;
+    }
+    .hero {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .hero h1 {
+      margin: 0 0 6px;
+      color: #1f5c3a;
+      font-size: 32px;
+      letter-spacing: -0.02em;
+    }
+    .hero p {
+      margin: 0;
+      color: #60786e;
+      line-height: 1.5;
+    }
+    .hero-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .btn {
+      border: none;
+      border-radius: 12px;
+      padding: 10px 14px;
+      font: inherit;
+      font-weight: 800;
+      cursor: pointer;
+      transition: transform .15s ease, box-shadow .15s ease, opacity .15s ease;
+    }
+    .btn:hover:not(:disabled) { transform: translateY(-1px); }
+    .btn.primary {
+      background: linear-gradient(135deg, #1f5c3a, #2d8b55);
+      color: #fff;
+      box-shadow: 0 10px 22px rgba(31, 92, 58, 0.16);
+    }
+    .btn.secondary {
+      background: #edf6f0;
+      color: #1f5c3a;
+      border: 1px solid #d0dfd5;
+    }
+    .btn:disabled {
+      opacity: 0.62;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+    .status-line {
+      min-height: 18px;
+      color: #60786e;
+      font-size: 13px;
+      font-weight: 700;
+    }
+    .status-line.error { color: #b42318; }
+    .status-line.ok { color: #166534; }
+    .layout {
+      display: grid;
+      grid-template-columns: 380px 1fr;
+      gap: 14px;
+      align-items: start;
+    }
+    .panel {
+      background: rgba(255, 255, 255, 0.96);
+      border: 1px solid #dbe7df;
+      border-radius: 16px;
+      box-shadow: 0 18px 38px rgba(16, 24, 40, 0.06);
+      padding: 16px;
+      display: grid;
+      gap: 12px;
+    }
+    .panel h2 {
+      margin: 0;
+      color: #1f5c3a;
+      font-size: 20px;
+    }
+    .subhead {
+      margin: 0;
+      color: #678075;
+      font-size: 13px;
+      line-height: 1.45;
+    }
+    .filters {
+      border: 1px solid #dce9e2;
+      border-radius: 14px;
+      background: #f9fcfa;
+      padding: 12px;
+      display: grid;
+      gap: 10px;
+    }
+    .filter-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    .field {
+      display: grid;
+      gap: 6px;
+      min-width: 0;
+    }
+    .field label {
+      font-size: 12px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: #4f6a5f;
+    }
+    input, textarea {
+      width: 100%;
+      border: 1px solid #d6e3db;
+      border-radius: 11px;
+      background: #fff;
+      color: #173327;
+      padding: 10px 12px;
+      font: inherit;
+      outline: none;
+    }
+    input:focus, textarea:focus {
+      border-color: #a8cab8;
+      box-shadow: 0 0 0 2px rgba(31, 92, 58, 0.12);
+    }
+    textarea { resize: vertical; min-height: 96px; }
+    .actions { display: flex; gap: 10px; flex-wrap: wrap; }
+    .list-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 999px;
+      padding: 6px 10px;
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      background: #eef7f2;
+      color: #1f5c3a;
+    }
+    .opportunities-list {
+      display: grid;
+      gap: 8px;
+      max-height: 620px;
+      overflow: auto;
+      padding-right: 2px;
+    }
+    .opp-item {
+      border: 1px solid #dce9e2;
+      border-radius: 12px;
+      background: #fbfdfc;
+      padding: 11px;
+      display: grid;
+      gap: 6px;
+      text-align: left;
+      width: 100%;
+      cursor: pointer;
+    }
+    .opp-item.active {
+      border-color: #1f5c3a;
+      background: #f2fbf5;
+    }
+    .opp-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+    }
+    .opp-title {
+      margin: 0;
+      color: #173327;
+      font-size: 15px;
+      font-weight: 800;
+      overflow-wrap: anywhere;
+    }
+    .opp-meta {
+      margin: 0;
+      color: #667f75;
+      font-size: 12px;
+      line-height: 1.45;
+    }
+    .badge {
+      border-radius: 999px;
+      padding: 4px 9px;
+      font-size: 10px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      background: #eef7f2;
+      color: #1f5c3a;
+      white-space: nowrap;
+    }
+    .badge.open { background: #fff7ed; color: #c2410c; }
+    .badge.matched { background: #ecfdf3; color: #027a48; }
+    .badge.closed, .badge.cancelled { background: #fef2f2; color: #b42318; }
+    .detail-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .detail-title {
+      margin: 0;
+      color: #1f5c3a;
+      font-size: 24px;
+      overflow-wrap: anywhere;
+    }
+    .detail-meta {
+      margin: 4px 0 0;
+      color: #61796f;
+      font-size: 13px;
+    }
+    .detail-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+    }
+    .detail-card {
+      border: 1px solid #dce9e2;
+      background: #f8fbf9;
+      border-radius: 12px;
+      padding: 10px;
+      display: grid;
+      gap: 5px;
+    }
+    .detail-card span {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: #678075;
+      font-weight: 800;
+    }
+    .detail-card strong {
+      font-size: 14px;
+      color: #173327;
+      word-break: break-word;
+    }
+    .section {
+      border: 1px solid #dce9e2;
+      border-radius: 14px;
+      padding: 12px;
+      display: grid;
+      gap: 10px;
+      background: #fff;
+    }
+    .section h3 {
+      margin: 0;
+      color: #1f5c3a;
+      font-size: 18px;
+    }
+    .offer-summary {
+      border: 1px solid #dce9e2;
+      border-radius: 12px;
+      background: #f8fbf9;
+      padding: 10px;
+      display: none;
+      gap: 5px;
+    }
+    .offer-summary.visible { display: grid; }
+    .offer-summary p {
+      margin: 0;
+      color: #5f776d;
+      font-size: 13px;
+      line-height: 1.45;
+    }
+    .empty {
+      border: 1px dashed #d5e3db;
+      border-radius: 12px;
+      background: #f8fbf9;
+      padding: 14px;
+      color: #657d73;
+      font-size: 13px;
+      line-height: 1.5;
+      text-align: center;
+    }
+    .empty strong {
+      display: block;
+      margin-bottom: 5px;
+      color: #173327;
+    }
+    @media (max-width: 1080px) {
+      .layout { grid-template-columns: 1fr; }
+      .opportunities-list { max-height: 340px; }
+      .detail-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    @media (max-width: 720px) {
+      body { padding: 14px; }
+      .hero h1 { font-size: 28px; }
+      .hero-actions { width: 100%; display: grid; grid-template-columns: 1fr; }
+      .hero-actions .btn { width: 100%; }
+      .filter-grid, .detail-grid { grid-template-columns: 1fr; }
+      .actions .btn { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <header class="hero">
+      <div>
+        <h1>Marketplace Opportunities</h1>
+        <p>Browse customer requests in your service area and submit competitive offers.</p>
+      </div>
+      <div class="hero-actions">
+        <a class="btn secondary" href="/dashboard.html">Dashboard</a>
+        <button id="refreshBtn" type="button" class="btn secondary">Refresh</button>
+      </div>
+    </header>
+
+    <div id="globalStatus" class="status-line" role="status" aria-live="polite"></div>
+
+    <section class="layout">
+      <aside class="panel">
+        <h2>Opportunity Filters</h2>
+        <p class="subhead">Filter opportunities by category and location text (city/state/zip).</p>
+        <div class="filters">
+          <div class="filter-grid">
+            <div class="field">
+              <label for="categoryFilter">Category ID</label>
+              <input id="categoryFilter" type="text" placeholder="e.g. 4">
+            </div>
+            <div class="field">
+              <label for="locationFilter">Location</label>
+              <input id="locationFilter" type="text" placeholder="Zip, city, or state">
+            </div>
+          </div>
+          <div class="actions">
+            <button id="applyFiltersBtn" type="button" class="btn secondary">Apply Filters</button>
+            <button id="clearFiltersBtn" type="button" class="btn secondary">Clear</button>
+          </div>
+        </div>
+
+        <div class="list-head">
+          <h2>Opportunities</h2>
+          <span id="countPill" class="pill">0</span>
+        </div>
+        <div id="opportunitiesList" class="opportunities-list"></div>
+      </aside>
+
+      <section class="panel">
+        <div class="detail-header">
+          <div>
+            <h2 id="detailTitle" class="detail-title">Select an opportunity</h2>
+            <p id="detailMeta" class="detail-meta">Request details and offer form will appear here.</p>
+          </div>
+          <span id="detailBadge" class="badge">N/A</span>
+        </div>
+
+        <div id="detailGrid" class="detail-grid"></div>
+
+        <section class="section">
+          <h3>Submit Offer</h3>
+          <p class="subhead">Send or update your offer for this request. Existing offer is overwritten per company/request pair.</p>
+          <form id="offerForm" class="filter-grid">
+            <div class="field">
+              <label for="offerPrice">Offer Price *</label>
+              <input id="offerPrice" name="price" type="number" min="1" step="0.01" placeholder="120.00" required>
+            </div>
+            <div class="field">
+              <label for="offerStartDate">Estimated Start Date</label>
+              <input id="offerStartDate" name="estimated_start_date" type="date">
+            </div>
+            <div class="field" style="grid-column: 1 / -1;">
+              <label for="offerMessage">Message</label>
+              <textarea id="offerMessage" name="message" maxlength="2000" placeholder="Describe your scope, timeline, and what is included."></textarea>
+            </div>
+            <div class="field" style="grid-column: 1 / -1;">
+              <button id="submitOfferBtn" type="submit" class="btn primary">Submit Offer</button>
+            </div>
+          </form>
+          <div id="offerStatus" class="status-line"></div>
+          <div id="offerSummary" class="offer-summary"></div>
+        </section>
+      </section>
+    </section>
+  </main>
+
+  <script>
+    (function() {
+      const LOGIN_REDIRECT = "/login.html";
+      const state = {
+        opportunitiesRaw: [],
+        opportunitiesFiltered: [],
+        selectedRequestId: null,
+        selectedRequest: null,
+        loading: false,
+        submittingOffer: false,
+        filters: {
+          category: "",
+          location: ""
+        },
+        lastOfferByRequest: {}
+      };
+
+      const els = {
+        globalStatus: document.getElementById("globalStatus"),
+        refreshBtn: document.getElementById("refreshBtn"),
+        applyFiltersBtn: document.getElementById("applyFiltersBtn"),
+        clearFiltersBtn: document.getElementById("clearFiltersBtn"),
+        categoryFilter: document.getElementById("categoryFilter"),
+        locationFilter: document.getElementById("locationFilter"),
+        opportunitiesList: document.getElementById("opportunitiesList"),
+        countPill: document.getElementById("countPill"),
+        detailTitle: document.getElementById("detailTitle"),
+        detailMeta: document.getElementById("detailMeta"),
+        detailBadge: document.getElementById("detailBadge"),
+        detailGrid: document.getElementById("detailGrid"),
+        offerForm: document.getElementById("offerForm"),
+        submitOfferBtn: document.getElementById("submitOfferBtn"),
+        offerStatus: document.getElementById("offerStatus"),
+        offerSummary: document.getElementById("offerSummary"),
+        offerPrice: document.getElementById("offerPrice"),
+        offerStartDate: document.getElementById("offerStartDate"),
+        offerMessage: document.getElementById("offerMessage")
+      };
+
+      function getToken() {
+        return localStorage.getItem("token");
+      }
+
+      function logoutToLogin() {
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+        window.top.location.href = LOGIN_REDIRECT;
+      }
+
+      function setLine(el, message, type) {
+        el.textContent = message || "";
+        el.className = "status-line" + (type ? " " + type : "");
+      }
+
+      function esc(value) {
+        return String(value == null ? "" : value).replace(/[&<>"']/g, function(ch) {
+          return ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[ch];
+        });
+      }
+
+      function txt(value, fallback) {
+        if (value === null || value === undefined || value === "") return fallback || "-";
+        return String(value);
+      }
+
+      function prettyStatus(value) {
+        return String(value || "unknown").replace(/_/g, " ").replace(/\b\w/g, function(ch) { return ch.toUpperCase(); });
+      }
+
+      function badgeClass(status) {
+        const s = String(status || "").toLowerCase();
+        return "badge " + (s || "open");
+      }
+
+      function money(value) {
+        const num = Number(value || 0);
+        return "$" + num.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+      }
+
+      function fmtDate(value) {
+        if (!value) return "-";
+        const d = new Date(value);
+        if (Number.isNaN(d.getTime())) return String(value);
+        return d.toLocaleString([], { dateStyle: "medium", timeStyle: "short" });
+      }
+
+      function fmtDateOnly(value) {
+        if (!value) return "-";
+        const d = new Date(value);
+        if (Number.isNaN(d.getTime())) return String(value);
+        return d.toLocaleDateString([], { dateStyle: "medium" });
+      }
+
+      function authHeaders(extra) {
+        return Object.assign({}, extra || {}, {
+          Authorization: "Bearer " + getToken()
+        });
+      }
+
+      async function api(path, options) {
+        const res = await fetch(path, options || {});
+        if (res.status === 401 || res.status === 403) {
+          logoutToLogin();
+          throw new Error("Unauthorized");
+        }
+        const data = await res.json().catch(function() { return {}; });
+        if (!res.ok) throw new Error(data.error || "Request failed");
+        return data;
+      }
+
+      function asArray(payload) {
+        if (Array.isArray(payload)) return payload;
+        if (!payload || typeof payload !== "object") return [];
+        if (Array.isArray(payload.opportunities)) return payload.opportunities;
+        if (Array.isArray(payload.items)) return payload.items;
+        if (Array.isArray(payload.data)) return payload.data;
+        return [];
+      }
+
+      function requestId(item) {
+        return Number(item && (item.id || item.request_id));
+      }
+
+      function titleFor(item) {
+        return txt(item && (item.title || item.request_title || item.service_title), "Untitled request");
+      }
+
+      function locationFor(item) {
+        const city = txt(item && item.city, "");
+        const state = txt(item && item.state, "");
+        const zip = txt(item && item.zip_code, "");
+        return [city, state, zip].filter(Boolean).join(", ");
+      }
+
+      function selectedFromFiltered() {
+        if (!state.selectedRequestId) return null;
+        return state.opportunitiesFiltered.find(function(item) {
+          return requestId(item) === Number(state.selectedRequestId);
+        }) || null;
+      }
+
+      function renderList() {
+        const list = state.opportunitiesFiltered;
+        els.countPill.textContent = String(list.length);
+
+        if (!list.length) {
+          els.opportunitiesList.innerHTML = '<div class="empty"><strong>No opportunities found</strong>Try clearing filters or check again later.</div>';
+          return;
+        }
+
+        els.opportunitiesList.innerHTML = list.map(function(item) {
+          const id = requestId(item);
+          const active = Number(id) === Number(state.selectedRequestId) ? " active" : "";
+          return (
+            '<button type="button" class="opp-item' + active + '" data-opp-id="' + esc(id) + '">' +
+              '<div class="opp-top">' +
+                '<p class="opp-title">' + esc(titleFor(item)) + '</p>' +
+                '<span class="' + badgeClass(item.status) + '">' + esc(prettyStatus(item.status || "open")) + "</span>" +
+              "</div>" +
+              '<p class="opp-meta">Category ID: ' + esc(txt(item.category_id)) + "</p>" +
+              '<p class="opp-meta">Location: ' + esc(txt(locationFor(item), "-")) + "</p>" +
+              '<p class="opp-meta">Created: ' + esc(fmtDate(item.created_at)) + "</p>" +
+            "</button>"
+          );
+        }).join("");
+      }
+
+      function renderDetails() {
+        const item = state.selectedRequest;
+        if (!item) {
+          els.detailTitle.textContent = "Select an opportunity";
+          els.detailMeta.textContent = "Request details and offer form will appear here.";
+          els.detailBadge.className = "badge";
+          els.detailBadge.textContent = "N/A";
+          els.detailGrid.innerHTML = '<div class="empty"><strong>No opportunity selected</strong>Pick an item from the opportunities list.</div>';
+          setOfferFormEnabled(false);
+          renderOfferSummary();
+          return;
+        }
+
+        const id = requestId(item);
+        els.detailTitle.textContent = titleFor(item);
+        els.detailMeta.textContent = "Request #" + id + " • Created " + fmtDate(item.created_at);
+        els.detailBadge.className = badgeClass(item.status || "open");
+        els.detailBadge.textContent = prettyStatus(item.status || "open");
+
+        els.detailGrid.innerHTML = [
+          '<article class="detail-card"><span>Category ID</span><strong>' + esc(txt(item.category_id)) + "</strong></article>",
+          '<article class="detail-card"><span>Requested Date</span><strong>' + esc(fmtDateOnly(item.requested_date)) + "</strong></article>",
+          '<article class="detail-card"><span>Requested Time</span><strong>' + esc(txt(item.requested_time)) + "</strong></article>",
+          '<article class="detail-card"><span>Zip Code</span><strong>' + esc(txt(item.zip_code)) + "</strong></article>",
+          '<article class="detail-card"><span>City</span><strong>' + esc(txt(item.city)) + "</strong></article>",
+          '<article class="detail-card"><span>State</span><strong>' + esc(txt(item.state)) + "</strong></article>",
+          '<article class="detail-card"><span>Address</span><strong>' + esc(txt(item.address)) + "</strong></article>",
+          '<article class="detail-card"><span>Status</span><strong>' + esc(prettyStatus(item.status || "open")) + "</strong></article>",
+          '<article class="detail-card" style="grid-column: 1 / -1;"><span>Description</span><strong>' + esc(txt(item.description, "No description provided.")) + "</strong></article>"
+        ].join("");
+
+        setOfferFormEnabled(true);
+        renderOfferSummary();
+      }
+
+      function setOfferFormEnabled(enabled) {
+        els.offerPrice.disabled = !enabled || state.submittingOffer;
+        els.offerStartDate.disabled = !enabled || state.submittingOffer;
+        els.offerMessage.disabled = !enabled || state.submittingOffer;
+        els.submitOfferBtn.disabled = !enabled || state.submittingOffer;
+        els.submitOfferBtn.textContent = state.submittingOffer ? "Submitting..." : "Submit Offer";
+      }
+
+      function renderOfferSummary() {
+        const selectedId = Number(state.selectedRequestId);
+        const offer = state.lastOfferByRequest[selectedId];
+        if (!selectedId || !offer) {
+          els.offerSummary.className = "offer-summary";
+          els.offerSummary.innerHTML = "";
+          return;
+        }
+
+        els.offerSummary.className = "offer-summary visible";
+        els.offerSummary.innerHTML = [
+          '<p><strong>Latest offer status:</strong> ' + esc(prettyStatus(offer.status || "pending")) + "</p>",
+          '<p><strong>Price:</strong> ' + esc(money(offer.price)) + "</p>",
+          '<p><strong>Estimated start:</strong> ' + esc(fmtDateOnly(offer.estimated_start_date)) + "</p>",
+          '<p><strong>Submitted:</strong> ' + esc(fmtDate(offer.created_at)) + "</p>"
+        ].join("");
+      }
+
+      function applyFilters() {
+        const category = String(state.filters.category || "").trim().toLowerCase();
+        const location = String(state.filters.location || "").trim().toLowerCase();
+
+        state.opportunitiesFiltered = state.opportunitiesRaw.filter(function(item) {
+          const categoryHit = !category || String(item.category_id || "").toLowerCase().indexOf(category) !== -1;
+          const locationText = [item.city, item.state, item.zip_code].map(function(v) {
+            return String(v || "").toLowerCase();
+          }).join(" ");
+          const locationHit = !location || locationText.indexOf(location) !== -1;
+          return categoryHit && locationHit;
+        });
+
+        const selectedStillPresent = state.opportunitiesFiltered.some(function(item) {
+          return requestId(item) === Number(state.selectedRequestId);
+        });
+        if (!selectedStillPresent) {
+          state.selectedRequestId = state.opportunitiesFiltered[0] ? requestId(state.opportunitiesFiltered[0]) : null;
+        }
+        state.selectedRequest = selectedFromFiltered();
+        renderList();
+        renderDetails();
+      }
+
+      async function loadOpportunities() {
+        state.loading = true;
+        setOfferFormEnabled(!!state.selectedRequest);
+        els.refreshBtn.disabled = true;
+        setLine(els.globalStatus, "Loading opportunities...", "");
+        try {
+          const payload = await api("/marketplace/opportunities", {
+            method: "GET",
+            headers: authHeaders()
+          });
+          state.opportunitiesRaw = asArray(payload);
+          applyFilters();
+          setLine(els.globalStatus, "Opportunities updated.", "ok");
+        } catch (err) {
+          state.opportunitiesRaw = [];
+          state.opportunitiesFiltered = [];
+          state.selectedRequestId = null;
+          state.selectedRequest = null;
+          renderList();
+          renderDetails();
+          setLine(els.globalStatus, err.message || "Unable to load opportunities.", "error");
+        } finally {
+          state.loading = false;
+          els.refreshBtn.disabled = false;
+        }
+      }
+
+      function buildOfferPayload() {
+        const price = Number(els.offerPrice.value);
+        const estimatedStartDate = String(els.offerStartDate.value || "").trim();
+        const message = String(els.offerMessage.value || "").trim();
+        const payload = { price: price };
+        if (estimatedStartDate) payload.estimated_start_date = estimatedStartDate;
+        if (message) payload.message = message;
+        return payload;
+      }
+
+      async function submitOffer(event) {
+        event.preventDefault();
+        if (!state.selectedRequestId || state.submittingOffer) return;
+
+        const payload = buildOfferPayload();
+        if (!Number.isFinite(payload.price) || payload.price <= 0) {
+          setLine(els.offerStatus, "Enter a valid offer price greater than zero.", "error");
+          return;
+        }
+
+        state.submittingOffer = true;
+        setOfferFormEnabled(true);
+        setLine(els.offerStatus, "Submitting offer...", "");
+        try {
+          const result = await api("/marketplace/requests/" + encodeURIComponent(state.selectedRequestId) + "/offers", {
+            method: "POST",
+            headers: authHeaders({ "Content-Type": "application/json" }),
+            body: JSON.stringify(payload)
+          });
+          state.lastOfferByRequest[Number(state.selectedRequestId)] = result;
+          setLine(els.offerStatus, "Offer submitted successfully.", "ok");
+          renderOfferSummary();
+        } catch (err) {
+          setLine(els.offerStatus, err.message || "Unable to submit offer.", "error");
+        } finally {
+          state.submittingOffer = false;
+          setOfferFormEnabled(true);
+        }
+      }
+
+      function bindEvents() {
+        els.refreshBtn.addEventListener("click", function() {
+          loadOpportunities();
+        });
+
+        els.applyFiltersBtn.addEventListener("click", function() {
+          state.filters.category = els.categoryFilter.value;
+          state.filters.location = els.locationFilter.value;
+          applyFilters();
+        });
+
+        els.clearFiltersBtn.addEventListener("click", function() {
+          els.categoryFilter.value = "";
+          els.locationFilter.value = "";
+          state.filters.category = "";
+          state.filters.location = "";
+          applyFilters();
+        });
+
+        els.opportunitiesList.addEventListener("click", function(event) {
+          const btn = event.target.closest("[data-opp-id]");
+          if (!btn) return;
+          const id = Number(btn.getAttribute("data-opp-id"));
+          if (!id) return;
+          state.selectedRequestId = id;
+          state.selectedRequest = selectedFromFiltered();
+          renderList();
+          renderDetails();
+          setLine(els.offerStatus, "", "");
+        });
+
+        els.offerForm.addEventListener("submit", submitOffer);
+      }
+
+      async function init() {
+        if (!getToken()) {
+          window.top.location.href = LOGIN_REDIRECT;
+          return;
+        }
+        bindEvents();
+        renderList();
+        renderDetails();
+        await loadOpportunities();
+      }
+
+      init();
+    })();
+  </script>
+</body>
+</html>

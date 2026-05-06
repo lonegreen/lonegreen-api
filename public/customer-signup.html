@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LoneGreen Customer Signup</title>
+  <link rel="stylesheet" href="/app-shell.css">
+  <style>
+    * { box-sizing: border-box; font-family: Inter, Arial, sans-serif; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at top left, rgba(46, 125, 50, 0.32), transparent 35%),
+        linear-gradient(135deg, #071b12, #0f2e1c 48%, #123f28);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      color: #102016;
+    }
+    .page {
+      width: 100%;
+      max-width: 1120px;
+      display: grid;
+      grid-template-columns: 1fr 0.95fr;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.16);
+      border-radius: 28px;
+      overflow: hidden;
+      box-shadow: 0 30px 90px rgba(0,0,0,0.35);
+      backdrop-filter: blur(18px);
+    }
+    .brand-panel {
+      padding: 56px;
+      color: white;
+      position: relative;
+      overflow: hidden;
+    }
+    .brand-panel::after {
+      content: "";
+      position: absolute;
+      width: 290px;
+      height: 290px;
+      border-radius: 999px;
+      background: rgba(80, 200, 120, 0.18);
+      right: -100px;
+      bottom: -95px;
+    }
+    .brand-logo, .mobile-logo {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 800;
+      font-size: 24px;
+    }
+    .brand-logo { margin-bottom: 70px; }
+    .brand-mark {
+      width: 46px;
+      height: 46px;
+      border-radius: 15px;
+      background: linear-gradient(135deg, #38b66b, #d7f7df);
+      color: #0f2e1c;
+      display: grid;
+      place-items: center;
+      font-size: 22px;
+      box-shadow: 0 10px 30px rgba(56,182,107,0.35);
+    }
+    .brand-panel h1 {
+      margin: 0 0 18px;
+      font-size: 44px;
+      line-height: 1.06;
+      letter-spacing: 0;
+      max-width: 520px;
+    }
+    .brand-panel p {
+      margin: 0;
+      max-width: 500px;
+      color: rgba(255,255,255,0.78);
+      font-size: 16px;
+      line-height: 1.7;
+    }
+    .brand-stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+      margin-top: 46px;
+      position: relative;
+      z-index: 2;
+    }
+    .stat {
+      padding: 18px;
+      border-radius: 8px;
+      background: rgba(255,255,255,0.10);
+      border: 1px solid rgba(255,255,255,0.12);
+    }
+    .stat strong { display: block; font-size: 20px; margin-bottom: 4px; }
+    .stat span { font-size: 12px; color: rgba(255,255,255,0.72); }
+    .auth-panel {
+      background: #f8fbf8;
+      padding: 42px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .auth-card { width: 100%; max-width: 470px; }
+    .mobile-logo {
+      display: none;
+      color: #143c27;
+      margin-bottom: 24px;
+    }
+    .auth-header { margin-bottom: 22px; }
+    .auth-header h2 {
+      margin: 0 0 8px;
+      font-size: 30px;
+      letter-spacing: 0;
+      color: #0f2418;
+    }
+    .auth-header p {
+      margin: 0;
+      color: #6a756d;
+      font-size: 14px;
+      line-height: 1.55;
+    }
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+    .field { display: grid; gap: 7px; text-align: left; }
+    .field.full { grid-column: 1 / -1; }
+    label { font-size: 13px; font-weight: 700; color: #1f3528; }
+    input {
+      width: 100%;
+      padding: 14px;
+      border-radius: 14px;
+      border: 1px solid #dbe5dd;
+      background: white;
+      outline: none;
+      font-size: 15px;
+      transition: 0.18s ease;
+      color: #173327;
+    }
+    input:focus {
+      border-color: #2c8b55;
+      box-shadow: 0 0 0 4px rgba(44,139,85,0.12);
+    }
+    .actions {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 14px;
+      margin-top: 18px;
+      flex-wrap: wrap;
+    }
+    .link {
+      color: #1f6f42;
+      font-weight: 800;
+      text-decoration: none;
+    }
+    .link:hover { text-decoration: underline; }
+    .btn {
+      padding: 14px 18px;
+      border: none;
+      border-radius: 14px;
+      background: linear-gradient(135deg, #1f5c3a, #2d8b55);
+      color: white;
+      font-size: 15px;
+      font-weight: 800;
+      cursor: pointer;
+      transition: 0.18s ease;
+      box-shadow: 0 12px 28px rgba(31,92,58,0.22);
+      min-width: 170px;
+    }
+    .btn:hover { transform: translateY(-1px); box-shadow: 0 16px 34px rgba(31,92,58,0.28); }
+    .btn:disabled { cursor: not-allowed; opacity: 0.65; transform: none; }
+    .status {
+      min-height: 22px;
+      margin-top: 16px;
+      font-size: 14px;
+      line-height: 1.45;
+      color: #5f6e66;
+    }
+    .status.success { color: #027a48; font-weight: 700; }
+    .status.error { color: #b42318; font-weight: 700; }
+    @media (max-width: 980px) {
+      .page { grid-template-columns: 1fr; }
+      .brand-panel { display: none; }
+      .auth-panel { padding: 30px 20px; }
+      .mobile-logo { display: inline-flex; }
+    }
+    @media (max-width: 640px) {
+      body { padding: 14px; align-items: stretch; }
+      .auth-panel { align-items: flex-start; }
+      .form-grid { grid-template-columns: 1fr; }
+      .field.full { grid-column: auto; }
+      .actions { flex-direction: column; align-items: stretch; }
+      .btn { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <section class="brand-panel">
+      <div class="brand-logo">
+        <div class="brand-mark">LG</div>
+        <span>LoneGreen</span>
+      </div>
+      <h1>Create your customer portal account.</h1>
+      <p>Use one secure customer login to manage profile details and access your service history as the portal grows.</p>
+      <div class="brand-stats">
+        <div class="stat"><strong>Secure</strong><span>Email-based access</span></div>
+        <div class="stat"><strong>Simple</strong><span>Clean customer profile</span></div>
+        <div class="stat"><strong>Connected</strong><span>Ready for portal data</span></div>
+      </div>
+    </section>
+
+    <section class="auth-panel">
+      <div class="auth-card">
+        <div class="mobile-logo">
+          <div class="brand-mark">LG</div>
+          <span>LoneGreen</span>
+        </div>
+
+        <form id="customerSignupForm">
+          <div class="auth-header">
+            <h2>Customer Signup</h2>
+            <p>Create your customer account. Your service provider will connect portal access once your account is verified.</p>
+          </div>
+
+          <div class="form-grid">
+            <label class="field">First Name <input id="firstName" autocomplete="given-name" required></label>
+            <label class="field">Last Name <input id="lastName" autocomplete="family-name" required></label>
+            <label class="field full">Email <input id="email" type="email" autocomplete="email" required></label>
+            <label class="field full">Phone <input id="phone" type="tel" autocomplete="tel" required></label>
+            <label class="field">Password <input id="password" type="password" autocomplete="new-password" minlength="8" required></label>
+            <label class="field">Confirm Password <input id="confirmPassword" type="password" autocomplete="new-password" minlength="8" required></label>
+          </div>
+
+          <div class="actions">
+            <a class="link" href="/customer-login-v2.html">Already have an account?</a>
+            <button id="submitBtn" class="btn" type="submit">Create Account</button>
+          </div>
+
+          <div id="status" class="status" role="status" aria-live="polite"></div>
+        </form>
+      </div>
+    </section>
+  </main>
+
+  <script src="/js/api.js"></script>
+  <script>
+    const API_BASE = (window.AppAPI && window.AppAPI.base) || window.location.origin;
+    const form = document.getElementById("customerSignupForm");
+    const statusBox = document.getElementById("status");
+    const submitBtn = document.getElementById("submitBtn");
+
+    function setStatus(message, type) {
+      statusBox.textContent = message || "";
+      statusBox.className = "status" + (type ? " " + type : "");
+    }
+
+    form.addEventListener("submit", async event => {
+      event.preventDefault();
+      setStatus("", "");
+
+      const password = document.getElementById("password").value;
+      const confirmPassword = document.getElementById("confirmPassword").value;
+      if (password !== confirmPassword) {
+        setStatus("Passwords do not match.", "error");
+        return;
+      }
+
+      const payload = {
+        first_name: document.getElementById("firstName").value.trim(),
+        last_name: document.getElementById("lastName").value.trim(),
+        email: document.getElementById("email").value.trim(),
+        phone: document.getElementById("phone").value.trim(),
+        password,
+        confirm_password: confirmPassword
+      };
+
+      submitBtn.disabled = true;
+      setStatus("Creating your account...", "");
+
+      try {
+        const res = await fetch(API_BASE + "/auth/customer-signup", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.error || data.message || "Unable to create your account yet.");
+
+        setStatus("Account created successfully. You can now log in.", "success");
+        form.reset();
+      } catch (err) {
+        setStatus(err.message || "Unable to create your account yet.", "error");
+      } finally {
+        submitBtn.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>

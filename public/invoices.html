@@ -89,7 +89,7 @@
 
     .summary {
       display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
       gap: 14px;
     }
 
@@ -172,12 +172,19 @@
     .status-overdue { background: #fef2f2; color: #b42318; }
     .status-draft { background: #eef2f0; color: #4b5563; }
     .status-cancelled { background: #fef2f2; color: #b42318; }
+    .status-partially_paid { background: #fff7df; color: #9a5b05; }
 
     .money-grid {
       display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
+      grid-template-columns: repeat(4, minmax(0, 1fr));
       gap: 10px;
       margin-bottom: 14px;
+    }
+
+    @media (max-width: 900px) {
+      .money-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
     }
 
     .money-box {
@@ -394,7 +401,7 @@
   <div class="hero">
     <div>
       <h1>Invoices</h1>
-      <p>Clear financial view of invoice status, paid amounts, and remaining balances.</p>
+      <p>Clear financial view of invoice status, net paid amounts, refunds, and remaining balances.</p>
     </div>
   </div>
 
@@ -409,7 +416,8 @@
     <div class="summary">
       <div class="panel summary-card"><div class="label">Invoices</div><div class="value" id="invoiceCount">0</div></div>
       <div class="panel summary-card"><div class="label">Total</div><div class="value" id="totalAmount">$0</div></div>
-      <div class="panel summary-card"><div class="label">Paid</div><div class="value" id="paidAmount">$0</div></div>
+      <div class="panel summary-card"><div class="label">Net paid</div><div class="value" id="paidAmount">$0</div></div>
+      <div class="panel summary-card"><div class="label">Refunded</div><div class="value" id="refundedAmount">$0</div></div>
       <div class="panel summary-card"><div class="label">Remaining</div><div class="value" id="remainingAmount">$0</div></div>
     </div>
   </div>
@@ -507,10 +515,14 @@ function formatDate(value){
 
 function badge(status){
   const safeStatus = String(status || "draft");
-  return `<span class="badge status-${safeStatus.replace(/[^a-z_]/g, "")}">${escapeHtml(safeStatus)}</span>`;
+  const slug = safeStatus.replace(/[^a-z_]/g, "") || "draft";
+  return `<span class="badge status-${slug}">${escapeHtml(safeStatus.replace(/_/g, " "))}</span>`;
 }
 
-function paidAmount(invoice){
+function netPaidAmount(invoice){
+  if(invoice.net_paid !== undefined && invoice.net_paid !== null){
+    return Number(invoice.net_paid || 0);
+  }
   if(invoice.paid_amount !== undefined && invoice.paid_amount !== null){
     return Number(invoice.paid_amount || 0);
   }
@@ -518,12 +530,44 @@ function paidAmount(invoice){
   return invoice.status === "paid" ? Number(invoice.amount || 0) : 0;
 }
 
+function refundedAmount(invoice){
+  if(invoice.refunded_amount !== undefined && invoice.refunded_amount !== null){
+    return Number(invoice.refunded_amount || 0);
+  }
+
+  return 0;
+}
+
 function remainingAmount(invoice){
   return Number(
-    invoice.remaining_balance !== undefined
+    invoice.remaining_balance !== undefined && invoice.remaining_balance !== null
       ? invoice.remaining_balance
       : (invoice.status === "paid" ? 0 : Number(invoice.amount || 0))
   );
+}
+
+function displayInvoiceStatus(invoice){
+  if(invoice.display_status){
+    return invoice.display_status;
+  }
+
+  const remaining = remainingAmount(invoice);
+  const paid = netPaidAmount(invoice);
+  const st = String(invoice.status || "").toLowerCase();
+
+  if(st === "cancelled"){
+    return "cancelled";
+  }
+
+  if(remaining <= 0 && Number(invoice.amount || 0) >= 0){
+    return "paid";
+  }
+
+  if(paid > 0 && remaining > 0){
+    return "partially_paid";
+  }
+
+  return invoice.status || "draft";
 }
 
 function setFilter(filter){
@@ -544,7 +588,8 @@ function getFilteredInvoices(){
 function renderSummary(list){
   document.getElementById("invoiceCount").textContent = list.length;
   document.getElementById("totalAmount").textContent = money(list.reduce((sum, invoice) => sum + Number(invoice.amount || 0), 0));
-  document.getElementById("paidAmount").textContent = money(list.reduce((sum, invoice) => sum + paidAmount(invoice), 0));
+  document.getElementById("paidAmount").textContent = money(list.reduce((sum, invoice) => sum + netPaidAmount(invoice), 0));
+  document.getElementById("refundedAmount").textContent = money(list.reduce((sum, invoice) => sum + refundedAmount(invoice), 0));
   document.getElementById("remainingAmount").textContent = money(list.reduce((sum, invoice) => sum + remainingAmount(invoice), 0));
 }
 
@@ -567,12 +612,13 @@ function render(){
           <div class="card-sub">${escapeHtml(invoice.client_name || "Client")} • Issued ${escapeHtml(formatDate(invoice.issued_date))}</div>
           <div class="card-sub">${escapeHtml(invoice.job_service || "Service")}${invoice.job_date ? " • " + escapeHtml(formatDate(invoice.job_date)) : ""}</div>
         </div>
-        ${badge(invoice.status)}
+        ${badge(displayInvoiceStatus(invoice))}
       </div>
 
       <div class="money-grid">
         <div class="money-box"><div class="label">Total</div><strong>${escapeHtml(money(invoice.amount || 0))}</strong></div>
-        <div class="money-box"><div class="label">Paid</div><strong>${escapeHtml(money(paidAmount(invoice)))}</strong></div>
+        <div class="money-box"><div class="label">Net paid</div><strong>${escapeHtml(money(netPaidAmount(invoice)))}</strong></div>
+        <div class="money-box"><div class="label">Refunded</div><strong>${escapeHtml(money(refundedAmount(invoice)))}</strong></div>
         <div class="money-box"><div class="label">Remaining</div><strong>${escapeHtml(money(remainingAmount(invoice)))}</strong></div>
       </div>
 

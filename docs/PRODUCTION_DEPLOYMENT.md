@@ -10,13 +10,13 @@ This document captures the production readiness requirements and deployment guid
 - `ALLOWED_ORIGINS`
 - `PORT`
 
-## Render Deployment Notes
+## Hosting Deployment Notes
 - Use `NODE_ENV=production` for the deployed service.
 - Set `DATABASE_URL` to the managed PostgreSQL database connection string.
 - Set `JWT_SECRET` to a strong, unguessable secret.
 - Set `ALLOWED_ORIGINS` to a comma-separated list of allowed frontend origins, for example:
   - `https://app.example.com,https://www.example.com`
-- Configure `PORT` if Render or your hosting provider requires a specific port value, otherwise the app defaults to `4000`.
+- Configure `PORT` if your hosting provider requires a specific port value; otherwise the app defaults to `4000`.
 - Ensure the `.env` file is never committed to source control.
 
 ## CORS Setup Example

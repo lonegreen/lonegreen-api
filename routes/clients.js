@@ -1,8 +1,10 @@
 const express = require("express");
 const bcrypt = require("bcrypt");
 const pool = require("../db/pool");
+const { enrichInvoiceRowsWithFinancials } = require("../services/invoiceService");
 const auth = require("../middleware/auth");
 const requireCompanyBillingForMutations = require("../middleware/requireCompanyBillingForMutations");
+const { enforcePlanLimits } = require("../middleware/enforcePlanLimits");
 const { requireMinimumRole, normalizeRole } = auth;
 const {
   warnDeprecatedRoute,
@@ -52,6 +54,7 @@ const {
 const { sendSafeServerError } = require("../services/safeServerError");
 
 const router = express.Router();
+const enforceClientPlanLimit = enforcePlanLimits("clients");
 
 /* ================= CLIENTS ================= */
 
@@ -132,7 +135,7 @@ router.get("/clients", auth, requireCompanyBillingForMutations, requireMinimumRo
   }
 });
 
-router.post("/clients", auth, requireCompanyBillingForMutations, requireMinimumRole("manager"), async (req, res) => {
+router.post("/clients", auth, requireCompanyBillingForMutations, enforceClientPlanLimit, requireMinimumRole("manager"), async (req, res) => {
   try {
     await ensureClientLifecycleSchema();
     const name = String(req.body?.name || "").trim();
@@ -576,13 +579,15 @@ router.get("/workflow/clients/:id/timeline", auth, requireCompanyBillingForMutat
 
     timeline.sort((a, b) => new Date(b.event_date || 0) - new Date(a.event_date || 0));
 
+    const enrichedInvoices = await enrichInvoiceRowsWithFinancials(companyId, invoices.rows);
+
     res.json({
       client: clientResult.rows[0],
       leads: leads.rows,
       estimates: estimates.rows,
       jobs: jobs.rows,
       subscriptions: subscriptions.rows,
-      invoices: invoices.rows.map(item => ({ ...item, line_items: safeJsonParse(item.line_items, []) })),
+      invoices: enrichedInvoices.map(item => ({ ...item, line_items: safeJsonParse(item.line_items, []) })),
       timeline
     });
   } catch (err) {

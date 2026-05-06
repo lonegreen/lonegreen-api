@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LoneGreen | Admin Marketplace Moderation</title>
+  <link rel="stylesheet" href="/app-shell.css">
+  <link rel="stylesheet" href="/ui-cleanup.css">
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: Inter, Arial, sans-serif; color: #173327; background: radial-gradient(circle at top left, rgba(31,92,58,.08), transparent 28%), linear-gradient(180deg,#edf5f0 0%,#f6f8f7 210px,#f4f6f8 100%); padding: 22px; }
+    .page { width: min(1260px,100%); margin: 0 auto; display: grid; gap: 16px; }
+    .hero { display:flex; justify-content:space-between; align-items:flex-end; gap:12px; flex-wrap:wrap; }
+    .hero h1 { margin:0 0 6px; color:#1f5c3a; font-size:32px; letter-spacing:-.02em; }
+    .hero p { margin:0; color:#60786e; line-height:1.5; }
+    .hero-actions { display:flex; gap:10px; flex-wrap:wrap; }
+    .btn { border:none; border-radius:12px; padding:10px 14px; font:inherit; font-weight:800; cursor:pointer; transition:transform .15s ease, box-shadow .15s ease, opacity .15s ease; }
+    .btn:hover:not(:disabled){ transform:translateY(-1px); }
+    .btn.primary { background:linear-gradient(135deg,#1f5c3a,#2d8b55); color:#fff; box-shadow:0 10px 22px rgba(31,92,58,.16); }
+    .btn.secondary { background:#edf6f0; color:#1f5c3a; border:1px solid #d0dfd5; }
+    .btn.danger { background:#b42318; color:#fff; }
+    .btn:disabled { opacity:.62; cursor:not-allowed; transform:none; box-shadow:none; }
+    .status-line { min-height:18px; color:#60786e; font-size:13px; font-weight:700; }
+    .status-line.error { color:#b42318; } .status-line.ok { color:#166534; }
+    .kpis { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:12px; }
+    .kpi { background:rgba(255,255,255,.96); border:1px solid #dbe7df; border-radius:16px; box-shadow:0 18px 38px rgba(16,24,40,.06); padding:14px; display:grid; gap:6px; }
+    .kpi span { color:#648076; font-size:12px; font-weight:800; text-transform:uppercase; letter-spacing:.04em; }
+    .kpi strong { color:#173327; font-size:32px; line-height:1.1; font-weight:900; font-variant-numeric:tabular-nums; }
+    .grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; align-items:start; }
+    .panel { background:rgba(255,255,255,.96); border:1px solid #dbe7df; border-radius:16px; box-shadow:0 18px 38px rgba(16,24,40,.06); padding:16px; display:grid; gap:12px; }
+    .panel h2 { margin:0; color:#1f5c3a; font-size:21px; }
+    .subhead { margin:0; color:#678075; font-size:13px; line-height:1.45; }
+    .list { display:grid; gap:8px; max-height:380px; overflow:auto; padding-right:2px; }
+    .item { border:1px solid #dce9e2; border-radius:12px; background:#fbfdfc; padding:10px; display:grid; gap:6px; }
+    .item-top { display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap; }
+    .item h3 { margin:0; color:#173327; font-size:15px; font-weight:800; overflow-wrap:anywhere; }
+    .meta { margin:0; color:#637b71; font-size:12px; line-height:1.45; }
+    .badge { border-radius:999px; padding:4px 9px; font-size:10px; font-weight:900; text-transform:uppercase; letter-spacing:.03em; background:#eef7f2; color:#1f5c3a; white-space:nowrap; }
+    .badge.pending,.badge.open { background:#fff7ed; color:#c2410c; }
+    .badge.accepted,.badge.matched,.badge.active,.badge.trialing { background:#ecfdf3; color:#027a48; }
+    .badge.rejected,.badge.suspended,.badge.cancelled,.badge.closed { background:#fef2f2; color:#b42318; }
+    .actions { display:flex; gap:8px; flex-wrap:wrap; }
+    .actions .btn { padding:8px 10px; font-size:12px; }
+    .audit { border:1px solid #dce9e2; border-radius:12px; background:#f8fbf9; padding:10px; display:grid; gap:5px; }
+    .empty { border:1px dashed #d5e3db; border-radius:12px; background:#f8fbf9; padding:14px; color:#657d73; font-size:13px; line-height:1.5; text-align:center; }
+    .empty strong { display:block; margin-bottom:5px; color:#173327; }
+    @media (max-width:1080px){ .kpis{grid-template-columns:repeat(2,minmax(0,1fr));} .grid{grid-template-columns:1fr;} }
+    @media (max-width:720px){ body{padding:14px;} .hero h1{font-size:28px;} .hero-actions{width:100%;display:grid;grid-template-columns:1fr;} .hero-actions .btn,.actions .btn{width:100%;} .kpis{grid-template-columns:1fr;} }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <header class="hero">
+      <div>
+        <h1>Marketplace Admin Moderation</h1>
+        <p>Moderate marketplace trust, verification, and platform safety controls.</p>
+      </div>
+      <div class="hero-actions">
+        <button id="refreshBtn" class="btn secondary" type="button">Refresh</button>
+      </div>
+    </header>
+
+    <div id="globalStatus" class="status-line" role="status" aria-live="polite"></div>
+
+    <section class="kpis">
+      <article class="kpi"><span>Requests Pending Moderation</span><strong id="kpiRequests">0</strong></article>
+      <article class="kpi"><span>Offers Pending Moderation</span><strong id="kpiOffers">0</strong></article>
+      <article class="kpi"><span>Reviews Pending Moderation</span><strong id="kpiReviews">0</strong></article>
+      <article class="kpi"><span>Reported Items</span><strong id="kpiReported">0</strong></article>
+    </section>
+
+    <section class="grid">
+      <article class="panel">
+        <h2>Requests Moderation List</h2>
+        <p class="subhead">Marketplace admin request moderation endpoint not exposed in current API.</p>
+        <div id="requestsList" class="list"></div>
+      </article>
+
+      <article class="panel">
+        <h2>Offers Moderation List</h2>
+        <p class="subhead">Marketplace admin offer moderation endpoint not exposed in current API.</p>
+        <div id="offersList" class="list"></div>
+      </article>
+
+      <article class="panel">
+        <h2>Reviews Moderation List</h2>
+        <p class="subhead">Company review summaries from public review APIs.</p>
+        <div id="reviewsList" class="list"></div>
+      </article>
+
+      <article class="panel">
+        <h2>Reported Items List</h2>
+        <p class="subhead">Flagged from platform billing risk/suspension indicators.</p>
+        <div id="reportedList" class="list"></div>
+      </article>
+
+      <article class="panel">
+        <h2>Company Verification Controls</h2>
+        <p class="subhead">Platform owner can verify/unverify and suspend/unlock companies.</p>
+        <div id="companiesList" class="list"></div>
+      </article>
+
+      <article class="panel">
+        <h2>Activity Audit Log</h2>
+        <p class="subhead">Recent moderation actions in this session.</p>
+        <div id="auditList" class="list"></div>
+      </article>
+    </section>
+  </main>
+
+  <script>
+    (function() {
+      const MAX_AUDIT = 30;
+      const state = {
+        token: localStorage.getItem("token") || "",
+        user: (function(){ try { return JSON.parse(localStorage.getItem("user") || "{}"); } catch(_) { return {}; } })(),
+        companiesPublic: [],
+        platformCompanies: [],
+        reviewsSummary: [],
+        audit: []
+      };
+
+      const els = {
+        refreshBtn: document.getElementById("refreshBtn"),
+        globalStatus: document.getElementById("globalStatus"),
+        requestsList: document.getElementById("requestsList"),
+        offersList: document.getElementById("offersList"),
+        reviewsList: document.getElementById("reviewsList"),
+        reportedList: document.getElementById("reportedList"),
+        companiesList: document.getElementById("companiesList"),
+        auditList: document.getElementById("auditList"),
+        kpiRequests: document.getElementById("kpiRequests"),
+        kpiOffers: document.getElementById("kpiOffers"),
+        kpiReviews: document.getElementById("kpiReviews"),
+        kpiReported: document.getElementById("kpiReported")
+      };
+
+      function esc(v){ return String(v==null?"":v).replace(/[&<>"']/g,function(c){return({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"})[c];});}
+      function txt(v,f){ return (v===null||v===undefined||v==="")?(f||""):String(v); }
+      function statusText(v){ return String(v||"unknown").replace(/_/g," ").replace(/\b\w/g,function(c){return c.toUpperCase();});}
+      function badgeClass(v){ return "badge "+String(v||"pending").toLowerCase(); }
+      function fmtDate(v){ if(!v)return "-"; const d=new Date(v); return Number.isNaN(d.getTime())?String(v):d.toLocaleString([], { dateStyle:"medium", timeStyle:"short" }); }
+
+      function setStatus(message, type){
+        els.globalStatus.textContent = message || "";
+        els.globalStatus.className = "status-line" + (type ? " " + type : "");
+      }
+
+      function hasRoleAccess() {
+        const role = String(state.user.role || "").toLowerCase();
+        return role === "admin" || role === "platform_owner";
+      }
+
+      function isPlatformOwner() {
+        return String(state.user.role || "").toLowerCase() === "platform_owner";
+      }
+
+      async function api(path, options) {
+        const res = await fetch(path, Object.assign({}, options || {}, {
+          headers: Object.assign({}, (options && options.headers) || {}, {
+            Authorization: "Bearer " + state.token
+          })
+        }));
+        const data = await res.json().catch(function(){ return {}; });
+        if (!res.ok) throw new Error(data.error || "Request failed");
+        return data;
+      }
+
+      function pushAudit(action, target, result) {
+        state.audit.unshift({
+          action: action,
+          target: target,
+          result: result,
+          at: new Date().toISOString()
+        });
+        state.audit = state.audit.slice(0, MAX_AUDIT);
+        renderAudit();
+      }
+
+      async function loadCompaniesPublic() {
+        try {
+          const payload = await fetch("/companies/public").then(function(res){ return res.json(); });
+          state.companiesPublic = Array.isArray(payload) ? payload : [];
+        } catch (_) {
+          state.companiesPublic = [];
+        }
+      }
+
+      async function loadPlatformCompanies() {
+        if (!state.token || !hasRoleAccess()) {
+          state.platformCompanies = [];
+          return;
+        }
+        try {
+          const payload = await api("/platform/billing/companies");
+          state.platformCompanies = Array.isArray(payload.items) ? payload.items : (Array.isArray(payload) ? payload : []);
+        } catch (_) {
+          state.platformCompanies = [];
+        }
+      }
+
+      async function loadReviewsSummary() {
+        const companies = state.companiesPublic.slice(0, 20);
+        const summaries = await Promise.all(companies.map(async function(c) {
+          try {
+            const s = await fetch("/companies/" + encodeURIComponent(c.id) + "/reviews/summary").then(function(res){ return res.json(); });
+            return {
+              company_id: c.id,
+              company_name: c.name,
+              average_rating: Number(s.average_rating || 0),
+              total_reviews: Number(s.total_reviews || 0)
+            };
+          } catch (_) {
+            return {
+              company_id: c.id,
+              company_name: c.name,
+              average_rating: 0,
+              total_reviews: 0
+            };
+          }
+        }));
+        state.reviewsSummary = summaries;
+      }
+
+      function renderUnavailableList(el, title, message) {
+        el.innerHTML = '<div class="empty"><strong>' + esc(title) + '</strong>' + esc(message) + "</div>";
+      }
+
+      function renderRequestsOffers() {
+        renderUnavailableList(
+          els.requestsList,
+          "Requests moderation API unavailable",
+          "No platform endpoint is exposed for marketplace request moderation at this time."
+        );
+        renderUnavailableList(
+          els.offersList,
+          "Offers moderation API unavailable",
+          "No platform endpoint is exposed for marketplace offer moderation at this time."
+        );
+      }
+
+      function renderReviews() {
+        const sorted = state.reviewsSummary.slice().sort(function(a, b) {
+          return b.total_reviews - a.total_reviews;
+        }).slice(0, 20);
+
+        if (!sorted.length) {
+          els.reviewsList.innerHTML = '<div class="empty"><strong>No review data</strong>Public review summaries are not available yet.</div>';
+          return;
+        }
+
+        els.reviewsList.innerHTML = sorted.map(function(r) {
+          return (
+            '<article class="item">' +
+              '<div class="item-top">' +
+                '<h3>' + esc(txt(r.company_name, "Company")) + "</h3>" +
+                '<span class="badge">' + esc(r.average_rating > 0 ? r.average_rating.toFixed(1) + "★" : "No rating") + "</span>" +
+              "</div>" +
+              '<p class="meta">Reviews: ' + esc(r.total_reviews) + "</p>" +
+              '<p class="meta">Company ID: ' + esc(r.company_id) + "</p>" +
+            "</article>"
+          );
+        }).join("");
+      }
+
+      function reportedCompanies() {
+        return state.platformCompanies.filter(function(c) {
+          const billing = String(c.billing_status || "").toLowerCase();
+          const hasPlatformSuspension = !!c.platform_suspended_at;
+          const billingRisk = ["suspended", "unpaid", "cancelled", "expired"].includes(billing);
+          return hasPlatformSuspension || billingRisk;
+        });
+      }
+
+      function renderReported() {
+        const list = reportedCompanies();
+        if (!list.length) {
+          els.reportedList.innerHTML = '<div class="empty"><strong>No reported items</strong>No companies currently flagged by platform/billing risk signals.</div>';
+          return;
+        }
+        els.reportedList.innerHTML = list.map(function(c) {
+          return (
+            '<article class="item">' +
+              '<div class="item-top">' +
+                '<h3>' + esc(txt(c.company_name || c.name, "Company")) + "</h3>" +
+                '<span class="' + badgeClass(c.billing_status || "pending") + '">' + esc(statusText(c.billing_status || "unknown")) + "</span>" +
+              "</div>" +
+              '<p class="meta">Company ID: ' + esc(c.company_id || c.id) + "</p>" +
+              '<p class="meta">Platform Suspended: ' + esc(c.platform_suspended_at ? fmtDate(c.platform_suspended_at) : "No") + "</p>" +
+            "</article>"
+          );
+        }).join("");
+      }
+
+      function renderCompaniesControls() {
+        if (!state.platformCompanies.length) {
+          els.companiesList.innerHTML = '<div class="empty"><strong>No companies loaded</strong>Unable to fetch platform company records for moderation controls.</div>';
+          return;
+        }
+
+        const rows = state.platformCompanies.slice(0, 40);
+        els.companiesList.innerHTML = rows.map(function(c) {
+          const companyId = c.company_id || c.id;
+          const verified = c.is_verified === true;
+          const suspended = !!c.platform_suspended_at || String(c.billing_status || "").toLowerCase() === "suspended";
+          return (
+            '<article class="item">' +
+              '<div class="item-top">' +
+                '<h3>' + esc(txt(c.company_name || c.name, "Company")) + "</h3>" +
+                '<span class="' + badgeClass(c.billing_status || "pending") + '">' + esc(statusText(c.billing_status || "unknown")) + "</span>' +
+              '</div>' +
+              '<p class="meta">Company ID: ' + esc(companyId) + " • Verified: " + esc(verified ? "Yes" : "No") + "</p>" +
+              '<p class="meta">Plan: ' + esc(txt(c.plan, "-")) + " • Platform Suspended: " + esc(suspended ? "Yes" : "No") + "</p>" +
+              '<div class="actions">' +
+                '<button class="btn secondary" type="button" data-verify="' + esc(companyId) + '"' + (isPlatformOwner() ? "" : " disabled") + ">" + (verified ? "Unverify" : "Verify") + "</button>" +
+                '<button class="btn danger" type="button" data-suspend="' + esc(companyId) + '"' + (isPlatformOwner() ? "" : " disabled") + ">" + (suspended ? "Unlock" : "Suspend") + "</button>" +
+              "</div>" +
+            "</article>"
+          );
+        }).join("");
+      }
+
+      function renderAudit() {
+        if (!state.audit.length) {
+          els.auditList.innerHTML = '<div class="empty"><strong>No moderation actions yet</strong>Actions performed in this panel will appear in the session audit log.</div>';
+          return;
+        }
+        els.auditList.innerHTML = state.audit.map(function(a) {
+          return (
+            '<article class="audit">' +
+              "<strong>" + esc(a.action) + " • " + esc(a.target) + "</strong>" +
+              '<p class="meta">' + esc(a.result) + "</p>" +
+              '<p class="meta">' + esc(fmtDate(a.at)) + "</p>" +
+            "</article>"
+          );
+        }).join("");
+      }
+
+      function renderKpis() {
+        const reported = reportedCompanies().length;
+        const pendingReviews = state.reviewsSummary.filter(function(r) {
+          return r.total_reviews > 0 && r.average_rating <= 2;
+        }).length;
+        els.kpiRequests.textContent = "0";
+        els.kpiOffers.textContent = "0";
+        els.kpiReviews.textContent = String(pendingReviews);
+        els.kpiReported.textContent = String(reported);
+      }
+
+      async function verifyCompany(companyId, currentlyVerified) {
+        if (!isPlatformOwner()) return;
+        try {
+          if (currentlyVerified) {
+            await api("/companies/unverify/" + encodeURIComponent(companyId), { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ verification_notes: "Removed via admin moderation UI" }) });
+            pushAudit("Unverify Company", "Company #" + companyId, "Success");
+          } else {
+            await api("/companies/verify/" + encodeURIComponent(companyId), { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ verification_notes: "Approved via admin moderation UI" }) });
+            pushAudit("Verify Company", "Company #" + companyId, "Success");
+          }
+          await loadAll();
+        } catch (err) {
+          pushAudit(currentlyVerified ? "Unverify Company" : "Verify Company", "Company #" + companyId, "Failed: " + (err.message || "Request failed"));
+          setStatus(err.message || "Unable to update verification.", "error");
+        }
+      }
+
+      async function suspendToggle(companyId, currentlySuspended) {
+        if (!isPlatformOwner()) return;
+        try {
+          if (currentlySuspended) {
+            await api("/platform/billing/companies/" + encodeURIComponent(companyId), {
+              method: "PUT",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ platform_unlock: true, clear_suspended_at: true, billing_status: "active" })
+            });
+            pushAudit("Unlock Company", "Company #" + companyId, "Success");
+          } else {
+            await api("/platform/billing/companies/" + encodeURIComponent(companyId), {
+              method: "PUT",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ billing_status: "suspended", billing_failure_reason: "Suspended via admin moderation UI" })
+            });
+            pushAudit("Suspend Company", "Company #" + companyId, "Success");
+          }
+          await loadAll();
+        } catch (err) {
+          pushAudit(currentlySuspended ? "Unlock Company" : "Suspend Company", "Company #" + companyId, "Failed: " + (err.message || "Request failed"));
+          setStatus(err.message || "Unable to update suspension.", "error");
+        }
+      }
+
+      function bindEvents() {
+        els.refreshBtn.addEventListener("click", loadAll);
+        els.companiesList.addEventListener("click", async function(event) {
+          const verifyBtn = event.target.closest("[data-verify]");
+          const suspendBtn = event.target.closest("[data-suspend]");
+          if (verifyBtn) {
+            const id = Number(verifyBtn.getAttribute("data-verify"));
+            const row = state.platformCompanies.find(function(c){ return Number(c.company_id || c.id) === id; });
+            if (id && row) await verifyCompany(id, row.is_verified === true);
+            return;
+          }
+          if (suspendBtn) {
+            const id = Number(suspendBtn.getAttribute("data-suspend"));
+            const row = state.platformCompanies.find(function(c){ return Number(c.company_id || c.id) === id; });
+            if (id && row) {
+              const suspended = !!row.platform_suspended_at || String(row.billing_status || "").toLowerCase() === "suspended";
+              await suspendToggle(id, suspended);
+            }
+          }
+        });
+      }
+
+      function renderAll() {
+        renderRequestsOffers();
+        renderReviews();
+        renderReported();
+        renderCompaniesControls();
+        renderAudit();
+        renderKpis();
+      }
+
+      async function loadAll() {
+        setStatus("Loading moderation data...", "");
+        els.refreshBtn.disabled = true;
+        try {
+          await Promise.all([loadCompaniesPublic(), loadPlatformCompanies()]);
+          await loadReviewsSummary();
+          renderAll();
+          setStatus("Moderation data loaded.", "ok");
+        } catch (err) {
+          renderAll();
+          setStatus(err.message || "Failed loading moderation data.", "error");
+        } finally {
+          els.refreshBtn.disabled = false;
+        }
+      }
+
+      function init() {
+        if (!state.token || !hasRoleAccess()) {
+          setStatus("Admin/platform_owner access required.", "error");
+          renderAll();
+          return;
+        }
+        if (!isPlatformOwner()) {
+          setStatus("Admin mode: view-only for global moderation controls. Platform owner required for verification/suspension actions.", "");
+        }
+        bindEvents();
+        renderAll();
+        loadAll();
+      }
+
+      init();
+    })();
+  </script>
+</body>
+</html>

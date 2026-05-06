@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LoneGreen | Marketplace Dashboard</title>
+  <link rel="stylesheet" href="/app-shell.css">
+  <link rel="stylesheet" href="/ui-cleanup.css">
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Inter, Arial, sans-serif;
+      color: #173327;
+      background:
+        radial-gradient(circle at top left, rgba(31, 92, 58, 0.08), transparent 28%),
+        linear-gradient(180deg, #edf5f0 0%, #f6f8f7 210px, #f4f6f8 100%);
+      padding: 22px;
+    }
+    .page {
+      width: min(1240px, 100%);
+      margin: 0 auto;
+      display: grid;
+      gap: 16px;
+    }
+    .hero {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .hero h1 {
+      margin: 0 0 6px;
+      color: #1f5c3a;
+      font-size: 32px;
+      letter-spacing: -0.02em;
+    }
+    .hero p {
+      margin: 0;
+      color: #60786e;
+      line-height: 1.5;
+    }
+    .hero-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .btn {
+      border: none;
+      border-radius: 12px;
+      padding: 10px 14px;
+      font: inherit;
+      font-weight: 800;
+      cursor: pointer;
+      transition: transform .15s ease, box-shadow .15s ease, opacity .15s ease;
+    }
+    .btn:hover:not(:disabled) { transform: translateY(-1px); }
+    .btn.primary {
+      background: linear-gradient(135deg, #1f5c3a, #2d8b55);
+      color: #fff;
+      box-shadow: 0 10px 22px rgba(31, 92, 58, 0.16);
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .btn.secondary {
+      background: #edf6f0;
+      color: #1f5c3a;
+      border: 1px solid #d0dfd5;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .btn:disabled {
+      opacity: 0.62;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+    .status-line {
+      min-height: 18px;
+      color: #60786e;
+      font-size: 13px;
+      font-weight: 700;
+    }
+    .status-line.error { color: #b42318; }
+    .status-line.ok { color: #166534; }
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+    }
+    .kpi-card {
+      background: rgba(255, 255, 255, 0.96);
+      border: 1px solid #dbe7df;
+      border-radius: 16px;
+      box-shadow: 0 18px 38px rgba(16, 24, 40, 0.06);
+      padding: 14px;
+      display: grid;
+      gap: 6px;
+    }
+    .kpi-label {
+      color: #648076;
+      font-size: 12px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .kpi-value {
+      margin: 0;
+      color: #173327;
+      font-size: 34px;
+      line-height: 1.05;
+      font-weight: 900;
+      font-variant-numeric: tabular-nums;
+    }
+    .layout {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      align-items: start;
+    }
+    .panel {
+      background: rgba(255, 255, 255, 0.96);
+      border: 1px solid #dbe7df;
+      border-radius: 16px;
+      box-shadow: 0 18px 38px rgba(16, 24, 40, 0.06);
+      padding: 16px;
+      display: grid;
+      gap: 12px;
+    }
+    .panel h2 {
+      margin: 0;
+      color: #1f5c3a;
+      font-size: 21px;
+    }
+    .subhead {
+      margin: 0;
+      color: #678075;
+      font-size: 13px;
+      line-height: 1.45;
+    }
+    .quick-links {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+    .quick-link {
+      border: 1px solid #dce9e2;
+      border-radius: 12px;
+      background: #fbfdfc;
+      padding: 12px;
+      text-decoration: none;
+      display: grid;
+      gap: 5px;
+    }
+    .quick-link strong {
+      color: #173327;
+      font-size: 14px;
+    }
+    .quick-link span {
+      color: #637b71;
+      font-size: 12px;
+      line-height: 1.45;
+    }
+    .quick-link:hover {
+      border-color: #1f5c3a;
+      background: #f2fbf5;
+    }
+    .activity-list {
+      display: grid;
+      gap: 8px;
+    }
+    .activity-item {
+      border: 1px solid #dce9e2;
+      border-radius: 12px;
+      background: #fbfdfc;
+      padding: 10px;
+      display: grid;
+      gap: 5px;
+    }
+    .activity-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .activity-title {
+      margin: 0;
+      color: #173327;
+      font-size: 14px;
+      font-weight: 800;
+      overflow-wrap: anywhere;
+    }
+    .activity-meta {
+      margin: 0;
+      color: #637b71;
+      font-size: 12px;
+      line-height: 1.45;
+    }
+    .badge {
+      border-radius: 999px;
+      padding: 4px 9px;
+      font-size: 10px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      background: #eef7f2;
+      color: #1f5c3a;
+      white-space: nowrap;
+    }
+    .badge.open, .badge.pending { background: #fff7ed; color: #c2410c; }
+    .badge.matched, .badge.accepted { background: #ecfdf3; color: #027a48; }
+    .badge.closed, .badge.cancelled, .badge.rejected { background: #fef2f2; color: #b42318; }
+    .marketplace-kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+    .marketplace-kpi {
+      border: 1px solid #dce9e2;
+      border-radius: 12px;
+      background: #f8fbf9;
+      padding: 10px;
+      display: grid;
+      gap: 4px;
+    }
+    .marketplace-kpi span {
+      font-size: 11px;
+      color: #678075;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      font-weight: 800;
+    }
+    .marketplace-kpi strong {
+      color: #173327;
+      font-size: 24px;
+      font-weight: 900;
+      font-variant-numeric: tabular-nums;
+    }
+    .empty {
+      border: 1px dashed #d5e3db;
+      border-radius: 12px;
+      background: #f8fbf9;
+      padding: 14px;
+      color: #657d73;
+      font-size: 13px;
+      line-height: 1.5;
+      text-align: center;
+    }
+    .empty strong {
+      display: block;
+      margin-bottom: 5px;
+      color: #173327;
+    }
+    @media (max-width: 1080px) {
+      .kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .layout { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 720px) {
+      body { padding: 14px; }
+      .hero h1 { font-size: 28px; }
+      .hero-actions { width: 100%; display: grid; grid-template-columns: 1fr; }
+      .hero-actions .btn { width: 100%; }
+      .kpi-grid, .quick-links, .marketplace-kpi-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <header class="hero">
+      <div>
+        <h1>Marketplace Dashboard</h1>
+        <p>Unified command center for requests, offers, matching activity, and performance KPIs.</p>
+      </div>
+      <div class="hero-actions">
+        <button id="refreshBtn" class="btn secondary" type="button">Refresh</button>
+      </div>
+    </header>
+
+    <div id="globalStatus" class="status-line" role="status" aria-live="polite"></div>
+
+    <section class="kpi-grid" aria-label="Marketplace KPI cards">
+      <article class="kpi-card">
+        <span class="kpi-label">Active Requests</span>
+        <p id="kpiActiveRequests" class="kpi-value">0</p>
+      </article>
+      <article class="kpi-card">
+        <span class="kpi-label">Active Offers</span>
+        <p id="kpiActiveOffers" class="kpi-value">0</p>
+      </article>
+      <article class="kpi-card">
+        <span class="kpi-label">Matched Requests</span>
+        <p id="kpiMatchedRequests" class="kpi-value">0</p>
+      </article>
+      <article class="kpi-card">
+        <span class="kpi-label">Accepted Offers</span>
+        <p id="kpiAcceptedOffers" class="kpi-value">0</p>
+      </article>
+    </section>
+
+    <section class="layout">
+      <article class="panel">
+        <h2>Quick Links</h2>
+        <p class="subhead">Jump into key marketplace workflows by role.</p>
+        <div class="quick-links">
+          <a class="quick-link" href="/marketplace.html">
+            <strong>Customer Requests</strong>
+            <span>Create and manage marketplace requests.</span>
+          </a>
+          <a class="quick-link" href="/marketplace-opportunities.html">
+            <strong>Company Opportunities</strong>
+            <span>Browse opportunities and submit offers.</span>
+          </a>
+          <a class="quick-link" href="/marketplace-offers.html">
+            <strong>Offers Inbox</strong>
+            <span>Track submitted offers and statuses.</span>
+          </a>
+          <a class="quick-link" href="/customer-dashboard-v2.html">
+            <strong>Customer Portal</strong>
+            <span>Review marketplace activity in customer dashboard.</span>
+          </a>
+        </div>
+      </article>
+
+      <article class="panel">
+        <h2>Marketplace KPIs</h2>
+        <p class="subhead">Snapshot derived from your current marketplace data.</p>
+        <div class="marketplace-kpi-grid">
+          <div class="marketplace-kpi">
+            <span>Request Match Rate</span>
+            <strong id="kpiMatchRate">0%</strong>
+          </div>
+          <div class="marketplace-kpi">
+            <span>Offer Acceptance Rate</span>
+            <strong id="kpiAcceptanceRate">0%</strong>
+          </div>
+          <div class="marketplace-kpi">
+            <span>Total Requests Seen</span>
+            <strong id="kpiTotalRequests">0</strong>
+          </div>
+          <div class="marketplace-kpi">
+            <span>Total Offers Seen</span>
+            <strong id="kpiTotalOffers">0</strong>
+          </div>
+        </div>
+      </article>
+    </section>
+
+    <section class="panel">
+      <h2>Latest Activity</h2>
+      <p class="subhead">Recent request/offer events from available marketplace endpoints.</p>
+      <div id="activityList" class="activity-list"></div>
+    </section>
+  </main>
+
+  <script>
+    (function() {
+      const state = {
+        companyToken: localStorage.getItem("token") || "",
+        customerToken: localStorage.getItem("customerToken") || "",
+        requests: [],
+        offers: [],
+        opportunities: []
+      };
+
+      const els = {
+        refreshBtn: document.getElementById("refreshBtn"),
+        globalStatus: document.getElementById("globalStatus"),
+        kpiActiveRequests: document.getElementById("kpiActiveRequests"),
+        kpiActiveOffers: document.getElementById("kpiActiveOffers"),
+        kpiMatchedRequests: document.getElementById("kpiMatchedRequests"),
+        kpiAcceptedOffers: document.getElementById("kpiAcceptedOffers"),
+        kpiMatchRate: document.getElementById("kpiMatchRate"),
+        kpiAcceptanceRate: document.getElementById("kpiAcceptanceRate"),
+        kpiTotalRequests: document.getElementById("kpiTotalRequests"),
+        kpiTotalOffers: document.getElementById("kpiTotalOffers"),
+        activityList: document.getElementById("activityList")
+      };
+
+      function setStatus(message, type) {
+        els.globalStatus.textContent = message || "";
+        els.globalStatus.className = "status-line" + (type ? " " + type : "");
+      }
+
+      function esc(value) {
+        return String(value == null ? "" : value).replace(/[&<>"']/g, function(ch) {
+          return ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[ch];
+        });
+      }
+
+      function toArray(payload) {
+        if (Array.isArray(payload)) return payload;
+        if (!payload || typeof payload !== "object") return [];
+        if (Array.isArray(payload.items)) return payload.items;
+        if (Array.isArray(payload.data)) return payload.data;
+        if (Array.isArray(payload.requests)) return payload.requests;
+        if (Array.isArray(payload.offers)) return payload.offers;
+        if (Array.isArray(payload.opportunities)) return payload.opportunities;
+        return [];
+      }
+
+      function prettyStatus(value) {
+        return String(value || "unknown").replace(/_/g, " ").replace(/\b\w/g, function(ch) { return ch.toUpperCase(); });
+      }
+
+      function badgeClass(status) {
+        const s = String(status || "").toLowerCase();
+        return "badge " + (s || "open");
+      }
+
+      function money(value) {
+        const num = Number(value || 0);
+        return "$" + num.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+      }
+
+      function fmtDate(value) {
+        if (!value) return "-";
+        const d = new Date(value);
+        if (Number.isNaN(d.getTime())) return String(value);
+        return d.toLocaleString([], { dateStyle: "medium", timeStyle: "short" });
+      }
+
+      function pct(part, total) {
+        if (!total) return "0%";
+        return Math.round((part / total) * 100) + "%";
+      }
+
+      async function fetchWithToken(path, token) {
+        const res = await fetch(path, {
+          headers: { Authorization: "Bearer " + token }
+        });
+        const body = await res.json().catch(function() { return {}; });
+        if (!res.ok) throw new Error(body.error || "Request failed");
+        return body;
+      }
+
+      async function tryFetch(path, token) {
+        if (!token) return [];
+        try {
+          const payload = await fetchWithToken(path, token);
+          return toArray(payload);
+        } catch (_) {
+          return [];
+        }
+      }
+
+      function deriveKpis() {
+        const requests = state.requests;
+        const offers = state.offers;
+        const opportunities = state.opportunities;
+
+        const activeRequests = requests.filter(function(item) {
+          const s = String(item.status || "").toLowerCase();
+          return s === "open" || s === "matched";
+        }).length;
+
+        const matchedRequests = requests.filter(function(item) {
+          return String(item.status || "").toLowerCase() === "matched";
+        }).length;
+
+        const activeOffers = offers.filter(function(item) {
+          const s = String(item.status || "").toLowerCase();
+          return s === "pending";
+        }).length;
+
+        const acceptedOffers = offers.filter(function(item) {
+          return String(item.status || "").toLowerCase() === "accepted";
+        }).length;
+
+        const totalRequestsSeen = Math.max(requests.length, opportunities.length);
+        const totalOffersSeen = offers.length;
+
+        els.kpiActiveRequests.textContent = String(activeRequests);
+        els.kpiActiveOffers.textContent = String(activeOffers);
+        els.kpiMatchedRequests.textContent = String(matchedRequests);
+        els.kpiAcceptedOffers.textContent = String(acceptedOffers);
+
+        els.kpiMatchRate.textContent = pct(matchedRequests, requests.length);
+        els.kpiAcceptanceRate.textContent = pct(acceptedOffers, offers.length);
+        els.kpiTotalRequests.textContent = String(totalRequestsSeen);
+        els.kpiTotalOffers.textContent = String(totalOffersSeen);
+      }
+
+      function titleForRequest(item) {
+        return String(item.title || item.request_title || "Marketplace Request");
+      }
+
+      function titleForOffer(item) {
+        return String(item.request_title || item.title || "Offer Submitted");
+      }
+
+      function deriveActivity() {
+        const requestEvents = state.requests.map(function(item) {
+          return {
+            type: "request",
+            title: titleForRequest(item),
+            status: item.status || "open",
+            date: item.created_at || item.updated_at || null,
+            meta: "Request #" + (item.id || "-")
+          };
+        });
+
+        const offerEvents = state.offers.map(function(item) {
+          return {
+            type: "offer",
+            title: titleForOffer(item),
+            status: item.status || "pending",
+            date: item.created_at || item.updated_at || null,
+            meta: "Offer #" + (item.id || "-") + " • " + money(item.price || 0)
+          };
+        });
+
+        const activity = requestEvents.concat(offerEvents).sort(function(a, b) {
+          const ta = new Date(a.date || 0).getTime();
+          const tb = new Date(b.date || 0).getTime();
+          return tb - ta;
+        }).slice(0, 10);
+
+        if (!activity.length) {
+          els.activityList.innerHTML = '<div class="empty"><strong>No activity yet</strong>Marketplace activity appears here after requests or offers are created.</div>';
+          return;
+        }
+
+        els.activityList.innerHTML = activity.map(function(item) {
+          return (
+            '<article class="activity-item">' +
+              '<div class="activity-top">' +
+                '<p class="activity-title">' + esc(item.title) + "</p>" +
+                '<span class="' + badgeClass(item.status) + '">' + esc(prettyStatus(item.status)) + "</span>" +
+              "</div>" +
+              '<p class="activity-meta">' + esc(item.meta) + "</p>" +
+              '<p class="activity-meta">' + esc(fmtDate(item.date)) + "</p>" +
+            "</article>"
+          );
+        }).join("");
+      }
+
+      async function loadDashboard() {
+        setStatus("Loading marketplace dashboard...", "");
+        els.refreshBtn.disabled = true;
+        try {
+          const [customerRequests, companyOffers, companyOpps] = await Promise.all([
+            tryFetch("/marketplace/requests/me", state.customerToken),
+            tryFetch("/marketplace/offers/me", state.companyToken),
+            tryFetch("/marketplace/opportunities", state.companyToken)
+          ]);
+
+          state.requests = customerRequests;
+          state.offers = companyOffers;
+          state.opportunities = companyOpps;
+
+          deriveKpis();
+          deriveActivity();
+
+          if (!state.requests.length && !state.offers.length && !state.opportunities.length) {
+            setStatus("Connected, but no marketplace data is available for this session yet.", "");
+          } else {
+            setStatus("Marketplace dashboard updated.", "ok");
+          }
+        } catch (err) {
+          deriveKpis();
+          deriveActivity();
+          setStatus(err.message || "Unable to load marketplace dashboard.", "error");
+        } finally {
+          els.refreshBtn.disabled = false;
+        }
+      }
+
+      function init() {
+        if (!state.companyToken && !state.customerToken) {
+          setStatus("Sign in first to view marketplace dashboard.", "error");
+          deriveKpis();
+          deriveActivity();
+          return;
+        }
+        els.refreshBtn.addEventListener("click", loadDashboard);
+        deriveKpis();
+        deriveActivity();
+        loadDashboard();
+      }
+
+      init();
+    })();
+  </script>
+</body>
+</html>

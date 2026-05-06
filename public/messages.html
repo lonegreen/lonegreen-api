@@ -1,0 +1,661 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LoneGreen | Messages</title>
+  <link rel="stylesheet" href="/ui-cleanup.css" />
+  <style>
+    :root {
+      --bg: #f5f7fb;
+      --card: #ffffff;
+      --line: #e4e9f2;
+      --text: #1f2a44;
+      --muted: #6d7890;
+      --brand: #2f6fed;
+      --brand-2: #1c52bf;
+      --ok: #11a36a;
+      --danger: #d64545;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Inter, "Segoe UI", Roboto, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+    .page {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 16px;
+    }
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+    .title {
+      font-size: 1.35rem;
+      font-weight: 700;
+      margin: 0;
+    }
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: #fff;
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+    .layout {
+      display: grid;
+      grid-template-columns: 320px 1fr;
+      gap: 12px;
+      min-height: calc(100vh - 130px);
+    }
+    .panel {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+    }
+    .panel-head {
+      padding: 12px;
+      border-bottom: 1px solid var(--line);
+      background: #fff;
+      display: grid;
+      gap: 10px;
+    }
+    .panel-head h2 {
+      margin: 0;
+      font-size: 1rem;
+    }
+    .row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+    input, button, textarea {
+      font: inherit;
+    }
+    input[type="number"], input[type="text"], textarea {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 10px 12px;
+      background: #fff;
+      color: var(--text);
+      outline: none;
+    }
+    input:focus, textarea:focus {
+      border-color: #b7c5e4;
+      box-shadow: 0 0 0 2px rgba(47,111,237,0.12);
+    }
+    .btn {
+      border: 0;
+      border-radius: 10px;
+      padding: 10px 12px;
+      background: var(--brand);
+      color: #fff;
+      cursor: pointer;
+      font-weight: 600;
+    }
+    .btn:hover { background: var(--brand-2); }
+    .btn.secondary {
+      background: #eff3fb;
+      color: var(--text);
+      border: 1px solid var(--line);
+    }
+    .btn.secondary:hover { background: #e9eef9; }
+    .conversation-list {
+      overflow: auto;
+      padding: 6px;
+      display: grid;
+      gap: 6px;
+    }
+    .conversation-item {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 10px;
+      cursor: pointer;
+      background: #fff;
+      display: grid;
+      gap: 4px;
+    }
+    .conversation-item.active {
+      border-color: #b7c5e4;
+      background: #f6f9ff;
+    }
+    .conversation-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      align-items: center;
+    }
+    .conversation-id {
+      font-size: 0.93rem;
+      font-weight: 600;
+    }
+    .conversation-time {
+      color: var(--muted);
+      font-size: 0.78rem;
+      white-space: nowrap;
+    }
+    .badge-unread {
+      justify-self: start;
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: #fff;
+      background: var(--ok);
+      border-radius: 999px;
+      padding: 2px 8px;
+    }
+    .thread-head {
+      border-bottom: 1px solid var(--line);
+      padding: 12px;
+      background: #fff;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+    }
+    .thread-title {
+      margin: 0;
+      font-size: 1rem;
+      font-weight: 700;
+    }
+    .thread-meta {
+      margin: 2px 0 0;
+      font-size: 0.84rem;
+      color: var(--muted);
+    }
+    .messages {
+      flex: 1;
+      overflow: auto;
+      background: linear-gradient(180deg, #fbfcff, #f5f8ff);
+      padding: 14px;
+      display: grid;
+      gap: 10px;
+      align-content: start;
+    }
+    .empty {
+      color: var(--muted);
+      text-align: center;
+      margin: 32px auto;
+      max-width: 340px;
+    }
+    .bubble {
+      max-width: min(78%, 720px);
+      border-radius: 14px;
+      padding: 10px 12px;
+      border: 1px solid var(--line);
+      background: #fff;
+      justify-self: start;
+    }
+    .bubble.me {
+      justify-self: end;
+      border-color: #c7d7fb;
+      background: #eef4ff;
+    }
+    .bubble-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 4px;
+      color: var(--muted);
+      font-size: 0.76rem;
+    }
+    .bubble-text {
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      line-height: 1.45;
+      font-size: 0.95rem;
+    }
+    .composer {
+      border-top: 1px solid var(--line);
+      background: #fff;
+      padding: 12px;
+      display: grid;
+      gap: 8px;
+    }
+    .status {
+      min-height: 18px;
+      color: var(--muted);
+      font-size: 0.84rem;
+    }
+    .status.error { color: var(--danger); }
+    @media (max-width: 900px) {
+      .layout { grid-template-columns: 1fr; min-height: 0; }
+      .panel { min-height: 340px; }
+      .messages { min-height: 300px; }
+      .bubble { max-width: 92%; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="topbar">
+      <h1 class="title">Messages</h1>
+      <div class="pill" id="sessionPill">Loading session...</div>
+    </div>
+
+    <div class="layout">
+      <section class="panel">
+        <div class="panel-head">
+          <h2>Conversations</h2>
+          <div class="row">
+            <button class="btn secondary" id="refreshBtn" type="button">Refresh</button>
+            <button class="btn secondary" id="newConversationBtn" type="button">Start</button>
+          </div>
+          <div class="row" id="companyClientRow" style="display:none;">
+            <input id="clientIdInput" type="number" min="1" placeholder="Client ID (company view)" />
+          </div>
+          <div class="status" id="leftStatus"></div>
+        </div>
+        <div class="conversation-list" id="conversationList"></div>
+      </section>
+
+      <section class="panel">
+        <div class="thread-head">
+          <div>
+            <p class="thread-title" id="threadTitle">Select a conversation</p>
+            <p class="thread-meta" id="threadMeta">Messages auto-refresh every 5 seconds</p>
+          </div>
+          <button class="btn secondary" id="reloadMessagesBtn" type="button">Reload</button>
+        </div>
+        <div class="messages" id="messages"></div>
+        <form class="composer" id="composerForm">
+          <textarea id="messageInput" rows="3" maxlength="4000" placeholder="Type your message..." disabled></textarea>
+          <div class="row">
+            <button class="btn" id="sendBtn" type="submit" disabled>Send Message</button>
+            <span class="status" id="composerStatus"></span>
+          </div>
+        </form>
+      </section>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      const STORAGE_LAST_READ_KEY = "messages:lastReadByConversation";
+      const POLL_CONVERSATIONS_MS = 15000;
+      const POLL_MESSAGES_MS = 5000;
+
+      const sessionPill = document.getElementById("sessionPill");
+      const conversationList = document.getElementById("conversationList");
+      const leftStatus = document.getElementById("leftStatus");
+      const threadTitle = document.getElementById("threadTitle");
+      const threadMeta = document.getElementById("threadMeta");
+      const messagesEl = document.getElementById("messages");
+      const reloadMessagesBtn = document.getElementById("reloadMessagesBtn");
+      const refreshBtn = document.getElementById("refreshBtn");
+      const newConversationBtn = document.getElementById("newConversationBtn");
+      const companyClientRow = document.getElementById("companyClientRow");
+      const clientIdInput = document.getElementById("clientIdInput");
+      const composerForm = document.getElementById("composerForm");
+      const messageInput = document.getElementById("messageInput");
+      const sendBtn = document.getElementById("sendBtn");
+      const composerStatus = document.getElementById("composerStatus");
+
+      const state = {
+        token: "",
+        actorType: "",
+        actorId: null,
+        companyId: null,
+        conversations: [],
+        selectedConversationId: null,
+        messages: [],
+        timers: {
+          conversations: null,
+          messages: null
+        }
+      };
+
+      function getSession() {
+        const customerToken = localStorage.getItem("customerToken") || "";
+        if (customerToken) {
+          const customer = JSON.parse(localStorage.getItem("customer") || "{}");
+          return {
+            token: customerToken,
+            actorType: "customer",
+            actorId: customer.client_id || customer.id || null,
+            companyId: customer.company_id || null
+          };
+        }
+        const token = localStorage.getItem("token") || "";
+        const user = JSON.parse(localStorage.getItem("user") || "{}");
+        if (token) {
+          return {
+            token: token,
+            actorType: "company",
+            actorId: user.id || null,
+            companyId: user.company_id || null
+          };
+        }
+        return { token: "", actorType: "", actorId: null, companyId: null };
+      }
+
+      function authHeaders() {
+        return {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer " + state.token
+        };
+      }
+
+      function parseJsonSafe(value, fallback) {
+        try {
+          return JSON.parse(value);
+        } catch (_) {
+          return fallback;
+        }
+      }
+
+      function getLastReadMap() {
+        return parseJsonSafe(localStorage.getItem(STORAGE_LAST_READ_KEY) || "{}", {});
+      }
+
+      function setLastRead(conversationId, isoDate) {
+        const map = getLastReadMap();
+        map[String(conversationId)] = isoDate;
+        localStorage.setItem(STORAGE_LAST_READ_KEY, JSON.stringify(map));
+      }
+
+      function getLastRead(conversationId) {
+        const map = getLastReadMap();
+        return map[String(conversationId)] || "";
+      }
+
+      function fmtDate(iso) {
+        if (!iso) return "";
+        const d = new Date(iso);
+        if (Number.isNaN(d.getTime())) return "";
+        return d.toLocaleString([], { dateStyle: "short", timeStyle: "short" });
+      }
+
+      function isMine(msg) {
+        if (state.actorType === "customer") {
+          return msg.sender_type === "customer";
+        }
+        return msg.sender_type === "company";
+      }
+
+      function markConversationRead(conversationId) {
+        const lastMessage = state.messages.length ? state.messages[state.messages.length - 1] : null;
+        if (lastMessage && lastMessage.created_at) {
+          setLastRead(conversationId, lastMessage.created_at);
+        }
+      }
+
+      function getLastMessageForConversation(id) {
+        if (state.selectedConversationId !== id || !state.messages.length) return null;
+        return state.messages[state.messages.length - 1] || null;
+      }
+
+      function hasUnread(conversation) {
+        const last = getLastMessageForConversation(conversation.id);
+        if (!last) return false;
+        if (isMine(last)) return false;
+        const lastRead = getLastRead(conversation.id);
+        if (!lastRead) return true;
+        return new Date(last.created_at).getTime() > new Date(lastRead).getTime();
+      }
+
+      function setLeftStatus(msg, isError) {
+        leftStatus.textContent = msg || "";
+        leftStatus.className = "status" + (isError ? " error" : "");
+      }
+
+      function setComposerStatus(msg, isError) {
+        composerStatus.textContent = msg || "";
+        composerStatus.className = "status" + (isError ? " error" : "");
+      }
+
+      async function request(url, options) {
+        const res = await fetch(url, options);
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          throw new Error(data.error || "Request failed");
+        }
+        return data;
+      }
+
+      function renderConversations() {
+        conversationList.innerHTML = "";
+        if (!state.conversations.length) {
+          conversationList.innerHTML = '<div class="empty">No conversations yet. Start one to begin messaging.</div>';
+          return;
+        }
+        for (const c of state.conversations) {
+          const item = document.createElement("button");
+          item.type = "button";
+          item.className = "conversation-item" + (c.id === state.selectedConversationId ? " active" : "");
+          item.dataset.id = String(c.id);
+
+          const unread = hasUnread(c);
+          const unreadBadge = unread ? '<span class="badge-unread">Unread</span>' : "";
+
+          item.innerHTML = [
+            '<div class="conversation-top">',
+            '<span class="conversation-id">Conversation #' + c.id + '</span>',
+            '<span class="conversation-time">' + fmtDate(c.created_at) + "</span>",
+            "</div>",
+            '<div class="thread-meta">Client ' + c.client_id + " • Company " + c.company_id + "</div>",
+            unreadBadge
+          ].join("");
+
+          item.addEventListener("click", function () {
+            selectConversation(c.id);
+          });
+          conversationList.appendChild(item);
+        }
+      }
+
+      function renderMessages() {
+        messagesEl.innerHTML = "";
+        if (!state.selectedConversationId) {
+          messagesEl.innerHTML = '<div class="empty">Select a conversation from the left to view messages.</div>';
+          return;
+        }
+        if (!state.messages.length) {
+          messagesEl.innerHTML = '<div class="empty">No messages yet. Send one below.</div>';
+          return;
+        }
+
+        for (const msg of state.messages) {
+          const bubble = document.createElement("article");
+          bubble.className = "bubble" + (isMine(msg) ? " me" : "");
+          bubble.innerHTML = [
+            '<div class="bubble-top">',
+            "<span>" + (msg.sender_type === "customer" ? "Customer" : "Company") + "</span>",
+            "<time>" + fmtDate(msg.created_at) + "</time>",
+            "</div>",
+            '<div class="bubble-text"></div>'
+          ].join("");
+          bubble.querySelector(".bubble-text").textContent = msg.message_text || "";
+          messagesEl.appendChild(bubble);
+        }
+        messagesEl.scrollTop = messagesEl.scrollHeight;
+      }
+
+      function updateThreadHeader() {
+        if (!state.selectedConversationId) {
+          threadTitle.textContent = "Select a conversation";
+          threadMeta.textContent = "Messages auto-refresh every 5 seconds";
+          messageInput.disabled = true;
+          sendBtn.disabled = true;
+          return;
+        }
+        const convo = state.conversations.find((c) => c.id === state.selectedConversationId);
+        threadTitle.textContent = "Conversation #" + state.selectedConversationId;
+        threadMeta.textContent = convo
+          ? "Client " + convo.client_id + " • Company " + convo.company_id
+          : "Messages auto-refresh every 5 seconds";
+        messageInput.disabled = false;
+        sendBtn.disabled = false;
+      }
+
+      async function loadConversations(showStatus) {
+        try {
+          if (showStatus) setLeftStatus("Loading conversations...");
+          state.conversations = await request("/conversations", {
+            method: "GET",
+            headers: authHeaders()
+          });
+          renderConversations();
+          if (showStatus) setLeftStatus("");
+
+          if (!state.selectedConversationId && state.conversations.length) {
+            await selectConversation(state.conversations[0].id);
+          } else if (state.selectedConversationId) {
+            const stillExists = state.conversations.some((c) => c.id === state.selectedConversationId);
+            if (!stillExists) {
+              state.selectedConversationId = null;
+              state.messages = [];
+              renderMessages();
+              updateThreadHeader();
+            }
+          }
+        } catch (err) {
+          setLeftStatus(err.message || "Failed loading conversations", true);
+        }
+      }
+
+      async function loadMessages(showStatus) {
+        if (!state.selectedConversationId) return;
+        try {
+          if (showStatus) setComposerStatus("Loading messages...");
+          state.messages = await request("/conversations/" + state.selectedConversationId + "/messages", {
+            method: "GET",
+            headers: authHeaders()
+          });
+          renderMessages();
+          markConversationRead(state.selectedConversationId);
+          renderConversations();
+          if (showStatus) setComposerStatus("");
+        } catch (err) {
+          setComposerStatus(err.message || "Failed loading messages", true);
+        }
+      }
+
+      async function selectConversation(conversationId) {
+        state.selectedConversationId = Number(conversationId);
+        updateThreadHeader();
+        renderConversations();
+        await loadMessages(true);
+      }
+
+      async function startConversation() {
+        try {
+          setLeftStatus("Creating conversation...");
+          let payload = {};
+          if (state.actorType === "company") {
+            const clientId = Number(clientIdInput.value);
+            if (!Number.isInteger(clientId) || clientId <= 0) {
+              setLeftStatus("Client ID is required for company users.", true);
+              return;
+            }
+            payload.client_id = clientId;
+          }
+          const created = await request("/conversations", {
+            method: "POST",
+            headers: authHeaders(),
+            body: JSON.stringify(payload)
+          });
+          await loadConversations(false);
+          if (created && created.id) {
+            await selectConversation(created.id);
+          }
+          setLeftStatus("Conversation ready.");
+        } catch (err) {
+          setLeftStatus(err.message || "Unable to create conversation", true);
+        }
+      }
+
+      async function sendMessage(event) {
+        event.preventDefault();
+        if (!state.selectedConversationId) return;
+        const text = String(messageInput.value || "").trim();
+        if (!text) {
+          setComposerStatus("Type a message first.", true);
+          return;
+        }
+        try {
+          sendBtn.disabled = true;
+          setComposerStatus("Sending...");
+          const created = await request("/conversations/" + state.selectedConversationId + "/messages", {
+            method: "POST",
+            headers: authHeaders(),
+            body: JSON.stringify({ message_text: text })
+          });
+          messageInput.value = "";
+          state.messages.push(created);
+          renderMessages();
+          markConversationRead(state.selectedConversationId);
+          renderConversations();
+          setComposerStatus("");
+        } catch (err) {
+          setComposerStatus(err.message || "Failed sending message", true);
+        } finally {
+          sendBtn.disabled = false;
+        }
+      }
+
+      function startPolling() {
+        window.clearInterval(state.timers.conversations);
+        window.clearInterval(state.timers.messages);
+        state.timers.conversations = window.setInterval(function () {
+          loadConversations(false);
+        }, POLL_CONVERSATIONS_MS);
+        state.timers.messages = window.setInterval(function () {
+          if (state.selectedConversationId) {
+            loadMessages(false);
+          }
+        }, POLL_MESSAGES_MS);
+      }
+
+      function initSession() {
+        const session = getSession();
+        state.token = session.token;
+        state.actorType = session.actorType;
+        state.actorId = session.actorId;
+        state.companyId = session.companyId;
+
+        if (!state.token || !state.actorType) {
+          sessionPill.textContent = "No active session";
+          setLeftStatus("Please sign in first.", true);
+          newConversationBtn.disabled = true;
+          refreshBtn.disabled = true;
+          reloadMessagesBtn.disabled = true;
+          return false;
+        }
+
+        sessionPill.textContent = state.actorType === "customer"
+          ? "Customer session"
+          : "Company session";
+        companyClientRow.style.display = state.actorType === "company" ? "flex" : "none";
+        return true;
+      }
+
+      refreshBtn.addEventListener("click", function () { loadConversations(true); });
+      reloadMessagesBtn.addEventListener("click", function () { loadMessages(true); });
+      newConversationBtn.addEventListener("click", startConversation);
+      composerForm.addEventListener("submit", sendMessage);
+
+      if (initSession()) {
+        updateThreadHeader();
+        loadConversations(true);
+        startPolling();
+      }
+    })();
+  </script>
+</body>
+</html>

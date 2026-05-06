@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Company Public Profile Settings</title>
+  <link rel="stylesheet" href="/app-shell.css">
+  <style>
+    * { box-sizing: border-box; font-family: Inter, Arial, sans-serif; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: linear-gradient(180deg, #edf5f0 0%, #f7f9f8 190px, #f4f6f8 100%);
+      color: #173327;
+      padding: 20px;
+    }
+    .page { width: min(1040px, 100%); margin: 0 auto; display: grid; gap: 14px; }
+    .hero {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    h1 {
+      margin: 0 0 6px;
+      color: #1f5c3a;
+      font-size: 30px;
+    }
+    .muted { margin: 0; color: #648076; line-height: 1.45; }
+    .actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .btn {
+      border: none;
+      border-radius: 12px;
+      padding: 12px 16px;
+      font-size: 14px;
+      font-weight: 800;
+      cursor: pointer;
+      transition: 0.18s ease;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .btn.primary {
+      background: linear-gradient(135deg, #1f5c3a, #2d8b55);
+      color: #fff;
+      box-shadow: 0 12px 28px rgba(31,92,58,0.20);
+    }
+    .btn.secondary {
+      background: #eef2f0;
+      color: #1f5c3a;
+      border: 1px solid #dbe7df;
+    }
+    .btn:disabled { opacity: 0.65; cursor: not-allowed; }
+    .btn:hover:not(:disabled) { transform: translateY(-1px); }
+    .panel {
+      background: #fff;
+      border: 1px solid #dbe7df;
+      border-radius: 16px;
+      box-shadow: 0 14px 30px rgba(16,24,40,0.06);
+      padding: 16px;
+      display: grid;
+      gap: 12px;
+    }
+    .panel h2 {
+      margin: 0;
+      color: #1f5c3a;
+      font-size: 20px;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    .field { display: grid; gap: 7px; }
+    .field.full { grid-column: 1 / -1; }
+    label {
+      font-size: 13px;
+      font-weight: 800;
+      color: #1f3528;
+    }
+    input, textarea, select {
+      width: 100%;
+      border-radius: 12px;
+      border: 1px solid #dbe5dd;
+      background: #fff;
+      padding: 12px;
+      font-size: 14px;
+      color: #173327;
+      outline: none;
+      transition: 0.18s ease;
+    }
+    textarea { min-height: 92px; resize: vertical; line-height: 1.4; }
+    input:focus, textarea:focus, select:focus {
+      border-color: #2c8b55;
+      box-shadow: 0 0 0 4px rgba(44,139,85,0.12);
+    }
+    .hint { color: #648076; font-size: 12px; margin: 0; }
+    .inline-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .btn.small {
+      padding: 9px 12px;
+      font-size: 12px;
+      border-radius: 10px;
+    }
+    .status {
+      min-height: 20px;
+      font-size: 14px;
+      color: #5f6e66;
+    }
+    .status.success { color: #027a48; font-weight: 700; }
+    .status.error { color: #b42318; font-weight: 700; }
+    .toggle {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+      color: #173327;
+      font-weight: 700;
+    }
+    .toggle input { width: 18px; height: 18px; margin: 0; }
+    @media (max-width: 840px) {
+      body { padding: 14px; }
+      .grid { grid-template-columns: 1fr; }
+      .field.full { grid-column: auto; }
+      .actions { width: 100%; }
+      .btn { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <section class="hero">
+      <div>
+        <h1>Public Profile Settings</h1>
+        <p class="muted">Manage how your company appears on the public discoverable profile page.</p>
+      </div>
+      <div class="actions">
+        <button id="previewBtn" type="button" class="btn secondary">Preview Public Profile</button>
+        <button id="saveBtn" type="button" class="btn primary">Save Profile</button>
+      </div>
+    </section>
+
+    <div id="status" class="status" role="status" aria-live="polite"></div>
+
+    <section class="panel">
+      <h2>Basic Info</h2>
+      <div class="grid">
+        <label class="field">
+          Public Slug
+          <input id="publicSlug" type="text" placeholder="your-company-name" required>
+          <p class="hint">Required. Used in public URL and preview.</p>
+        </label>
+        <label class="field full">
+          Public Description
+          <textarea id="publicDescription" placeholder="Describe your company, services, and why customers should choose you."></textarea>
+        </label>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>Branding</h2>
+      <div class="grid">
+        <label class="field">
+          Logo URL
+          <input id="logoUrl" type="url" placeholder="https://example.com/logo.png">
+          <span class="inline-actions">
+            <button id="uploadLogoBtn" type="button" class="btn secondary small">Upload Logo</button>
+          </span>
+        </label>
+        <label class="field">
+          Cover Image URL
+          <input id="coverImageUrl" type="url" placeholder="https://example.com/cover.jpg">
+          <span class="inline-actions">
+            <button id="uploadCoverBtn" type="button" class="btn secondary small">Upload Cover Image</button>
+          </span>
+        </label>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>Gallery</h2>
+      <div class="inline-actions">
+        <button id="uploadGalleryBtn" type="button" class="btn secondary small">Upload Gallery Images</button>
+      </div>
+      <label class="field">
+        Gallery Image URLs (one per line)
+        <textarea id="galleryUrls" placeholder="https://example.com/image1.jpg&#10;https://example.com/image2.jpg"></textarea>
+      </label>
+      <p class="hint">Maximum 20 image URLs.</p>
+    </section>
+
+    <section class="panel">
+      <h2>Links</h2>
+      <div class="grid">
+        <label class="field">
+          Website URL
+          <input id="websiteUrl" type="url" placeholder="https://yourcompany.com">
+        </label>
+        <label class="field">
+          Facebook URL
+          <input id="facebookUrl" type="url" placeholder="https://facebook.com/yourcompany">
+        </label>
+        <label class="field">
+          Instagram URL
+          <input id="instagramUrl" type="url" placeholder="https://instagram.com/yourcompany">
+        </label>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>Publish Settings</h2>
+      <label class="toggle">
+        <input id="isPublic" type="checkbox">
+        Make this profile publicly visible
+      </label>
+    </section>
+  </main>
+
+  <input id="logoFileInput" type="file" accept="image/*" hidden>
+  <input id="coverFileInput" type="file" accept="image/*" hidden>
+  <input id="galleryFileInput" type="file" accept="image/*" multiple hidden>
+
+  <script src="/js/api.js"></script>
+  <script>
+    const API_BASE = (window.AppAPI && window.AppAPI.base) || window.location.origin;
+    const TOKEN = localStorage.getItem("token") || "";
+    const params = new URLSearchParams(window.location.search);
+    const initialSlug = String(params.get("slug") || localStorage.getItem("companyPublicSlug") || "").trim().toLowerCase();
+
+    const elements = {
+      publicSlug: document.getElementById("publicSlug"),
+      publicDescription: document.getElementById("publicDescription"),
+      logoUrl: document.getElementById("logoUrl"),
+      coverImageUrl: document.getElementById("coverImageUrl"),
+      galleryUrls: document.getElementById("galleryUrls"),
+      websiteUrl: document.getElementById("websiteUrl"),
+      facebookUrl: document.getElementById("facebookUrl"),
+      instagramUrl: document.getElementById("instagramUrl"),
+      isPublic: document.getElementById("isPublic"),
+      saveBtn: document.getElementById("saveBtn"),
+      previewBtn: document.getElementById("previewBtn"),
+      status: document.getElementById("status"),
+      uploadLogoBtn: document.getElementById("uploadLogoBtn"),
+      uploadCoverBtn: document.getElementById("uploadCoverBtn"),
+      uploadGalleryBtn: document.getElementById("uploadGalleryBtn"),
+      logoFileInput: document.getElementById("logoFileInput"),
+      coverFileInput: document.getElementById("coverFileInput"),
+      galleryFileInput: document.getElementById("galleryFileInput")
+    };
+
+    function setStatus(message, type) {
+      elements.status.textContent = message || "";
+      elements.status.className = "status" + (type ? " " + type : "");
+    }
+
+    function authHeaders(extra) {
+      const headers = Object.assign({}, extra || {});
+      if (TOKEN) headers.Authorization = "Bearer " + TOKEN;
+      return headers;
+    }
+
+    function isValidUrl(value) {
+      if (!value) return true;
+      try {
+        const url = new URL(value);
+        return url.protocol === "http:" || url.protocol === "https:";
+      } catch (err) {
+        return false;
+      }
+    }
+
+    function parseGalleryUrls(raw) {
+      return String(raw || "")
+        .split(/\n+/)
+        .map((line) => line.trim())
+        .filter(Boolean)
+        .slice(0, 20);
+    }
+
+    function validateImageFile(file) {
+      if (!file) return "No file selected.";
+      if (!String(file.type || "").startsWith("image/")) return "Only image files are allowed.";
+      if (Number(file.size || 0) > 10 * 1024 * 1024) return "File too large. Max size is 10MB.";
+      return "";
+    }
+
+    async function uploadImage(file) {
+      const err = validateImageFile(file);
+      if (err) throw new Error(err);
+
+      if (!TOKEN) throw new Error("Missing auth token. Sign in before uploading files.");
+
+      const form = new FormData();
+      form.append("file", file);
+      const res = await fetch(API_BASE + "/uploads", {
+        method: "POST",
+        headers: authHeaders(),
+        body: form
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || "Upload failed.");
+      if (!data.url) throw new Error("Upload response missing file URL.");
+      return String(data.url);
+    }
+
+    function readForm() {
+      const gallery = parseGalleryUrls(elements.galleryUrls.value);
+      return {
+        public_slug: String(elements.publicSlug.value || "").trim().toLowerCase(),
+        public_description: String(elements.publicDescription.value || "").trim(),
+        logo_url: String(elements.logoUrl.value || "").trim(),
+        cover_image_url: String(elements.coverImageUrl.value || "").trim(),
+        gallery_urls: gallery,
+        website_url: String(elements.websiteUrl.value || "").trim(),
+        facebook_url: String(elements.facebookUrl.value || "").trim(),
+        instagram_url: String(elements.instagramUrl.value || "").trim(),
+        is_public: elements.isPublic.checked
+      };
+    }
+
+    function validatePayload(payload) {
+      if (!payload.public_slug) return "Slug is required.";
+
+      const urls = [
+        payload.logo_url,
+        payload.cover_image_url,
+        payload.website_url,
+        payload.facebook_url,
+        payload.instagram_url
+      ];
+      for (const value of urls) {
+        if (!isValidUrl(value)) return "One or more URLs are invalid. Use http:// or https://";
+      }
+
+      if (payload.gallery_urls.length > 20) return "Gallery supports up to 20 image URLs.";
+      for (const value of payload.gallery_urls) {
+        if (!isValidUrl(value)) return "One or more gallery URLs are invalid.";
+      }
+
+      return "";
+    }
+
+    function fillForm(data) {
+      elements.publicSlug.value = data.public_slug || "";
+      elements.publicDescription.value = data.public_description || "";
+      elements.logoUrl.value = data.logo_url || "";
+      elements.coverImageUrl.value = data.cover_image_url || "";
+      elements.galleryUrls.value = Array.isArray(data.gallery_urls) ? data.gallery_urls.join("\n") : "";
+      elements.websiteUrl.value = data.website_url || "";
+      elements.facebookUrl.value = data.facebook_url || "";
+      elements.instagramUrl.value = data.instagram_url || "";
+      elements.isPublic.checked = data.is_public === true;
+    }
+
+    async function loadProfileBySlug(slug) {
+      if (!slug) {
+        setStatus("Enter or pass a slug in the URL (?slug=your-company) before loading.", "");
+        return;
+      }
+
+      setStatus("Loading public profile data...", "");
+      try {
+        const res = await fetch(API_BASE + "/companies/public/" + encodeURIComponent(slug), {
+          headers: authHeaders()
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.error || "Unable to load profile data for this slug.");
+        fillForm(data);
+        localStorage.setItem("companyPublicSlug", data.public_slug || slug);
+        setStatus("Profile data loaded from public profile endpoint.", "success");
+      } catch (err) {
+        setStatus(err.message || "Unable to load public profile data.", "error");
+      }
+    }
+
+    async function saveProfile() {
+      if (!TOKEN) {
+        setStatus("Missing auth token. Sign in before saving profile settings.", "error");
+        return;
+      }
+
+      const payload = readForm();
+      const validationError = validatePayload(payload);
+      if (validationError) {
+        setStatus(validationError, "error");
+        return;
+      }
+
+      elements.saveBtn.disabled = true;
+      setStatus("Saving public profile...", "");
+      try {
+        const res = await fetch(API_BASE + "/companies/public-profile", {
+          method: "PUT",
+          headers: authHeaders({ "Content-Type": "application/json" }),
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.error || "Unable to save public profile.");
+        if (data.public_slug) {
+          elements.publicSlug.value = data.public_slug;
+          localStorage.setItem("companyPublicSlug", data.public_slug);
+        }
+        setStatus("Public profile saved successfully.", "success");
+      } catch (err) {
+        setStatus(err.message || "Unable to save public profile.", "error");
+      } finally {
+        elements.saveBtn.disabled = false;
+      }
+    }
+
+    async function handleLogoUpload() {
+      const file = elements.logoFileInput.files && elements.logoFileInput.files[0];
+      if (!file) return;
+      setStatus("Uploading logo...", "");
+      try {
+        const url = await uploadImage(file);
+        elements.logoUrl.value = url;
+        setStatus("Logo uploaded.", "success");
+      } catch (err) {
+        setStatus(err.message || "Unable to upload logo.", "error");
+      } finally {
+        elements.logoFileInput.value = "";
+      }
+    }
+
+    async function handleCoverUpload() {
+      const file = elements.coverFileInput.files && elements.coverFileInput.files[0];
+      if (!file) return;
+      setStatus("Uploading cover image...", "");
+      try {
+        const url = await uploadImage(file);
+        elements.coverImageUrl.value = url;
+        setStatus("Cover image uploaded.", "success");
+      } catch (err) {
+        setStatus(err.message || "Unable to upload cover image.", "error");
+      } finally {
+        elements.coverFileInput.value = "";
+      }
+    }
+
+    async function handleGalleryUpload() {
+      const files = Array.from(elements.galleryFileInput.files || []);
+      if (!files.length) return;
+
+      const existing = parseGalleryUrls(elements.galleryUrls.value);
+      if (existing.length + files.length > 20) {
+        setStatus("Gallery supports up to 20 images total.", "error");
+        elements.galleryFileInput.value = "";
+        return;
+      }
+
+      setStatus("Uploading gallery images...", "");
+      try {
+        const uploadedUrls = [];
+        for (const file of files) {
+          const url = await uploadImage(file);
+          uploadedUrls.push(url);
+        }
+        const merged = existing.concat(uploadedUrls).slice(0, 20);
+        elements.galleryUrls.value = merged.join("\n");
+        setStatus("Gallery images uploaded.", "success");
+      } catch (err) {
+        setStatus(err.message || "Unable to upload gallery images.", "error");
+      } finally {
+        elements.galleryFileInput.value = "";
+      }
+    }
+
+    function previewProfile() {
+      const slug = String(elements.publicSlug.value || "").trim().toLowerCase();
+      if (!slug) {
+        setStatus("Slug is required before previewing.", "error");
+        return;
+      }
+      window.open("/company-profile.html?slug=" + encodeURIComponent(slug), "_blank", "noopener");
+    }
+
+    elements.saveBtn.addEventListener("click", saveProfile);
+    elements.previewBtn.addEventListener("click", previewProfile);
+    elements.uploadLogoBtn.addEventListener("click", function() { elements.logoFileInput.click(); });
+    elements.uploadCoverBtn.addEventListener("click", function() { elements.coverFileInput.click(); });
+    elements.uploadGalleryBtn.addEventListener("click", function() { elements.galleryFileInput.click(); });
+    elements.logoFileInput.addEventListener("change", function() { void handleLogoUpload(); });
+    elements.coverFileInput.addEventListener("change", function() { void handleCoverUpload(); });
+    elements.galleryFileInput.addEventListener("change", function() { void handleGalleryUpload(); });
+
+    if (initialSlug) {
+      elements.publicSlug.value = initialSlug;
+      loadProfileBySlug(initialSlug);
+    } else {
+      setStatus("Set your public slug, then save. Add ?slug=your-company to preload existing public profile data.", "");
+    }
+  </script>
+</body>
+</html>

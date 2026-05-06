@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Billing Plans</title>
+  <link rel="stylesheet" href="/app-shell.css">
+  <link rel="stylesheet" href="/ui-cleanup.css">
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background:
+        radial-gradient(circle at top left, rgba(31, 92, 58, 0.08), transparent 28%),
+        linear-gradient(180deg, #edf5f0 0%, #f6f8f7 210px, #f4f6f8 100%);
+      color: #163328;
+      padding: 22px;
+    }
+    .page {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: grid;
+      gap: 18px;
+    }
+    .hero {
+      display: flex;
+      justify-content: space-between;
+      gap: 14px;
+      align-items: flex-end;
+      flex-wrap: wrap;
+    }
+    .hero h1 {
+      margin: 0 0 6px;
+      font-size: 32px;
+      color: #1f5c3a;
+      letter-spacing: -0.03em;
+    }
+    .hero p {
+      margin: 0;
+      color: #60786e;
+      line-height: 1.5;
+    }
+    .panel {
+      background: rgba(255, 255, 255, 0.96);
+      border: 1px solid #dbe7df;
+      border-radius: 18px;
+      box-shadow: 0 18px 38px rgba(16, 24, 40, 0.06);
+      padding: 18px;
+    }
+    .head-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 14px;
+    }
+    .head-row h2 {
+      margin: 0 0 4px;
+      color: #1f5c3a;
+      font-size: 20px;
+    }
+    .head-row p {
+      margin: 0;
+      color: #678075;
+      font-size: 13px;
+    }
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 999px;
+      padding: 6px 10px;
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      background: #eef7f2;
+      color: #1f5c3a;
+    }
+    .pill.warn { background: #fff8e5; color: #9a6700; }
+    .pill.danger { background: #fff1f1; color: #b42318; }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+    }
+    .btn {
+      border: none;
+      border-radius: 12px;
+      padding: 10px 14px;
+      font: inherit;
+      font-weight: 800;
+      cursor: pointer;
+      background: #1f5c3a;
+      color: white;
+      transition: transform .15s ease, box-shadow .15s ease, opacity .15s ease;
+      box-shadow: 0 10px 22px rgba(31, 92, 58, 0.16);
+    }
+    .btn:hover:not(:disabled) {
+      transform: translateY(-1px);
+      box-shadow: 0 14px 26px rgba(31, 92, 58, 0.2);
+    }
+    .btn.secondary {
+      background: #edf6f0;
+      color: #1f5c3a;
+      border: 1px solid #d0dfd5;
+      box-shadow: none;
+    }
+    .btn:disabled {
+      opacity: 0.58;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    .status {
+      min-height: 18px;
+      color: #60786e;
+      font-size: 13px;
+      font-weight: 700;
+    }
+    .status.ok { color: #166534; }
+    .status.error { color: #b42318; }
+
+    .alert {
+      display: none;
+      border-radius: 12px;
+      border: 1px solid #f0c7c7;
+      background: #fff7f7;
+      color: #b42318;
+      padding: 11px 12px;
+      font-size: 13px;
+      line-height: 1.45;
+      font-weight: 700;
+    }
+
+    .current-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+    }
+    .metric {
+      border: 1px solid #dce9e2;
+      background: #f8fbf9;
+      border-radius: 12px;
+      padding: 12px;
+      min-width: 0;
+    }
+    .metric span {
+      display: block;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #678075;
+      font-weight: 800;
+      margin-bottom: 6px;
+    }
+    .metric strong {
+      color: #173327;
+      font-size: 18px;
+      word-break: break-word;
+    }
+
+    .usage-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+    .usage-card {
+      border: 1px solid #dce9e2;
+      border-radius: 12px;
+      background: white;
+      padding: 12px;
+      display: grid;
+      gap: 7px;
+    }
+    .usage-label {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      font-size: 13px;
+      color: #4d665c;
+      font-weight: 700;
+    }
+    .track {
+      height: 10px;
+      border-radius: 999px;
+      background: #e8f0eb;
+      overflow: hidden;
+    }
+    .fill {
+      height: 100%;
+      border-radius: 999px;
+      background: linear-gradient(90deg, #1f5c3a, #3d8b5c);
+      max-width: 100%;
+    }
+    .fill.warn { background: linear-gradient(90deg, #9a6700, #c08214); }
+    .fill.danger { background: linear-gradient(90deg, #b42318, #dc3a3a); }
+    .usage-help {
+      font-size: 12px;
+      color: #6a8177;
+    }
+
+    .plans-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+    }
+    .plan-card {
+      border: 1px solid #dbe7df;
+      border-radius: 14px;
+      background: white;
+      padding: 14px;
+      display: grid;
+      gap: 10px;
+    }
+    .plan-card.current {
+      border-color: #1f5c3a;
+      background: #f2fbf5;
+    }
+    .plan-card h3 {
+      margin: 0;
+      color: #173327;
+      font-size: 20px;
+    }
+    .plan-price {
+      font-size: 28px;
+      color: #1f5c3a;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+    }
+    .plan-price small {
+      font-size: 12px;
+      color: #678075;
+      font-weight: 700;
+    }
+    .limits {
+      border: 1px solid #dce9e2;
+      background: #f8fbf9;
+      border-radius: 11px;
+      padding: 10px;
+      display: grid;
+      gap: 5px;
+      font-size: 12px;
+      color: #4c675d;
+      font-weight: 700;
+    }
+
+    .empty {
+      border: 1px dashed #d5e3db;
+      background: #f8fbf9;
+      border-radius: 12px;
+      padding: 14px;
+      color: #657d73;
+      font-size: 13px;
+    }
+
+    @media (max-width: 980px) {
+      .current-grid,
+      .plans-grid,
+      .usage-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+    @media (max-width: 680px) {
+      body { padding: 14px; }
+      .hero h1 { font-size: 28px; }
+      .current-grid,
+      .plans-grid,
+      .usage-grid {
+        grid-template-columns: 1fr;
+      }
+      .actions .btn {
+        width: 100%;
+      }
+    }
+  </style>
+  <script src="/js/role-guard.js"></script>
+</head>
+<body>
+  <script>
+    (function(){
+      const token = localStorage.getItem("token");
+      let user = null;
+      try { user = JSON.parse(localStorage.getItem("user") || "null"); } catch { user = null; }
+      if (!token || !user) {
+        window.top.location.href = "/login.html";
+        return;
+      }
+      const role = String(user.role || "").toLowerCase();
+      if (role === "worker") {
+        window.top.location.href = "/control.html";
+      }
+    })();
+  </script>
+
+  <div class="page">
+    <header class="hero">
+      <div>
+        <h1>Billing Plans</h1>
+        <p>Manage plan, billing status, usage limits, and upgrade actions for your company workspace.</p>
+      </div>
+      <span id="billingStatusPill" class="pill">Loading</span>
+    </header>
+
+    <section class="panel">
+      <div class="head-row">
+        <div>
+          <h2>Billing Actions</h2>
+          <p>Refresh billing data, open customer portal, and change plan safely.</p>
+        </div>
+        <div class="actions">
+          <button id="refreshBtn" class="btn secondary" type="button">Refresh Billing</button>
+          <button id="portalBtn" class="btn secondary" type="button">Open Billing Portal</button>
+        </div>
+      </div>
+      <div id="warningBox" class="alert"></div>
+      <div id="globalStatus" class="status"></div>
+    </section>
+
+    <section class="panel">
+      <div class="head-row">
+        <div>
+          <h2>Current Plan</h2>
+          <p>Live plan information from your billing and subscription records.</p>
+        </div>
+      </div>
+      <div id="currentPlanGrid" class="current-grid"></div>
+    </section>
+
+    <section class="panel">
+      <div class="head-row">
+        <div>
+          <h2>Usage & Limits</h2>
+          <p>Usage progress for users, clients, jobs, invoices, and workers.</p>
+        </div>
+      </div>
+      <div id="usageGrid" class="usage-grid"></div>
+      <div id="upgradeSuggestion" class="status"></div>
+    </section>
+
+    <section class="panel">
+      <div class="head-row">
+        <div>
+          <h2>Available Plans</h2>
+          <p>Starter, Pro, and Growth plans with usage limits and change actions.</p>
+        </div>
+      </div>
+      <div id="plansGrid" class="plans-grid"></div>
+    </section>
+  </div>
+
+  <script>
+    const API = window.location.origin;
+    const state = {
+      loading: false,
+      changingPlanSlug: "",
+      portalOpening: false,
+      data: {
+        plans: [],
+        current: null,
+        me: null
+      }
+    };
+
+    function getToken() { return localStorage.getItem("token"); }
+    function getUser() {
+      try { return JSON.parse(localStorage.getItem("user") || "{}"); } catch { return {}; }
+    }
+    function roleAllowed() {
+      const role = String((getUser() && getUser().role) || "").toLowerCase();
+      return role === "owner" || role === "admin";
+    }
+    function esc(value) {
+      return String(value == null ? "" : value).replace(/[&<>"']/g, function(ch) {
+        return ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[ch];
+      });
+    }
+    function money(value) {
+      return "$" + Number(value || 0).toLocaleString(undefined, {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 2
+      });
+    }
+    function safeNumber(value) {
+      const n = Number(value);
+      return Number.isFinite(n) ? n : null;
+    }
+    function planStatusClass(status) {
+      const s = String(status || "").toLowerCase();
+      if (["past_due", "unpaid", "cancelled", "expired", "suspended", "incomplete"].includes(s)) return "danger";
+      if (["trial", "trialing"].includes(s)) return "warn";
+      return "";
+    }
+    function statusText(status) {
+      return String(status || "unknown").replace(/_/g, " ").replace(/\b\w/g, function(c) { return c.toUpperCase(); });
+    }
+    function setStatus(message, type) {
+      const el = document.getElementById("globalStatus");
+      el.className = "status" + (type ? " " + type : "");
+      el.textContent = message || "";
+    }
+    function setWarning(message) {
+      const box = document.getElementById("warningBox");
+      if (!message) {
+        box.style.display = "none";
+        box.textContent = "";
+        return;
+      }
+      box.style.display = "block";
+      box.textContent = message;
+    }
+    async function safeJson(res) {
+      try { return await res.json(); } catch { return {}; }
+    }
+    async function apiFetch(path, options) {
+      const token = getToken();
+      if (!token) {
+        window.top.location.href = "/login.html";
+        throw new Error("Missing token");
+      }
+      const res = await fetch(API + path, {
+        ...(options || {}),
+        headers: {
+          ...((options && options.headers) || {}),
+          Authorization: "Bearer " + token
+        }
+      });
+      if (res.status === 401) {
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+        window.top.location.href = "/login.html";
+        throw new Error("Unauthorized");
+      }
+      return res;
+    }
+    function extractUsage(me, key) {
+      const usage = (me && me.usage) || {};
+      const aliases = {
+        users: ["users_count", "users", "user_count"],
+        clients: ["clients_count", "clients", "client_count"],
+        jobs: ["jobs_count", "jobs_this_month", "jobs", "job_count"],
+        invoices: ["invoices_count", "invoices", "invoice_count"],
+        workers: ["workers_count", "workers", "worker_count"]
+      };
+      const keys = aliases[key] || [];
+      for (let i = 0; i < keys.length; i += 1) {
+        const n = safeNumber(usage[keys[i]]);
+        if (n !== null) return n;
+      }
+      return 0;
+    }
+    function extractLimit(me, currentPlan, key) {
+      const limits = (me && me.limits) || {};
+      const aliases = {
+        users: ["max_users"],
+        clients: ["max_clients"],
+        jobs: ["max_jobs", "max_jobs_per_month"],
+        invoices: ["max_invoices"],
+        workers: ["max_workers"]
+      };
+      const keys = aliases[key] || [];
+      for (let i = 0; i < keys.length; i += 1) {
+        const n = safeNumber(limits[keys[i]]);
+        if (n !== null) return n;
+      }
+      if (currentPlan) {
+        const n = safeNumber(currentPlan["max_" + key]);
+        if (n !== null) return n;
+      }
+      return null;
+    }
+    function usagePercent(used, limit) {
+      if (limit == null || limit <= 0) return 0;
+      const p = Math.round((used / limit) * 100);
+      return Math.max(0, Math.min(100, p));
+    }
+    function usageClass(pct) {
+      if (pct >= 100) return "danger";
+      if (pct >= 85) return "warn";
+      return "";
+    }
+    function getCurrentPlan() {
+      const current = state.data.current || {};
+      if (current.selected_plan) return current.selected_plan;
+      const meBilling = state.data.me && state.data.me.billing;
+      const slug = (meBilling && meBilling.plan) || current.legacy_plan || "starter";
+      return state.data.plans.find(function(p){ return String(p.slug || "").toLowerCase() === String(slug || "").toLowerCase(); }) || null;
+    }
+    function checkoutPlanForSlug(slug) {
+      const s = String(slug || "").toLowerCase();
+      if (s === "starter") return "basic";
+      if (s === "growth") return "business";
+      return "pro";
+    }
+    function buttonDisabled(slug) {
+      return state.loading || state.changingPlanSlug === slug || !roleAllowed();
+    }
+    function renderCurrentPlan() {
+      const currentPlan = getCurrentPlan();
+      const current = state.data.current || {};
+      const me = state.data.me || {};
+      const billing = me.billing || {};
+      const status = current.billing_status || billing.billing_status || "unknown";
+      const stripePortal = me.portal_available === true;
+
+      document.getElementById("billingStatusPill").className = "pill " + planStatusClass(status);
+      document.getElementById("billingStatusPill").textContent = statusText(status);
+
+      const planName = currentPlan ? currentPlan.name : statusText(current.legacy_plan || billing.plan || "starter");
+      const planPrice = currentPlan ? money(currentPlan.monthly_price) : money(billing.monthly_price || 0);
+      const portalText = stripePortal ? "Available" : "Not available";
+      const checkoutText = me.checkout_available ? "Available" : "Not available";
+
+      document.getElementById("currentPlanGrid").innerHTML = [
+        '<div class="metric"><span>Plan Name</span><strong>' + esc(planName) + '</strong></div>',
+        '<div class="metric"><span>Billing Status</span><strong>' + esc(statusText(status)) + '</strong></div>',
+        '<div class="metric"><span>Monthly Price</span><strong>' + esc(planPrice) + '</strong></div>',
+        '<div class="metric"><span>Stripe Portal</span><strong>' + esc(portalText) + '</strong></div>',
+        '<div class="metric"><span>Checkout Session</span><strong>' + esc(checkoutText) + '</strong></div>',
+        '<div class="metric"><span>Legacy Plan</span><strong>' + esc(statusText(current.legacy_plan || billing.plan || "-")) + '</strong></div>',
+        '<div class="metric"><span>Warning Mode</span><strong>' + esc(me.warning_mode === true ? "Enabled" : "Disabled") + '</strong></div>',
+        '<div class="metric"><span>Portal Eligible</span><strong>' + esc(me.stripe_customer_id ? "Yes" : "No") + '</strong></div>'
+      ].join("");
+    }
+    function renderUsage() {
+      const me = state.data.me || {};
+      const currentPlan = getCurrentPlan();
+      const items = [
+        { key: "users", label: "Users" },
+        { key: "clients", label: "Clients" },
+        { key: "jobs", label: "Jobs" },
+        { key: "invoices", label: "Invoices" },
+        { key: "workers", label: "Workers" }
+      ];
+      const html = items.map(function(item){
+        const used = extractUsage(me, item.key);
+        const limit = extractLimit(me, currentPlan, item.key);
+        const pct = usagePercent(used, limit);
+        return '<div class="usage-card">' +
+          '<div class="usage-label"><span>' + esc(item.label) + '</span><span>' + esc(String(used)) + ' / ' + esc(limit == null ? "Unlimited" : String(limit)) + '</span></div>' +
+          '<div class="track"><div class="fill ' + esc(usageClass(pct)) + '" style="width:' + pct + '%"></div></div>' +
+          '<div class="usage-help">' + esc(limit == null ? "No limit set on this plan." : (pct + "% used")) + '</div>' +
+        '</div>';
+      }).join("");
+      document.getElementById("usageGrid").innerHTML = html || '<div class="empty">Usage is unavailable.</div>';
+
+      const warnings = me && me.warnings && Array.isArray(me.warnings.warnings) ? me.warnings.warnings : [];
+      const suggestion = warnings.length
+        ? (warnings[0].message || "Upgrade your plan to avoid usage limits.")
+        : "If your team is growing, upgrade to increase limits and avoid creation blocks.";
+      const sugEl = document.getElementById("upgradeSuggestion");
+      sugEl.textContent = suggestion;
+      sugEl.className = "status" + (warnings.length ? " error" : "");
+    }
+    function renderPlans() {
+      const plans = Array.isArray(state.data.plans) ? state.data.plans : [];
+      const currentPlan = getCurrentPlan();
+      if (!plans.length) {
+        document.getElementById("plansGrid").innerHTML = '<div class="empty">No active plans found.</div>';
+        return;
+      }
+
+      const checkoutAvailable = state.data.me && state.data.me.checkout_available === true;
+      const cards = plans.map(function(plan){
+        const slug = String(plan.slug || "").toLowerCase();
+        const isCurrent = currentPlan && String(currentPlan.slug || "").toLowerCase() === slug;
+        const changing = state.changingPlanSlug === slug;
+        const label = isCurrent ? "Current Plan" : (changing ? "Saving..." : "Select Plan");
+        return '<div class="plan-card ' + (isCurrent ? "current" : "") + '">' +
+          '<h3>' + esc(plan.name || slug) + '</h3>' +
+          '<div class="plan-price">' + esc(money(plan.monthly_price)) + ' <small>/ month</small></div>' +
+          '<div class="limits">' +
+            '<div>Users: ' + esc(plan.max_users) + '</div>' +
+            '<div>Clients: ' + esc(plan.max_clients) + '</div>' +
+            '<div>Jobs: ' + esc(plan.max_jobs) + '</div>' +
+            '<div>Invoices: ' + esc(plan.max_invoices) + '</div>' +
+            '<div>Workers: ' + esc(plan.max_workers) + '</div>' +
+          '</div>' +
+          (isCurrent
+            ? '<button class="btn secondary" type="button" disabled>Current Plan</button>'
+            : '<button class="btn" type="button" data-plan-change="' + esc(slug) + '" ' + (buttonDisabled(slug) ? "disabled" : "") + '>' + esc(checkoutAvailable ? "Upgrade via Checkout" : label) + '</button>') +
+        '</div>';
+      }).join("");
+      document.getElementById("plansGrid").innerHTML = cards;
+    }
+    function renderAll() {
+      renderCurrentPlan();
+      renderUsage();
+      renderPlans();
+
+      const me = state.data.me || {};
+      const portalEnabled = me.portal_available === true;
+      const portalBtn = document.getElementById("portalBtn");
+      portalBtn.disabled = state.loading || state.portalOpening || !portalEnabled || !roleAllowed();
+      portalBtn.textContent = state.portalOpening ? "Opening..." : "Open Billing Portal";
+
+      document.getElementById("refreshBtn").disabled = state.loading;
+    }
+    async function fetchAll() {
+      state.loading = true;
+      setStatus("Loading billing data...", "");
+      setWarning("");
+      renderAll();
+      try {
+        const [plansRes, currentRes, meRes] = await Promise.all([
+          apiFetch("/billing/plans"),
+          apiFetch("/billing/current-plan"),
+          apiFetch("/billing/me")
+        ]);
+        const plansData = await safeJson(plansRes);
+        const currentData = await safeJson(currentRes);
+        const meData = await safeJson(meRes);
+
+        if (!plansRes.ok) throw new Error(plansData.error || "Unable to load billing plans.");
+        if (!currentRes.ok) throw new Error(currentData.error || "Unable to load current plan.");
+        if (!meRes.ok) throw new Error(meData.error || "Unable to load billing summary.");
+
+        state.data.plans = Array.isArray(plansData.plans) ? plansData.plans : [];
+        state.data.current = currentData || {};
+        state.data.me = meData || {};
+
+        const warnings = meData && meData.warnings && Array.isArray(meData.warnings.warnings) ? meData.warnings.warnings : [];
+        if (warnings.length) {
+          setWarning(warnings[0].message || "Billing warning detected.");
+        }
+        setStatus("Billing data refreshed.", "ok");
+      } catch (err) {
+        setStatus(err.message || "Failed to load billing data.", "error");
+        setWarning(err.message || "Could not load billing data.");
+      } finally {
+        state.loading = false;
+        renderAll();
+      }
+    }
+    async function openPortal() {
+      state.portalOpening = true;
+      setStatus("Opening billing portal...", "");
+      renderAll();
+      try {
+        const res = await apiFetch("/billing/create-portal-session", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({})
+        });
+        const data = await safeJson(res);
+        if (!res.ok) throw new Error(data.error || "Unable to open billing portal.");
+        if (!data.url) throw new Error("Portal URL is missing.");
+        window.top.location.href = data.url;
+      } catch (err) {
+        setStatus(err.message || "Unable to open portal.", "error");
+      } finally {
+        state.portalOpening = false;
+        renderAll();
+      }
+    }
+    async function changePlan(planSlug) {
+      if (!planSlug) return;
+      state.changingPlanSlug = planSlug;
+      setStatus("Changing plan...", "");
+      renderAll();
+      try {
+        const me = state.data.me || {};
+        const checkoutAvailable = me.checkout_available === true;
+        if (checkoutAvailable) {
+          const checkoutPlan = checkoutPlanForSlug(planSlug);
+          const checkoutRes = await apiFetch("/billing/create-checkout-session", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ plan: checkoutPlan })
+          });
+          const checkoutData = await safeJson(checkoutRes);
+          if (!checkoutRes.ok) throw new Error(checkoutData.error || "Unable to create checkout session.");
+          if (!checkoutData.url) throw new Error("Checkout URL is missing.");
+          window.top.location.href = checkoutData.url;
+          return;
+        }
+
+        const res = await apiFetch("/billing/change-plan", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ plan_slug: planSlug })
+        });
+        const data = await safeJson(res);
+        if (!res.ok) throw new Error(data.error || "Unable to change plan.");
+        setStatus("Plan changed successfully.", "ok");
+        await fetchAll();
+      } catch (err) {
+        setStatus(err.message || "Plan change failed.", "error");
+      } finally {
+        state.changingPlanSlug = "";
+        renderAll();
+      }
+    }
+    function bindEvents() {
+      document.getElementById("refreshBtn").addEventListener("click", function(){ fetchAll(); });
+      document.getElementById("portalBtn").addEventListener("click", function(){ openPortal(); });
+      document.getElementById("plansGrid").addEventListener("click", function(ev){
+        const btn = ev.target.closest("[data-plan-change]");
+        if (!btn) return;
+        const slug = btn.getAttribute("data-plan-change");
+        if (slug) changePlan(slug);
+      });
+    }
+    function init() {
+      if (!roleAllowed()) {
+        setWarning("Only owner/admin can manage billing plans.");
+      }
+      bindEvents();
+      fetchAll();
+    }
+    init();
+  </script>
+</body>
+</html>

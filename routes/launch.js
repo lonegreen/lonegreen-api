@@ -4,12 +4,14 @@ const bcrypt = require("bcrypt");
 const pool = require("../db/pool");
 const auth = require("../middleware/auth");
 const requireCompanyBillingForMutations = require("../middleware/requireCompanyBillingForMutations");
+const { enforcePlanLimits } = require("../middleware/enforcePlanLimits");
 const { requireMinimumRole, normalizeRole } = auth;
 const { listMigrationFiles, getAppliedMigrations } = require("../db/setup");
 const { logActivity } = require("../services/routeHelpers");
 
 const router = express.Router();
 const ROLES = new Set(["owner", "admin", "manager", "worker"]);
+const enforceUserPlanLimit = enforcePlanLimits("users");
 let launchSchemaChecked = false;
 
 function cleanText(value) {
@@ -120,7 +122,7 @@ router.get("/users/options", auth, requireCompanyBillingForMutations, requireMin
   }
 });
 
-router.post("/users", auth, requireCompanyBillingForMutations, requireMinimumRole("admin"), async (req, res) => {
+router.post("/users", auth, requireCompanyBillingForMutations, enforceUserPlanLimit, requireMinimumRole("admin"), async (req, res) => {
   try {
     await ensureLaunchSchema();
     const username = cleanText(req.body.username);

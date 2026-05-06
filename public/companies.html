@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Discover Companies</title>
+  <link rel="stylesheet" href="/app-shell.css">
+  <style>
+    * { box-sizing: border-box; font-family: Inter, Arial, sans-serif; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: linear-gradient(180deg, #edf5f0 0%, #f7f9f8 180px, #f4f6f8 100%);
+      color: #173327;
+      padding: 20px;
+    }
+    .page {
+      width: min(1180px, 100%);
+      margin: 0 auto;
+      display: grid;
+      gap: 14px;
+    }
+    .hero {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    h1 {
+      margin: 0 0 6px;
+      color: #1f5c3a;
+      font-size: 32px;
+    }
+    .muted {
+      margin: 0;
+      color: #648076;
+      line-height: 1.45;
+    }
+    .search-wrap {
+      width: min(420px, 100%);
+    }
+    .search {
+      width: 100%;
+      border: 1px solid #cfe0d5;
+      border-radius: 12px;
+      padding: 12px 14px;
+      font-size: 14px;
+      color: #173327;
+      outline: none;
+      background: #fff;
+      transition: 0.18s ease;
+    }
+    .search:focus {
+      border-color: #2c8b55;
+      box-shadow: 0 0 0 4px rgba(44,139,85,0.12);
+    }
+    .status {
+      min-height: 20px;
+      color: #5f6e66;
+      font-size: 14px;
+    }
+    .status.error {
+      color: #b42318;
+      font-weight: 700;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+    }
+    .card {
+      background: #fff;
+      border: 1px solid #dbe7df;
+      border-radius: 16px;
+      box-shadow: 0 14px 30px rgba(16,24,40,0.06);
+      padding: 16px;
+      display: grid;
+      gap: 10px;
+    }
+    .head {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .logo {
+      width: 52px;
+      height: 52px;
+      border-radius: 12px;
+      border: 1px solid #dbe7df;
+      background: #f8fcf9;
+      display: grid;
+      place-items: center;
+      color: #1f5c3a;
+      font-weight: 900;
+      overflow: hidden;
+      flex: 0 0 auto;
+    }
+    .logo img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    .name {
+      margin: 0;
+      color: #1f5c3a;
+      font-size: 20px;
+      line-height: 1.2;
+    }
+    .desc {
+      margin: 0;
+      color: #5f7469;
+      line-height: 1.45;
+      min-height: 40px;
+    }
+    .label {
+      margin: 0 0 6px;
+      color: #648076;
+      font-size: 12px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .chip {
+      border-radius: 999px;
+      padding: 5px 10px;
+      font-size: 12px;
+      font-weight: 800;
+      background: #eef4f0;
+      color: #1f5c3a;
+    }
+    .btn {
+      border: none;
+      border-radius: 12px;
+      padding: 11px 14px;
+      font-size: 14px;
+      font-weight: 800;
+      cursor: pointer;
+      background: linear-gradient(135deg, #1f5c3a, #2d8b55);
+      color: #fff;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: fit-content;
+    }
+    .empty {
+      border: 1px dashed #cfe0d5;
+      border-radius: 14px;
+      background: #f8fcf9;
+      padding: 18px;
+      text-align: center;
+      color: #648076;
+      line-height: 1.5;
+    }
+    .empty strong {
+      display: block;
+      color: #173327;
+      margin-bottom: 6px;
+    }
+    @media (max-width: 1020px) {
+      .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    @media (max-width: 700px) {
+      body { padding: 14px; }
+      .grid { grid-template-columns: 1fr; }
+      h1 { font-size: 28px; }
+      .search-wrap { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <section class="hero">
+      <div>
+        <h1>Discover Companies</h1>
+        <p class="muted">Browse public company profiles and find services in your area.</p>
+      </div>
+      <div class="search-wrap">
+        <input id="searchInput" class="search" type="search" placeholder="Search by name, service, or area">
+      </div>
+    </section>
+
+    <div id="status" class="status" role="status" aria-live="polite"></div>
+    <section id="companiesGrid" class="grid"></section>
+  </main>
+
+  <script>
+    const API_BASE = window.location.origin;
+    const state = {
+      all: [],
+      filtered: []
+    };
+
+    function setStatus(message, type) {
+      const el = document.getElementById("status");
+      el.textContent = message || "";
+      el.className = "status" + (type ? " " + type : "");
+    }
+
+    function initials(name) {
+      return String(name || "CO")
+        .split(/\s+/)
+        .map((part) => part[0] || "")
+        .join("")
+        .slice(0, 2)
+        .toUpperCase() || "CO";
+    }
+
+    function renderCompanies(items) {
+      const host = document.getElementById("companiesGrid");
+      if (!items.length) {
+        host.innerHTML = '<div class="empty" style="grid-column:1/-1;"><strong>No companies found</strong>Try a different search term.</div>';
+        return;
+      }
+
+      host.innerHTML = items.map((company) => {
+        const services = Array.isArray(company.services) ? company.services : [];
+        const areas = Array.isArray(company.service_areas) ? company.service_areas : [];
+        const desc = String(company.public_description || "").trim() || "No public description available.";
+        const logoHtml = company.logo_url
+          ? '<img src="' + company.logo_url + '" alt="">'
+          : initials(company.name);
+
+        return (
+          '<article class="card">' +
+            '<div class="head">' +
+              '<div class="logo">' + logoHtml + '</div>' +
+              '<h2 class="name">' + (company.name || "Company") + '</h2>' +
+            '</div>' +
+            '<p class="desc">' + desc + '</p>' +
+            '<div>' +
+              '<p class="label">Services</p>' +
+              '<div class="chips">' +
+                (services.length
+                  ? services.slice(0, 6).map((service) => '<span class="chip">' + service + '</span>').join("")
+                  : '<span class="chip">Not listed</span>') +
+              '</div>' +
+            '</div>' +
+            '<div>' +
+              '<p class="label">Service Areas</p>' +
+              '<div class="chips">' +
+                (areas.length
+                  ? areas.slice(0, 6).map((area) => '<span class="chip">' + area + '</span>').join("")
+                  : '<span class="chip">Not listed</span>') +
+              '</div>' +
+            '</div>' +
+            '<a class="btn" href="/company-profile.html?slug=' + encodeURIComponent(company.public_slug || "") + '">View Profile</a>' +
+          '</article>'
+        );
+      }).join("");
+    }
+
+    function applySearch() {
+      const query = String(document.getElementById("searchInput").value || "").trim().toLowerCase();
+      if (!query) {
+        state.filtered = state.all.slice();
+        renderCompanies(state.filtered);
+        return;
+      }
+
+      state.filtered = state.all.filter((company) => {
+        const name = String(company.name || "").toLowerCase();
+        const services = Array.isArray(company.services) ? company.services.join(" ").toLowerCase() : "";
+        const areas = Array.isArray(company.service_areas) ? company.service_areas.join(" ").toLowerCase() : "";
+        return name.includes(query) || services.includes(query) || areas.includes(query);
+      });
+
+      renderCompanies(state.filtered);
+    }
+
+    async function loadCompanies() {
+      setStatus("Loading companies...", "");
+      try {
+        const res = await fetch(API_BASE + "/companies/public");
+        const data = await res.json().catch(() => []);
+        if (!res.ok) throw new Error((data && data.error) || "Unable to load companies.");
+        state.all = Array.isArray(data) ? data : [];
+        state.filtered = state.all.slice();
+        renderCompanies(state.filtered);
+        setStatus(state.all.length ? "" : "No public companies are available yet.", "");
+      } catch (err) {
+        setStatus(err.message || "Unable to load companies.", "error");
+        renderCompanies([]);
+      }
+    }
+
+    document.getElementById("searchInput").addEventListener("input", applySearch);
+    loadCompanies();
+  </script>
+</body>
+</html>

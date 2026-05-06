@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LoneGreen | Marketplace Analytics</title>
+  <link rel="stylesheet" href="/app-shell.css">
+  <link rel="stylesheet" href="/ui-cleanup.css">
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: Inter, Arial, sans-serif; color: #173327; background: radial-gradient(circle at top left, rgba(31,92,58,.08), transparent 28%), linear-gradient(180deg,#edf5f0 0%,#f6f8f7 210px,#f4f6f8 100%); padding: 22px; }
+    .page { width: min(1280px, 100%); margin: 0 auto; display: grid; gap: 16px; }
+    .hero { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; flex-wrap: wrap; }
+    .hero h1 { margin: 0 0 6px; color: #1f5c3a; font-size: 32px; letter-spacing: -.02em; }
+    .hero p { margin: 0; color: #60786e; line-height: 1.5; }
+    .hero-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+    .btn { border: none; border-radius: 12px; padding: 10px 14px; font: inherit; font-weight: 800; cursor: pointer; transition: transform .15s ease, box-shadow .15s ease, opacity .15s ease; }
+    .btn:hover:not(:disabled) { transform: translateY(-1px); }
+    .btn.secondary { background: #edf6f0; color: #1f5c3a; border: 1px solid #d0dfd5; }
+    .btn:disabled { opacity: .62; cursor: not-allowed; transform: none; box-shadow: none; }
+    .status-line { min-height: 18px; color: #60786e; font-size: 13px; font-weight: 700; }
+    .status-line.error { color: #b42318; }
+    .status-line.ok { color: #166534; }
+    .kpis { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 10px; }
+    .kpi { background: rgba(255,255,255,.96); border: 1px solid #dbe7df; border-radius: 14px; box-shadow: 0 14px 28px rgba(16,24,40,.06); padding: 12px; display: grid; gap: 6px; }
+    .kpi span { color: #648076; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: .04em; }
+    .kpi strong { color: #173327; font-size: 28px; line-height: 1.1; font-weight: 900; font-variant-numeric: tabular-nums; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; align-items: start; }
+    .panel { background: rgba(255,255,255,.96); border: 1px solid #dbe7df; border-radius: 16px; box-shadow: 0 18px 38px rgba(16,24,40,.06); padding: 16px; display: grid; gap: 12px; }
+    .panel h2 { margin: 0; color: #1f5c3a; font-size: 20px; }
+    .subhead { margin: 0; color: #678075; font-size: 13px; line-height: 1.45; }
+    .list { display: grid; gap: 8px; }
+    .row { border: 1px solid #dce9e2; border-radius: 12px; background: #fbfdfc; padding: 10px; display: grid; gap: 4px; }
+    .row-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+    .row-title { margin: 0; color: #173327; font-size: 14px; font-weight: 800; overflow-wrap: anywhere; }
+    .row-meta { margin: 0; color: #637b71; font-size: 12px; }
+    .metric-grid { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 10px; }
+    .metric { border: 1px solid #dce9e2; border-radius: 12px; background: #f8fbf9; padding: 10px; display: grid; gap: 4px; }
+    .metric span { font-size: 11px; color: #678075; text-transform: uppercase; letter-spacing: .04em; font-weight: 800; }
+    .metric strong { font-size: 23px; color: #173327; font-weight: 900; font-variant-numeric: tabular-nums; }
+    .chart-wrap { border: 1px solid #dce9e2; border-radius: 12px; background: #f8fbf9; padding: 10px; }
+    svg { width: 100%; height: auto; display: block; }
+    .empty { border: 1px dashed #d5e3db; border-radius: 12px; background: #f8fbf9; padding: 14px; color: #657d73; font-size: 13px; line-height: 1.5; text-align: center; }
+    .empty strong { display:block; margin-bottom: 5px; color: #173327; }
+    @media (max-width: 1200px) { .kpis { grid-template-columns: repeat(3, minmax(0,1fr)); } }
+    @media (max-width: 980px) { .grid { grid-template-columns: 1fr; } .metric-grid { grid-template-columns: 1fr; } }
+    @media (max-width: 720px) { body { padding: 14px; } .hero h1 { font-size: 28px; } .hero-actions { width: 100%; display: grid; grid-template-columns: 1fr; } .hero-actions .btn, .kpis { grid-template-columns: 1fr; width: 100%; } }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <header class="hero">
+      <div>
+        <h1>Marketplace Analytics</h1>
+        <p>Track request, offer, and conversion performance across your marketplace activity.</p>
+      </div>
+      <div class="hero-actions">
+        <button id="refreshBtn" class="btn secondary" type="button">Refresh</button>
+      </div>
+    </header>
+
+    <div id="statusLine" class="status-line" role="status" aria-live="polite"></div>
+
+    <section class="kpis">
+      <article class="kpi"><span>Requests Created</span><strong id="kpiRequestsCreated">0</strong></article>
+      <article class="kpi"><span>Offers Sent</span><strong id="kpiOffersSent">0</strong></article>
+      <article class="kpi"><span>Offers Accepted</span><strong id="kpiOffersAccepted">0</strong></article>
+      <article class="kpi"><span>Match Rate</span><strong id="kpiMatchRate">0%</strong></article>
+      <article class="kpi"><span>Acceptance Rate</span><strong id="kpiAcceptanceRate">0%</strong></article>
+      <article class="kpi"><span>Conversions</span><strong id="kpiConversions">0</strong></article>
+    </section>
+
+    <section class="grid">
+      <article class="panel">
+        <h2>Top Categories</h2>
+        <div id="topCategories" class="list"></div>
+      </article>
+      <article class="panel">
+        <h2>Top Zip Codes</h2>
+        <div id="topZips" class="list"></div>
+      </article>
+      <article class="panel">
+        <h2>Top Companies</h2>
+        <div id="topCompanies" class="list"></div>
+      </article>
+      <article class="panel">
+        <h2>Conversion Metrics</h2>
+        <p class="subhead">Request-to-match and offer-to-accept conversion insights.</p>
+        <div class="metric-grid">
+          <div class="metric"><span>Matched Requests</span><strong id="metricMatchedRequests">0</strong></div>
+          <div class="metric"><span>Open Requests</span><strong id="metricOpenRequests">0</strong></div>
+          <div class="metric"><span>Pending Offers</span><strong id="metricPendingOffers">0</strong></div>
+          <div class="metric"><span>Request Conversion</span><strong id="metricRequestConversion">0%</strong></div>
+          <div class="metric"><span>Offer Conversion</span><strong id="metricOfferConversion">0%</strong></div>
+          <div class="metric"><span>Total Activity</span><strong id="metricTotalActivity">0</strong></div>
+        </div>
+      </article>
+    </section>
+
+    <section class="grid">
+      <article class="panel">
+        <h2>Weekly Activity Chart</h2>
+        <p class="subhead">Last 7 days of requests + offers.</p>
+        <div id="weeklyChart" class="chart-wrap"></div>
+      </article>
+      <article class="panel">
+        <h2>Monthly Activity Chart</h2>
+        <p class="subhead">Last 6 months of requests + offers.</p>
+        <div id="monthlyChart" class="chart-wrap"></div>
+      </article>
+    </section>
+  </main>
+
+  <script>
+    (function() {
+      const state = {
+        companyToken: localStorage.getItem("token") || "",
+        customerToken: localStorage.getItem("customerToken") || "",
+        requests: [],
+        offers: [],
+        opportunities: []
+      };
+
+      const els = {
+        refreshBtn: document.getElementById("refreshBtn"),
+        statusLine: document.getElementById("statusLine"),
+        kpiRequestsCreated: document.getElementById("kpiRequestsCreated"),
+        kpiOffersSent: document.getElementById("kpiOffersSent"),
+        kpiOffersAccepted: document.getElementById("kpiOffersAccepted"),
+        kpiMatchRate: document.getElementById("kpiMatchRate"),
+        kpiAcceptanceRate: document.getElementById("kpiAcceptanceRate"),
+        kpiConversions: document.getElementById("kpiConversions"),
+        topCategories: document.getElementById("topCategories"),
+        topZips: document.getElementById("topZips"),
+        topCompanies: document.getElementById("topCompanies"),
+        metricMatchedRequests: document.getElementById("metricMatchedRequests"),
+        metricOpenRequests: document.getElementById("metricOpenRequests"),
+        metricPendingOffers: document.getElementById("metricPendingOffers"),
+        metricRequestConversion: document.getElementById("metricRequestConversion"),
+        metricOfferConversion: document.getElementById("metricOfferConversion"),
+        metricTotalActivity: document.getElementById("metricTotalActivity"),
+        weeklyChart: document.getElementById("weeklyChart"),
+        monthlyChart: document.getElementById("monthlyChart")
+      };
+
+      function setStatus(message, type) {
+        els.statusLine.textContent = message || "";
+        els.statusLine.className = "status-line" + (type ? " " + type : "");
+      }
+
+      function esc(v) {
+        return String(v == null ? "" : v).replace(/[&<>"']/g, function(c) {
+          return ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" })[c];
+        });
+      }
+
+      function toArray(payload) {
+        if (Array.isArray(payload)) return payload;
+        if (!payload || typeof payload !== "object") return [];
+        if (Array.isArray(payload.items)) return payload.items;
+        if (Array.isArray(payload.data)) return payload.data;
+        if (Array.isArray(payload.requests)) return payload.requests;
+        if (Array.isArray(payload.offers)) return payload.offers;
+        if (Array.isArray(payload.opportunities)) return payload.opportunities;
+        return [];
+      }
+
+      function pct(part, total) {
+        if (!total) return "0%";
+        return Math.round((part / total) * 100) + "%";
+      }
+
+      function dayKey(date) {
+        return date.toISOString().slice(0, 10);
+      }
+
+      function monthKey(date) {
+        return date.getFullYear() + "-" + String(date.getMonth() + 1).padStart(2, "0");
+      }
+
+      async function fetchWithToken(path, token) {
+        const res = await fetch(path, { headers: { Authorization: "Bearer " + token } });
+        const body = await res.json().catch(function() { return {}; });
+        if (!res.ok) throw new Error(body.error || "Request failed");
+        return body;
+      }
+
+      async function tryFetch(path, token) {
+        if (!token) return [];
+        try {
+          const payload = await fetchWithToken(path, token);
+          return toArray(payload);
+        } catch (_) {
+          return [];
+        }
+      }
+
+      function num(v) {
+        const n = Number(v);
+        return Number.isFinite(n) ? n : 0;
+      }
+
+      function renderTopList(el, rows, emptyTitle, emptyText) {
+        if (!rows.length) {
+          el.innerHTML = '<div class="empty"><strong>' + esc(emptyTitle) + "</strong>" + esc(emptyText) + "</div>";
+          return;
+        }
+        el.innerHTML = rows.map(function(r) {
+          return '<article class="row"><div class="row-top"><p class="row-title">' + esc(r.label) + '</p><strong>' + esc(r.value) + "</strong></div></article>";
+        }).join("");
+      }
+
+      function aggregateCounts(items, keySelector) {
+        const map = new Map();
+        items.forEach(function(item) {
+          const key = keySelector(item);
+          if (!key) return;
+          map.set(key, (map.get(key) || 0) + 1);
+        });
+        return Array.from(map.entries()).map(function(entry) {
+          return { label: entry[0], value: entry[1] };
+        }).sort(function(a, b) { return b.value - a.value; }).slice(0, 8);
+      }
+
+      function buildChart(container, labels, values, color) {
+        if (!labels.length) {
+          container.innerHTML = '<div class="empty"><strong>No chart data</strong>Activity appears when requests/offers are created.</div>';
+          return;
+        }
+        const width = 640;
+        const height = 220;
+        const padding = { top: 12, right: 14, bottom: 48, left: 22 };
+        const plotW = width - padding.left - padding.right;
+        const plotH = height - padding.top - padding.bottom;
+        const max = Math.max(1, values.reduce(function(a, b) { return Math.max(a, b); }, 0));
+        const barW = plotW / labels.length;
+
+        let bars = "";
+        let xLabels = "";
+        for (let i = 0; i < labels.length; i += 1) {
+          const v = values[i];
+          const h = Math.round((v / max) * (plotH - 8));
+          const x = padding.left + i * barW + 4;
+          const y = padding.top + plotH - h;
+          const w = Math.max(8, barW - 8);
+          bars += '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="' + h + '" rx="4" fill="' + color + '"></rect>';
+          bars += '<text x="' + (x + w / 2) + '" y="' + (y - 4) + '" text-anchor="middle" font-size="11" fill="#1f5c3a">' + v + '</text>';
+          xLabels += '<text x="' + (x + w / 2) + '" y="' + (height - 18) + '" text-anchor="middle" font-size="11" fill="#5f776d">' + esc(labels[i]) + '</text>';
+        }
+
+        container.innerHTML = '<svg viewBox="0 0 ' + width + " " + height + '" role="img" aria-label="activity chart">' +
+          '<rect x="0" y="0" width="' + width + '" height="' + height + '" fill="transparent"></rect>' +
+          '<line x1="' + padding.left + '" y1="' + (padding.top + plotH) + '" x2="' + (padding.left + plotW) + '" y2="' + (padding.top + plotH) + '" stroke="#d5e3db"></line>' +
+          bars + xLabels + "</svg>";
+      }
+
+      function createdAt(item) {
+        return item.created_at || item.updated_at || null;
+      }
+
+      function render() {
+        const requests = state.requests;
+        const offers = state.offers;
+        const opportunities = state.opportunities;
+
+        const requestsCreated = requests.length;
+        const offersSent = offers.length;
+        const offersAccepted = offers.filter(function(o) { return String(o.status || "").toLowerCase() === "accepted"; }).length;
+        const matchedRequests = requests.filter(function(r) { return String(r.status || "").toLowerCase() === "matched"; }).length;
+        const openRequests = requests.filter(function(r) { return String(r.status || "").toLowerCase() === "open"; }).length;
+        const pendingOffers = offers.filter(function(o) { return String(o.status || "").toLowerCase() === "pending"; }).length;
+        const conversions = matchedRequests + offersAccepted;
+        const matchRate = pct(matchedRequests, requestsCreated);
+        const acceptanceRate = pct(offersAccepted, offersSent);
+
+        els.kpiRequestsCreated.textContent = String(requestsCreated);
+        els.kpiOffersSent.textContent = String(offersSent);
+        els.kpiOffersAccepted.textContent = String(offersAccepted);
+        els.kpiMatchRate.textContent = matchRate;
+        els.kpiAcceptanceRate.textContent = acceptanceRate;
+        els.kpiConversions.textContent = String(conversions);
+
+        els.metricMatchedRequests.textContent = String(matchedRequests);
+        els.metricOpenRequests.textContent = String(openRequests);
+        els.metricPendingOffers.textContent = String(pendingOffers);
+        els.metricRequestConversion.textContent = matchRate;
+        els.metricOfferConversion.textContent = acceptanceRate;
+        els.metricTotalActivity.textContent = String(requestsCreated + offersSent + opportunities.length);
+
+        const topCategories = aggregateCounts(
+          requests.concat(opportunities),
+          function(item) { return item.category_name || (item.category_id ? "Category " + item.category_id : "Uncategorized"); }
+        );
+        const topZips = aggregateCounts(
+          requests.concat(opportunities),
+          function(item) { return item.zip_code ? String(item.zip_code) : ""; }
+        );
+        const topCompanies = aggregateCounts(
+          offers,
+          function(item) { return item.company_name || (item.company_id ? "Company " + item.company_id : "Unknown Company"); }
+        );
+
+        renderTopList(els.topCategories, topCategories, "No category data", "Categories appear after marketplace activity.");
+        renderTopList(els.topZips, topZips, "No zip data", "Zip insights appear after marketplace activity.");
+        renderTopList(els.topCompanies, topCompanies, "No company data", "Company rankings appear after offers are sent.");
+
+        const now = new Date();
+        const weeklyLabels = [];
+        const weeklyValues = [];
+        for (let i = 6; i >= 0; i -= 1) {
+          const d = new Date(now);
+          d.setDate(d.getDate() - i);
+          const key = dayKey(d);
+          const label = d.toLocaleDateString([], { weekday: "short" });
+          const count = requests.filter(function(r) { return dayKey(new Date(createdAt(r) || 0)) === key; }).length +
+            offers.filter(function(o) { return dayKey(new Date(createdAt(o) || 0)) === key; }).length;
+          weeklyLabels.push(label);
+          weeklyValues.push(count);
+        }
+        buildChart(els.weeklyChart, weeklyLabels, weeklyValues, "#2d8b55");
+
+        const monthlyLabels = [];
+        const monthlyValues = [];
+        for (let j = 5; j >= 0; j -= 1) {
+          const d2 = new Date(now.getFullYear(), now.getMonth() - j, 1);
+          const key2 = monthKey(d2);
+          const label2 = d2.toLocaleDateString([], { month: "short" });
+          const count2 = requests.filter(function(r) { return monthKey(new Date(createdAt(r) || 0)) === key2; }).length +
+            offers.filter(function(o) { return monthKey(new Date(createdAt(o) || 0)) === key2; }).length;
+          monthlyLabels.push(label2);
+          monthlyValues.push(count2);
+        }
+        buildChart(els.monthlyChart, monthlyLabels, monthlyValues, "#1f5c3a");
+      }
+
+      async function loadData() {
+        setStatus("Loading marketplace analytics...", "");
+        els.refreshBtn.disabled = true;
+        try {
+          const [requests, offers, opportunities] = await Promise.all([
+            tryFetch("/marketplace/requests/me", state.customerToken),
+            tryFetch("/marketplace/offers/me", state.companyToken),
+            tryFetch("/marketplace/opportunities", state.companyToken)
+          ]);
+          state.requests = requests;
+          state.offers = offers;
+          state.opportunities = opportunities;
+          render();
+          if (!requests.length && !offers.length && !opportunities.length) {
+            setStatus("Connected, but no marketplace analytics data is available yet.", "");
+          } else {
+            setStatus("Analytics updated.", "ok");
+          }
+        } catch (err) {
+          render();
+          setStatus(err.message || "Unable to load analytics.", "error");
+        } finally {
+          els.refreshBtn.disabled = false;
+        }
+      }
+
+      function init() {
+        if (!state.companyToken && !state.customerToken) {
+          setStatus("Sign in to view marketplace analytics.", "error");
+          render();
+          return;
+        }
+        els.refreshBtn.addEventListener("click", loadData);
+        render();
+        loadData();
+      }
+
+      init();
+    })();
+  </script>
+</body>
+</html>

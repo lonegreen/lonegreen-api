@@ -12,7 +12,7 @@
       font-family: Arial, sans-serif;
       background: #eef4f0;
       color: #163328;
-      padding: 24px;
+      padding: 14px;
     }
 
     .page {
@@ -26,19 +26,19 @@
     }
 
     .header {
-      padding: 30px 34px;
+      padding: 12px 16px;
       background: #ffffff;
       color: #173327;
       display: grid;
-      grid-template-columns: minmax(0, 1fr) minmax(260px, auto);
-      gap: 28px;
+      grid-template-columns: minmax(0, 1fr) 250px;
+      gap: 10px;
       border-bottom: 1px solid #dce8e1;
       align-items: start;
     }
 
     .header h1 {
-      margin: 0 0 10px;
-      font-size: 42px;
+      margin: 0 0 4px;
+      font-size: 34px;
       letter-spacing: -0.03em;
       color: #10291f;
     }
@@ -55,7 +55,7 @@
 
     .brand-wrap {
       display: flex;
-      gap: 16px;
+      gap: 12px;
       align-items: flex-start;
       min-width: 0;
     }
@@ -65,31 +65,33 @@
     }
 
     .brand-name {
-      font-size: 24px;
+      font-size: 18px;
       font-weight: 900;
       color: #10291f;
-      line-height: 1.2;
-      margin-bottom: 8px;
+      line-height: 1.15;
+      margin-bottom: 4px;
       word-break: break-word;
+      max-width: 100%;
     }
 
     .brand-lines,
     .client-lines,
     .detail-lines {
       color: #587067;
-      line-height: 1.6;
+      line-height: 1.25;
+      font-size: 11px;
       word-break: break-word;
     }
 
     .brand-logo {
       display: block;
-      width: 96px;
-      max-width: 96px;
-      max-height: 72px;
+      width: 84px;
+      max-width: 84px;
+      max-height: 58px;
       object-fit: contain;
       border: 1px solid #dce8e1;
       border-radius: 8px;
-      padding: 8px;
+      padding: 5px;
       background: white;
       flex: 0 0 auto;
     }
@@ -97,14 +99,17 @@
     .invoice-head {
       text-align: right;
       display: grid;
-      gap: 10px;
+      gap: 4px;
       justify-items: end;
+      align-content: start;
+      padding: 2px 0;
     }
 
     .invoice-meta {
       display: grid;
-      gap: 6px;
-      min-width: 240px;
+      gap: 2px;
+      min-width: 0;
+      width: 100%;
     }
 
     .meta-row,
@@ -118,7 +123,7 @@
     .meta-row span,
     .total-row span {
       color: #60766b;
-      font-size: 13px;
+      font-size: 9px;
       font-weight: 800;
       text-transform: uppercase;
       letter-spacing: 0.04em;
@@ -153,42 +158,38 @@
     .status-cancelled { background: #f1f5f3; color: #6b7280; }
 
     .body {
-      padding: 30px 34px 24px;
+      padding: 10px 16px 8px;
     }
 
     .grid {
       display: grid;
       grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
-      gap: 16px;
-      margin-bottom: 20px;
-    }
-
-    .grid.three {
-      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 7px;
+      margin-bottom: 7px;
     }
 
     .box {
       border: 1px solid #dce8e1;
       border-radius: 8px;
-      padding: 16px 17px;
+      padding: 7px 8px;
       background: #fbfdfc;
-      line-height: 1.55;
+      line-height: 1.35;
       word-break: break-word;
     }
 
     .label {
-      font-size: 11px;
+      font-size: 9px;
       font-weight: 800;
       text-transform: uppercase;
       letter-spacing: 0.05em;
       color: #6a8278;
-      margin-bottom: 8px;
+      margin-bottom: 3px;
     }
 
     .table-wrap {
       width: 100%;
       overflow-x: auto;
-      margin-bottom: 22px;
+      margin-bottom: 10px;
       border: 1px solid #e4ece7;
       border-radius: 8px;
       background: white;
@@ -202,7 +203,7 @@
 
     th,
     td {
-      padding: 14px 12px;
+      padding: 7px 9px;
       border-bottom: 1px solid #e4ece7;
       text-align: left;
       vertical-align: top;
@@ -228,39 +229,35 @@
 
     td {
       color: #173327;
-      line-height: 1.45;
+      line-height: 1.35;
+      font-size: 13px;
       word-break: break-word;
-    }
-
-    .summary {
-      display: grid;
-      grid-template-columns: minmax(0, 1.1fr) minmax(300px, 0.9fr);
-      gap: 18px;
-      margin-bottom: 22px;
     }
 
     .payment-box {
       border: 1px solid #dce8e1;
       border-radius: 8px;
-      padding: 18px;
+      padding: 7px 8px;
       background: #f8fbf9;
     }
 
     .totals-grid {
       display: grid;
-      gap: 8px;
+      gap: 5px;
+      width: min(330px, 100%);
+      margin-left: auto;
     }
 
     .money-card {
       border: 1px solid #dce8e1;
       border-radius: 8px;
-      padding: 12px 14px;
+      padding: 5px 7px;
       background: white;
       min-width: 0;
     }
 
     .money-card strong {
-      font-size: 18px;
+      font-size: 14px;
       color: #1f5c3a;
       word-break: break-word;
     }
@@ -271,12 +268,17 @@
     }
 
     .money-card.grand strong {
-      font-size: 24px;
+      font-size: 17px;
     }
 
     .money-card.remaining strong {
       color: #b42318;
-      font-size: 24px;
+      font-size: 17px;
+    }
+
+    .totals-wrap {
+      display: block;
+      margin-bottom: 5px;
     }
 
     .money-card.paid strong {
@@ -288,7 +290,7 @@
       justify-content: space-between;
       align-items: center;
       gap: 10px;
-      padding: 16px 34px;
+      padding: 12px 22px;
       flex-wrap: wrap;
       background: #f8fbf9;
       border-top: 1px solid #dce8e1;
@@ -303,7 +305,7 @@
     .btn {
       border: none;
       border-radius: 8px;
-      padding: 11px 16px;
+      padding: 9px 13px;
       font-weight: 800;
       cursor: pointer;
       transition: transform .15s ease, box-shadow .15s ease, opacity .15s ease;
@@ -445,25 +447,11 @@
       word-break: break-word;
     }
 
-    .payment-copy {
-      line-height: 1.6;
-      white-space: pre-wrap;
-      word-break: break-word;
-    }
-
-    .payment-instructions {
-      border: 1px solid #dce8e1;
-      border-radius: 8px;
-      padding: 16px 17px;
-      background: #fbfdfc;
-      margin-bottom: 18px;
-    }
-
     .payment-row {
       display: grid;
-      grid-template-columns: minmax(0, 1fr) auto;
+      grid-template-columns: 140px minmax(0, 1fr);
       gap: 12px;
-      padding: 11px 0;
+      padding: 7px 0;
       border-bottom: 1px solid #e4ece7;
     }
 
@@ -480,10 +468,15 @@
       font-size: 13px;
     }
 
+    .invoice-ref {
+      font-weight: 700;
+      color: #173327;
+    }
+
     .footer-message {
       color: #587067;
       text-align: center;
-      padding: 8px 0 0;
+      padding: 6px 0 0;
       white-space: pre-wrap;
       word-break: break-word;
     }
@@ -532,10 +525,15 @@
 
     @page {
       size: letter;
-      margin: 0.5in;
+      margin: 0.30in;
     }
 
     @media print {
+      * {
+        break-inside: auto;
+        page-break-inside: auto;
+      }
+
       html,
       body {
         background: #fff !important;
@@ -555,10 +553,14 @@
 
       .actions,
       .modal,
-      .invoice-print-hint {
+      .invoice-print-hint,
+      #notesBox {
         display: none !important;
       }
 
+      .invoice-shell,
+      .invoice-container,
+      .invoice-bottom,
       .page {
         box-shadow: none !important;
         margin: 0 !important;
@@ -567,14 +569,27 @@
         border: none !important;
         background: #fff !important;
         overflow: visible !important;
+        height: auto !important;
+        min-height: auto !important;
       }
 
-      .header {
-        break-inside: avoid;
-        page-break-inside: avoid;
-        padding: 12px 0 14px !important;
+      .header,
+      .invoice-header {
+        padding: 2px 0 4px !important;
         background: #fff !important;
         border-bottom: 1px solid #999 !important;
+        display: grid !important;
+        grid-template-columns: 1fr 240px !important;
+        align-items: start !important;
+        gap: 8px !important;
+      }
+
+      .invoice-meta,
+      .invoice-summary,
+      .invoice-panel,
+      .invoice-head {
+        text-align: right !important;
+        justify-items: end !important;
       }
 
       .header h1,
@@ -594,7 +609,6 @@
       .client-lines,
       .detail-lines,
       .notes,
-      .payment-copy,
       .footer-message,
       .payment-row strong,
       .payment-row span {
@@ -626,52 +640,41 @@
       }
 
       .body {
-        padding: 14px 0 10px !important;
-      }
-
-      /* Bill To + Invoice Details: keep paired; three-column row may span pages on long invoices */
-      .grid:not(.three) {
-        break-inside: avoid;
-        page-break-inside: avoid;
-      }
-
-      .summary {
-        break-inside: avoid;
-        page-break-inside: avoid;
-      }
-
-      .totals-grid {
-        break-inside: avoid;
-        page-break-inside: avoid;
+        padding: 2px 0 1px !important;
       }
 
       .box,
-      .payment-box,
-      .payment-instructions {
-        break-inside: avoid;
-        page-break-inside: avoid;
+      .payment-box {
         background: #fff !important;
         border: 1px solid #999 !important;
         box-shadow: none !important;
-      }
-
-      .grid.three,
-      .table-wrap,
-      .footer-message {
-        break-inside: avoid;
-        page-break-inside: avoid;
-      }
-
-      #notesBox {
-        break-inside: avoid;
-        page-break-inside: avoid;
       }
 
       .table-wrap {
         overflow: visible !important;
         border: 1px solid #999 !important;
         background: #fff !important;
-        break-inside: auto;
+      }
+
+      .invoice-bottom {
+        break-inside: avoid;
+        page-break-inside: avoid;
+        margin-bottom: 2px !important;
+      }
+
+      .invoice-grid,
+      .invoice-info-grid,
+      .invoice-card-grid,
+      .grid {
+        display: grid !important;
+        grid-template-columns: 1fr 1fr !important;
+        gap: 8px !important;
+      }
+
+      .invoice-table,
+      .invoice-footer {
+        break-inside: avoid;
+        page-break-inside: avoid;
       }
 
       table {
@@ -687,10 +690,12 @@
         background: #f0f0f0 !important;
         color: #000 !important;
         border-bottom: 1px solid #666 !important;
+        font-size: 9px !important;
       }
 
       td {
         border-bottom: 1px solid #ccc !important;
+        font-size: 9.5px !important;
       }
 
       tbody tr:last-child td {
@@ -706,6 +711,7 @@
         background: #fff !important;
         border: 1px solid #999 !important;
         box-shadow: none !important;
+        padding: 5px 7px !important;
       }
 
       .money-card strong {
@@ -724,12 +730,12 @@
 
       .payment-row {
         border-bottom: 1px solid #ccc !important;
+        padding: 4px 0 !important;
       }
 
       .footer-message {
-        break-inside: avoid;
-        page-break-inside: avoid;
-        padding-top: 10px !important;
+        padding-top: 2px !important;
+        font-size: 8px !important;
       }
 
       a {
@@ -742,7 +748,7 @@
       }
     }
 
-    @media (max-width: 820px) {
+    @media screen and (max-width: 820px) {
       body {
         padding: 0;
       }
@@ -761,8 +767,6 @@
 
       .header,
       .grid,
-      .grid.three,
-      .summary,
       .totals-grid,
       .form-grid,
       .line-item-row {
@@ -819,8 +823,8 @@
   }
 })();
 </script>
-<div class="page">
-  <div class="header">
+<div class="page invoice-shell invoice-container">
+  <div class="header invoice-header">
     <div id="companyBlock">
       <div class="brand-wrap">
         <div class="brand-copy">
@@ -842,37 +846,35 @@
   </div>
 
   <div class="body">
-    <div class="grid">
+    <div class="grid invoice-grid invoice-info-grid">
       <div class="box"><div class="label">Bill To</div><div id="clientBlock" class="client-lines"></div></div>
-      <div class="box"><div class="label">Work Order Details</div><div id="invoiceBlock" class="detail-lines"></div></div>
+      <div class="box"><div class="label">Service Summary</div><div id="invoiceBlock" class="detail-lines"></div></div>
     </div>
 
-    <div class="grid three">
-      <div class="box"><div class="label">Service Type</div><div id="serviceBlock" class="detail-lines">-</div></div>
-      <div class="box"><div class="label">Payment Status</div><div id="paymentStatusBlock" class="detail-lines">-</div></div>
+    <div class="grid invoice-grid invoice-card-grid">
       <div class="box"><div class="label">Service Address</div><div id="serviceAddressBlock" class="detail-lines">-</div></div>
+      <div class="payment-box">
+        <div class="label">Payment Methods</div>
+        <div id="paymentMethodsList" class="detail-lines"></div>
+      </div>
     </div>
 
-    <div class="table-wrap">
+    <div class="table-wrap invoice-table">
       <table>
         <thead>
-          <tr><th>Service / Description</th><th>Qty</th><th class="amount">Rate</th><th class="amount">Amount</th></tr>
+          <tr><th>Service</th><th>Description</th><th>Qty</th><th class="amount">Unit Price</th><th class="amount">Total</th></tr>
         </thead>
         <tbody id="lineItems"></tbody>
       </table>
     </div>
 
-    <div id="paymentInstructionsBlock" class="payment-instructions" style="display:none;"></div>
-
-    <div class="summary">
-      <div class="payment-box">
-        <div class="label">Payment History</div>
-        <div id="paymentsList" class="empty">No payments recorded.</div>
-      </div>
-
+    <div class="totals-wrap invoice-bottom">
       <div class="totals-grid">
         <div class="money-card">
           <div class="total-row"><span>Subtotal</span><strong id="subtotalAmount">$0.00</strong></div>
+        </div>
+        <div class="money-card" id="taxCard" style="display:none;">
+          <div class="total-row"><span>Tax</span><strong id="taxAmount">$0.00</strong></div>
         </div>
         <div class="money-card grand">
           <div class="label">Total</div>
@@ -890,7 +892,7 @@
     </div>
 
     <div class="box" id="notesBox" style="display:none;"></div>
-    <div id="footerMessage" class="footer-message" style="display:none;"></div>
+    <div id="footerMessage" class="footer-message invoice-footer" style="display:none;"></div>
     <div id="invoiceEmpty" style="display:none;"></div>
   </div>
 
@@ -906,6 +908,7 @@
       <button type="button" class="btn gray" id="closeInvoiceBtn">Close</button>
       <div class="print-action-wrap">
         <button type="button" class="btn primary" id="printInvoiceBtn">Print Invoice</button>
+        <button type="button" class="btn gray" id="downloadPdfBtn">Download PDF</button>
         <span class="invoice-print-hint">Use Print, then choose Save as PDF.</span>
       </div>
     </div>
@@ -1041,6 +1044,14 @@ function displayText(value, fallback = "-"){
   return text ? escapeHtml(text) : escapeHtml(fallback);
 }
 
+function toTitleWords(value){
+  return cleanText(value)
+    .split(/[\s_-]+/)
+    .filter(Boolean)
+    .map(part => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
+    .join(" ");
+}
+
 function invoiceNumberText(invoice, branding){
   const raw = cleanText(invoice && invoice.invoice_number);
   if(raw) return raw;
@@ -1104,6 +1115,36 @@ function getLineAmount(item){
   return quantity * price;
 }
 
+function sanitizeFilePart(value, fallback){
+  const clean = String(value || "").trim().replace(/[^a-zA-Z0-9-_. ]+/g, "").replace(/\s+/g, "-");
+  return clean || fallback;
+}
+
+function buildPdfFilename(invoice, invoiceNumber){
+  const client = sanitizeFilePart(invoice && invoice.client_name, "Client");
+  const number = sanitizeFilePart(invoiceNumber, "invoice");
+  return `LoneGreen-${number}-${client}.pdf`;
+}
+
+function sanitizeTitlePart(value){
+  return String(value || "")
+    .replace(/[<>:"/\\|?*\u0000-\u001F]/g, " ")
+    .trim()
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "");
+}
+
+function buildInvoicePageTitle(invoice, invoiceNumber){
+  const numberPart = sanitizeTitlePart(invoiceNumber);
+  const clientPart = sanitizeTitlePart(invoice && invoice.client_name);
+  if (numberPart && clientPart) {
+    return `LoneGreen-${numberPart}-${clientPart}`;
+  }
+  const invoiceId = sanitizeTitlePart(invoice && invoice.id);
+  return `LoneGreen-Invoice-${invoiceId || "Invoice"}`;
+}
+
 function renderInvoiceEditorRows(lineItems){
   const safeItems = Array.isArray(lineItems) && lineItems.length
     ? lineItems
@@ -1152,17 +1193,18 @@ function collectInvoiceLineItems(){
 }
 
 function renderLoadError(message){
+  document.title = "LoneGreen-Invoice";
   document.getElementById("invoiceNumber").textContent = "Invoice unavailable";
   document.getElementById("companyBlock").innerHTML =
     '<div class="brand-wrap"><div class="brand-copy"><div class="brand-name">Company unavailable</div><div class="brand-lines">Unable to load company branding.</div></div></div>';
   document.getElementById("clientBlock").innerHTML = `<div class="empty">Unable to load client details.</div>`;
   document.getElementById("invoiceBlock").innerHTML = `<div class="empty">${escapeHtml(message)}</div>`;
-  document.getElementById("serviceBlock").innerHTML = `<span class="muted">No service details available.</span>`;
-  document.getElementById("paymentStatusBlock").innerHTML = `<span class="muted">Unavailable</span>`;
   document.getElementById("serviceAddressBlock").innerHTML = `<span class="muted">No service address available.</span>`;
-  document.getElementById("lineItems").innerHTML = `<tr><td colspan="4"><div class="empty">No invoice line items available.</div></td></tr>`;
-  document.getElementById("paymentsList").innerHTML = `<div class="empty">No payment history available.</div>`;
+  document.getElementById("lineItems").innerHTML = `<tr><td colspan="5"><div class="empty">No invoice line items available.</div></td></tr>`;
+  document.getElementById("paymentMethodsList").innerHTML = `<div class="empty">Payment methods unavailable.</div>`;
   document.getElementById("subtotalAmount").textContent = formatMoney(0);
+  document.getElementById("taxAmount").textContent = formatMoney(0);
+  document.getElementById("taxCard").style.display = "none";
   document.getElementById("invoiceTotal").textContent = formatMoney(0);
   document.getElementById("paidAmount").textContent = formatMoney(0);
   document.getElementById("remainingBalance").textContent = formatMoney(0);
@@ -1173,8 +1215,6 @@ function renderLoadError(message){
   document.getElementById("markPaidButton").style.display = "inline-flex";
   document.getElementById("recordPaymentButton").style.display = "none";
   document.getElementById("deleteInvoiceButton").style.display = "none";
-  document.getElementById("paymentInstructionsBlock").style.display = "none";
-  document.getElementById("paymentInstructionsBlock").innerHTML = "";
   document.getElementById("footerMessage").style.display = "none";
   document.getElementById("footerMessage").innerHTML = "";
 
@@ -1216,6 +1256,7 @@ async function load(){
     const logoUrl = branding.logo_url || currentInvoice.invoice_logo_url || "";
     const invoiceNumber = invoiceNumberText(currentInvoice, branding);
     const displayStatus = getDisplayStatus(currentInvoice);
+    document.title = buildInvoicePageTitle(currentInvoice, invoiceNumber);
 
     document.getElementById("invoiceNumber").textContent = invoiceNumber;
     document.getElementById("issuedDateText").textContent = formatDate(currentInvoice.issued_date);
@@ -1224,12 +1265,18 @@ async function load(){
 
     document.getElementById("companyBlock").innerHTML =
       `<div class="brand-wrap">` +
-        `${logoUrl ? `<img class="brand-logo" src="${escapeHtml(logoUrl)}" alt="">` : ""}` +
+        `${logoUrl ? `<img class="brand-logo" src="${escapeHtml(logoUrl)}" alt="Company logo">` : ""}` +
         `<div class="brand-copy">` +
           `<div class="brand-name">${escapeHtml(companyName)}</div>` +
           `<div class="brand-lines">${contactLines([companyPhone, companyEmail, companyWebsite, companyAddress], "No company contact details provided.")}</div>` +
         `</div>` +
       `</div>`;
+    const logoEl = document.querySelector("#companyBlock .brand-logo");
+    if(logoEl){
+      logoEl.addEventListener("error", () => {
+        logoEl.style.display = "none";
+      }, { once: true });
+    }
 
     document.getElementById("clientBlock").innerHTML =
       `<strong>${displayText(currentInvoice.client_name, "Client")}</strong>` +
@@ -1242,20 +1289,10 @@ async function load(){
 
     document.getElementById("invoiceBlock").innerHTML =
       contactLines([
-        "Number: " + invoiceNumber,
-        "Issued: " + formatDate(currentInvoice.issued_date),
-        "Due: " + formatDate(currentInvoice.due_date),
-        "Work order: " + (currentInvoice.source_subscription_id ? "Subscription Service" : "Field Service")
-      ], "No invoice details available.");
-
-    document.getElementById("serviceBlock").innerHTML = contactLines([
-      currentInvoice.job_service || (Array.isArray(currentInvoice.line_items) && currentInvoice.line_items[0] && currentInvoice.line_items[0].description),
-      currentInvoice.job_date ? "Service date: " + formatDate(currentInvoice.job_date) : "",
-      currentInvoice.source_subscription_id ? "Subscription invoice" : ""
-    ], "No service details available.");
-
-    document.getElementById("paymentStatusBlock").innerHTML =
-      `${statusBadge(displayStatus)}<div style="margin-top:8px;">Net paid ${formatMoney(currentInvoice.paid_amount || 0)} of ${formatMoney(currentInvoice.amount || 0)}</div>`;
+        "Service Type: " + (toTitleWords(currentInvoice.job_service || "service") || "Service"),
+        currentInvoice.job_date ? "Service Date: " + formatDate(currentInvoice.job_date) : "",
+        "Work Type: " + (currentInvoice.source_subscription_id ? "Subscription Service" : "Field Service")
+      ], "No service details available.");
 
     document.getElementById("serviceAddressBlock").innerHTML =
       contactLines([currentInvoice.client_address, currentInvoice.client_zip], "No service address available.");
@@ -1283,76 +1320,52 @@ async function load(){
       const quantity = Number(item.quantity || 1);
       const price = Number(item.price || 0);
       const lineAmount = getLineAmount(item);
+      const rawDescription = cleanText(item.description || "");
+      const serviceName = toTitleWords(cleanText(currentInvoice.job_service) || cleanText(rawDescription.split("-")[0]) || "Service");
+      const normalizedService = cleanText(serviceName).toLowerCase();
+      const normalizedDescription = cleanText(rawDescription).toLowerCase();
+      const fallbackDescription = cleanText(currentInvoice.notes) || "Service completed as requested";
+      const renderedDescription = normalizedDescription && normalizedDescription !== normalizedService
+        ? rawDescription
+        : fallbackDescription;
 
       return `<tr>
-        <td>${escapeHtml(item.description || "Service")}</td>
+        <td>${escapeHtml(serviceName)}</td>
+        <td>${escapeHtml(renderedDescription)}</td>
         <td>${Number.isFinite(quantity) ? quantity : 1}</td>
         <td class="amount">${formatMoney(Number.isFinite(price) ? price : 0)}</td>
         <td class="amount">${formatMoney(Number.isFinite(lineAmount) ? lineAmount : 0)}</td>
       </tr>`;
     }).join("");
-
-    const payments = Array.isArray(currentInvoice.payments) ? currentInvoice.payments : [];
-    const refunds = Array.isArray(currentInvoice.refunds) ? currentInvoice.refunds : [];
-
-    document.getElementById("paymentsList").innerHTML = payments.length || refunds.length
-      ? payments.map(payment => `
-          <div class="payment-row">
-            <div>
-              <strong>${escapeHtml(payment.method || "cash")}</strong>
-              <span>${formatDate(payment.date)}</span>
-              ${payment.notes ? `<div class="muted">${escapeHtml(payment.notes)}</div>` : ""}
-            </div>
-            <strong>${formatMoney(payment.amount || 0)}</strong>
-          </div>
-        `).join("") + refunds.map(refund => `
-          <div class="payment-row">
-            <div>
-              <strong>Refunded</strong>
-              <span>${formatDate(refund.created_at)}</span>
-              ${refund.notes || refund.reason ? `<div class="muted">${escapeHtml(refund.notes || refund.reason)}</div>` : ""}
-            </div>
-            <strong>-${formatMoney(refund.amount || 0)}</strong>
-          </div>
-        `).join("")
-      : AppUI.emptyState(
-          "No payments recorded yet.",
-          "Record a payment or mark this invoice as paid to update the remaining balance.",
-          []
-        );
+    const paymentMethods = [
+      {
+        name: "Zelle",
+        detail: cleanText(currentInvoice.zelle_name || currentInvoice.zelle_contact)
+          ? [currentInvoice.zelle_name, currentInvoice.zelle_contact].filter(cleanText).join(" - ")
+          : "Use company billing details"
+      },
+      { name: "Cash", detail: "Accepted by company" },
+      { name: "Check", detail: "Payable to company name" },
+      { name: "ACH", detail: "Contact company for bank details" }
+    ];
+    document.getElementById("paymentMethodsList").innerHTML = paymentMethods.map(method => `
+      <div class="payment-row">
+        <strong>${escapeHtml(method.name)}</strong>
+        <span>${escapeHtml(method.detail)}</span>
+      </div>
+    `).join("");
 
     document.getElementById("subtotalAmount").textContent =
       formatMoney(currentInvoice.subtotal != null ? currentInvoice.subtotal : currentInvoice.amount || 0);
+    const taxValue = Number(currentInvoice.tax_amount != null ? currentInvoice.tax_amount : currentInvoice.tax || 0);
+    document.getElementById("taxAmount").textContent = formatMoney(taxValue);
+    document.getElementById("taxCard").style.display = taxValue > 0 ? "block" : "none";
     document.getElementById("invoiceTotal").textContent = formatMoney(currentInvoice.amount || 0);
     document.getElementById("paidAmount").textContent = formatMoney(currentInvoice.paid_amount || 0);
     document.getElementById("remainingBalance").textContent = formatMoney(currentInvoice.remaining_balance || 0);
 
     const notesBox = document.getElementById("notesBox");
-    const instructionsBox = document.getElementById("paymentInstructionsBlock");
     const footerBox = document.getElementById("footerMessage");
-
-    const paymentParts = [];
-    const instructionText = branding.payment_instructions || currentInvoice.payment_instructions || "";
-    const zelleName = branding.zelle_name || currentInvoice.zelle_name || "";
-    const zelleContact = branding.zelle_contact || currentInvoice.zelle_contact || "";
-
-    if(instructionText){
-      paymentParts.push(instructionText);
-    }
-    if(zelleName){
-      paymentParts.push("Zelle name: " + zelleName);
-    }
-    if(zelleContact){
-      paymentParts.push("Zelle contact: " + zelleContact);
-    }
-    if(paymentParts.length){
-      instructionsBox.style.display = "block";
-      instructionsBox.innerHTML =
-        `<div class="label">How to Pay</div><div class="payment-copy">${escapeHtml(paymentParts.join("\n"))}\nInvoice memo: ${escapeHtml(invoiceNumber)}</div>`;
-    } else {
-      instructionsBox.style.display = "none";
-      instructionsBox.innerHTML = "";
-    }
 
     if(currentInvoice.notes){
       notesBox.style.display = "block";
@@ -1363,7 +1376,6 @@ async function load(){
     }
 
     const footerParts = [];
-    footerParts.push("Payment is due by " + formatDate(currentInvoice.due_date) + ".");
     footerParts.push("Thank you for your business.");
     if(branding.footer || currentInvoice.invoice_footer){
       footerParts.push(branding.footer || currentInvoice.invoice_footer);
@@ -1371,6 +1383,7 @@ async function load(){
     if(companyWebsite){
       footerParts.push(companyWebsite);
     }
+    footerParts.push("Invoice reference: " + invoiceNumber + ".");
     const footerMessage = footerParts.filter(Boolean).join(" ");
     if(footerMessage){
       footerBox.style.display = "block";
@@ -1549,7 +1562,37 @@ function bindInvoiceUiHandlers(){
   document.getElementById("cancelInvoiceBtn")?.addEventListener("click", e => cancelInvoice(e.currentTarget));
   document.getElementById("deleteInvoiceButton")?.addEventListener("click", () => openDeleteInvoice());
   document.getElementById("closeInvoiceBtn")?.addEventListener("click", () => window.close());
-  document.getElementById("printInvoiceBtn")?.addEventListener("click", () => window.print());
+  document.getElementById("printInvoiceBtn")?.addEventListener("click", () => {
+    if (currentInvoice) {
+      const branding = currentInvoice.invoice_branding || {};
+      const invoiceNumber = invoiceNumberText(currentInvoice, branding);
+      document.title = buildInvoicePageTitle(currentInvoice, invoiceNumber);
+    }
+    window.print();
+  });
+  document.getElementById("downloadPdfBtn")?.addEventListener("click", async e => {
+    if(!currentInvoice || !invoiceId) return;
+    await AppUI.withButton(e.currentTarget, async () => {
+      const res = await apiFetch(API + "/workflow/invoices/" + encodeURIComponent(invoiceId) + "/pdf");
+      if(!res.ok){
+        const data = await safeJson(res);
+        AppUI.showToast(getErrorMessage(data, "Unable to download PDF."), "error");
+        return;
+      }
+      const blob = await res.blob();
+      const branding = currentInvoice.invoice_branding || {};
+      const invoiceNumber = invoiceNumberText(currentInvoice, branding);
+      const filename = buildPdfFilename(currentInvoice, invoiceNumber);
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+    }, { loading: "Downloading..." });
+  });
   document.getElementById("saveInvoiceEditBtn")?.addEventListener("click", e => saveInvoiceEdit(e.currentTarget));
   document.getElementById("cancelEditInvoiceBtn")?.addEventListener("click", () => closeEditInvoice());
   document.getElementById("confirmDeleteInvoiceBtn")?.addEventListener("click", e => confirmDeleteInvoice(e.currentTarget));

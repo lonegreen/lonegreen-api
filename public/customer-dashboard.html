@@ -21,19 +21,79 @@
     .muted { color:#648076; font-size:14px; }
     .status { display:inline-flex; width:fit-content; border-radius:999px; padding:6px 10px; font-size:12px; font-weight:800; text-transform:uppercase; background:#eef4f0; color:#1f5c3a; }
     .actions { display:flex; flex-wrap:wrap; gap:8px; margin-top:6px; }
-    .btn { border:0; border-radius:12px; padding:10px 12px; font-weight:800; cursor:pointer; background:#1f5c3a; color:white; }
+    .btn { border:0; border-radius:12px; padding:10px 12px; font-weight:800; cursor:pointer; background:#1f5c3a; color:white; font-size:14px; }
     .btn.gray { background:#eef2f0; color:#1f5c3a; border:1px solid #dbe7df; }
     .btn.danger { background:#b42318; }
+    .btn.sm { padding:8px 10px; font-size:13px; }
     .section { display:none; }
     .section.active { display:grid; gap:12px; }
-    .invoice-print { display:none; }
     .form-grid { display:grid; gap:10px; }
     label { display:grid; gap:6px; font-weight:800; color:#173327; }
     input,textarea { width:100%; box-sizing:border-box; border:1px solid #cfe0d5; border-radius:12px; padding:11px 12px; font:inherit; }
     textarea { min-height:92px; resize:vertical; }
-    table { width:100%; border-collapse:collapse; margin:10px 0; }
-    th,td { text-align:left; border-bottom:1px solid #e4ece7; padding:10px; }
-    @media print { body { background:white; } .no-print { display:none !important; } .invoice-print { display:block !important; } .page { max-width:none; } }
+    .hidden { display:none !important; }
+    .empty-panel { padding:28px; text-align:center; color:#648076; font-size:15px; line-height:1.5; }
+    .empty-panel strong { display:block; color:#173327; margin-bottom:8px; font-size:17px; }
+
+    /* Invoice list */
+    .inv-table-wrap { overflow-x:auto; border-radius:14px; border:1px solid #dbe7df; background:white; }
+    .inv-table { width:100%; border-collapse:collapse; min-width:720px; font-size:14px; }
+    .inv-table th, .inv-table td { text-align:left; padding:12px 14px; border-bottom:1px solid #e8efe9; vertical-align:top; }
+    .inv-table th { font-size:11px; text-transform:uppercase; letter-spacing:0.05em; color:#6b8278; background:#f7faf8; }
+    .inv-table tr:last-child td { border-bottom:0; }
+    .inv-actions-cell { white-space:nowrap; }
+    .inv-num { font-weight:800; color:#173327; }
+    .badge { display:inline-flex; align-items:center; padding:5px 10px; border-radius:999px; font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:0.03em; }
+    .badge-paid { background:#ecfdf3; color:#027a48; }
+    .badge-unpaid { background:#fff7ed; color:#c2410c; }
+    .badge-overdue { background:#fef2f2; color:#b42318; }
+    .badge-draft { background:#eef2f0; color:#4b5563; }
+    .badge-cancelled { background:#f1f5f3; color:#6b7280; }
+    .badge-partially_paid { background:#fff7df; color:#9a5b05; }
+
+    /* Invoice detail (customer-safe) */
+    .invoice-detail-wrap { display:grid; gap:12px; margin-top:4px; }
+    .invoice-detail-toolbar { display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:10px; padding:14px 16px; }
+    .invoice-detail-actions { display:flex; flex-wrap:wrap; gap:8px; }
+    .customer-invoice-sheet { padding:24px 22px 28px; max-width:900px; margin:0 auto; }
+    .cis-head { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,220px); gap:20px; align-items:start; margin-bottom:20px; padding-bottom:18px; border-bottom:1px solid #dce8e1; }
+    @media (max-width:720px){ .cis-head { grid-template-columns:1fr; } }
+    .cis-brand { display:flex; gap:14px; align-items:flex-start; }
+    .cis-logo { width:88px; height:64px; object-fit:contain; border:1px solid #dce8e1; border-radius:8px; padding:6px; background:#fff; flex-shrink:0; }
+    .cis-company { font-size:22px; font-weight:900; color:#10291f; margin:0 0 6px; line-height:1.2; word-break:break-word; }
+    .cis-lines { color:#587067; font-size:14px; line-height:1.55; word-break:break-word; }
+    .cis-meta { text-align:right; justify-self:end; min-width:200px; }
+    .cis-meta-row { display:flex; justify-content:flex-end; gap:12px; font-size:13px; margin-bottom:6px; }
+    .cis-meta-row span { color:#6a8278; font-weight:800; text-transform:uppercase; font-size:11px; letter-spacing:0.04em; }
+    .cis-meta-row strong { color:#173327; }
+    .cis-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; margin-bottom:18px; }
+    @media (max-width:640px){ .cis-grid { grid-template-columns:1fr; } }
+    .cis-box { border:1px solid #dce8e1; border-radius:10px; padding:14px 16px; background:#fbfdfc; }
+    .cis-box .lbl { font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:0.05em; color:#6a8278; margin-bottom:8px; }
+    .cis-table-wrap { overflow-x:auto; border:1px solid #e4ece7; border-radius:8px; margin-bottom:18px; background:white; }
+    .cis-table { width:100%; border-collapse:collapse; min-width:520px; font-size:14px; }
+    .cis-table th, .cis-table td { padding:10px 12px; border-bottom:1px solid #eef2f0; text-align:left; }
+    .cis-table th { font-size:11px; text-transform:uppercase; color:#6b8278; background:#fafcfb; }
+    .cis-table td.amount { text-align:right; white-space:nowrap; }
+    .cis-totals { max-width:340px; margin-left:auto; display:grid; gap:8px; margin-bottom:18px; }
+    .cis-total-row { display:flex; justify-content:space-between; gap:16px; font-size:14px; }
+    .cis-total-row.grand { font-size:18px; font-weight:900; color:#10291f; padding-top:8px; border-top:2px solid #dce8e1; margin-top:4px; }
+    .cis-payhist { border:1px solid #dce8e1; border-radius:10px; padding:14px 16px; background:#fff; margin-bottom:14px; }
+    .cis-payhist h4 { margin:0 0 10px; font-size:13px; text-transform:uppercase; letter-spacing:0.05em; color:#6a8278; }
+    .cis-pay-row { display:flex; justify-content:space-between; gap:12px; padding:8px 0; border-bottom:1px solid #f0f4f2; font-size:14px; }
+    .cis-pay-row:last-child { border-bottom:0; }
+    .cis-instructions { border:1px dashed #c5ddd1; border-radius:10px; padding:14px 16px; background:#f7faf8; margin-bottom:12px; font-size:14px; line-height:1.55; color:#334d43; word-break:break-word; }
+    .cis-footer { font-size:13px; color:#6b8278; line-height:1.5; word-break:break-word; padding-top:8px; border-top:1px solid #e8efe9; margin-top:8px; }
+
+    @media print {
+      body { background:white !important; padding:0 !important; }
+      .no-print { display:none !important; }
+      .invoice-detail-wrap { display:block !important; }
+      .invoice-detail-toolbar { display:none !important; }
+      .page { max-width:none; padding:12px; }
+      .customer-invoice-sheet { box-shadow:none !important; border:none !important; border-radius:0 !important; padding:16px !important; }
+      .inv-table-wrap { border:none; }
+    }
     @media (max-width:820px){ body{padding:12px;} .grid{grid-template-columns:1fr;} }
   </style>
 </head>
@@ -57,88 +117,316 @@
   </div>
   <div id="overview" class="section active no-print"></div>
   <div id="estimates" class="section no-print"></div>
-  <div id="invoices" class="section no-print"></div>
+  <div id="invoices" class="section no-print">
+    <div id="invoiceListHost"></div>
+    <div id="invoiceDetailSection" class="invoice-detail-wrap hidden">
+      <div class="panel invoice-detail-toolbar no-print">
+        <button type="button" class="btn gray sm" data-customer-action="close-invoice-detail">← Back to invoices</button>
+        <div class="invoice-detail-actions">
+          <button type="button" class="btn gray sm" data-customer-action="print-invoice-detail">Print / Save as PDF</button>
+          <button type="button" class="btn sm" data-customer-action="download-current-invoice-pdf">Download PDF</button>
+        </div>
+      </div>
+      <div id="invoiceDetailBody" class="customer-invoice-sheet panel"></div>
+    </div>
+  </div>
   <div id="jobs" class="section no-print"></div>
   <div id="subscriptions" class="section no-print"></div>
   <div id="serviceRequest" class="section no-print"></div>
-  <div id="invoicePrint" class="invoice-print"></div>
 </div>
 <script src="/js/ui.js"></script>
 <script src="/js/format.js"></script>
 <script>
 const API = window.location.origin;
 let state = null;
+let currentInvoiceId = null;
+
 function token(){ return localStorage.getItem("customerToken"); }
 function headers(){ return { Authorization: "Bearer " + token() }; }
 function esc(v){ return AppFormat.escapeHtml(v || ""); }
 function money(v){ return AppFormat.formatMoney(v || 0); }
 function date(v){ return v ? String(v).split("T")[0] : "-"; }
+
 function logout(){ localStorage.removeItem("customerToken"); localStorage.removeItem("customer"); window.location.href="/customer-login.html"; }
+
 async function customerFetch(url, options){
   const res = await fetch(url, Object.assign({}, options || {}, { headers: Object.assign({}, (options && options.headers) || {}, headers()) }));
   if(res.status === 401 || res.status === 403){ logout(); throw new Error("Unauthorized"); }
   return res;
 }
+
 function showTab(id, button){
   document.querySelectorAll(".section").forEach(item => item.classList.toggle("active", item.id === id));
   document.querySelectorAll(".tab").forEach(item => item.classList.remove("active"));
   if(button) button.classList.add("active");
 }
+
 function card(title, lines, status, actions){
   return '<div class="card"><div class="card-title">' + esc(title) + '</div>' +
     (status ? '<span class="status">' + esc(status) + '</span>' : '') +
     lines.map(line => '<div class="muted">' + line + '</div>').join('') +
     (actions ? '<div class="actions">' + actions + '</div>' : '') + '</div>';
 }
+
+function badgeClass(displayStatus){
+  const s = String(displayStatus || "draft").toLowerCase().replace(/[^a-z_]/g, "") || "draft";
+  return "badge badge-" + s;
+}
+
+function badgeLabel(displayStatus){
+  const raw = String(displayStatus || "draft");
+  return raw.replace(/_/g, " ");
+}
+
+function branding(inv){
+  const ib = inv.invoice_branding || {};
+  return {
+    logo: ib.logo_url || inv.invoice_logo_url || "",
+    name: ib.display_name || inv.branded_company_name || inv.company_name || "",
+    phone: ib.phone || inv.branded_company_phone || inv.company_phone || "",
+    email: ib.email || inv.branded_company_email || inv.company_email || "",
+    website: ib.website || inv.branded_company_website || "",
+    address: ib.address || inv.branded_company_address || inv.company_address || "",
+    payment_instructions: ib.payment_instructions || inv.payment_instructions || "",
+    zelle_name: ib.zelle_name || inv.zelle_name || "",
+    zelle_contact: ib.zelle_contact || inv.zelle_contact || "",
+    footer: ib.footer || inv.invoice_footer || ""
+  };
+}
+
+function refundedSum(inv){
+  if(inv.refunded_total != null && inv.refunded_total !== ""){
+    return Number(inv.refunded_total);
+  }
+  if(Array.isArray(inv.refunds)){
+    return inv.refunds.reduce(function(sum, r){ return sum + Number(r && r.amount != null ? r.amount : 0); }, 0);
+  }
+  return 0;
+}
+
+function netPaid(inv){
+  if(inv.net_paid != null && inv.net_paid !== "") return Number(inv.net_paid);
+  return Number(inv.paid_amount != null ? inv.paid_amount : 0);
+}
+
 function renderOverview(){
   const client = state.client || state.customer || {};
+  const invs = state.invoices || [];
+  const openCount = invs.filter(function(i){
+    const ds = String(i.display_status || i.status || "").toLowerCase();
+    return ds !== "paid" && ds !== "cancelled";
+  }).length;
   document.getElementById("overview").innerHTML =
     '<div class="panel"><strong>Account</strong><br>' + esc(client.name || "") + '<br>' + esc(client.phone || "") + '<br>' + esc(client.address || "") + '<br>' + esc(client.zip || "") + '</div>' +
     '<div class="grid">' +
     card("Upcoming Jobs", [String((state.upcoming_jobs || []).length)], "", "") +
-    card("Open Invoices", [String((state.invoices || []).filter(i => !["paid","cancelled"].includes(i.status)).length)], "", "") +
-    card("Active Subscriptions", [String((state.subscriptions || []).filter(s => s.status === "active").length)], "", "") +
+    card("Open Invoices", [String(openCount)], "", "") +
+    card("Active Subscriptions", [String((state.subscriptions || []).filter(function(s){ return s.status === "active"; }).length)], "", "") +
     '</div>';
 }
+
 function renderEstimates(){
   const items = state.estimates || [];
-  document.getElementById("estimates").innerHTML = items.length ? items.map(item => {
+  document.getElementById("estimates").innerHTML = items.length ? items.map(function(item){
     const decisionButtons = item.status === "converted" ? "" : '<button type="button" class="btn" data-customer-action="estimate-decision" data-customer-estimate-id="' + item.id + '" data-customer-decision="approve">Approve</button><button type="button" class="btn danger" data-customer-action="estimate-decision" data-customer-estimate-id="' + item.id + '" data-customer-decision="reject">Reject</button>';
     return card(
       item.service || "Estimate",
       ["Visit: " + date(item.visit_date), "Quoted: " + money(item.quoted_price), esc(item.notes || "")],
       item.status,
-      decisionButtons + '<button type="button" class="btn gray" data-customer-action="download-pdf" data-customer-pdf-path="/customer/estimates/' + item.id + '/pdf" data-customer-pdf-file="estimate-' + item.id + '.pdf">PDF</button>'
+      decisionButtons + '<button type="button" class="btn gray" data-customer-action="download-pdf" data-customer-pdf-path="/customer/estimates/' + item.id + '/pdf" data-customer-pdf-file="estimate-' + item.id + '.pdf">Download PDF</button>'
     );
-  }).join("") : '<div class="panel">No estimates yet.</div>';
+  }).join("") : '<div class="panel empty-panel"><strong>No estimates yet</strong>Your estimates will appear here when available.</div>';
 }
+
 function renderInvoices(){
   const items = state.invoices || [];
-  document.getElementById("invoices").innerHTML = items.length ? items.map(item => card(
-    item.invoice_number || ("Invoice #" + item.id),
-    ["Issued: " + date(item.issued_date), "Due: " + date(item.due_date), "Total: " + money(item.amount), "Remaining: " + money(item.remaining_balance)],
-    item.status,
-    '<button type="button" class="btn" data-customer-action="download-pdf" data-customer-pdf-path="/customer/invoices/' + item.id + '/pdf" data-customer-pdf-file="invoice-' + item.id + '.pdf">PDF</button><button type="button" class="btn gray" data-customer-action="print-invoice" data-customer-invoice-id="' + item.id + '">Print View</button>'
-  )).join("") : '<div class="panel">No invoices yet.</div>';
+  const host = document.getElementById("invoiceListHost");
+  if(!host) return;
+  if(!items.length){
+    host.innerHTML = '<div class="panel empty-panel"><strong>No invoices yet</strong>When your provider sends an invoice, it will show up here.</div>';
+    return;
+  }
+  host.innerHTML =
+    '<div class="inv-table-wrap">' +
+    '<table class="inv-table" role="grid">' +
+    '<thead><tr>' +
+    '<th>Invoice</th><th>Status</th><th>Issued</th><th>Due</th><th>Total</th><th>Net paid</th><th>Refunded</th><th>Remaining</th><th class="inv-actions-cell">Actions</th>' +
+    '</tr></thead><tbody>' +
+    items.map(function(item){
+      const ds = item.display_status || item.status || "draft";
+      const refAmt = refundedSum(item);
+      return '<tr>' +
+        '<td><span class="inv-num">' + esc(item.invoice_number || ("#" + item.id)) + '</span></td>' +
+        '<td><span class="' + badgeClass(ds) + '">' + esc(badgeLabel(ds)) + '</span></td>' +
+        '<td>' + esc(date(item.issued_date)) + '</td>' +
+        '<td>' + esc(date(item.due_date)) + '</td>' +
+        '<td>' + esc(money(item.amount)) + '</td>' +
+        '<td>' + esc(money(netPaid(item))) + '</td>' +
+        '<td>' + esc(refAmt > 0 ? money(refAmt) : "—") + '</td>' +
+        '<td>' + esc(money(item.remaining_balance)) + '</td>' +
+        '<td class="inv-actions-cell">' +
+          '<button type="button" class="btn sm" data-customer-action="view-invoice" data-customer-invoice-id="' + Number(item.id) + '">View</button> ' +
+          '<button type="button" class="btn gray sm" data-customer-action="open-invoice-print" data-customer-invoice-id="' + Number(item.id) + '">Print</button> ' +
+          '<button type="button" class="btn gray sm" data-customer-action="download-pdf" data-customer-pdf-path="/customer/invoices/' + Number(item.id) + '/pdf" data-customer-pdf-file="invoice-' + Number(item.id) + '.pdf">PDF</button>' +
+        '</td>' +
+        '</tr>';
+    }).join("") +
+    '</tbody></table></div>';
 }
+
+function renderInvoiceDetailBody(inv){
+  const b = branding(inv);
+  const items = Array.isArray(inv.line_items) && inv.line_items.length
+    ? inv.line_items
+    : [{ description: inv.job_service || "Service", quantity: 1, price: Number(inv.amount || 0), amount: Number(inv.amount || 0) }];
+  const net = netPaid(inv);
+  const refTot = refundedSum(inv);
+  const displaySt = inv.display_status || inv.status || "";
+
+  let logoHtml = "";
+  if(b.logo){
+    logoHtml = '<img class="cis-logo" src="' + esc(b.logo) + '" alt="">';
+  }
+
+  let payHist = "";
+  const payments = Array.isArray(inv.payments) ? inv.payments : [];
+  const refunds = Array.isArray(inv.refunds) ? inv.refunds : [];
+  if(payments.length || refunds.length){
+    payHist = '<div class="cis-payhist"><h4>Payment activity</h4>';
+    payments.forEach(function(p){
+      payHist += '<div class="cis-pay-row"><span>' + esc(date(p.date)) + " · " + esc(p.method || "Payment") + '</span><strong>' + esc(money(p.amount)) + '</strong></div>';
+    });
+    refunds.forEach(function(r){
+      payHist += '<div class="cis-pay-row"><span>' + esc(date(r.created_at)) + " · Refunded</span><strong>−" + esc(money(r.amount)) + '</strong></div>';
+    });
+    payHist += '</div>';
+  }
+
+  let instruct = "";
+  if(b.payment_instructions || b.zelle_name || b.zelle_contact){
+    instruct += '<div class="cis-instructions">';
+    instruct += "<strong>How to pay</strong><br>";
+    if(b.payment_instructions){
+      instruct += '<div style="margin-top:8px;">' + esc(b.payment_instructions).replace(/\n/g, "<br>") + '</div>';
+    }
+    if(b.zelle_name || b.zelle_contact){
+      instruct += '<div style="margin-top:12px;"><strong>Zelle</strong><br>';
+      if(b.zelle_name) instruct += esc(b.zelle_name) + "<br>";
+      if(b.zelle_contact) instruct += esc(b.zelle_contact);
+      instruct += '</div>';
+    }
+    instruct += '</div>';
+  }
+
+  let footerHtml = "";
+  if(b.footer){
+    footerHtml = '<div class="cis-footer">' + esc(b.footer).replace(/\n/g, "<br>") + '</div>';
+  }
+
+  document.getElementById("invoiceDetailBody").innerHTML =
+    '<div class="cis-head">' +
+      '<div class="cis-brand">' +
+        logoHtml +
+        '<div>' +
+          '<div class="cis-company">' + esc(b.name || "Invoice") + '</div>' +
+          '<div class="cis-lines">' +
+            [b.phone, b.email, b.website, b.address].filter(Boolean).map(function(line){ return esc(line); }).join("<br>") +
+          '</div>' +
+        '</div>' +
+      '</div>' +
+      '<div class="cis-meta">' +
+        '<div><span class="' + badgeClass(displaySt) + '" style="margin-bottom:10px;display:inline-flex;">' + esc(badgeLabel(displaySt)) + '</span></div>' +
+        '<div class="cis-meta-row"><span>Invoice #</span><strong>' + esc(inv.invoice_number || ("#" + inv.id)) + '</strong></div>' +
+        '<div class="cis-meta-row"><span>Issued</span><strong>' + esc(date(inv.issued_date)) + '</strong></div>' +
+        '<div class="cis-meta-row"><span>Due</span><strong>' + esc(date(inv.due_date)) + '</strong></div>' +
+      '</div>' +
+    '</div>' +
+    '<div class="cis-grid">' +
+      '<div class="cis-box"><div class="lbl">Bill to</div><div class="cis-lines">' +
+        esc(inv.client_name || "") + "<br>" + esc(inv.client_phone || "") + "<br>" + esc(inv.client_address || "") + (inv.client_zip ? "<br>" + esc(inv.client_zip) : "") +
+      '</div></div>' +
+      '<div class="cis-box"><div class="lbl">Summary</div><div class="cis-lines">' +
+        "Invoice total " + money(inv.amount) + "<br>" +
+        "Net paid " + money(net) + "<br>" +
+        (refTot > 0 ? "Refunded " + money(refTot) + "<br>" : "") +
+        "Remaining " + money(inv.remaining_balance) +
+      '</div></div>' +
+    '</div>' +
+    '<div class="cis-table-wrap"><table class="cis-table"><thead><tr><th>Description</th><th class="amount">Qty</th><th class="amount">Price</th><th class="amount">Amount</th></tr></thead><tbody>' +
+    items.map(function(line){
+      const qty = Number(line.quantity != null ? line.quantity : 1);
+      const price = Number(line.price != null ? line.price : 0);
+      const amt = Number(line.amount != null ? line.amount : (qty * price));
+      return '<tr><td>' + esc(line.description || "Service") + '</td><td class="amount">' + esc(String(qty)) + '</td><td class="amount">' + esc(money(price)) + '</td><td class="amount">' + esc(money(amt)) + '</td></tr>';
+    }).join("") +
+    '</tbody></table></div>' +
+    '<div class="cis-totals">' +
+      '<div class="cis-total-row"><span>Subtotal</span><strong>' + money(inv.subtotal != null ? inv.subtotal : inv.amount) + '</strong></div>' +
+      '<div class="cis-total-row grand"><span>Total</span><strong>' + money(inv.amount) + '</strong></div>' +
+      '<div class="cis-total-row"><span>Net paid</span><strong>' + money(net) + '</strong></div>' +
+      (refTot > 0 ? '<div class="cis-total-row"><span>Refunded</span><strong>' + money(refTot) + '</strong></div>' : '') +
+      '<div class="cis-total-row"><span>Remaining</span><strong>' + money(inv.remaining_balance) + '</strong></div>' +
+    '</div>' +
+    payHist +
+    instruct +
+    footerHtml;
+}
+
+async function openInvoiceDetail(id, opts){
+  opts = opts || {};
+  var numericId = Number(id);
+  if(!numericId){ AppUI.showToast("Invalid invoice.", "error"); return; }
+  AppUI.setLoading(true, "Loading invoice...");
+  try {
+    const res = await customerFetch(API + "/customer/invoices/" + encodeURIComponent(numericId));
+    const data = await res.json();
+    if(!res.ok){
+      AppUI.showToast(data.error || "This invoice is unavailable or could not be found.", "error");
+      return;
+    }
+    currentInvoiceId = numericId;
+    renderInvoiceDetailBody(data);
+    document.getElementById("invoiceDetailSection").classList.remove("hidden");
+    showTab("invoices", document.querySelector('[data-customer-tab="invoices"]'));
+    if(!opts.skipScroll){
+      document.getElementById("invoiceDetailSection").scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+    if(opts.printAfter){
+      requestAnimationFrame(function(){ window.print(); });
+    }
+  } catch(err){
+    AppUI.showToast("Unable to load invoice. Please try again.", "error");
+  } finally {
+    AppUI.setLoading(false, "");
+  }
+}
+
+function closeInvoiceDetail(){
+  currentInvoiceId = null;
+  document.getElementById("invoiceDetailSection").classList.add("hidden");
+  document.getElementById("invoiceDetailBody").innerHTML = "";
+}
+
 function renderJobs(){
   const upcoming = state.upcoming_jobs || [];
   const history = state.job_history || [];
   document.getElementById("jobs").innerHTML =
     '<div class="panel"><strong>Upcoming Jobs</strong></div>' +
-    (upcoming.length ? upcoming.map(item => card(item.service || "Job", ["Date: " + date(item.date), "Time: " + (item.start_time || "") + " - " + (item.end_time || ""), "Worker: " + esc(item.worker_name || "TBD")], item.status, "")).join("") : '<div class="panel">No upcoming jobs.</div>') +
+    (upcoming.length ? upcoming.map(function(item){ return card(item.service || "Job", ["Date: " + date(item.date), "Time: " + (item.start_time || "") + " - " + (item.end_time || ""), "Worker: " + esc(item.worker_name || "TBD")], item.status, ""); }).join("") : '<div class="panel empty-panel"><strong>No upcoming jobs</strong>Scheduled visits will appear here.</div>') +
     '<div class="panel"><strong>Job History</strong></div>' +
-    (history.length ? history.map(item => card(item.service || "Job", ["Date: " + date(item.date), "Time: " + (item.start_time || "") + " - " + (item.end_time || "")], item.status, "")).join("") : '<div class="panel">No job history yet.</div>');
+    (history.length ? history.map(function(item){ return card(item.service || "Job", ["Date: " + date(item.date), "Time: " + (item.start_time || "") + " - " + (item.end_time || "")], item.status, ""); }).join("") : '<div class="panel empty-panel"><strong>No job history yet</strong>Past jobs will show here.</div>');
 }
+
 function renderSubscriptions(){
   const items = state.subscriptions || [];
-  document.getElementById("subscriptions").innerHTML = items.length ? items.map(item => card(
+  document.getElementById("subscriptions").innerHTML = items.length ? items.map(function(item){ return card(
     item.service || "Subscription",
     ["Frequency: " + esc(item.frequency || ""), "Next Visit: " + date(item.next_date), "Price: " + money(item.price), "Worker: " + esc(item.worker_name || "TBD")],
     item.status,
     ""
-  )).join("") : '<div class="panel">No subscriptions yet.</div>';
+  ); }).join("") : '<div class="panel empty-panel"><strong>No subscriptions yet</strong>Active plans will appear here.</div>';
 }
+
 function renderServiceRequest(){
   document.getElementById("serviceRequest").innerHTML =
     '<div class="panel"><form class="form-grid" id="customerServiceRequestForm">' +
@@ -150,12 +438,14 @@ function renderServiceRequest(){
   const form = document.getElementById("customerServiceRequestForm");
   if(form) form.addEventListener("submit", submitServiceRequest);
 }
+
 function renderCompany(){
   const c = state.company || {};
   const client = state.client || state.customer || {};
   document.getElementById("welcome").textContent = "Welcome, " + (client.name ? client.name : "customer") + ".";
   document.getElementById("companyBox").innerHTML = '<strong>' + esc(c.name || "Company") + '</strong><br>' + esc(c.phone || "") + '<br>' + esc(c.email || "") + '<br>' + esc(c.address || "") + '<br>' + esc(c.business_hours || "");
 }
+
 async function setEstimateStatus(id, action){
   const res = await customerFetch(API + "/customer/estimates/" + encodeURIComponent(id) + "/" + action, { method:"POST" });
   const data = await res.json();
@@ -163,6 +453,7 @@ async function setEstimateStatus(id, action){
   AppUI.showToast(action === "approve" ? "Estimate approved." : "Estimate rejected.", "success");
   await load();
 }
+
 async function downloadPdf(path, filename){
   const res = await customerFetch(API + path);
   if(!res.ok){
@@ -181,6 +472,7 @@ async function downloadPdf(path, filename){
   link.remove();
   URL.revokeObjectURL(url);
 }
+
 async function submitServiceRequest(event){
   event.preventDefault();
   const payload = {
@@ -201,40 +493,34 @@ async function submitServiceRequest(event){
   document.getElementById("requestNotes").value = "";
   await load();
 }
-async function printInvoice(id){
-  const res = await customerFetch(API + "/customer/invoices/" + encodeURIComponent(id));
-  const invoice = await res.json();
-  if(!res.ok){ AppUI.showToast(invoice.error || "Unable to load invoice.", "error"); return; }
-  const items = Array.isArray(invoice.line_items) && invoice.line_items.length ? invoice.line_items : [{ description: invoice.job_service || "Service", quantity: 1, price: invoice.amount || 0, amount: invoice.amount || 0 }];
-  document.getElementById("invoicePrint").innerHTML =
-    '<h1>' + esc(invoice.invoice_number || ("Invoice #" + invoice.id)) + '</h1>' +
-    '<p><strong>' + esc(invoice.company_name || "") + '</strong><br>' + esc(invoice.company_phone || "") + '<br>' + esc(invoice.company_email || "") + '</p>' +
-    '<p><strong>Bill To:</strong><br>' + esc(invoice.client_name || "") + '<br>' + esc(invoice.client_phone || "") + '<br>' + esc(invoice.client_address || "") + '</p>' +
-    '<p>Status: ' + esc(invoice.status || "") + ' | Due: ' + date(invoice.due_date) + '</p>' +
-    '<table><thead><tr><th>Description</th><th>Qty</th><th>Price</th><th>Total</th></tr></thead><tbody>' +
-    items.map(item => '<tr><td>' + esc(item.description || "Service") + '</td><td>' + Number(item.quantity || 1) + '</td><td>' + money(item.price || 0) + '</td><td>' + money(item.amount || 0) + '</td></tr>').join("") +
-    '</tbody></table><h2>Total: ' + money(invoice.amount || 0) + '</h2><h2>Remaining: ' + money(invoice.remaining_balance || 0) + '</h2>';
-  window.print();
-}
+
 async function load(){
   if(!token()){ window.location.href = "/customer-login.html"; return; }
   AppUI.setLoading(true, "Loading portal...");
   try {
     const res = await customerFetch(API + "/customer/dashboard");
     state = await res.json();
-    if(!res.ok){ AppUI.showToast(state.error || "Unable to load portal.", "error"); return; }
+    if(!res.ok){
+      AppUI.showToast(state.error || "Unable to load portal.", "error");
+      return;
+    }
+    closeInvoiceDetail();
     renderCompany(); renderOverview(); renderEstimates(); renderInvoices(); renderJobs(); renderSubscriptions(); renderServiceRequest();
   } catch(err) {
-    AppUI.showToast("Unable to load portal.", "error");
+    AppUI.showToast("Unable to load portal. Please refresh or sign in again.", "error");
   } finally {
-    AppUI.setLoading(false);
+    AppUI.setLoading(false, "");
   }
 }
 
 document.getElementById("customerPortalTabs").addEventListener("click", function(ev){
   const tab = ev.target.closest("[data-customer-tab]");
   if(!tab || !document.getElementById("customerPortalTabs").contains(tab)) return;
-  showTab(tab.getAttribute("data-customer-tab"), tab);
+  const tabId = tab.getAttribute("data-customer-tab");
+  if(tabId !== "invoices"){
+    closeInvoiceDetail();
+  }
+  showTab(tabId, tab);
 });
 
 document.querySelector(".page").addEventListener("click", function(ev){
@@ -253,8 +539,32 @@ document.querySelector(".page").addEventListener("click", function(ev){
     void downloadPdf(btn.getAttribute("data-customer-pdf-path"), btn.getAttribute("data-customer-pdf-file"));
     return;
   }
-  if(action === "print-invoice"){
-    void printInvoice(Number(btn.getAttribute("data-customer-invoice-id")));
+  if(action === "view-invoice"){
+    void openInvoiceDetail(btn.getAttribute("data-customer-invoice-id"), {});
+    return;
+  }
+  if(action === "open-invoice-print"){
+    void openInvoiceDetail(btn.getAttribute("data-customer-invoice-id"), { printAfter: true, skipScroll: false });
+    return;
+  }
+  if(action === "close-invoice-detail"){
+    closeInvoiceDetail();
+    return;
+  }
+  if(action === "print-invoice-detail"){
+    if(!currentInvoiceId){
+      AppUI.showToast("Open an invoice first.", "error");
+      return;
+    }
+    window.print();
+    return;
+  }
+  if(action === "download-current-invoice-pdf"){
+    if(!currentInvoiceId){
+      AppUI.showToast("Open an invoice first.", "error");
+      return;
+    }
+    void downloadPdf("/customer/invoices/" + encodeURIComponent(currentInvoiceId) + "/pdf", "invoice-" + currentInvoiceId + ".pdf");
   }
 });
 

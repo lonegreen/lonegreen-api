@@ -1,0 +1,956 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LoneGreen | Marketplace Requests</title>
+  <link rel="stylesheet" href="/app-shell.css">
+  <link rel="stylesheet" href="/ui-cleanup.css">
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Inter, Arial, sans-serif;
+      color: #173327;
+      background:
+        radial-gradient(circle at top left, rgba(31, 92, 58, 0.08), transparent 28%),
+        linear-gradient(180deg, #edf5f0 0%, #f6f8f7 210px, #f4f6f8 100%);
+      padding: 22px;
+    }
+    .page {
+      width: min(1220px, 100%);
+      margin: 0 auto;
+      display: grid;
+      gap: 16px;
+    }
+    .hero {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .hero h1 {
+      margin: 0 0 6px;
+      color: #1f5c3a;
+      font-size: 32px;
+      letter-spacing: -0.02em;
+    }
+    .hero p {
+      margin: 0;
+      color: #60786e;
+      line-height: 1.5;
+    }
+    .hero-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .btn {
+      border: none;
+      border-radius: 12px;
+      padding: 10px 14px;
+      font: inherit;
+      font-weight: 800;
+      cursor: pointer;
+      transition: transform .15s ease, box-shadow .15s ease, opacity .15s ease;
+    }
+    .btn:hover:not(:disabled) { transform: translateY(-1px); }
+    .btn.primary {
+      background: linear-gradient(135deg, #1f5c3a, #2d8b55);
+      color: #fff;
+      box-shadow: 0 10px 22px rgba(31, 92, 58, 0.16);
+    }
+    .btn.secondary {
+      background: #edf6f0;
+      color: #1f5c3a;
+      border: 1px solid #d0dfd5;
+    }
+    .btn.danger {
+      background: #b42318;
+      color: #fff;
+    }
+    .btn:disabled {
+      opacity: 0.62;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+    .layout {
+      display: grid;
+      grid-template-columns: 360px 1fr;
+      gap: 14px;
+      align-items: start;
+    }
+    .panel {
+      background: rgba(255, 255, 255, 0.96);
+      border: 1px solid #dbe7df;
+      border-radius: 16px;
+      box-shadow: 0 18px 38px rgba(16, 24, 40, 0.06);
+      padding: 16px;
+      display: grid;
+      gap: 12px;
+    }
+    .panel h2 {
+      margin: 0;
+      color: #1f5c3a;
+      font-size: 20px;
+    }
+    .subhead {
+      margin: 0;
+      color: #678075;
+      font-size: 13px;
+      line-height: 1.45;
+    }
+    .status-line {
+      min-height: 18px;
+      color: #60786e;
+      font-size: 13px;
+      font-weight: 700;
+    }
+    .status-line.error { color: #b42318; }
+    .status-line.ok { color: #166534; }
+    .field-grid {
+      display: grid;
+      gap: 10px;
+      grid-template-columns: 1fr 1fr;
+    }
+    .field {
+      display: grid;
+      gap: 6px;
+      min-width: 0;
+    }
+    .field.full { grid-column: 1 / -1; }
+    .field label {
+      font-size: 12px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: #4f6a5f;
+    }
+    input, textarea, select {
+      width: 100%;
+      border: 1px solid #d6e3db;
+      border-radius: 11px;
+      background: #fff;
+      color: #173327;
+      padding: 10px 12px;
+      font: inherit;
+      outline: none;
+    }
+    input:focus, textarea:focus, select:focus {
+      border-color: #a8cab8;
+      box-shadow: 0 0 0 2px rgba(31, 92, 58, 0.12);
+    }
+    textarea { resize: vertical; min-height: 84px; }
+    .list-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 999px;
+      padding: 6px 10px;
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      background: #eef7f2;
+      color: #1f5c3a;
+    }
+    .requests-list {
+      display: grid;
+      gap: 8px;
+      max-height: 500px;
+      overflow: auto;
+      padding-right: 2px;
+    }
+    .request-item {
+      border: 1px solid #dce9e2;
+      border-radius: 12px;
+      background: #fbfdfc;
+      padding: 11px;
+      display: grid;
+      gap: 6px;
+      text-align: left;
+      width: 100%;
+      cursor: pointer;
+    }
+    .request-item.active {
+      border-color: #1f5c3a;
+      background: #f2fbf5;
+    }
+    .request-item-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      align-items: center;
+    }
+    .request-title {
+      margin: 0;
+      font-size: 15px;
+      color: #173327;
+      font-weight: 800;
+      overflow-wrap: anywhere;
+    }
+    .request-meta {
+      margin: 0;
+      color: #667f75;
+      font-size: 12px;
+      line-height: 1.45;
+    }
+    .badge {
+      border-radius: 999px;
+      padding: 4px 9px;
+      font-size: 10px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      background: #eef7f2;
+      color: #1f5c3a;
+      white-space: nowrap;
+    }
+    .badge.open { background: #fff7ed; color: #c2410c; }
+    .badge.matched { background: #ecfdf3; color: #027a48; }
+    .badge.closed, .badge.cancelled, .badge.rejected { background: #fef2f2; color: #b42318; }
+    .badge.pending { background: #fff7ed; color: #c2410c; }
+    .badge.accepted { background: #ecfdf3; color: #027a48; }
+    .detail-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .detail-title {
+      margin: 0;
+      color: #1f5c3a;
+      font-size: 22px;
+      overflow-wrap: anywhere;
+    }
+    .detail-meta {
+      margin: 4px 0 0;
+      color: #61796f;
+      font-size: 13px;
+    }
+    .detail-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+    }
+    .detail-card {
+      border: 1px solid #dce9e2;
+      background: #f8fbf9;
+      border-radius: 12px;
+      padding: 10px;
+      display: grid;
+      gap: 5px;
+      min-width: 0;
+    }
+    .detail-card span {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: #678075;
+      font-weight: 800;
+    }
+    .detail-card strong {
+      font-size: 14px;
+      color: #173327;
+      word-break: break-word;
+    }
+    .section {
+      border: 1px solid #dce9e2;
+      border-radius: 14px;
+      padding: 12px;
+      display: grid;
+      gap: 10px;
+      background: #fff;
+    }
+    .section-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .section-head h3 {
+      margin: 0;
+      color: #1f5c3a;
+      font-size: 17px;
+    }
+    .cards {
+      display: grid;
+      gap: 8px;
+    }
+    .card {
+      border: 1px solid #dce9e2;
+      border-radius: 12px;
+      background: #fbfdfc;
+      padding: 10px;
+      display: grid;
+      gap: 6px;
+    }
+    .card-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .card h4 {
+      margin: 0;
+      color: #173327;
+      font-size: 15px;
+    }
+    .card p {
+      margin: 0;
+      color: #637b71;
+      font-size: 13px;
+      line-height: 1.45;
+      overflow-wrap: anywhere;
+    }
+    .price {
+      color: #1f5c3a;
+      font-size: 20px;
+      font-weight: 900;
+      letter-spacing: -0.01em;
+    }
+    .empty {
+      border: 1px dashed #d5e3db;
+      border-radius: 12px;
+      background: #f8fbf9;
+      padding: 14px;
+      color: #657d73;
+      font-size: 13px;
+      line-height: 1.5;
+      text-align: center;
+    }
+    .empty strong {
+      display: block;
+      margin-bottom: 5px;
+      color: #173327;
+    }
+    @media (max-width: 1040px) {
+      .layout { grid-template-columns: 1fr; }
+      .detail-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .requests-list { max-height: 340px; }
+    }
+    @media (max-width: 720px) {
+      body { padding: 14px; }
+      .hero h1 { font-size: 28px; }
+      .hero-actions { width: 100%; display: grid; grid-template-columns: 1fr; }
+      .hero-actions .btn { width: 100%; }
+      .field-grid { grid-template-columns: 1fr; }
+      .detail-grid { grid-template-columns: 1fr; }
+      .section-head .btn { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <header class="hero">
+      <div>
+        <h1>Marketplace Requests</h1>
+        <p>Create service requests, compare company offers, and accept the best match.</p>
+      </div>
+      <div class="hero-actions">
+        <a class="btn secondary" href="/customer-dashboard-v2.html">Dashboard</a>
+        <button id="refreshAllBtn" class="btn secondary" type="button">Refresh</button>
+      </div>
+    </header>
+
+    <div id="globalStatus" class="status-line" role="status" aria-live="polite"></div>
+
+    <section class="layout">
+      <aside class="panel">
+        <h2>Create Request</h2>
+        <p class="subhead">Required: category ID and title. Add location and details to improve matching.</p>
+        <form id="requestForm" class="field-grid">
+          <div class="field">
+            <label for="categoryId">Category ID *</label>
+            <input id="categoryId" name="category_id" type="number" min="1" required placeholder="e.g. 3">
+          </div>
+          <div class="field">
+            <label for="requestedDate">Requested Date</label>
+            <input id="requestedDate" name="requested_date" type="date">
+          </div>
+          <div class="field full">
+            <label for="title">Title *</label>
+            <input id="title" name="title" type="text" maxlength="140" required placeholder="Example: Weekly lawn mowing">
+          </div>
+          <div class="field full">
+            <label for="description">Description</label>
+            <textarea id="description" name="description" maxlength="2000" placeholder="Describe scope, property size, and special requests."></textarea>
+          </div>
+          <div class="field">
+            <label for="requestedTime">Requested Time</label>
+            <input id="requestedTime" name="requested_time" type="time">
+          </div>
+          <div class="field">
+            <label for="zipCode">Zip Code</label>
+            <input id="zipCode" name="zip_code" type="text" maxlength="5" inputmode="numeric" placeholder="10001">
+          </div>
+          <div class="field full">
+            <label for="address">Address</label>
+            <input id="address" name="address" type="text" maxlength="160" placeholder="123 Main St">
+          </div>
+          <div class="field">
+            <label for="city">City</label>
+            <input id="city" name="city" type="text" maxlength="60" placeholder="New York">
+          </div>
+          <div class="field">
+            <label for="state">State</label>
+            <input id="state" name="state" type="text" maxlength="2" placeholder="NY">
+          </div>
+          <div class="field full">
+            <button id="submitRequestBtn" class="btn primary" type="submit">Create Request</button>
+          </div>
+        </form>
+        <div id="formStatus" class="status-line"></div>
+
+        <div class="list-head">
+          <h2>My Requests</h2>
+          <span id="requestCountPill" class="pill">0</span>
+        </div>
+        <div id="requestsList" class="requests-list"></div>
+      </aside>
+
+      <section class="panel">
+        <div class="detail-header">
+          <div>
+            <h2 id="detailTitle" class="detail-title">Select a request</h2>
+            <p id="detailMeta" class="detail-meta">Request details, matches, and offers will appear here.</p>
+          </div>
+          <span id="detailStatusBadge" class="badge">N/A</span>
+        </div>
+
+        <div id="requestDetailsGrid" class="detail-grid"></div>
+
+        <section class="section">
+          <div class="section-head">
+            <h3>Matched Companies</h3>
+            <button id="refreshMatchesBtn" type="button" class="btn secondary">Refresh Matches</button>
+          </div>
+          <div id="matchesStatus" class="status-line"></div>
+          <div id="matchesList" class="cards"></div>
+        </section>
+
+        <section class="section">
+          <div class="section-head">
+            <h3>Offers</h3>
+            <button id="refreshOffersBtn" type="button" class="btn secondary">Refresh Offers</button>
+          </div>
+          <div id="offersStatus" class="status-line"></div>
+          <div id="offersList" class="cards"></div>
+        </section>
+      </section>
+    </section>
+  </main>
+
+  <script>
+    (function() {
+      const LOGIN_REDIRECT = "/customer-login-v2.html";
+      const state = {
+        requests: [],
+        selectedRequestId: null,
+        selectedRequest: null,
+        matches: [],
+        offers: [],
+        loadingRequests: false,
+        loadingDetail: false,
+        loadingMatches: false,
+        loadingOffers: false,
+        creatingRequest: false,
+        acceptingOfferId: null
+      };
+
+      const els = {
+        globalStatus: document.getElementById("globalStatus"),
+        form: document.getElementById("requestForm"),
+        formStatus: document.getElementById("formStatus"),
+        submitRequestBtn: document.getElementById("submitRequestBtn"),
+        refreshAllBtn: document.getElementById("refreshAllBtn"),
+        requestsList: document.getElementById("requestsList"),
+        requestCountPill: document.getElementById("requestCountPill"),
+        detailTitle: document.getElementById("detailTitle"),
+        detailMeta: document.getElementById("detailMeta"),
+        detailStatusBadge: document.getElementById("detailStatusBadge"),
+        requestDetailsGrid: document.getElementById("requestDetailsGrid"),
+        refreshMatchesBtn: document.getElementById("refreshMatchesBtn"),
+        refreshOffersBtn: document.getElementById("refreshOffersBtn"),
+        matchesStatus: document.getElementById("matchesStatus"),
+        offersStatus: document.getElementById("offersStatus"),
+        matchesList: document.getElementById("matchesList"),
+        offersList: document.getElementById("offersList")
+      };
+
+      function getToken() {
+        return localStorage.getItem("customerToken");
+      }
+
+      function logoutToLogin() {
+        localStorage.removeItem("customerToken");
+        localStorage.removeItem("customer");
+        window.location.href = LOGIN_REDIRECT;
+      }
+
+      function setLine(el, message, type) {
+        el.textContent = message || "";
+        el.className = "status-line" + (type ? " " + type : "");
+      }
+
+      function setGlobalStatus(message, type) {
+        setLine(els.globalStatus, message, type);
+      }
+
+      function esc(value) {
+        return String(value == null ? "" : value).replace(/[&<>"']/g, function(ch) {
+          return ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[ch];
+        });
+      }
+
+      function niceText(value, fallback) {
+        if (value === null || value === undefined || value === "") return fallback || "-";
+        return String(value);
+      }
+
+      function prettyStatus(value) {
+        return String(value || "unknown").replace(/_/g, " ").replace(/\b\w/g, function(ch) { return ch.toUpperCase(); });
+      }
+
+      function money(value) {
+        const num = Number(value || 0);
+        return "$" + num.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+      }
+
+      function fmtDate(value) {
+        if (!value) return "-";
+        const d = new Date(value);
+        if (Number.isNaN(d.getTime())) return String(value);
+        return d.toLocaleString([], { dateStyle: "medium", timeStyle: "short" });
+      }
+
+      function fmtDateOnly(value) {
+        if (!value) return "-";
+        const d = new Date(value);
+        if (Number.isNaN(d.getTime())) return String(value);
+        return d.toLocaleDateString([], { dateStyle: "medium" });
+      }
+
+      function authHeaders(extra) {
+        return Object.assign({}, extra || {}, {
+          Authorization: "Bearer " + getToken()
+        });
+      }
+
+      async function request(path, options) {
+        const res = await fetch(path, options || {});
+        if (res.status === 401 || res.status === 403) {
+          logoutToLogin();
+          throw new Error("Unauthorized");
+        }
+        const data = await res.json().catch(function() { return {}; });
+        if (!res.ok) throw new Error(data.error || "Request failed");
+        return data;
+      }
+
+      function getRequestTitle(item) {
+        return item && item.title ? String(item.title) : "Untitled request";
+      }
+
+      function badgeClass(status) {
+        const s = String(status || "").toLowerCase();
+        return "badge " + (s || "open");
+      }
+
+      function renderRequests() {
+        const list = state.requests || [];
+        els.requestCountPill.textContent = String(list.length);
+
+        if (!list.length) {
+          els.requestsList.innerHTML = '<div class="empty"><strong>No requests yet</strong>Create your first marketplace request to start receiving offers.</div>';
+          return;
+        }
+
+        els.requestsList.innerHTML = list.map(function(item) {
+          const activeClass = Number(item.id) === Number(state.selectedRequestId) ? " active" : "";
+          return (
+            '<button type="button" class="request-item' + activeClass + '" data-request-id="' + esc(item.id) + '">' +
+              '<div class="request-item-top">' +
+                '<p class="request-title">' + esc(getRequestTitle(item)) + '</p>' +
+                '<span class="' + badgeClass(item.status) + '">' + esc(prettyStatus(item.status)) + "</span>" +
+              "</div>" +
+              '<p class="request-meta">Category ID: ' + esc(item.category_id) + "</p>" +
+              '<p class="request-meta">Created: ' + esc(fmtDate(item.created_at)) + "</p>" +
+            "</button>"
+          );
+        }).join("");
+      }
+
+      function renderRequestDetails() {
+        const r = state.selectedRequest;
+        if (!r) {
+          els.detailTitle.textContent = "Select a request";
+          els.detailMeta.textContent = "Request details, matches, and offers will appear here.";
+          els.detailStatusBadge.className = "badge";
+          els.detailStatusBadge.textContent = "N/A";
+          els.requestDetailsGrid.innerHTML = '<div class="empty"><strong>No request selected</strong>Pick a request from My Requests to view full details.</div>';
+          return;
+        }
+
+        els.detailTitle.textContent = getRequestTitle(r);
+        els.detailMeta.textContent = "Request #" + r.id + " • Created " + fmtDate(r.created_at);
+        els.detailStatusBadge.className = badgeClass(r.status);
+        els.detailStatusBadge.textContent = prettyStatus(r.status);
+
+        els.requestDetailsGrid.innerHTML = [
+          '<article class="detail-card"><span>Category ID</span><strong>' + esc(niceText(r.category_id)) + "</strong></article>",
+          '<article class="detail-card"><span>Requested Date</span><strong>' + esc(fmtDateOnly(r.requested_date)) + "</strong></article>",
+          '<article class="detail-card"><span>Requested Time</span><strong>' + esc(niceText(r.requested_time)) + "</strong></article>",
+          '<article class="detail-card"><span>Accepted Offer</span><strong>' + esc(niceText(r.accepted_offer_id)) + "</strong></article>",
+          '<article class="detail-card"><span>Address</span><strong>' + esc(niceText(r.address)) + "</strong></article>",
+          '<article class="detail-card"><span>City</span><strong>' + esc(niceText(r.city)) + "</strong></article>",
+          '<article class="detail-card"><span>State</span><strong>' + esc(niceText(r.state)) + "</strong></article>",
+          '<article class="detail-card"><span>Zip Code</span><strong>' + esc(niceText(r.zip_code)) + "</strong></article>",
+          '<article class="detail-card" style="grid-column: 1 / -1;"><span>Description</span><strong>' + esc(niceText(r.description, "No description provided.")) + "</strong></article>"
+        ].join("");
+      }
+
+      function renderMatches() {
+        const list = state.matches || [];
+        if (!state.selectedRequestId) {
+          els.matchesList.innerHTML = '<div class="empty"><strong>No request selected</strong>Select a request to view matched companies.</div>';
+          return;
+        }
+        if (!list.length) {
+          els.matchesList.innerHTML = '<div class="empty"><strong>No matches yet</strong>There are currently no companies matching this request area/category.</div>';
+          return;
+        }
+
+        els.matchesList.innerHTML = list.map(function(c) {
+          const profileUrl = c.public_slug ? "/company-public-profile.html?slug=" + encodeURIComponent(c.public_slug) : "";
+          return (
+            '<article class="card">' +
+              '<div class="card-top">' +
+                "<h4>" + esc(niceText(c.name, "Company")) + "</h4>" +
+                '<span class="' + badgeClass(c.billing_status || "active") + '">' + esc(prettyStatus(c.billing_status || "active")) + "</span>" +
+              "</div>" +
+              '<p>Email: ' + esc(niceText(c.email)) + "</p>" +
+              '<p>Phone: ' + esc(niceText(c.phone)) + "</p>" +
+              '<p>Address: ' + esc(niceText(c.address)) + "</p>" +
+              (profileUrl ? '<p><a href="' + esc(profileUrl) + '" target="_blank" rel="noopener">View public profile</a></p>' : "") +
+            "</article>"
+          );
+        }).join("");
+      }
+
+      function canAcceptOffer(offer) {
+        if (!state.selectedRequest) return false;
+        const requestStatus = String(state.selectedRequest.status || "").toLowerCase();
+        const offerStatus = String(offer.status || "").toLowerCase();
+        return requestStatus === "open" && offerStatus === "pending";
+      }
+
+      function renderOffers() {
+        const list = state.offers || [];
+        if (!state.selectedRequestId) {
+          els.offersList.innerHTML = '<div class="empty"><strong>No request selected</strong>Select a request to view offers.</div>';
+          return;
+        }
+        if (!list.length) {
+          els.offersList.innerHTML = '<div class="empty"><strong>No offers yet</strong>Offers from matched companies will appear here.</div>';
+          return;
+        }
+
+        els.offersList.innerHTML = list.map(function(o) {
+          const isAccepting = Number(state.acceptingOfferId) === Number(o.id);
+          const canAccept = canAcceptOffer(o) && !isAccepting;
+          const buttonLabel = isAccepting ? "Accepting..." : "Accept Offer";
+
+          return (
+            '<article class="card">' +
+              '<div class="card-top">' +
+                '<div>' +
+                  "<h4>" + esc(niceText(o.company_name, "Company")) + "</h4>" +
+                  '<p>Offer #' + esc(o.id) + " • " + esc(fmtDate(o.created_at)) + "</p>" +
+                "</div>" +
+                '<span class="' + badgeClass(o.status) + '">' + esc(prettyStatus(o.status)) + "</span>" +
+              "</div>" +
+              '<div class="price">' + esc(money(o.price)) + "</div>" +
+              '<p>Message: ' + esc(niceText(o.message, "No message provided.")) + "</p>" +
+              '<p>Estimated Start: ' + esc(fmtDateOnly(o.estimated_start_date)) + "</p>" +
+              '<div class="actions">' +
+                '<button type="button" class="btn primary" data-accept-offer-id="' + esc(o.id) + '" ' + (canAccept ? "" : "disabled") + ">" + esc(buttonLabel) + "</button>" +
+              "</div>" +
+            "</article>"
+          );
+        }).join("");
+      }
+
+      function setButtonsState() {
+        els.submitRequestBtn.disabled = state.creatingRequest;
+        els.submitRequestBtn.textContent = state.creatingRequest ? "Creating..." : "Create Request";
+
+        const hasSelection = !!state.selectedRequestId;
+        els.refreshMatchesBtn.disabled = !hasSelection || state.loadingMatches;
+        els.refreshOffersBtn.disabled = !hasSelection || state.loadingOffers;
+        els.refreshAllBtn.disabled = state.loadingRequests || state.loadingDetail || state.loadingMatches || state.loadingOffers;
+      }
+
+      async function loadRequests(initialSelectionId) {
+        state.loadingRequests = true;
+        setButtonsState();
+        setGlobalStatus("Loading your requests...", "");
+        try {
+          const list = await request("/marketplace/requests/me", {
+            method: "GET",
+            headers: authHeaders()
+          });
+          state.requests = Array.isArray(list) ? list : [];
+
+          const preferredId = initialSelectionId || state.selectedRequestId;
+          const exists = state.requests.some(function(item) { return Number(item.id) === Number(preferredId); });
+          state.selectedRequestId = exists ? preferredId : (state.requests[0] ? state.requests[0].id : null);
+
+          renderRequests();
+          if (state.selectedRequestId) {
+            await loadRequestDetail(state.selectedRequestId);
+          } else {
+            state.selectedRequest = null;
+            state.matches = [];
+            state.offers = [];
+            renderRequestDetails();
+            renderMatches();
+            renderOffers();
+            setLine(els.matchesStatus, "", "");
+            setLine(els.offersStatus, "", "");
+          }
+          setGlobalStatus("Marketplace loaded.", "ok");
+        } catch (err) {
+          setGlobalStatus(err.message || "Unable to load requests.", "error");
+          state.requests = [];
+          state.selectedRequestId = null;
+          state.selectedRequest = null;
+          state.matches = [];
+          state.offers = [];
+          renderRequests();
+          renderRequestDetails();
+          renderMatches();
+          renderOffers();
+        } finally {
+          state.loadingRequests = false;
+          setButtonsState();
+        }
+      }
+
+      async function loadRequestDetail(requestId) {
+        if (!requestId) return;
+        state.loadingDetail = true;
+        setButtonsState();
+        try {
+          const detail = await request("/marketplace/requests/" + encodeURIComponent(requestId), {
+            method: "GET",
+            headers: authHeaders()
+          });
+          state.selectedRequest = detail || null;
+          renderRequestDetails();
+          await Promise.all([loadMatches(false), loadOffers(false)]);
+        } catch (err) {
+          state.selectedRequest = null;
+          state.matches = [];
+          state.offers = [];
+          renderRequestDetails();
+          renderMatches();
+          renderOffers();
+          setGlobalStatus(err.message || "Unable to load request details.", "error");
+        } finally {
+          state.loadingDetail = false;
+          setButtonsState();
+        }
+      }
+
+      async function loadMatches(showStatus) {
+        if (!state.selectedRequestId) return;
+        state.loadingMatches = true;
+        setButtonsState();
+        if (showStatus !== false) setLine(els.matchesStatus, "Loading matches...", "");
+        try {
+          const payload = await request("/marketplace/requests/" + encodeURIComponent(state.selectedRequestId) + "/matches", {
+            method: "GET",
+            headers: authHeaders()
+          });
+          state.matches = Array.isArray(payload && payload.matches) ? payload.matches : [];
+          renderMatches();
+          if (showStatus !== false) {
+            setLine(els.matchesStatus, state.matches.length ? "Matches updated." : "No matches found yet.", state.matches.length ? "ok" : "");
+          }
+        } catch (err) {
+          state.matches = [];
+          renderMatches();
+          setLine(els.matchesStatus, err.message || "Unable to load matches.", "error");
+        } finally {
+          state.loadingMatches = false;
+          setButtonsState();
+        }
+      }
+
+      async function loadOffers(showStatus) {
+        if (!state.selectedRequestId) return;
+        state.loadingOffers = true;
+        setButtonsState();
+        if (showStatus !== false) setLine(els.offersStatus, "Loading offers...", "");
+        try {
+          const list = await request("/marketplace/requests/" + encodeURIComponent(state.selectedRequestId) + "/offers", {
+            method: "GET",
+            headers: authHeaders()
+          });
+          state.offers = Array.isArray(list) ? list : [];
+          renderOffers();
+          if (showStatus !== false) {
+            setLine(els.offersStatus, state.offers.length ? "Offers updated." : "No offers yet.", state.offers.length ? "ok" : "");
+          }
+        } catch (err) {
+          state.offers = [];
+          renderOffers();
+          setLine(els.offersStatus, err.message || "Unable to load offers.", "error");
+        } finally {
+          state.loadingOffers = false;
+          setButtonsState();
+        }
+      }
+
+      function createPayloadFromForm(form) {
+        const fd = new FormData(form);
+        const payload = {
+          category_id: Number(fd.get("category_id")),
+          title: String(fd.get("title") || "").trim()
+        };
+
+        const optionalFields = [
+          "description",
+          "requested_date",
+          "requested_time",
+          "address",
+          "city",
+          "state",
+          "zip_code"
+        ];
+
+        optionalFields.forEach(function(key) {
+          const raw = fd.get(key);
+          const value = typeof raw === "string" ? raw.trim() : "";
+          if (value) payload[key] = value;
+        });
+
+        if (payload.state) payload.state = payload.state.toUpperCase().slice(0, 2);
+        if (payload.zip_code) payload.zip_code = payload.zip_code.replace(/\D/g, "").slice(0, 5);
+        return payload;
+      }
+
+      async function handleCreateRequest(event) {
+        event.preventDefault();
+        if (state.creatingRequest) return;
+
+        const payload = createPayloadFromForm(els.form);
+        if (!payload.category_id || !payload.title) {
+          setLine(els.formStatus, "Category ID and title are required.", "error");
+          return;
+        }
+
+        state.creatingRequest = true;
+        setButtonsState();
+        setLine(els.formStatus, "Creating marketplace request...", "");
+
+        try {
+          const created = await request("/marketplace/requests", {
+            method: "POST",
+            headers: authHeaders({ "Content-Type": "application/json" }),
+            body: JSON.stringify(payload)
+          });
+          setLine(els.formStatus, "Request created successfully.", "ok");
+          els.form.reset();
+          await loadRequests(created && created.id ? created.id : null);
+        } catch (err) {
+          setLine(els.formStatus, err.message || "Unable to create request.", "error");
+        } finally {
+          state.creatingRequest = false;
+          setButtonsState();
+        }
+      }
+
+      async function handleAcceptOffer(offerId) {
+        if (!offerId || state.acceptingOfferId) return;
+        state.acceptingOfferId = Number(offerId);
+        renderOffers();
+        setLine(els.offersStatus, "Accepting offer...", "");
+        try {
+          await request("/marketplace/offers/" + encodeURIComponent(offerId) + "/accept", {
+            method: "POST",
+            headers: authHeaders({ "Content-Type": "application/json" }),
+            body: JSON.stringify({})
+          });
+          setLine(els.offersStatus, "Offer accepted. Request is now matched.", "ok");
+          await loadRequests(state.selectedRequestId);
+        } catch (err) {
+          setLine(els.offersStatus, err.message || "Unable to accept offer.", "error");
+        } finally {
+          state.acceptingOfferId = null;
+          renderOffers();
+        }
+      }
+
+      function bindEvents() {
+        els.form.addEventListener("submit", handleCreateRequest);
+        els.refreshAllBtn.addEventListener("click", function() {
+          loadRequests(state.selectedRequestId);
+        });
+        els.refreshMatchesBtn.addEventListener("click", function() {
+          loadMatches(true);
+        });
+        els.refreshOffersBtn.addEventListener("click", function() {
+          loadOffers(true);
+        });
+
+        els.requestsList.addEventListener("click", function(event) {
+          const button = event.target.closest("[data-request-id]");
+          if (!button) return;
+          const requestId = Number(button.getAttribute("data-request-id"));
+          if (!requestId || requestId === state.selectedRequestId) return;
+          state.selectedRequestId = requestId;
+          renderRequests();
+          loadRequestDetail(requestId);
+        });
+
+        els.offersList.addEventListener("click", function(event) {
+          const button = event.target.closest("[data-accept-offer-id]");
+          if (!button) return;
+          const offerId = Number(button.getAttribute("data-accept-offer-id"));
+          if (offerId) handleAcceptOffer(offerId);
+        });
+      }
+
+      async function init() {
+        if (!getToken()) {
+          window.location.href = LOGIN_REDIRECT;
+          return;
+        }
+        bindEvents();
+        setButtonsState();
+        renderRequests();
+        renderRequestDetails();
+        renderMatches();
+        renderOffers();
+        await loadRequests(null);
+      }
+
+      init();
+    })();
+  </script>
+</body>
+</html>

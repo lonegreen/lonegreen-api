@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Company Profile</title>
+  <link rel="stylesheet" href="/app-shell.css">
+  <style>
+    * { box-sizing: border-box; font-family: Inter, Arial, sans-serif; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: linear-gradient(180deg, #edf5f0 0%, #f7f9f8 190px, #f4f6f8 100%);
+      color: #173327;
+      padding: 20px;
+    }
+    .page { width: min(1080px, 100%); margin: 0 auto; display: grid; gap: 16px; }
+    .hero {
+      background: #fff;
+      border: 1px solid #dbe7df;
+      border-radius: 18px;
+      box-shadow: 0 18px 42px rgba(16,24,40,0.06);
+      overflow: hidden;
+    }
+    .cover {
+      min-height: 180px;
+      background: linear-gradient(135deg, #1f5c3a, #2d8b55);
+      display: grid;
+      place-items: center;
+      color: #fff;
+      font-weight: 800;
+    }
+    .cover img { width: 100%; height: 240px; object-fit: cover; display: block; }
+    .hero-body { padding: 20px; display: grid; gap: 12px; }
+    .identity { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+    .logo {
+      width: 72px; height: 72px; border-radius: 16px; border: 1px solid #dbe7df;
+      display: grid; place-items: center; background: #f8fcf9; font-weight: 900;
+      color: #1f5c3a; overflow: hidden;
+    }
+    .logo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    h1 { margin: 0 0 4px; color: #1f5c3a; font-size: 30px; }
+    .muted { margin: 0; color: #648076; line-height: 1.5; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .panel {
+      background: #fff;
+      border: 1px solid #dbe7df;
+      border-radius: 16px;
+      box-shadow: 0 12px 28px rgba(16,24,40,0.05);
+      padding: 16px;
+      display: grid;
+      gap: 10px;
+    }
+    .panel h2 { margin: 0; color: #1f5c3a; font-size: 20px; }
+    .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+    .chip {
+      border-radius: 999px; background: #eef4f0; color: #1f5c3a;
+      padding: 6px 10px; font-size: 12px; font-weight: 800;
+    }
+    .gallery {
+      display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 10px;
+    }
+    .gallery img {
+      width: 100%; height: 120px; object-fit: cover; border-radius: 10px; border: 1px solid #dbe7df;
+      background: #f8fcf9;
+    }
+    .kv { margin: 0; color: #173327; }
+    .kv strong { color: #1f5c3a; }
+    a.link { color: #1f6f42; font-weight: 700; text-decoration: none; word-break: break-all; }
+    a.link:hover { text-decoration: underline; }
+    .status {
+      min-height: 20px;
+      color: #5f6e66;
+      font-size: 14px;
+    }
+    .status.error { color: #b42318; font-weight: 700; }
+    @media (max-width: 860px) {
+      body { padding: 14px; }
+      .grid { grid-template-columns: 1fr; }
+      .gallery { grid-template-columns: 1fr 1fr; }
+    }
+    @media (max-width: 560px) {
+      .gallery { grid-template-columns: 1fr; }
+      h1 { font-size: 26px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <section class="hero">
+      <div id="cover" class="cover">Company Profile</div>
+      <div class="hero-body">
+        <div class="identity">
+          <div id="logo" class="logo">CO</div>
+          <div>
+            <h1 id="companyName">Loading...</h1>
+            <p id="description" class="muted"></p>
+          </div>
+        </div>
+        <div id="status" class="status" role="status" aria-live="polite"></div>
+      </div>
+    </section>
+
+    <section class="grid">
+      <article class="panel">
+        <h2>Services</h2>
+        <div id="services" class="chips"></div>
+      </article>
+
+      <article class="panel">
+        <h2>Service Areas</h2>
+        <div id="serviceAreas" class="chips"></div>
+      </article>
+
+      <article class="panel">
+        <h2>Business Hours</h2>
+        <div id="hours"></div>
+      </article>
+
+      <article class="panel">
+        <h2>Contact</h2>
+        <div id="contact"></div>
+      </article>
+    </section>
+
+    <section class="panel">
+      <h2>Gallery</h2>
+      <div id="gallery" class="gallery"></div>
+    </section>
+  </main>
+
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const slug = String(params.get("slug") || "").trim().toLowerCase();
+    const API_BASE = window.location.origin;
+
+    function setStatus(message, type) {
+      const el = document.getElementById("status");
+      el.textContent = message || "";
+      el.className = "status" + (type ? " " + type : "");
+    }
+
+    function chipList(hostId, items, emptyText) {
+      const host = document.getElementById(hostId);
+      const list = Array.isArray(items) ? items.filter(Boolean) : [];
+      host.innerHTML = list.length
+        ? list.map((item) => '<span class="chip">' + String(item) + "</span>").join("")
+        : '<p class="muted">' + emptyText + "</p>";
+    }
+
+    function renderCompany(data) {
+      document.title = (data.name || "Company") + " | Public Profile";
+      document.getElementById("companyName").textContent = data.name || "Company";
+      document.getElementById("description").textContent = data.public_description || "No public description available yet.";
+
+      const logo = document.getElementById("logo");
+      if (data.logo_url) {
+        logo.innerHTML = '<img src="' + data.logo_url + '" alt="">';
+      } else {
+        const initials = String(data.name || "CO").split(/\s+/).map((p) => p[0]).join("").slice(0, 2).toUpperCase() || "CO";
+        logo.textContent = initials;
+      }
+
+      const cover = document.getElementById("cover");
+      if (data.cover_image_url) {
+        cover.innerHTML = '<img src="' + data.cover_image_url + '" alt="">';
+      } else {
+        cover.textContent = data.name || "Company Profile";
+      }
+
+      chipList("services", data.services, "No services listed yet.");
+      chipList("serviceAreas", data.service_areas, "No service areas listed yet.");
+
+      const hours = document.getElementById("hours");
+      const hoursList = Array.isArray(data.business_hours) ? data.business_hours : [];
+      hours.innerHTML = hoursList.length
+        ? hoursList.map((line) => '<p class="kv">' + line + "</p>").join("")
+        : '<p class="muted">Business hours are not listed yet.</p>';
+
+      const contact = data.contact || {};
+      const links = [];
+      if (data.website_url) links.push('<p class="kv"><strong>Website:</strong> <a class="link" href="' + data.website_url + '" target="_blank" rel="noopener noreferrer">' + data.website_url + "</a></p>");
+      if (data.facebook_url) links.push('<p class="kv"><strong>Facebook:</strong> <a class="link" href="' + data.facebook_url + '" target="_blank" rel="noopener noreferrer">' + data.facebook_url + "</a></p>");
+      if (data.instagram_url) links.push('<p class="kv"><strong>Instagram:</strong> <a class="link" href="' + data.instagram_url + '" target="_blank" rel="noopener noreferrer">' + data.instagram_url + "</a></p>");
+      document.getElementById("contact").innerHTML =
+        '<p class="kv"><strong>Phone:</strong> ' + (contact.phone || "Not listed") + "</p>" +
+        '<p class="kv"><strong>Email:</strong> ' + (contact.email || "Not listed") + "</p>" +
+        '<p class="kv"><strong>Address:</strong> ' + (contact.address || "Not listed") + "</p>" +
+        (links.length ? links.join("") : '<p class="muted">Social and website links are not listed yet.</p>');
+
+      const gallery = document.getElementById("gallery");
+      const images = Array.isArray(data.gallery_urls) ? data.gallery_urls.filter(Boolean) : [];
+      gallery.innerHTML = images.length
+        ? images.map((url) => '<img src="' + url + '" alt="">').join("")
+        : '<p class="muted">No gallery images have been published yet.</p>';
+
+      setStatus("Public profile loaded.", "");
+    }
+
+    async function loadProfile() {
+      if (!slug) {
+        setStatus("Missing company slug. Open this page with ?slug=company-name.", "error");
+        return;
+      }
+
+      setStatus("Loading public company profile...", "");
+      try {
+        const res = await fetch(API_BASE + "/companies/public/" + encodeURIComponent(slug));
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.error || "Unable to load company profile.");
+        renderCompany(data);
+      } catch (err) {
+        setStatus(err.message || "Unable to load company profile.", "error");
+      }
+    }
+
+    loadProfile();
+  </script>
+</body>
+</html>

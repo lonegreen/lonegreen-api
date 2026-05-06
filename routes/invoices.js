@@ -9,6 +9,7 @@ const pool = require("../db/pool");
 
 const auth = require("../middleware/auth");
 const requireCompanyBillingForMutations = require("../middleware/requireCompanyBillingForMutations");
+const { enforcePlanLimits } = require("../middleware/enforcePlanLimits");
 const { generateInvoicePdf } = require("../services/pdfService");
 
 
@@ -169,12 +170,29 @@ const {
 
 
 const router = express.Router();
+const enforceInvoicePlanLimit = enforcePlanLimits("invoices");
+
+function sanitizeFilenamePart(value, fallback) {
+  const clean = String(value || "")
+    .replace(/[<>:"/\\|?*\u0000-\u001F]/g, " ")
+    .trim()
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "");
+  return clean || fallback;
+}
+
+function buildInvoicePdfFilename(invoice) {
+  const numberPart = sanitizeFilenamePart(invoice && invoice.invoice_number, String(invoice && invoice.id ? invoice.id : "invoice"));
+  const clientPart = sanitizeFilenamePart(invoice && invoice.client_name, String(invoice && invoice.id ? invoice.id : "client"));
+  return `LoneGreen-${numberPart}-${clientPart}.pdf`;
+}
 
 
 
 
 
-router.post("/workflow/invoices", auth, requireCompanyBillingForMutations, requireMinimumRole("manager"), async (req, res) => {
+router.post("/workflow/invoices", auth, requireCompanyBillingForMutations, enforceInvoicePlanLimit, requireMinimumRole("manager"), async (req, res) => {
 
 
   try {
@@ -1362,8 +1380,7 @@ router.get("/workflow/invoices/:id/pdf", auth, requireCompanyBillingForMutations
 
 
     const pdf = await generateInvoicePdf(invoice);
-    const safeNumber = invoice.invoice_number ? String(invoice.invoice_number).replace(/[^a-zA-Z0-9_-]/g, "-") : String(invoice.id);
-    const filename = invoice.invoice_number ? `invoice-${safeNumber}.pdf` : `invoice-${safeNumber}.pdf`;
+    const filename = buildInvoicePdfFilename(invoice);
 
 
     await logActivity({

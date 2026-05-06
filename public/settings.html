@@ -185,6 +185,17 @@
 
     .field { display: grid; gap: 7px; }
     .field.full { grid-column: 1 / -1; }
+    .inline-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+    .logo-preview {
+      width: 120px;
+      height: 120px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: #fff;
+      object-fit: contain;
+      padding: 8px;
+      display: none;
+    }
 
     label {
       font-size: 13px;
@@ -583,6 +594,12 @@
             <div class="field full">
               <label for="invoice_logo_url">Invoice Logo URL</label>
               <input id="invoice_logo_url" name="invoice_logo_url" type="url" placeholder="https://example.com/logo.png">
+              <div class="inline-actions">
+                <button type="button" class="secondary small" id="uploadInvoiceLogoBtn">Upload Logo</button>
+                <input id="invoiceLogoFileInput" type="file" accept="image/jpeg,image/png,image/webp" style="display:none;">
+                <span class="note">Upload JPG/PNG/WEBP up to 2MB. Uploaded logos are stored locally in this environment and may need cloud storage for production durability.</span>
+              </div>
+              <img id="invoiceLogoPreview" class="logo-preview" alt="Invoice logo preview">
             </div>
             <div class="field">
               <label for="invoice_display_name">Billing Display Name</label>
@@ -1052,6 +1069,81 @@ function fillCompanyForm(company){
   document.getElementById("zelle_name").value = company && company.zelle_name ? company.zelle_name : "";
   document.getElementById("zelle_contact").value = company && company.zelle_contact ? company.zelle_contact : "";
   document.getElementById("invoice_prefix").value = company && company.invoice_prefix ? company.invoice_prefix : "";
+  renderInvoiceLogoPreview();
+}
+
+function renderInvoiceLogoPreview(){
+  const input = document.getElementById("invoice_logo_url");
+  const preview = document.getElementById("invoiceLogoPreview");
+  if(!input || !preview) return;
+
+  const url = String(input.value || "").trim();
+  if(!url){
+    preview.style.display = "none";
+    preview.removeAttribute("src");
+    return;
+  }
+
+  preview.src = url;
+  preview.style.display = "block";
+}
+
+function validateLogoFile(file){
+  if(!file){
+    return "No file selected.";
+  }
+  const mime = String(file.type || "").toLowerCase();
+  if(!["image/jpeg", "image/png", "image/webp"].includes(mime)){
+    return "Only JPG, PNG, and WEBP files are allowed.";
+  }
+  if(Number(file.size || 0) > 2 * 1024 * 1024){
+    return "File too large. Max size is 2MB.";
+  }
+  return "";
+}
+
+async function uploadInvoiceLogo(){
+  const input = document.getElementById("invoiceLogoFileInput");
+  const file = input && input.files && input.files[0];
+  if(!file) return;
+
+  const validationError = validateLogoFile(file);
+  if(validationError){
+    setStatus("companyStatus", validationError, "error");
+    input.value = "";
+    return;
+  }
+
+  const uploadBtn = document.getElementById("uploadInvoiceLogoBtn");
+  if(uploadBtn) uploadBtn.disabled = true;
+  setStatus("companyStatus", "Uploading logo...", "muted");
+
+  try {
+    const form = new FormData();
+    form.append("file", file);
+
+    const res = await apiFetch(API + "/uploads/company/logo", {
+      method: "POST",
+      body: form
+    });
+    const data = await safeJson(res);
+
+    if(!res.ok){
+      throw new Error(data.error || "Logo upload failed");
+    }
+    if(!data.url){
+      throw new Error("Upload response missing URL");
+    }
+
+    document.getElementById("invoice_logo_url").value = data.url;
+    renderInvoiceLogoPreview();
+    setStatus("companyStatus", "Logo uploaded. Save company settings to keep all changes.", "ok");
+  } catch (err) {
+    setStatus("companyStatus", err.message || "Logo upload failed.", "error");
+  } finally {
+    if(uploadBtn) uploadBtn.disabled = false;
+    input.value = "";
+  }
 }
 
 async function loadProfile(){
@@ -1304,6 +1396,14 @@ document.getElementById("passwordForm").addEventListener("submit", changePasswor
 document.getElementById("settingsNotifRefresh").addEventListener("click", () => loadNotifications());
 document.getElementById("settingsActivityRefresh").addEventListener("click", () => loadActivity());
 document.getElementById("acceptLegalBtn").addEventListener("click", () => acceptLegalTerms());
+document.getElementById("uploadInvoiceLogoBtn").addEventListener("click", function(){
+  const input = document.getElementById("invoiceLogoFileInput");
+  if(input) input.click();
+});
+document.getElementById("invoiceLogoFileInput").addEventListener("change", function(){
+  void uploadInvoiceLogo();
+});
+document.getElementById("invoice_logo_url").addEventListener("input", renderInvoiceLogoPreview);
 document.getElementById("notificationsList").addEventListener("click", function(ev){
   const btn = ev.target.closest("[data-notification-mark-read]");
   if(!btn) return;

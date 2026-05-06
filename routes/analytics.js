@@ -16,6 +16,241 @@ async function one(sql, params) {
   return result.rows[0] || {};
 }
 
+/** Lifetime net collected: payments minus refunds (read-model). Falls back if refunds table missing. */
+async function netCollectedLifetime(companyId) {
+  try {
+    return await one(`
+      SELECT (
+        COALESCE((SELECT SUM(amount) FROM payments WHERE company_id = $1), 0)
+        - COALESCE((SELECT SUM(amount) FROM refunds WHERE company_id = $1), 0)
+      )::numeric AS amount
+    `, [companyId]);
+  } catch (err) {
+    if (err && err.code === "42P01") {
+      return one("SELECT COALESCE(SUM(amount),0)::numeric AS amount FROM payments WHERE company_id=$1", [companyId]);
+    }
+    throw err;
+  }
+}
+
+/** Remaining balance on non-paid statuses: invoice amount minus net paid (payments minus refunds per invoice). */
+async function unpaidAmountOpenStatuses(companyId) {
+  try {
+    return await one(`
+      WITH net AS (
+        SELECT
+          i.id,
+          i.amount::numeric AS amount,
+          i.status,
+          COALESCE((
+            SELECT SUM(p.amount)::numeric FROM payments p
+            WHERE p.invoice_id = i.id AND p.company_id = i.company_id
+          ), 0)
+          - COALESCE((
+            SELECT SUM(r.amount)::numeric FROM refunds r
+            WHERE r.invoice_id = i.id AND r.company_id = i.company_id
+          ), 0) AS net_paid
+        FROM invoices i
+        WHERE i.company_id = $1
+      )
+      SELECT COALESCE(SUM(GREATEST(amount - net_paid, 0)), 0)::numeric AS amount
+      FROM net
+      WHERE status IN ('draft','unpaid','overdue')
+    `, [companyId]);
+  } catch (err) {
+    if (err && err.code === "42P01") {
+      return one(`
+        SELECT COALESCE(SUM(GREATEST(invoices.amount - COALESCE(payments.total_paid, 0), 0)), 0)::numeric AS amount
+        FROM invoices
+        LEFT JOIN (
+          SELECT invoice_id, company_id, SUM(amount)::numeric AS total_paid
+          FROM payments
+          WHERE company_id=$1
+          GROUP BY invoice_id, company_id
+        ) payments ON payments.invoice_id=invoices.id AND payments.company_id=invoices.company_id
+        WHERE invoices.company_id=$1
+          AND invoices.status IN ('draft','unpaid','overdue')
+      `, [companyId]);
+    }
+    throw err;
+  }
+}
+
+/** Rolling 12 calendar months of net revenue (payments in month minus refunds issued in month). */
+async function monthlyNetRevenueSeries(companyId) {
+  try {
+    return await pool.query(`
+      SELECT
+        to_char(gs.month_bucket, 'YYYY-MM') AS month,
+        (COALESCE(pay.pay_amt, 0)::numeric - COALESCE(ref.ref_amt, 0)::numeric) AS revenue
+      FROM generate_series(
+        date_trunc('month', CURRENT_TIMESTAMP::timestamp with time zone) - interval '11 months',
+        date_trunc('month', CURRENT_TIMESTAMP::timestamp with time zone),
+        interval '1 month'
+      ) AS gs(month_bucket)
+      LEFT JOIN (
+        SELECT date_trunc('month', date::timestamp with time zone) AS mb, SUM(amount)::numeric AS pay_amt
+        FROM payments
+        WHERE company_id = $1
+        GROUP BY 1
+      ) pay ON pay.mb = gs.month_bucket
+      LEFT JOIN (
+        SELECT date_trunc('month', created_at) AS mb, SUM(amount)::numeric AS ref_amt
+        FROM refunds
+        WHERE company_id = $1
+        GROUP BY 1
+      ) ref ON ref.mb = gs.month_bucket
+      ORDER BY gs.month_bucket ASC
+    `, [companyId]);
+  } catch (err) {
+    if (err && err.code === "42P01") {
+      return pool.query(`
+        SELECT
+          to_char(gs.month_bucket, 'YYYY-MM') AS month,
+          COALESCE(pay.pay_amt, 0)::numeric AS revenue
+        FROM generate_series(
+          date_trunc('month', CURRENT_TIMESTAMP::timestamp with time zone) - interval '11 months',
+          date_trunc('month', CURRENT_TIMESTAMP::timestamp with time zone),
+          interval '1 month'
+        ) AS gs(month_bucket)
+        LEFT JOIN (
+          SELECT date_trunc('month', date::timestamp with time zone) AS mb, SUM(amount)::numeric AS pay_amt
+          FROM payments
+          WHERE company_id = $1
+          GROUP BY 1
+        ) pay ON pay.mb = gs.month_bucket
+        ORDER BY gs.month_bucket ASC
+      `, [companyId]);
+    }
+    throw err;
+  }
+}
+
+/** Pro dashboard revenue row: net collected, net monthly slices, unpaid/overdue from net per invoice. */
+async function proRevenueMetrics(companyId) {
+  try {
+    return await one(`
+      WITH net_per_invoice AS (
+        SELECT
+          i.id,
+          i.amount::numeric AS amount,
+          i.status,
+          i.due_date,
+          COALESCE((
+            SELECT SUM(p.amount)::numeric FROM payments p
+            WHERE p.invoice_id = i.id AND p.company_id = i.company_id
+          ), 0)
+          - COALESCE((
+            SELECT SUM(r.amount)::numeric FROM refunds r
+            WHERE r.invoice_id = i.id AND r.company_id = i.company_id
+          ), 0) AS net_paid
+        FROM invoices i
+        WHERE i.company_id = $1
+      )
+      SELECT
+        (
+          COALESCE((SELECT SUM(amount) FROM payments WHERE company_id = $1), 0)
+          - COALESCE((SELECT SUM(amount) FROM refunds WHERE company_id = $1), 0)
+        )::numeric AS total_collected,
+        (
+          COALESCE((SELECT SUM(amount) FROM payments WHERE company_id = $1 AND date >= date_trunc('month', CURRENT_DATE)::date), 0)
+          - COALESCE((SELECT SUM(amount) FROM refunds WHERE company_id = $1 AND created_at >= date_trunc('month', CURRENT_DATE)::timestamptz), 0)
+        )::numeric AS this_month_collected,
+        (
+          COALESCE((
+            SELECT SUM(amount) FROM payments
+            WHERE company_id = $1
+              AND date >= (date_trunc('month', CURRENT_DATE)::date - INTERVAL '1 month')
+              AND date < date_trunc('month', CURRENT_DATE)::date
+          ), 0)
+          - COALESCE((
+            SELECT SUM(amount) FROM refunds
+            WHERE company_id = $1
+              AND created_at >= (date_trunc('month', CURRENT_DATE)::timestamptz - INTERVAL '1 month')
+              AND created_at < date_trunc('month', CURRENT_DATE)::timestamptz
+          ), 0)
+        )::numeric AS last_month_collected,
+        (SELECT COALESCE(SUM(GREATEST(amount - net_paid, 0)), 0) FROM net_per_invoice WHERE status IN ('draft','unpaid','overdue'))::numeric AS unpaid_total,
+        (SELECT COALESCE(SUM(GREATEST(amount - net_paid, 0)), 0) FROM net_per_invoice WHERE status = 'overdue' OR (status IN ('draft','unpaid') AND due_date < CURRENT_DATE))::numeric AS overdue_total,
+        (SELECT COALESCE(AVG(amount), 0) FROM invoices WHERE company_id = $1)::numeric AS average_invoice_value
+    `, [companyId]);
+  } catch (err) {
+    if (err && err.code === "42P01") {
+      return one(`
+        WITH payment_totals AS (
+          SELECT invoice_id, company_id, COALESCE(SUM(amount), 0)::numeric AS paid_amount
+          FROM payments
+          WHERE company_id = $1
+          GROUP BY invoice_id, company_id
+        )
+        SELECT
+          COALESCE((SELECT SUM(amount) FROM payments WHERE company_id = $1), 0)::numeric AS total_collected,
+          COALESCE((SELECT SUM(amount) FROM payments WHERE company_id = $1 AND date >= date_trunc('month', CURRENT_DATE)::date), 0)::numeric AS this_month_collected,
+          COALESCE((
+            SELECT SUM(amount)
+            FROM payments
+            WHERE company_id = $1
+              AND date >= (date_trunc('month', CURRENT_DATE)::date - INTERVAL '1 month')
+              AND date < date_trunc('month', CURRENT_DATE)::date
+          ), 0)::numeric AS last_month_collected,
+          COALESCE(SUM(GREATEST(invoices.amount - COALESCE(payment_totals.paid_amount, 0), 0)) FILTER (WHERE invoices.status IN ('draft','unpaid','overdue')), 0)::numeric AS unpaid_total,
+          COALESCE(SUM(GREATEST(invoices.amount - COALESCE(payment_totals.paid_amount, 0), 0)) FILTER (WHERE invoices.status = 'overdue' OR (invoices.status IN ('draft','unpaid') AND invoices.due_date < CURRENT_DATE)), 0)::numeric AS overdue_total,
+          COALESCE(AVG(invoices.amount), 0)::numeric AS average_invoice_value
+        FROM invoices
+        LEFT JOIN payment_totals ON payment_totals.invoice_id = invoices.id AND payment_totals.company_id = invoices.company_id
+        WHERE invoices.company_id = $1
+      `, [companyId]);
+    }
+    throw err;
+  }
+}
+
+async function proMonthlyNetTrends(companyId) {
+  try {
+    return await pool.query(`
+      SELECT
+        to_char(gs.mb, 'YYYY-MM') AS month,
+        (COALESCE(pay.pay_amt, 0)::numeric - COALESCE(ref.ref_amt, 0)::numeric) AS revenue
+      FROM generate_series(
+        date_trunc('month', CURRENT_DATE)::date - INTERVAL '11 months',
+        date_trunc('month', CURRENT_DATE)::date,
+        INTERVAL '1 month'
+      ) AS gs(mb)
+      LEFT JOIN (
+        SELECT date_trunc('month', date)::date AS m, SUM(amount)::numeric AS pay_amt
+        FROM payments
+        WHERE company_id = $1
+        GROUP BY 1
+      ) pay ON pay.m = gs.mb
+      LEFT JOIN (
+        SELECT date_trunc('month', created_at)::date AS m, SUM(amount)::numeric AS ref_amt
+        FROM refunds
+        WHERE company_id = $1
+        GROUP BY 1
+      ) ref ON ref.m = gs.mb
+      ORDER BY gs.mb ASC
+    `, [companyId]);
+  } catch (err) {
+    if (err && err.code === "42P01") {
+      return pool.query(`
+        SELECT to_char(months.month, 'YYYY-MM') AS month,
+               COALESCE(SUM(payments.amount), 0)::numeric AS revenue
+        FROM generate_series(
+          date_trunc('month', CURRENT_DATE)::date - INTERVAL '11 months',
+          date_trunc('month', CURRENT_DATE)::date,
+          INTERVAL '1 month'
+        ) AS months(month)
+        LEFT JOIN payments ON payments.company_id = $1
+          AND payments.date >= months.month
+          AND payments.date < months.month + INTERVAL '1 month'
+        GROUP BY months.month
+        ORDER BY months.month ASC
+      `, [companyId]);
+    }
+    throw err;
+  }
+}
+
 router.get("/analytics/overview", ownerAdmin, async (req, res) => {
   try {
     const companyId = req.user.company_id;
@@ -45,35 +280,10 @@ router.get("/analytics/overview", ownerAdmin, async (req, res) => {
 router.get("/analytics/revenue", ownerAdmin, async (req, res) => {
   try {
     const companyId = req.user.company_id;
-    const [totalRevenue, unpaid, monthly, invoiceTotals, paymentTotals] = await Promise.all([
-      one("SELECT COALESCE(SUM(amount),0)::numeric AS amount FROM payments WHERE company_id=$1", [companyId]),
-      one(`
-        SELECT COALESCE(SUM(GREATEST(invoices.amount - COALESCE(payments.total_paid, 0), 0)),0)::numeric AS amount
-        FROM invoices
-        LEFT JOIN (
-          SELECT invoice_id, company_id, SUM(amount)::numeric AS total_paid
-          FROM payments
-          WHERE company_id=$1
-          GROUP BY invoice_id, company_id
-        ) payments ON payments.invoice_id=invoices.id AND payments.company_id=invoices.company_id
-        WHERE invoices.company_id=$1
-          AND invoices.status IN ('draft','unpaid','overdue')
-      `, [companyId]),
-      pool.query(`
-        SELECT month, revenue
-        FROM (
-          SELECT
-            to_char(date_trunc('month', payments.date), 'YYYY-MM') AS month,
-            date_trunc('month', payments.date) AS month_start,
-            COALESCE(SUM(payments.amount),0)::numeric AS revenue
-          FROM payments
-          WHERE payments.company_id=$1
-          GROUP BY date_trunc('month', payments.date)
-          ORDER BY month_start DESC
-          LIMIT 12
-        ) recent_months
-        ORDER BY month_start ASC
-      `, [companyId]),
+    const [totalRevenue, unpaid, monthly, invoiceTotals, paymentTotals, billingMetrics, invoiceAlerts, agingBuckets, recentPayments, recentRefunds] = await Promise.all([
+      netCollectedLifetime(companyId),
+      unpaidAmountOpenStatuses(companyId),
+      monthlyNetRevenueSeries(companyId),
       pool.query(`
         SELECT status, COUNT(*)::int AS count, COALESCE(SUM(amount),0)::numeric AS amount
         FROM invoices
@@ -87,15 +297,245 @@ router.get("/analytics/revenue", ownerAdmin, async (req, res) => {
         WHERE company_id=$1
         GROUP BY method
         ORDER BY method ASC
+      `, [companyId]),
+      one(`
+        WITH net AS (
+          SELECT
+            i.id,
+            i.amount::numeric AS total,
+            i.status,
+            i.issued_date,
+            i.due_date,
+            COALESCE((
+              SELECT SUM(p.amount)::numeric
+              FROM payments p
+              WHERE p.invoice_id = i.id AND p.company_id = i.company_id
+            ), 0) - COALESCE((
+              SELECT SUM(r.amount)::numeric
+              FROM refunds r
+              WHERE r.invoice_id = i.id AND r.company_id = i.company_id
+            ), 0) AS net_paid
+          FROM invoices i
+          WHERE i.company_id = $1
+        )
+        SELECT
+          COALESCE((SELECT SUM(amount) FROM payments WHERE company_id = $1 AND date >= date_trunc('month', CURRENT_DATE)::date), 0)::numeric
+            - COALESCE((SELECT SUM(amount) FROM refunds WHERE company_id = $1 AND created_at >= date_trunc('month', CURRENT_DATE)::timestamptz), 0)::numeric
+            AS paid_this_month,
+          COALESCE((SELECT SUM(amount) FROM refunds WHERE company_id = $1 AND created_at >= date_trunc('month', CURRENT_DATE)::timestamptz), 0)::numeric
+            AS refunds_this_month,
+          (SELECT COUNT(*) FROM invoices WHERE company_id = $1 AND status IN ('draft','unpaid','overdue'))::int
+            AS active_invoices,
+          COALESCE((SELECT SUM(GREATEST(total - net_paid, 0)) FROM net WHERE status IN ('draft','unpaid','overdue')), 0)::numeric
+            AS open_unpaid_balance,
+          COALESCE((SELECT SUM(GREATEST(total - net_paid, 0)) FROM net WHERE status = 'overdue' OR (status IN ('draft','unpaid') AND due_date < CURRENT_DATE)), 0)::numeric
+            AS open_overdue_balance,
+          (SELECT COUNT(*) FROM invoices WHERE company_id = $1 AND issued_date >= date_trunc('month', CURRENT_DATE)::date)::int
+            AS invoices_sent_this_month,
+          (SELECT COUNT(*) FROM net WHERE net_paid >= total - 0.01 AND total >= 0 AND issued_date >= date_trunc('month', CURRENT_DATE)::date)::int
+            AS invoices_paid_this_month,
+          COALESCE((SELECT AVG(amount) FROM invoices WHERE company_id = $1), 0)::numeric AS average_invoice_value
+      `, [companyId]),
+      pool.query(`
+        WITH net AS (
+          SELECT
+            i.id,
+            i.invoice_number,
+            i.status,
+            i.client_id,
+            i.due_date,
+            i.amount::numeric AS total,
+            c.name AS client_name,
+            COALESCE((
+              SELECT SUM(p.amount)::numeric
+              FROM payments p
+              WHERE p.invoice_id = i.id AND p.company_id = i.company_id
+            ), 0) - COALESCE((
+              SELECT SUM(r.amount)::numeric
+              FROM refunds r
+              WHERE r.invoice_id = i.id AND r.company_id = i.company_id
+            ), 0) AS net_paid
+          FROM invoices i
+          LEFT JOIN clients c ON c.id = i.client_id AND c.company_id = i.company_id
+          WHERE i.company_id = $1
+        )
+        SELECT
+          id,
+          invoice_number,
+          status,
+          client_id,
+          client_name,
+          due_date,
+          GREATEST(total - net_paid, 0)::numeric AS remaining_balance,
+          CASE
+            WHEN status = 'cancelled' THEN 'cancelled'
+            WHEN GREATEST(total - net_paid, 0) <= 0.009 AND total >= 0 THEN 'paid'
+            WHEN net_paid > 0.009 AND GREATEST(total - net_paid, 0) > 0.009 THEN 'partially_paid'
+            ELSE status
+          END AS display_status
+        FROM net
+        WHERE status <> 'cancelled'
+        ORDER BY due_date ASC NULLS LAST, id DESC
+      `, [companyId]),
+      pool.query(`
+        SELECT p.id, p.invoice_id, p.date, p.method, p.amount::numeric AS amount, i.invoice_number, c.name AS client_name
+        FROM payments p
+        LEFT JOIN invoices i ON i.id = p.invoice_id AND i.company_id = p.company_id
+        LEFT JOIN clients c ON c.id = i.client_id AND c.company_id = i.company_id
+        WHERE p.company_id = $1
+        ORDER BY p.id DESC
+        LIMIT 10
+      `, [companyId]),
+      pool.query(`
+        SELECT r.id, r.invoice_id, r.payment_id, r.created_at, r.amount::numeric AS amount, r.reason, i.invoice_number, c.name AS client_name
+        FROM refunds r
+        LEFT JOIN invoices i ON i.id = r.invoice_id AND i.company_id = r.company_id
+        LEFT JOIN clients c ON c.id = i.client_id AND c.company_id = i.company_id
+        WHERE r.company_id = $1
+        ORDER BY r.id DESC
+        LIMIT 10
       `, [companyId])
     ]);
+
+    const today = new Date();
+    const todayKey = today.toISOString().slice(0, 10);
+    const sevenDays = new Date(today);
+    sevenDays.setDate(sevenDays.getDate() + 7);
+    const sevenDaysKey = sevenDays.toISOString().slice(0, 10);
+
+    const alertsBase = invoiceAlerts.rows.map(row => ({
+      id: Number(row.id),
+      invoice_id: Number(row.id),
+      invoice_number: row.invoice_number || `#${row.id}`,
+      status: row.status || "draft",
+      display_status: row.display_status || row.status || "draft",
+      client_id: row.client_id ? Number(row.client_id) : null,
+      client_name: row.client_name || "Client",
+      due_date: row.due_date,
+      remaining_balance: num(row.remaining_balance)
+    }));
+
+    const overdueInvoices = alertsBase.filter(item => {
+      const due = item.due_date ? String(item.due_date).split("T")[0] : "";
+      return Boolean(due) && due < todayKey && item.remaining_balance > 0.009 && item.display_status !== "paid";
+    });
+
+    const dueSoonInvoices = alertsBase.filter(item => {
+      const due = item.due_date ? String(item.due_date).split("T")[0] : "";
+      return Boolean(due) && due >= todayKey && due <= sevenDaysKey && item.remaining_balance > 0.009 && item.display_status !== "paid";
+    });
+
+    const partialInvoices = alertsBase.filter(item => item.display_status === "partially_paid" && item.remaining_balance > 0.009);
+    const unpaidInvoices = alertsBase.filter(item => ["draft", "unpaid", "overdue"].includes(String(item.status || "").toLowerCase()) && item.remaining_balance > 0.009);
+
+    const aging = {
+      current: 0,
+      overdue_1_30: 0,
+      overdue_31_60: 0,
+      overdue_61_plus: 0
+    };
+    alertsBase.forEach(item => {
+      const due = item.due_date ? new Date(String(item.due_date).split("T")[0] + "T00:00:00Z") : null;
+      const remaining = num(item.remaining_balance);
+      if (!due || remaining <= 0.009) {
+        aging.current += remaining;
+        return;
+      }
+      const days = Math.floor((Date.parse(todayKey + "T00:00:00Z") - due.getTime()) / 86400000);
+      if (days <= 0) aging.current += remaining;
+      else if (days <= 30) aging.overdue_1_30 += remaining;
+      else if (days <= 60) aging.overdue_31_60 += remaining;
+      else aging.overdue_61_plus += remaining;
+    });
+
+    const sentThisMonth = num(billingMetrics.invoices_sent_this_month);
+    const paidThisMonthCount = num(billingMetrics.invoices_paid_this_month);
+    const collectionRate = sentThisMonth > 0 ? (paidThisMonthCount / sentThisMonth) * 100 : 0;
+
+    let statusChanges = [];
+    try {
+      const statusRows = await pool.query(`
+        SELECT created_at, details
+        FROM activity_log
+        WHERE company_id = $1
+          AND action IN ('invoice_status_changed', 'invoice_marked_paid')
+        ORDER BY created_at DESC, id DESC
+        LIMIT 10
+      `, [companyId]);
+      statusChanges = statusRows.rows.map(row => {
+        let details = {};
+        try { details = JSON.parse(row.details || "{}"); } catch (_err) { details = {}; }
+        return {
+          type: "invoice_status",
+          at: row.created_at,
+          invoice_id: details.invoice_id ? Number(details.invoice_id) : null,
+          invoice_number: details.invoice_number || null,
+          client_name: details.client_name || null,
+          before_status: details.before_status || null,
+          after_status: details.after_status || null
+        };
+      });
+    } catch (err) {
+      if (!(err && err.code === "42P01")) {
+        throw err;
+      }
+    }
 
     res.json({
       total_revenue: num(totalRevenue.amount),
       unpaid_amount: num(unpaid.amount),
       monthly_revenue: monthly.rows.map(row => ({ month: row.month, revenue: num(row.revenue) })),
       invoice_totals: invoiceTotals.rows.map(row => ({ status: row.status || "draft", count: num(row.count), amount: num(row.amount) })),
-      payment_totals: paymentTotals.rows.map(row => ({ method: row.method || "unknown", count: num(row.count), amount: num(row.amount) }))
+      payment_totals: paymentTotals.rows.map(row => ({ method: row.method || "unknown", count: num(row.count), amount: num(row.amount) })),
+      billing_kpis: {
+        revenue_this_month: num(monthly.rows.length ? monthly.rows[monthly.rows.length - 1].revenue : 0),
+        total_collected: num(totalRevenue.amount),
+        unpaid_balance: num(billingMetrics.open_unpaid_balance),
+        overdue_balance: num(billingMetrics.open_overdue_balance),
+        active_invoices: num(billingMetrics.active_invoices),
+        paid_this_month: num(billingMetrics.paid_this_month),
+        refunds_this_month: num(billingMetrics.refunds_this_month)
+      },
+      invoice_alerts: {
+        overdue: overdueInvoices,
+        due_soon: dueSoonInvoices,
+        partially_paid: partialInvoices,
+        unpaid: unpaidInvoices
+      },
+      aging_buckets: {
+        current: num(aging.current),
+        overdue_1_30: num(aging.overdue_1_30),
+        overdue_31_60: num(aging.overdue_31_60),
+        overdue_61_plus: num(aging.overdue_61_plus)
+      },
+      collections_snapshot: {
+        invoices_sent_this_month: sentThisMonth,
+        invoices_paid_this_month: paidThisMonthCount,
+        collection_rate_this_month: Number(collectionRate.toFixed(2)),
+        average_invoice_value: num(billingMetrics.average_invoice_value)
+      },
+      recent_billing_activity: {
+        payments: recentPayments.rows.map(row => ({
+          id: Number(row.id),
+          invoice_id: Number(row.invoice_id),
+          invoice_number: row.invoice_number || null,
+          client_name: row.client_name || null,
+          date: row.date,
+          method: row.method || "unknown",
+          amount: num(row.amount)
+        })),
+        refunds: recentRefunds.rows.map(row => ({
+          id: Number(row.id),
+          invoice_id: Number(row.invoice_id),
+          payment_id: Number(row.payment_id),
+          invoice_number: row.invoice_number || null,
+          client_name: row.client_name || null,
+          created_at: row.created_at,
+          reason: row.reason || "",
+          amount: num(row.amount)
+        })),
+        invoice_status_changes: statusChanges
+      }
     });
   } catch (err) {
     console.log("ANALYTICS REVENUE ERROR:", err);
@@ -139,30 +579,72 @@ router.get("/analytics/workers", ownerAdmin, async (req, res) => {
 
 router.get("/analytics/clients", ownerAdmin, async (req, res) => {
   try {
-    const result = await pool.query(`
-      SELECT
-        clients.id,
-        clients.name,
-        clients.phone,
-        clients.address,
-        COALESCE(COUNT(DISTINCT jobs.id),0)::int AS total_jobs,
-        COALESCE(COUNT(DISTINCT subscriptions.id) FILTER (WHERE subscriptions.status='active'),0)::int AS active_subscriptions,
-        MAX(jobs.date) AS last_service_date,
-        COALESCE(SUM(GREATEST(invoices.amount - COALESCE(payment_totals.total_paid, 0), 0)) FILTER (WHERE invoices.status IN ('draft','unpaid','overdue')),0)::numeric AS unpaid_balance
-      FROM clients
-      LEFT JOIN jobs ON jobs.client_id=clients.id AND jobs.company_id=clients.company_id
-      LEFT JOIN subscriptions ON subscriptions.client_id=clients.id AND subscriptions.company_id=clients.company_id
-      LEFT JOIN invoices ON invoices.client_id=clients.id AND invoices.company_id=clients.company_id
-      LEFT JOIN (
-        SELECT invoice_id, company_id, SUM(amount)::numeric AS total_paid
-        FROM payments
-        WHERE company_id=$1
-        GROUP BY invoice_id, company_id
-      ) payment_totals ON payment_totals.invoice_id=invoices.id AND payment_totals.company_id=invoices.company_id
-      WHERE clients.company_id=$1 AND COALESCE(clients.archived, FALSE)=FALSE
-      GROUP BY clients.id, clients.name, clients.phone, clients.address
-      ORDER BY unpaid_balance DESC, total_jobs DESC, clients.name ASC
-    `, [req.user.company_id]);
+    let result;
+    try {
+      result = await pool.query(`
+        SELECT
+          clients.id,
+          clients.name,
+          clients.phone,
+          clients.address,
+          COALESCE(COUNT(DISTINCT jobs.id),0)::int AS total_jobs,
+          COALESCE(COUNT(DISTINCT subscriptions.id) FILTER (WHERE subscriptions.status='active'),0)::int AS active_subscriptions,
+          MAX(jobs.date) AS last_service_date,
+          COALESCE(SUM(GREATEST(
+            invoices.amount::numeric
+              - (COALESCE(gross_pay.total_paid, 0)::numeric - COALESCE(refund_totals.refunded, 0)::numeric),
+            0
+          )) FILTER (WHERE invoices.status IN ('draft','unpaid','overdue')),0)::numeric AS unpaid_balance
+        FROM clients
+        LEFT JOIN jobs ON jobs.client_id=clients.id AND jobs.company_id=clients.company_id
+        LEFT JOIN subscriptions ON subscriptions.client_id=clients.id AND subscriptions.company_id=clients.company_id
+        LEFT JOIN invoices ON invoices.client_id=clients.id AND invoices.company_id=clients.company_id
+        LEFT JOIN (
+          SELECT invoice_id, company_id, SUM(amount)::numeric AS total_paid
+          FROM payments
+          WHERE company_id=$1
+          GROUP BY invoice_id, company_id
+        ) gross_pay ON gross_pay.invoice_id=invoices.id AND gross_pay.company_id=invoices.company_id
+        LEFT JOIN (
+          SELECT invoice_id, company_id, SUM(amount)::numeric AS refunded
+          FROM refunds
+          WHERE company_id=$1
+          GROUP BY invoice_id, company_id
+        ) refund_totals ON refund_totals.invoice_id=invoices.id AND refund_totals.company_id=invoices.company_id
+        WHERE clients.company_id=$1 AND COALESCE(clients.archived, FALSE)=FALSE
+        GROUP BY clients.id, clients.name, clients.phone, clients.address
+        ORDER BY unpaid_balance DESC, total_jobs DESC, clients.name ASC
+      `, [req.user.company_id]);
+    } catch (err) {
+      if (err && err.code === "42P01") {
+        result = await pool.query(`
+          SELECT
+            clients.id,
+            clients.name,
+            clients.phone,
+            clients.address,
+            COALESCE(COUNT(DISTINCT jobs.id),0)::int AS total_jobs,
+            COALESCE(COUNT(DISTINCT subscriptions.id) FILTER (WHERE subscriptions.status='active'),0)::int AS active_subscriptions,
+            MAX(jobs.date) AS last_service_date,
+            COALESCE(SUM(GREATEST(invoices.amount - COALESCE(payment_totals.total_paid, 0), 0)) FILTER (WHERE invoices.status IN ('draft','unpaid','overdue')),0)::numeric AS unpaid_balance
+          FROM clients
+          LEFT JOIN jobs ON jobs.client_id=clients.id AND jobs.company_id=clients.company_id
+          LEFT JOIN subscriptions ON subscriptions.client_id=clients.id AND subscriptions.company_id=clients.company_id
+          LEFT JOIN invoices ON invoices.client_id=clients.id AND invoices.company_id=clients.company_id
+          LEFT JOIN (
+            SELECT invoice_id, company_id, SUM(amount)::numeric AS total_paid
+            FROM payments
+            WHERE company_id=$1
+            GROUP BY invoice_id, company_id
+          ) payment_totals ON payment_totals.invoice_id=invoices.id AND payment_totals.company_id=invoices.company_id
+          WHERE clients.company_id=$1 AND COALESCE(clients.archived, FALSE)=FALSE
+          GROUP BY clients.id, clients.name, clients.phone, clients.address
+          ORDER BY unpaid_balance DESC, total_jobs DESC, clients.name ASC
+        `, [req.user.company_id]);
+      } else {
+        throw err;
+      }
+    }
 
     res.json(result.rows.map(row => ({
       id: row.id,
@@ -196,30 +678,7 @@ router.get("/analytics/pro", ownerAdmin, async (req, res) => {
       monthlyNewClients,
       alerts
     ] = await Promise.all([
-      one(`
-        WITH payment_totals AS (
-          SELECT invoice_id, company_id, COALESCE(SUM(amount), 0)::numeric AS paid_amount
-          FROM payments
-          WHERE company_id = $1
-          GROUP BY invoice_id, company_id
-        )
-        SELECT
-          COALESCE((SELECT SUM(amount) FROM payments WHERE company_id = $1), 0)::numeric AS total_collected,
-          COALESCE((SELECT SUM(amount) FROM payments WHERE company_id = $1 AND date >= date_trunc('month', CURRENT_DATE)::date), 0)::numeric AS this_month_collected,
-          COALESCE((
-            SELECT SUM(amount)
-            FROM payments
-            WHERE company_id = $1
-              AND date >= (date_trunc('month', CURRENT_DATE)::date - INTERVAL '1 month')
-              AND date < date_trunc('month', CURRENT_DATE)::date
-          ), 0)::numeric AS last_month_collected,
-          COALESCE(SUM(GREATEST(invoices.amount - COALESCE(payment_totals.paid_amount, 0), 0)) FILTER (WHERE invoices.status IN ('draft','unpaid','overdue')), 0)::numeric AS unpaid_total,
-          COALESCE(SUM(GREATEST(invoices.amount - COALESCE(payment_totals.paid_amount, 0), 0)) FILTER (WHERE invoices.status = 'overdue' OR (invoices.status IN ('draft','unpaid') AND invoices.due_date < CURRENT_DATE)), 0)::numeric AS overdue_total,
-          COALESCE(AVG(invoices.amount), 0)::numeric AS average_invoice_value
-        FROM invoices
-        LEFT JOIN payment_totals ON payment_totals.invoice_id = invoices.id AND payment_totals.company_id = invoices.company_id
-        WHERE invoices.company_id = $1
-      `, [companyId]),
+      proRevenueMetrics(companyId),
       one(`
         SELECT
           COUNT(*)::int AS total_jobs,
@@ -283,20 +742,7 @@ router.get("/analytics/pro", ownerAdmin, async (req, res) => {
         ORDER BY completed_jobs DESC, workers.name ASC
         LIMIT 5
       `, [companyId]),
-      pool.query(`
-        SELECT to_char(months.month, 'YYYY-MM') AS month,
-               COALESCE(SUM(payments.amount), 0)::numeric AS revenue
-        FROM generate_series(
-          date_trunc('month', CURRENT_DATE)::date - INTERVAL '11 months',
-          date_trunc('month', CURRENT_DATE)::date,
-          INTERVAL '1 month'
-        ) AS months(month)
-        LEFT JOIN payments ON payments.company_id = $1
-          AND payments.date >= months.month
-          AND payments.date < months.month + INTERVAL '1 month'
-        GROUP BY months.month
-        ORDER BY months.month ASC
-      `, [companyId]),
+      proMonthlyNetTrends(companyId),
       pool.query(`
         SELECT to_char(months.month, 'YYYY-MM') AS month,
                COUNT(jobs.id)::int AS jobs

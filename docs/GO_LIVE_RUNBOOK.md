@@ -27,17 +27,17 @@ node -c routes/stripeWebhook.js
 
 4. Confirm `.env.example` contains no real secrets.
 
-## Render Deployment
+## Deployment
 
-1. Set Render build command to `npm install`.
-2. Set Render start command to `npm start`.
-3. Add the required env vars from `docs/RENDER_DEPLOYMENT_GUIDE.md`.
+1. Set build command to `npm install`.
+2. Set start command to `npm start`.
+3. Add required production env vars from your deployment guide (`docs/RENDER_DEPLOYMENT_GUIDE.md` remains valid if you deploy on Render).
 4. Run migrations by pre-deploy command `node db/setup.js` or set `RUN_STARTUP_MIGRATIONS=true` for the deploy window.
 5. Deploy.
 6. Check:
 
 ```bash
-curl https://your-service.onrender.com/health
+curl https://your-service.example.com/health
 ```
 
 Expected launch state:
@@ -54,7 +54,7 @@ Expected launch state:
 2. Configure webhook endpoint:
 
 ```text
-https://your-service.onrender.com/billing/stripe/webhook
+https://your-service.example.com/billing/stripe/webhook
 ```
 
 3. Enable:
@@ -88,7 +88,7 @@ customer.subscription.trial_will_end
 ## Live Switch
 
 1. Replace test Stripe env vars with live values.
-2. Save and deploy Render service.
+2. Save and deploy the service.
 3. Confirm `/health` after deploy.
 4. Complete one low-risk live subscription.
 5. Confirm the webhook succeeded and local billing fields are reconciled.
@@ -96,7 +96,7 @@ customer.subscription.trial_will_end
 
 ## Rollback
 
-1. Redeploy previous successful Render deploy.
+1. Redeploy the previous successful production deploy.
 2. Restore previous env variable snapshot.
 3. Disable `RUN_STARTUP_MIGRATIONS` unless a migration rerun is intentional.
 4. If data changed incorrectly, restore the verified database backup.

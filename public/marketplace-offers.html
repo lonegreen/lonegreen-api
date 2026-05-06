@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LoneGreen | Marketplace Offers Inbox</title>
+  <link rel="stylesheet" href="/app-shell.css">
+  <link rel="stylesheet" href="/ui-cleanup.css">
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Inter, Arial, sans-serif;
+      color: #173327;
+      background:
+        radial-gradient(circle at top left, rgba(31, 92, 58, 0.08), transparent 28%),
+        linear-gradient(180deg, #edf5f0 0%, #f6f8f7 210px, #f4f6f8 100%);
+      padding: 22px;
+    }
+    .page {
+      width: min(1240px, 100%);
+      margin: 0 auto;
+      display: grid;
+      gap: 16px;
+    }
+    .hero {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .hero h1 {
+      margin: 0 0 6px;
+      color: #1f5c3a;
+      font-size: 32px;
+      letter-spacing: -0.02em;
+    }
+    .hero p {
+      margin: 0;
+      color: #60786e;
+      line-height: 1.5;
+    }
+    .hero-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .btn {
+      border: none;
+      border-radius: 12px;
+      padding: 10px 14px;
+      font: inherit;
+      font-weight: 800;
+      cursor: pointer;
+      transition: transform .15s ease, box-shadow .15s ease, opacity .15s ease;
+    }
+    .btn:hover:not(:disabled) { transform: translateY(-1px); }
+    .btn.primary {
+      background: linear-gradient(135deg, #1f5c3a, #2d8b55);
+      color: #fff;
+      box-shadow: 0 10px 22px rgba(31, 92, 58, 0.16);
+    }
+    .btn.secondary {
+      background: #edf6f0;
+      color: #1f5c3a;
+      border: 1px solid #d0dfd5;
+    }
+    .btn:disabled {
+      opacity: 0.62;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+    .status-line {
+      min-height: 18px;
+      color: #60786e;
+      font-size: 13px;
+      font-weight: 700;
+    }
+    .status-line.error { color: #b42318; }
+    .status-line.ok { color: #166534; }
+    .layout {
+      display: grid;
+      grid-template-columns: 420px 1fr;
+      gap: 14px;
+      align-items: start;
+    }
+    .panel {
+      background: rgba(255, 255, 255, 0.96);
+      border: 1px solid #dbe7df;
+      border-radius: 16px;
+      box-shadow: 0 18px 38px rgba(16, 24, 40, 0.06);
+      padding: 16px;
+      display: grid;
+      gap: 12px;
+    }
+    .panel h2 {
+      margin: 0;
+      color: #1f5c3a;
+      font-size: 20px;
+    }
+    .subhead {
+      margin: 0;
+      color: #678075;
+      font-size: 13px;
+      line-height: 1.45;
+    }
+    .list-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 999px;
+      padding: 6px 10px;
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      background: #eef7f2;
+      color: #1f5c3a;
+    }
+    .offers-list {
+      display: grid;
+      gap: 8px;
+      max-height: 680px;
+      overflow: auto;
+      padding-right: 2px;
+    }
+    .offer-item {
+      border: 1px solid #dce9e2;
+      border-radius: 12px;
+      background: #fbfdfc;
+      padding: 11px;
+      display: grid;
+      gap: 6px;
+      text-align: left;
+      width: 100%;
+      cursor: pointer;
+    }
+    .offer-item.active {
+      border-color: #1f5c3a;
+      background: #f2fbf5;
+    }
+    .offer-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      align-items: center;
+    }
+    .offer-title {
+      margin: 0;
+      color: #173327;
+      font-size: 15px;
+      font-weight: 800;
+      overflow-wrap: anywhere;
+    }
+    .offer-meta {
+      margin: 0;
+      color: #667f75;
+      font-size: 12px;
+      line-height: 1.45;
+    }
+    .badge {
+      border-radius: 999px;
+      padding: 4px 9px;
+      font-size: 10px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      background: #eef7f2;
+      color: #1f5c3a;
+      white-space: nowrap;
+    }
+    .badge.pending { background: #fff7ed; color: #c2410c; }
+    .badge.accepted { background: #ecfdf3; color: #027a48; }
+    .badge.rejected { background: #fef2f2; color: #b42318; }
+    .badge.open { background: #fff7ed; color: #c2410c; }
+    .badge.matched { background: #ecfdf3; color: #027a48; }
+    .badge.closed, .badge.cancelled { background: #fef2f2; color: #b42318; }
+    .detail-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .detail-title {
+      margin: 0;
+      color: #1f5c3a;
+      font-size: 24px;
+      overflow-wrap: anywhere;
+    }
+    .detail-meta {
+      margin: 4px 0 0;
+      color: #61796f;
+      font-size: 13px;
+    }
+    .detail-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+    }
+    .detail-card {
+      border: 1px solid #dce9e2;
+      background: #f8fbf9;
+      border-radius: 12px;
+      padding: 10px;
+      display: grid;
+      gap: 5px;
+    }
+    .detail-card span {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: #678075;
+      font-weight: 800;
+    }
+    .detail-card strong {
+      font-size: 14px;
+      color: #173327;
+      word-break: break-word;
+    }
+    .section {
+      border: 1px solid #dce9e2;
+      border-radius: 14px;
+      padding: 12px;
+      background: #fff;
+      display: grid;
+      gap: 8px;
+    }
+    .section h3 {
+      margin: 0;
+      color: #1f5c3a;
+      font-size: 18px;
+    }
+    .summary {
+      margin: 0;
+      color: #556e64;
+      line-height: 1.55;
+      font-size: 14px;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
+    .empty {
+      border: 1px dashed #d5e3db;
+      border-radius: 12px;
+      background: #f8fbf9;
+      padding: 14px;
+      color: #657d73;
+      font-size: 13px;
+      line-height: 1.5;
+      text-align: center;
+    }
+    .empty strong {
+      display: block;
+      margin-bottom: 5px;
+      color: #173327;
+    }
+    @media (max-width: 1080px) {
+      .layout { grid-template-columns: 1fr; }
+      .offers-list { max-height: 360px; }
+      .detail-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    @media (max-width: 720px) {
+      body { padding: 14px; }
+      .hero h1 { font-size: 28px; }
+      .hero-actions { width: 100%; display: grid; grid-template-columns: 1fr; }
+      .hero-actions .btn { width: 100%; }
+      .detail-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <header class="hero">
+      <div>
+        <h1>Marketplace Offers Inbox</h1>
+        <p>Track all offers your company has submitted across marketplace requests.</p>
+      </div>
+      <div class="hero-actions">
+        <a class="btn secondary" href="/marketplace-opportunities.html">New Opportunities</a>
+        <button id="refreshBtn" class="btn secondary" type="button">Refresh</button>
+      </div>
+    </header>
+
+    <div id="globalStatus" class="status-line" role="status" aria-live="polite"></div>
+
+    <section class="layout">
+      <aside class="panel">
+        <div class="list-head">
+          <h2>Submitted Offers</h2>
+          <span id="offerCountPill" class="pill">0</span>
+        </div>
+        <p class="subhead">Offers are ordered by latest submission time.</p>
+        <div id="offersList" class="offers-list"></div>
+      </aside>
+
+      <section class="panel">
+        <div class="detail-header">
+          <div>
+            <h2 id="detailTitle" class="detail-title">Select an offer</h2>
+            <p id="detailMeta" class="detail-meta">Offer and request context will appear here.</p>
+          </div>
+          <span id="detailBadge" class="badge">N/A</span>
+        </div>
+
+        <div id="detailGrid" class="detail-grid"></div>
+
+        <section class="section">
+          <h3>Customer Request Summary</h3>
+          <p id="requestSummary" class="summary">Select an offer to view the request summary.</p>
+        </section>
+      </section>
+    </section>
+  </main>
+
+  <script>
+    (function() {
+      const LOGIN_REDIRECT = "/login.html";
+      const state = {
+        offers: [],
+        selectedOfferId: null
+      };
+
+      const els = {
+        globalStatus: document.getElementById("globalStatus"),
+        refreshBtn: document.getElementById("refreshBtn"),
+        offerCountPill: document.getElementById("offerCountPill"),
+        offersList: document.getElementById("offersList"),
+        detailTitle: document.getElementById("detailTitle"),
+        detailMeta: document.getElementById("detailMeta"),
+        detailBadge: document.getElementById("detailBadge"),
+        detailGrid: document.getElementById("detailGrid"),
+        requestSummary: document.getElementById("requestSummary")
+      };
+
+      function getToken() {
+        return localStorage.getItem("token");
+      }
+
+      function logoutToLogin() {
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+        window.top.location.href = LOGIN_REDIRECT;
+      }
+
+      function setLine(el, message, type) {
+        el.textContent = message || "";
+        el.className = "status-line" + (type ? " " + type : "");
+      }
+
+      function esc(value) {
+        return String(value == null ? "" : value).replace(/[&<>"']/g, function(ch) {
+          return ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[ch];
+        });
+      }
+
+      function txt(value, fallback) {
+        if (value === null || value === undefined || value === "") return fallback || "-";
+        return String(value);
+      }
+
+      function prettyStatus(value) {
+        return String(value || "unknown").replace(/_/g, " ").replace(/\b\w/g, function(ch) { return ch.toUpperCase(); });
+      }
+
+      function badgeClass(status) {
+        const s = String(status || "").toLowerCase();
+        return "badge " + (s || "pending");
+      }
+
+      function money(value) {
+        const num = Number(value || 0);
+        return "$" + num.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+      }
+
+      function fmtDate(value) {
+        if (!value) return "-";
+        const d = new Date(value);
+        if (Number.isNaN(d.getTime())) return String(value);
+        return d.toLocaleString([], { dateStyle: "medium", timeStyle: "short" });
+      }
+
+      function fmtDateOnly(value) {
+        if (!value) return "-";
+        const d = new Date(value);
+        if (Number.isNaN(d.getTime())) return String(value);
+        return d.toLocaleDateString([], { dateStyle: "medium" });
+      }
+
+      function asArray(payload) {
+        if (Array.isArray(payload)) return payload;
+        if (!payload || typeof payload !== "object") return [];
+        if (Array.isArray(payload.offers)) return payload.offers;
+        if (Array.isArray(payload.items)) return payload.items;
+        if (Array.isArray(payload.data)) return payload.data;
+        return [];
+      }
+
+      function requestTitle(item) {
+        return txt(
+          item.request_title ||
+          item.title ||
+          item.marketplace_request_title ||
+          item.service_title,
+          "Marketplace Request"
+        );
+      }
+
+      function requestSummary(item) {
+        return txt(
+          item.request_description ||
+          item.description ||
+          item.request_summary ||
+          item.summary,
+          "No request summary provided."
+        );
+      }
+
+      function requestId(item) {
+        return txt(item.request_id || item.marketplace_request_id, "-");
+      }
+
+      function selectedOffer() {
+        return state.offers.find(function(item) {
+          return Number(item.id) === Number(state.selectedOfferId);
+        }) || null;
+      }
+
+      async function api(path, options) {
+        const res = await fetch(path, options || {});
+        if (res.status === 401 || res.status === 403) {
+          logoutToLogin();
+          throw new Error("Unauthorized");
+        }
+        const data = await res.json().catch(function() { return {}; });
+        if (!res.ok) throw new Error(data.error || "Request failed");
+        return data;
+      }
+
+      function renderList() {
+        els.offerCountPill.textContent = String(state.offers.length);
+
+        if (!state.offers.length) {
+          els.offersList.innerHTML = '<div class="empty"><strong>No offers submitted</strong>Your marketplace offers will show here once submitted.</div>';
+          return;
+        }
+
+        els.offersList.innerHTML = state.offers.map(function(item) {
+          const active = Number(item.id) === Number(state.selectedOfferId) ? " active" : "";
+          return (
+            '<button type="button" class="offer-item' + active + '" data-offer-id="' + esc(item.id) + '">' +
+              '<div class="offer-top">' +
+                '<p class="offer-title">' + esc(requestTitle(item)) + '</p>' +
+                '<span class="' + badgeClass(item.status) + '">' + esc(prettyStatus(item.status)) + "</span>" +
+              "</div>" +
+              '<p class="offer-meta">Offer Price: ' + esc(money(item.price)) + "</p>" +
+              '<p class="offer-meta">Estimated Date: ' + esc(fmtDateOnly(item.estimated_start_date)) + "</p>" +
+              '<p class="offer-meta">Submitted: ' + esc(fmtDate(item.created_at)) + "</p>" +
+            "</button>"
+          );
+        }).join("");
+      }
+
+      function renderDetail() {
+        const item = selectedOffer();
+        if (!item) {
+          els.detailTitle.textContent = "Select an offer";
+          els.detailMeta.textContent = "Offer and request context will appear here.";
+          els.detailBadge.className = "badge";
+          els.detailBadge.textContent = "N/A";
+          els.detailGrid.innerHTML = '<div class="empty"><strong>No offer selected</strong>Select an offer from the inbox list.</div>';
+          els.requestSummary.textContent = "Select an offer to view the request summary.";
+          return;
+        }
+
+        els.detailTitle.textContent = requestTitle(item);
+        els.detailMeta.textContent = "Offer #" + txt(item.id) + " • Request #" + requestId(item);
+        els.detailBadge.className = badgeClass(item.status);
+        els.detailBadge.textContent = prettyStatus(item.status);
+
+        els.detailGrid.innerHTML = [
+          '<article class="detail-card"><span>Offer Price</span><strong>' + esc(money(item.price)) + "</strong></article>",
+          '<article class="detail-card"><span>Estimated Date</span><strong>' + esc(fmtDateOnly(item.estimated_start_date)) + "</strong></article>",
+          '<article class="detail-card"><span>Offer Status</span><strong>' + esc(prettyStatus(item.status)) + "</strong></article>",
+          '<article class="detail-card"><span>Request ID</span><strong>' + esc(requestId(item)) + "</strong></article>",
+          '<article class="detail-card"><span>Request Title</span><strong>' + esc(requestTitle(item)) + "</strong></article>",
+          '<article class="detail-card"><span>Submitted At</span><strong>' + esc(fmtDate(item.created_at)) + "</strong></article>",
+          '<article class="detail-card" style="grid-column: 1 / -1;"><span>Offer Message</span><strong>' + esc(txt(item.message, "No message provided.")) + "</strong></article>"
+        ].join("");
+
+        els.requestSummary.textContent = requestSummary(item);
+      }
+
+      async function loadOffers() {
+        setLine(els.globalStatus, "Loading offers inbox...", "");
+        els.refreshBtn.disabled = true;
+        try {
+          const payload = await api("/marketplace/offers/me", {
+            method: "GET",
+            headers: { Authorization: "Bearer " + getToken() }
+          });
+          const list = asArray(payload);
+          state.offers = list.slice().sort(function(a, b) {
+            const ta = new Date(a.created_at || 0).getTime();
+            const tb = new Date(b.created_at || 0).getTime();
+            return tb - ta;
+          });
+
+          const exists = state.offers.some(function(item) {
+            return Number(item.id) === Number(state.selectedOfferId);
+          });
+          state.selectedOfferId = exists ? state.selectedOfferId : (state.offers[0] ? state.offers[0].id : null);
+
+          renderList();
+          renderDetail();
+          setLine(els.globalStatus, "Offers inbox updated.", "ok");
+        } catch (err) {
+          state.offers = [];
+          state.selectedOfferId = null;
+          renderList();
+          renderDetail();
+          setLine(els.globalStatus, err.message || "Unable to load offers inbox.", "error");
+        } finally {
+          els.refreshBtn.disabled = false;
+        }
+      }
+
+      function bindEvents() {
+        els.refreshBtn.addEventListener("click", loadOffers);
+        els.offersList.addEventListener("click", function(event) {
+          const btn = event.target.closest("[data-offer-id]");
+          if (!btn) return;
+          const id = Number(btn.getAttribute("data-offer-id"));
+          if (!id) return;
+          state.selectedOfferId = id;
+          renderList();
+          renderDetail();
+        });
+      }
+
+      async function init() {
+        if (!getToken()) {
+          window.top.location.href = LOGIN_REDIRECT;
+          return;
+        }
+        bindEvents();
+        renderList();
+        renderDetail();
+        await loadOffers();
+      }
+
+      init();
+    })();
+  </script>
+</body>
+</html>

@@ -1,4 +1,10 @@
-node_modules/
-backups/
-*.dump
 .env
+.env.*
+!.env.example
+node_modules/
+public/uploads/
+uploads/
+logs/
+*.log
+coverage/
+.DS_Store

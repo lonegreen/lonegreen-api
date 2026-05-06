@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LoneGreen Customer Dashboard</title>
+  <link rel="stylesheet" href="/app-shell.css">
+  <style>
+    * { box-sizing: border-box; font-family: Inter, Arial, sans-serif; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: linear-gradient(180deg, #edf5f0 0%, #f7f9f8 190px, #f4f6f8 100%);
+      color: #173327;
+      padding: 22px;
+    }
+    .page {
+      width: min(1180px, 100%);
+      margin: 0 auto;
+      display: grid;
+      gap: 16px;
+    }
+    .hero {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      gap: 16px;
+      flex-wrap: wrap;
+      padding: 8px 0;
+    }
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 900;
+      color: #143c27;
+      margin-bottom: 14px;
+    }
+    .brand-mark {
+      width: 42px;
+      height: 42px;
+      border-radius: 14px;
+      background: linear-gradient(135deg, #38b66b, #d7f7df);
+      color: #0f2e1c;
+      display: grid;
+      place-items: center;
+      font-size: 20px;
+      box-shadow: 0 10px 28px rgba(56,182,107,0.22);
+    }
+    h1 {
+      margin: 0 0 6px;
+      color: #1f5c3a;
+      font-size: 32px;
+      letter-spacing: 0;
+    }
+    .hero p {
+      margin: 0;
+      color: #648076;
+      line-height: 1.45;
+    }
+    .hero-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .btn {
+      padding: 12px 16px;
+      border: none;
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: 800;
+      cursor: pointer;
+      transition: 0.18s ease;
+    }
+    .btn.primary {
+      background: linear-gradient(135deg, #1f5c3a, #2d8b55);
+      color: #fff;
+      box-shadow: 0 12px 28px rgba(31,92,58,0.18);
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .btn.secondary {
+      background: #eef2f0;
+      color: #1f5c3a;
+      border: 1px solid #dbe7df;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .btn.danger {
+      background: #b42318;
+      color: #fff;
+    }
+    .btn:hover { transform: translateY(-1px); }
+    .panel {
+      background: #fff;
+      border: 1px solid #dbe7df;
+      border-radius: 18px;
+      box-shadow: 0 18px 42px rgba(16,24,40,0.06);
+      padding: 18px;
+    }
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+    }
+    .kpi-card {
+      background: #fff;
+      border: 1px solid #dbe7df;
+      border-radius: 16px;
+      box-shadow: 0 14px 30px rgba(16,24,40,0.06);
+      padding: 16px;
+      display: grid;
+      gap: 6px;
+    }
+    .kpi-label {
+      color: #648076;
+      font-size: 13px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .kpi-value {
+      color: #10291f;
+      font-size: 30px;
+      font-weight: 900;
+      line-height: 1.1;
+      font-variant-numeric: tabular-nums;
+    }
+    .sections {
+      display: grid;
+      gap: 12px;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 12px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid #e8efe9;
+    }
+    .section-header h2 {
+      margin: 0;
+      color: #1f5c3a;
+      font-size: 20px;
+    }
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      border-radius: 999px;
+      padding: 5px 10px;
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      background: #eef4f0;
+      color: #1f5c3a;
+    }
+    .list {
+      display: grid;
+      gap: 10px;
+    }
+    .list-item {
+      border: 1px solid #e5eee8;
+      border-radius: 12px;
+      padding: 12px;
+      background: #fbfdfc;
+      display: grid;
+      gap: 6px;
+    }
+    .item-title {
+      font-size: 15px;
+      font-weight: 800;
+      color: #173327;
+      margin: 0;
+    }
+    .item-meta {
+      margin: 0;
+      color: #648076;
+      font-size: 13px;
+      line-height: 1.45;
+    }
+    .empty {
+      border: 1px dashed #cfe0d5;
+      background: #f8fcf9;
+      border-radius: 12px;
+      padding: 16px;
+      text-align: center;
+      color: #648076;
+      line-height: 1.5;
+    }
+    .empty strong {
+      display: block;
+      color: #173327;
+      margin-bottom: 6px;
+    }
+    .status {
+      min-height: 22px;
+      font-size: 14px;
+      line-height: 1.45;
+      color: #5f6e66;
+    }
+    .status.error { color: #b42318; font-weight: 700; }
+    .status.success { color: #027a48; font-weight: 700; }
+
+    @media (max-width: 1020px) {
+      .kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .sections { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 720px) {
+      body { padding: 14px; }
+      h1 { font-size: 28px; }
+      .hero-actions {
+        width: 100%;
+        display: grid;
+        grid-template-columns: 1fr;
+      }
+      .btn { width: 100%; justify-content: center; }
+      .kpi-grid { grid-template-columns: 1fr; }
+      .panel { padding: 16px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <header class="hero">
+      <div>
+        <div class="brand">
+          <div class="brand-mark">LG</div>
+          <span>LoneGreen Customer Portal</span>
+        </div>
+        <h1>Customer Dashboard</h1>
+        <p id="welcomeMessage">Loading your dashboard...</p>
+      </div>
+      <div class="hero-actions">
+        <a class="btn secondary" href="/customer-profile.html">Profile</a>
+        <button id="logoutBtn" class="btn danger" type="button">Logout</button>
+      </div>
+    </header>
+
+    <section class="kpi-grid" aria-label="Dashboard KPI cards">
+      <article class="kpi-card">
+        <span class="kpi-label">Open Requests</span>
+        <strong id="kpiOpenRequests" class="kpi-value">0</strong>
+      </article>
+      <article class="kpi-card">
+        <span class="kpi-label">Upcoming Jobs</span>
+        <strong id="kpiUpcomingJobs" class="kpi-value">0</strong>
+      </article>
+      <article class="kpi-card">
+        <span class="kpi-label">Unpaid Invoices</span>
+        <strong id="kpiUnpaidInvoices" class="kpi-value">0</strong>
+      </article>
+      <article class="kpi-card">
+        <span class="kpi-label">Active Subscriptions</span>
+        <strong id="kpiActiveSubs" class="kpi-value">0</strong>
+      </article>
+    </section>
+
+    <div id="status" class="status" role="status" aria-live="polite"></div>
+
+    <section class="sections">
+      <article class="panel">
+        <div class="section-header">
+          <h2>My Requests</h2>
+          <span id="requestsCount" class="pill">0</span>
+        </div>
+        <div id="requestsList" class="list"></div>
+      </article>
+
+      <article class="panel">
+        <div class="section-header">
+          <h2>My Estimates</h2>
+          <span id="estimatesCount" class="pill">0</span>
+        </div>
+        <div id="estimatesList" class="list"></div>
+      </article>
+
+      <article class="panel">
+        <div class="section-header">
+          <h2>My Jobs</h2>
+          <span id="jobsCount" class="pill">0</span>
+        </div>
+        <div id="jobsList" class="list"></div>
+      </article>
+
+      <article class="panel">
+        <div class="section-header">
+          <h2>My Invoices</h2>
+          <span id="invoicesCount" class="pill">0</span>
+        </div>
+        <div id="invoicesList" class="list"></div>
+      </article>
+
+      <article class="panel" style="grid-column: 1 / -1;">
+        <div class="section-header">
+          <h2>My Subscriptions</h2>
+          <span id="subscriptionsCount" class="pill">0</span>
+        </div>
+        <div id="subscriptionsList" class="list"></div>
+      </article>
+    </section>
+  </main>
+
+  <script src="/js/api.js"></script>
+  <script>
+    const API_BASE = (window.AppAPI && window.AppAPI.base) || window.location.origin;
+    const LOGIN_REDIRECT = "/customer-login-v2.html";
+
+    const state = {
+      me: null,
+      requests: [],
+      estimates: [],
+      jobs: [],
+      invoices: [],
+      subscriptions: []
+    };
+
+    function customerToken() {
+      return localStorage.getItem("customerToken");
+    }
+
+    function logout() {
+      localStorage.removeItem("customerToken");
+      localStorage.removeItem("customer");
+      window.location.href = LOGIN_REDIRECT;
+    }
+
+    function setStatus(message, type) {
+      const el = document.getElementById("status");
+      el.textContent = message || "";
+      el.className = "status" + (type ? " " + type : "");
+    }
+
+    function authHeaders(extraHeaders) {
+      return Object.assign({}, extraHeaders || {}, {
+        Authorization: "Bearer " + customerToken()
+      });
+    }
+
+    async function fetchJson(url) {
+      const res = await fetch(url, { headers: authHeaders() });
+      if (res.status === 401 || res.status === 403) {
+        logout();
+        throw new Error("Unauthorized");
+      }
+      const data = await res.json().catch(function() { return []; });
+      if (!res.ok) throw new Error((data && data.error) || "Request failed");
+      return data;
+    }
+
+    function toArray(payload) {
+      if (Array.isArray(payload)) return payload;
+      if (!payload || typeof payload !== "object") return [];
+      if (Array.isArray(payload.items)) return payload.items;
+      if (Array.isArray(payload.data)) return payload.data;
+      return [];
+    }
+
+    function readText(value, fallback) {
+      if (value === null || value === undefined || value === "") return fallback || "";
+      return String(value);
+    }
+
+    function pickTitle(item, candidates, fallback) {
+      for (var i = 0; i < candidates.length; i++) {
+        var val = item && item[candidates[i]];
+        if (val !== null && val !== undefined && val !== "") return String(val);
+      }
+      return fallback;
+    }
+
+    function pickMetaLines(item, fields) {
+      return fields
+        .map(function(def) {
+          var val = item && item[def.key];
+          if (val === null || val === undefined || val === "") return "";
+          return def.label + ": " + String(val);
+        })
+        .filter(Boolean);
+    }
+
+    function renderList(listId, countId, items, options) {
+      var listEl = document.getElementById(listId);
+      var countEl = document.getElementById(countId);
+      countEl.textContent = String(items.length);
+
+      if (!items.length) {
+        listEl.innerHTML = '<div class="empty"><strong>' + options.emptyTitle + '</strong>' + options.emptyMessage + '</div>';
+        return;
+      }
+
+      listEl.innerHTML = items.map(function(item) {
+        var title = pickTitle(item, options.titleCandidates, options.titleFallback);
+        var lines = pickMetaLines(item, options.metaFields);
+        if (!lines.length) lines.push(options.metaFallback);
+        return (
+          '<article class="list-item">' +
+            '<h3 class="item-title">' + title + '</h3>' +
+            lines.map(function(line) { return '<p class="item-meta">' + line + '</p>'; }).join("") +
+          '</article>'
+        );
+      }).join("");
+    }
+
+    function updateWelcome() {
+      var me = state.me || {};
+      var customer = me.customer || me.profile || me;
+      var name = readText(customer.name || customer.full_name || customer.first_name, "Customer");
+      document.getElementById("welcomeMessage").textContent = "Welcome back, " + name + ".";
+    }
+
+    function updateKpis() {
+      var openRequests = state.requests.filter(function(item) {
+        var status = String(item.status || item.display_status || "").toLowerCase();
+        return status !== "completed" && status !== "closed" && status !== "cancelled";
+      }).length;
+
+      var upcomingJobs = state.jobs.filter(function(item) {
+        var status = String(item.status || item.display_status || "").toLowerCase();
+        return status !== "completed" && status !== "cancelled";
+      }).length;
+
+      var unpaidInvoices = state.invoices.filter(function(item) {
+        var status = String(item.status || item.display_status || "").toLowerCase();
+        return status !== "paid" && status !== "cancelled";
+      }).length;
+
+      var activeSubs = state.subscriptions.filter(function(item) {
+        var status = String(item.status || item.display_status || "").toLowerCase();
+        return status === "active";
+      }).length;
+
+      document.getElementById("kpiOpenRequests").textContent = String(openRequests);
+      document.getElementById("kpiUpcomingJobs").textContent = String(upcomingJobs);
+      document.getElementById("kpiUnpaidInvoices").textContent = String(unpaidInvoices);
+      document.getElementById("kpiActiveSubs").textContent = String(activeSubs);
+    }
+
+    function renderSections() {
+      renderList("requestsList", "requestsCount", state.requests, {
+        titleCandidates: ["service", "title", "request_type", "name"],
+        titleFallback: "Service Request",
+        metaFields: [
+          { key: "status", label: "Status" },
+          { key: "preferred_date", label: "Preferred Date" },
+          { key: "created_at", label: "Created" }
+        ],
+        metaFallback: "Request details will appear here.",
+        emptyTitle: "No requests yet",
+        emptyMessage: "You have not submitted any service requests yet."
+      });
+
+      renderList("estimatesList", "estimatesCount", state.estimates, {
+        titleCandidates: ["service", "title", "estimate_number", "name"],
+        titleFallback: "Estimate",
+        metaFields: [
+          { key: "status", label: "Status" },
+          { key: "quoted_price", label: "Quoted Price" },
+          { key: "visit_date", label: "Visit Date" }
+        ],
+        metaFallback: "Estimate details will appear here.",
+        emptyTitle: "No estimates yet",
+        emptyMessage: "Estimates from your provider will appear here."
+      });
+
+      renderList("jobsList", "jobsCount", state.jobs, {
+        titleCandidates: ["service", "title", "job_number", "name"],
+        titleFallback: "Job",
+        metaFields: [
+          { key: "status", label: "Status" },
+          { key: "date", label: "Date" },
+          { key: "worker_name", label: "Assigned To" }
+        ],
+        metaFallback: "Job details will appear here.",
+        emptyTitle: "No jobs yet",
+        emptyMessage: "Upcoming and recent jobs will appear here."
+      });
+
+      renderList("invoicesList", "invoicesCount", state.invoices, {
+        titleCandidates: ["invoice_number", "title", "name"],
+        titleFallback: "Invoice",
+        metaFields: [
+          { key: "display_status", label: "Status" },
+          { key: "amount", label: "Total" },
+          { key: "due_date", label: "Due Date" }
+        ],
+        metaFallback: "Invoice details will appear here.",
+        emptyTitle: "No invoices yet",
+        emptyMessage: "Invoices will show up here once available."
+      });
+
+      renderList("subscriptionsList", "subscriptionsCount", state.subscriptions, {
+        titleCandidates: ["service", "title", "plan_name", "name"],
+        titleFallback: "Subscription",
+        metaFields: [
+          { key: "status", label: "Status" },
+          { key: "frequency", label: "Frequency" },
+          { key: "next_date", label: "Next Service" }
+        ],
+        metaFallback: "Subscription details will appear here.",
+        emptyTitle: "No subscriptions yet",
+        emptyMessage: "Active customer plans will appear here."
+      });
+    }
+
+    async function loadDashboard() {
+      if (!customerToken()) {
+        window.location.href = LOGIN_REDIRECT;
+        return;
+      }
+
+      setStatus("Loading dashboard...", "");
+
+      try {
+        var responses = await Promise.allSettled([
+          fetchJson(API_BASE + "/customer/me"),
+          fetchJson(API_BASE + "/customer/requests"),
+          fetchJson(API_BASE + "/customer/estimates"),
+          fetchJson(API_BASE + "/customer/jobs"),
+          fetchJson(API_BASE + "/customer/invoices"),
+          fetchJson(API_BASE + "/customer/subscriptions")
+        ]);
+
+        state.me = responses[0].status === "fulfilled" ? responses[0].value : {};
+        state.requests = responses[1].status === "fulfilled" ? toArray(responses[1].value) : [];
+        state.estimates = responses[2].status === "fulfilled" ? toArray(responses[2].value) : [];
+        state.jobs = responses[3].status === "fulfilled" ? toArray(responses[3].value) : [];
+        state.invoices = responses[4].status === "fulfilled" ? toArray(responses[4].value) : [];
+        state.subscriptions = responses[5].status === "fulfilled" ? toArray(responses[5].value) : [];
+
+        updateWelcome();
+        updateKpis();
+        renderSections();
+
+        var failedCount = responses.filter(function(r) { return r.status === "rejected"; }).length;
+        if (failedCount > 0) {
+          setStatus("Some dashboard widgets are in placeholder mode until APIs return data.", "");
+        } else {
+          setStatus("Dashboard loaded.", "success");
+        }
+      } catch (err) {
+        setStatus("Unable to load dashboard right now. Try again shortly.", "error");
+      }
+    }
+
+    document.getElementById("logoutBtn").addEventListener("click", logout);
+    loadDashboard();
+  </script>
+</body>
+</html>

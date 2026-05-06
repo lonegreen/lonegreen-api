@@ -3,6 +3,7 @@ const bcrypt = require("bcrypt");
 const pool = require("../db/pool");
 const auth = require("../middleware/auth");
 const requireCompanyBillingForMutations = require("../middleware/requireCompanyBillingForMutations");
+const { enforcePlanLimits } = require("../middleware/enforcePlanLimits");
 const { requireMinimumRole, normalizeRole, isOwnerAdmin, isManagerOrAbove, isWorker, workerIdForUser } = auth;
 const {
   warnDeprecatedRoute,
@@ -50,6 +51,7 @@ const {
 const { sendSafeServerError } = require("../services/safeServerError");
 
 const router = express.Router();
+const enforceWorkerPlanLimit = enforcePlanLimits("workers");
 
 function forbidden(res) {
   return res.status(403).json({ error: "Forbidden" });
@@ -123,7 +125,7 @@ router.get("/workers", auth, requireCompanyBillingForMutations, requireMinimumRo
   }
 });
 
-router.post("/workers", auth, requireCompanyBillingForMutations, requireMinimumRole("admin"), async (req, res) => {
+router.post("/workers", auth, requireCompanyBillingForMutations, enforceWorkerPlanLimit, requireMinimumRole("admin"), async (req, res) => {
   try {
     const { name } = req.body;
     const company_id = req.user.company_id;
@@ -353,7 +355,7 @@ router.get("/operations/workers", auth, requireCompanyBillingForMutations, requi
   }
 });
 
-router.post("/ops/workers", auth, requireCompanyBillingForMutations, requireMinimumRole("admin"), async (req, res) => {
+router.post("/ops/workers", auth, requireCompanyBillingForMutations, enforceWorkerPlanLimit, requireMinimumRole("admin"), async (req, res) => {
   try {
     await ensureOperationsSchema();
     const { name, phone, active } = req.body;

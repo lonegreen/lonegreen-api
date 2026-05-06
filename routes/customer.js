@@ -106,9 +106,73 @@ function portalEstimateStatus(status) {
   return status === "converted" ? "converted" : normalizeEstimateStatus(status);
 }
 
+/**
+ * Read-model only: align customer invoice JSON with staff list/detail (net paid, refunds total, display_status).
+ * Does not change persisted invoice rows or financial calculations (hydrateInvoice already computes balances).
+ */
+function attachCustomerInvoicePresentation(invoice) {
+  if (!invoice) {
+    return null;
+  }
+  const netPaid = Number(
+    invoice.paid_amount != null
+      ? invoice.paid_amount
+      : invoice.net_paid != null
+        ? invoice.net_paid
+        : 0
+  );
+  let refundedTotal = 0;
+  if (Array.isArray(invoice.refunds)) {
+    refundedTotal = invoice.refunds.reduce((sum, r) => sum + Number(r && r.amount != null ? r.amount : 0), 0);
+  } else if (invoice.refunded_amount != null) {
+    refundedTotal = Number(invoice.refunded_amount);
+  }
+  const remaining = Number(invoice.remaining_balance != null ? invoice.remaining_balance : 0);
+  const total = Number(invoice.amount || 0);
+  const st = String(invoice.status || "").toLowerCase();
+  let display_status = st;
+  if (st === "cancelled") {
+    display_status = "cancelled";
+  } else if (remaining <= 0.009 && total >= 0) {
+    display_status = "paid";
+  } else if (netPaid > 0.009 && remaining > 0.009) {
+    display_status = "partially_paid";
+  }
+  return {
+    ...invoice,
+    net_paid: netPaid,
+    refunded_total: refundedTotal,
+    display_status
+  };
+}
+
 function normalizePhone(value) {
   const digits = String(value || "").replace(/\D/g, "");
   return digits.length > 24 ? digits.slice(0, 24) : digits;
+}
+
+function cleanEmail(value) {
+  return String(value || "").trim().toLowerCase();
+}
+
+function cleanText(value) {
+  return String(value || "").trim();
+}
+
+function sanitizeFilenamePart(value, fallback) {
+  const clean = String(value || "")
+    .replace(/[<>:"/\\|?*\u0000-\u001F]/g, " ")
+    .trim()
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "");
+  return clean || fallback;
+}
+
+function buildInvoicePdfFilename(invoice) {
+  const numberPart = sanitizeFilenamePart(invoice && invoice.invoice_number, String(invoice && invoice.id ? invoice.id : "invoice"));
+  const clientPart = sanitizeFilenamePart(invoice && invoice.client_name, String(invoice && invoice.id ? invoice.id : "client"));
+  return `LoneGreen-${numberPart}-${clientPart}.pdf`;
 }
 
 function signCustomerToken(client) {
@@ -128,10 +192,22 @@ function customerAuth(req, res, next) {
 
   try {
     const decoded = jwt.verify(token, SECRET);
-    if (decoded.portal !== "customer" || !decoded.client_id || !decoded.company_id) {
+    const isLegacyPortalToken = decoded.portal === "customer";
+    const isCustomerRoleToken = String(decoded.role || "").toLowerCase() === "customer";
+
+    if (!isLegacyPortalToken && !isCustomerRoleToken) {
       return res.status(403).json({ error: "Forbidden" });
     }
-    req.customer = decoded;
+
+    if (!decoded.client_id) {
+      return res.status(403).json({ error: "Forbidden" });
+    }
+
+    req.customer = {
+      ...decoded,
+      portal: isLegacyPortalToken ? "customer" : "customer_account",
+      role: isCustomerRoleToken ? "customer" : decoded.role
+    };
     return next();
   } catch (err) {
     return res.status(401).json({ error: "Invalid customer token" });
@@ -139,8 +215,61 @@ function customerAuth(req, res, next) {
 }
 
 async function getClient(customer) {
-  const result = await pool.query("SELECT * FROM clients WHERE id=$1 AND company_id=$2 LIMIT 1", [customer.client_id, customer.company_id]);
+  if (customer.company_id) {
+    const result = await pool.query("SELECT * FROM clients WHERE id=$1 AND company_id=$2 LIMIT 1", [customer.client_id, customer.company_id]);
+    return result.rows[0] || null;
+  }
+  const result = await pool.query("SELECT * FROM clients WHERE id=$1 LIMIT 1", [customer.client_id]);
   return result.rows[0] || null;
+}
+
+function ensureCustomerCompanyIsolation(customer, client) {
+  if (!client) return false;
+  if (!customer.company_id) return true;
+  return String(customer.company_id) === String(client.company_id);
+}
+
+async function getCustomerAccountByClient(clientId) {
+  const result = await pool.query(
+    `
+    SELECT
+      id,
+      client_id,
+      email,
+      first_name,
+      last_name,
+      phone,
+      is_verified,
+      created_at,
+      updated_at
+    FROM customer_accounts
+    WHERE client_id = $1
+    LIMIT 1
+    `,
+    [clientId]
+  );
+  return result.rows[0] || null;
+}
+
+async function getCustomerRequests(customer) {
+  await ensureWorkflowSchema();
+  const companyId = customer.company_id || null;
+  if (!companyId) {
+    return [];
+  }
+  const result = await pool.query(
+    `
+    SELECT id, service, status, visit_date, notes, created_at
+    FROM estimates
+    WHERE company_id = $1
+      AND client_id = $2
+      AND record_type = 'lead'
+      AND COALESCE(archived, FALSE) = FALSE
+    ORDER BY created_at DESC, id DESC
+    `,
+    [companyId, customer.client_id]
+  );
+  return result.rows;
 }
 
 async function getCompany(companyId) {
@@ -241,7 +370,13 @@ async function getInvoices(customer) {
   for (const row of result.rows) {
     const invoice = await hydrateInvoice(customer.company_id, row.id);
     if (invoice && String(invoice.client_id) === String(customer.client_id)) {
-      invoices.push({ ...invoice, line_items: safeJsonParse(invoice.line_items, invoice.line_items || []) });
+      const parsed = attachCustomerInvoicePresentation({
+        ...invoice,
+        line_items: safeJsonParse(invoice.line_items, invoice.line_items || [])
+      });
+      if (parsed) {
+        invoices.push(parsed);
+      }
     }
   }
   return invoices;
@@ -287,6 +422,162 @@ router.post("/customer/login", customerLoginLimiter, async (req, res) => {
     });
   } catch (err) {
     sendSafeServerError(res, err, "CUSTOMER LOGIN ERROR");
+  }
+});
+
+router.get("/customer/me", customerAuth, async (req, res) => {
+  try {
+    const client = await getClient(req.customer);
+    if (!client) {
+      return res.status(404).json({ error: "Customer not found" });
+    }
+
+    if (!ensureCustomerCompanyIsolation(req.customer, client)) {
+      return res.status(403).json({ error: "Forbidden" });
+    }
+
+    const account = await getCustomerAccountByClient(client.id);
+    const companyId = req.customer.company_id || client.company_id || null;
+
+    return res.json({
+      id: account ? account.id : null,
+      role: "customer",
+      client_id: client.id,
+      company_id: companyId,
+      email: account ? account.email : client.email || null,
+      first_name: account ? account.first_name : null,
+      last_name: account ? account.last_name : null,
+      phone: account ? account.phone : client.phone || null,
+      is_verified: account ? account.is_verified : false,
+      created_at: account ? account.created_at : null,
+      updated_at: account ? account.updated_at : null,
+      customer: {
+        id: client.id,
+        name: client.name || "",
+        phone: client.phone || "",
+        email: client.email || null,
+        address: client.address || "",
+        zip: client.zip || ""
+      }
+    });
+  } catch (err) {
+    sendSafeServerError(res, err, "CUSTOMER ME ERROR");
+  }
+});
+
+router.put("/customer/profile", customerAuth, async (req, res) => {
+  try {
+    const client = await getClient(req.customer);
+    if (!client) {
+      return res.status(404).json({ error: "Customer not found" });
+    }
+
+    if (!ensureCustomerCompanyIsolation(req.customer, client)) {
+      return res.status(403).json({ error: "Forbidden" });
+    }
+
+    const account = await getCustomerAccountByClient(client.id);
+    if (!account) {
+      return res.status(404).json({ error: "Customer account not found" });
+    }
+
+    const firstName = cleanText(req.body?.first_name);
+    const lastName = cleanText(req.body?.last_name);
+    const phone = cleanText(req.body?.phone);
+    const email = cleanEmail(req.body?.email);
+    const address = cleanText(req.body?.address);
+
+    if (!firstName || !lastName || !email) {
+      return res.status(400).json({ error: "First name, last name, and email are required" });
+    }
+
+    const emailConflict = await pool.query(
+      `
+      SELECT id
+      FROM customer_accounts
+      WHERE LOWER(email) = LOWER($1)
+        AND id <> $2
+      LIMIT 1
+      `,
+      [email, account.id]
+    );
+    if (emailConflict.rows.length) {
+      return res.status(409).json({ error: "Email is already in use" });
+    }
+
+    const updatedAccountResult = await pool.query(
+      `
+      UPDATE customer_accounts
+      SET
+        first_name = $2,
+        last_name = $3,
+        phone = $4,
+        email = $5,
+        updated_at = CURRENT_TIMESTAMP
+      WHERE id = $1
+      RETURNING id, client_id, email, first_name, last_name, phone, is_verified, created_at, updated_at
+      `,
+      [account.id, firstName, lastName, phone, email]
+    );
+
+    const updatedClientResult = await pool.query(
+      `
+      UPDATE clients
+      SET
+        name = $2,
+        phone = $3,
+        email = $4,
+        address = $5
+      WHERE id = $1
+      RETURNING id, company_id, name, phone, email, address, zip
+      `,
+      [client.id, [firstName, lastName].filter(Boolean).join(" "), phone, email, address || client.address || ""]
+    );
+
+    const updatedClient = updatedClientResult.rows[0];
+    if (!ensureCustomerCompanyIsolation(req.customer, updatedClient)) {
+      return res.status(403).json({ error: "Forbidden" });
+    }
+
+    return res.json({
+      profile: {
+        ...updatedAccountResult.rows[0],
+        role: "customer",
+        company_id: updatedClient.company_id || null,
+        customer: {
+          id: updatedClient.id,
+          name: updatedClient.name || "",
+          phone: updatedClient.phone || "",
+          email: updatedClient.email || null,
+          address: updatedClient.address || "",
+          zip: updatedClient.zip || ""
+        }
+      }
+    });
+  } catch (err) {
+    sendSafeServerError(res, err, "CUSTOMER PROFILE UPDATE ERROR");
+  }
+});
+
+router.get("/customer/requests", customerAuth, async (req, res) => {
+  try {
+    const client = await getClient(req.customer);
+    if (!client) {
+      return res.status(404).json({ error: "Customer not found" });
+    }
+
+    if (!ensureCustomerCompanyIsolation(req.customer, client)) {
+      return res.status(403).json({ error: "Forbidden" });
+    }
+
+    const scopedCustomer = {
+      ...req.customer,
+      company_id: req.customer.company_id || client.company_id || null
+    };
+    const requests = await getCustomerRequests(scopedCustomer);
+    return res.json(requests);
+  } catch (err) {
+    sendSafeServerError(res, err, "CUSTOMER REQUESTS ERROR");
   }
 });
 
@@ -393,8 +684,14 @@ router.get("/customer/invoices", customerAuth, async (req, res) => {
 router.get("/customer/invoices/:id", customerAuth, async (req, res) => {
   try {
     const invoice = await hydrateInvoice(req.customer.company_id, req.params.id);
-    if (!invoice || String(invoice.client_id) !== String(req.customer.client_id)) return res.status(404).json({ error: "Invoice not found" });
-    res.json({ ...invoice, line_items: safeJsonParse(invoice.line_items, invoice.line_items || []) });
+    if (!invoice || String(invoice.client_id) !== String(req.customer.client_id)) {
+      return res.status(404).json({ error: "Invoice not found" });
+    }
+    const payload = attachCustomerInvoicePresentation({
+      ...invoice,
+      line_items: safeJsonParse(invoice.line_items, invoice.line_items || [])
+    });
+    res.json(payload);
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
@@ -404,8 +701,7 @@ router.get("/customer/invoices/:id/pdf", customerAuth, async (req, res) => {
     if (!invoice || String(invoice.client_id) !== String(req.customer.client_id)) return res.status(404).json({ error: "Invoice not found" });
 
     const pdf = await generateInvoicePdf(invoice);
-    const number = invoice.invoice_number || invoice.id;
-    const safeNumber = String(number).replace(/[^a-zA-Z0-9_-]/g, "-");
+    const filename = buildInvoicePdfFilename(invoice);
 
     await logActivity({
       companyId: req.customer.company_id,
@@ -420,7 +716,7 @@ router.get("/customer/invoices/:id/pdf", customerAuth, async (req, res) => {
     });
 
     res.setHeader("Content-Type", "application/pdf");
-    res.setHeader("Content-Disposition", `attachment; filename="invoice-${safeNumber}.pdf"`);
+    res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
     res.send(pdf);
   } catch (err) {
     console.log("CUSTOMER INVOICE PDF ERROR:", err);

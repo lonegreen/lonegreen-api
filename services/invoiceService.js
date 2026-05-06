@@ -163,6 +163,119 @@ function resultValue(row, key, fallback) {
   return row && row[key] ? row[key] : fallback;
 }
 
+/**
+ * Read-model-only: batch-load gross payments and refunds per invoice (same math source as recalculateInvoiceFinancials).
+ * Does not persist or mutate invoices.
+ */
+async function fetchInvoiceFinancialAggregates(companyId, invoiceIds, db = pool) {
+  const map = new Map();
+  if (!invoiceIds.length) {
+    return map;
+  }
+  const queryWithRefunds = `
+    SELECT
+      i.id,
+      (
+        SELECT COALESCE(SUM(p.amount), 0)::numeric
+        FROM payments p
+        WHERE p.invoice_id = i.id AND p.company_id = $1
+      ) AS gross_payments,
+      (
+        SELECT COALESCE(SUM(r.amount), 0)::numeric
+        FROM refunds r
+        WHERE r.invoice_id = i.id AND r.company_id = $1
+      ) AS refunded_amount
+    FROM invoices i
+    WHERE i.company_id = $1 AND i.id = ANY($2::int[])
+  `;
+  try {
+    const result = await db.query(queryWithRefunds, [companyId, invoiceIds]);
+    for (const row of result.rows) {
+      map.set(Number(row.id), {
+        gross_payments: Number(row.gross_payments || 0),
+        refunded_amount: Number(row.refunded_amount || 0)
+      });
+    }
+    return map;
+  } catch (err) {
+    if (err && err.code === "42P01") {
+      const result = await db.query(
+        `
+        SELECT
+          i.id,
+          (
+            SELECT COALESCE(SUM(p.amount), 0)::numeric
+            FROM payments p
+            WHERE p.invoice_id = i.id AND p.company_id = $1
+          ) AS gross_payments,
+          0::numeric AS refunded_amount
+        FROM invoices i
+        WHERE i.company_id = $1 AND i.id = ANY($2::int[])
+        `,
+        [companyId, invoiceIds]
+      );
+      for (const row of result.rows) {
+        map.set(Number(row.id), {
+          gross_payments: Number(row.gross_payments || 0),
+          refunded_amount: 0
+        });
+      }
+      return map;
+    }
+    throw err;
+  }
+}
+
+function computeInvoiceDisplayStatus(row, netPaid, remainingBalance) {
+  const status = String(row.status || "").toLowerCase();
+  if (status === "cancelled") {
+    return "cancelled";
+  }
+  const total = Number(row.amount || 0);
+  if (remainingBalance <= 0.009 && total >= 0) {
+    return "paid";
+  }
+  if (netPaid > 0.009 && remainingBalance > 0.009) {
+    return "partially_paid";
+  }
+  return status;
+}
+
+/**
+ * Read-model-only: attach paid_amount (net), net_paid, refunded_amount, gross_payments, remaining_balance, display_status.
+ * Mirrors hydrateInvoice / recalculateInvoiceFinancials without updating the database.
+ */
+async function enrichInvoiceRowsWithFinancials(companyId, invoiceRows, db = pool) {
+  if (!Array.isArray(invoiceRows) || invoiceRows.length === 0) {
+    return [];
+  }
+  const ids = invoiceRows.map(r => Number(r && r.id)).filter(id => Number.isInteger(id) && id > 0);
+  if (ids.length === 0) {
+    return invoiceRows.map(row => ({ ...row }));
+  }
+  const aggregates = await fetchInvoiceFinancialAggregates(companyId, ids, db);
+  return invoiceRows.map(row => {
+    const id = Number(row && row.id);
+    const agg = aggregates.get(id) || { gross_payments: 0, refunded_amount: 0 };
+    const grossPayments = Number(agg.gross_payments || 0);
+    const refundedAmount = Number(agg.refunded_amount || 0);
+    const netPaid = Number((grossPayments - refundedAmount).toFixed(2));
+    const totalAmount = Number(row.amount || 0);
+    const remainingBalance = Number(Math.max(totalAmount - netPaid, 0).toFixed(2));
+    const paidAmount = netPaid;
+    const displayStatus = computeInvoiceDisplayStatus(row, netPaid, remainingBalance);
+    return {
+      ...row,
+      paid_amount: paidAmount,
+      net_paid: netPaid,
+      refunded_amount: refundedAmount,
+      gross_payments: grossPayments,
+      remaining_balance: remainingBalance,
+      display_status: displayStatus
+    };
+  });
+}
+
 async function hydrateInvoice(companyId, invoiceId) {
   const result = await pool.query(`
     SELECT
@@ -179,7 +292,18 @@ async function hydrateInvoice(companyId, invoiceId) {
       companies.email AS company_email,
       companies.address AS company_address,
       companies.service_area,
-      companies.business_hours
+      companies.business_hours,
+      companies.invoice_logo_url,
+      companies.invoice_display_name,
+      companies.invoice_phone,
+      companies.invoice_email,
+      companies.invoice_website,
+      companies.invoice_address,
+      companies.invoice_footer,
+      companies.payment_instructions,
+      companies.zelle_name,
+      companies.zelle_contact,
+      companies.invoice_prefix
     FROM invoices
     LEFT JOIN clients ON invoices.client_id = clients.id AND clients.company_id = invoices.company_id
     LEFT JOIN jobs ON invoices.job_id = jobs.id AND jobs.company_id = invoices.company_id
@@ -217,6 +341,24 @@ async function hydrateInvoice(companyId, invoiceId) {
   const merged = {
     ...result.rows[0],
     ...invoice,
+    invoice_branding: {
+      logo_url: result.rows[0].invoice_logo_url || "",
+      display_name: result.rows[0].invoice_display_name || result.rows[0].company_name || "",
+      phone: result.rows[0].invoice_phone || result.rows[0].company_phone || "",
+      email: result.rows[0].invoice_email || result.rows[0].company_email || "",
+      website: result.rows[0].invoice_website || "",
+      address: result.rows[0].invoice_address || result.rows[0].company_address || "",
+      footer: result.rows[0].invoice_footer || "",
+      payment_instructions: result.rows[0].payment_instructions || "",
+      zelle_name: result.rows[0].zelle_name || "",
+      zelle_contact: result.rows[0].zelle_contact || "",
+      invoice_prefix: result.rows[0].invoice_prefix || "INV"
+    },
+    branded_company_name: result.rows[0].invoice_display_name || result.rows[0].company_name || "",
+    branded_company_phone: result.rows[0].invoice_phone || result.rows[0].company_phone || "",
+    branded_company_email: result.rows[0].invoice_email || result.rows[0].company_email || "",
+    branded_company_address: result.rows[0].invoice_address || result.rows[0].company_address || "",
+    branded_company_website: result.rows[0].invoice_website || "",
     line_items: normalizeLineItems(safeJsonParse(result.rows[0].line_items, []), result.rows[0].amount, result.rows[0].job_service || "Service").line_items,
     payments: payments.rows.map(payment => ({
       ...payment,
@@ -265,6 +407,7 @@ module.exports = {
   nextInvoiceNumber,
   normalizeLineItems,
   recalculateInvoiceFinancials,
+  enrichInvoiceRowsWithFinancials,
   hydrateInvoice,
   syncFinancialAlerts
 };

@@ -41,6 +41,12 @@ const customerRoutes = require("./routes/customer");
 const analyticsRoutes = require("./routes/analytics");
 const platformRoutes = require("./routes/platform");
 const billingRoutes = require("./routes/billing");
+const companiesRoutes = require("./routes/companies");
+const reviewsRoutes = require("./routes/reviews");
+const favoritesRoutes = require("./routes/favorites");
+const followsRoutes = require("./routes/follows");
+const messagesRoutes = require("./routes/messages");
+const marketplaceRoutes = require("./routes/marketplace");
 const { handleStripeWebhookRequest } = require("./routes/stripeWebhook");
 const { isStripeCheckoutConfigured } = require("./services/stripeService");
 const launchRoutes = require("./routes/launch");
@@ -267,6 +273,12 @@ app.use("/", customerRoutes);
 app.use("/", analyticsRoutes);
 app.use("/", platformRoutes);
 app.use("/", billingRoutes);
+app.use("/", companiesRoutes);
+app.use("/", reviewsRoutes);
+app.use("/", favoritesRoutes);
+app.use("/", followsRoutes);
+app.use("/", messagesRoutes);
+app.use("/", marketplaceRoutes);
 app.use("/", launchRoutes);
 
 /* Setup DB route */

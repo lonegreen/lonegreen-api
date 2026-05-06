@@ -127,7 +127,7 @@
 
     .kpi-grid {
       display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
       gap: 14px;
     }
 
@@ -178,6 +178,84 @@
       background: #f9fbfa;
       border-radius: 14px;
       padding: 14px 15px;
+    }
+
+    .billing-pro-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .billing-box {
+      border: 1px solid #deebe3;
+      background: #f9fbfa;
+      border-radius: 14px;
+      padding: 14px;
+    }
+
+    .billing-box h4 {
+      margin: 0 0 10px;
+      color: #1f5c3a;
+      font-size: 15px;
+    }
+
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .metric-card {
+      border: 1px solid #dbe7df;
+      border-radius: 12px;
+      padding: 10px;
+      background: white;
+    }
+
+    .metric-card span {
+      display: block;
+      font-size: 11px;
+      text-transform: uppercase;
+      color: #678075;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      margin-bottom: 5px;
+    }
+
+    .metric-card strong {
+      color: #173327;
+      font-size: 18px;
+    }
+
+    .invoice-alert-list,
+    .activity-list {
+      display: grid;
+      gap: 8px;
+    }
+
+    .invoice-alert-row,
+    .activity-row {
+      border: 1px solid #e4ece7;
+      border-radius: 12px;
+      background: white;
+      padding: 10px 12px;
+      display: grid;
+      gap: 6px;
+    }
+
+    .invoice-alert-meta,
+    .activity-meta {
+      font-size: 12px;
+      color: #5e766b;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .age-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
     }
 
     .alert-item {
@@ -711,12 +789,37 @@
     <div class="panel kpi-card">
       <div class="kpi-label">Revenue This Month</div>
       <div class="kpi-value" id="revenueThisMonth">$0</div>
-      <div class="kpi-sub">Cash collected this month across jobs and subscriptions.</div>
+      <div class="kpi-sub">Net cash collected this month (payments minus refunds issued this month).</div>
+    </div>
+    <div class="panel kpi-card">
+      <div class="kpi-label">Total Collected</div>
+      <div class="kpi-value" id="totalCollected">$0</div>
+      <div class="kpi-sub">Net lifetime collected after refunds.</div>
     </div>
     <div class="panel kpi-card">
       <div class="kpi-label">Unpaid</div>
       <div class="kpi-value" id="unpaidAmount">$0</div>
-      <div class="kpi-sub">Outstanding balance still waiting on payment.</div>
+      <div class="kpi-sub">Remaining balance on open invoices (draft, unpaid, overdue), net of payments and refunds.</div>
+    </div>
+    <div class="panel kpi-card">
+      <div class="kpi-label">Overdue Balance</div>
+      <div class="kpi-value" id="overdueBalance">$0</div>
+      <div class="kpi-sub">Open invoice balances that are already past due.</div>
+    </div>
+    <div class="panel kpi-card">
+      <div class="kpi-label">Active Invoices</div>
+      <div class="kpi-value" id="activeInvoices">0</div>
+      <div class="kpi-sub">Invoices currently in draft, unpaid, or overdue state.</div>
+    </div>
+    <div class="panel kpi-card">
+      <div class="kpi-label">Paid This Month</div>
+      <div class="kpi-value" id="paidThisMonth">$0</div>
+      <div class="kpi-sub">Net paid this month after refund adjustments.</div>
+    </div>
+    <div class="panel kpi-card">
+      <div class="kpi-label">Refunds This Month</div>
+      <div class="kpi-value" id="refundsThisMonth">$0</div>
+      <div class="kpi-sub">Total refunds issued this month.</div>
     </div>
     <div class="panel kpi-card">
       <div class="kpi-label">Jobs Today</div>
@@ -727,6 +830,31 @@
       <div class="kpi-label">Active Subscriptions</div>
       <div class="kpi-value" id="activeSubscriptionsCount">0</div>
       <div class="kpi-sub">Recurring customers currently active in the system.</div>
+    </div>
+  </div>
+
+  <div class="panel section">
+    <div class="section-head">
+      <h3>Billing Dashboard Pro</h3>
+      <div class="section-note">Net-balance monitoring across collections, aging, and invoice risk.</div>
+    </div>
+    <div class="billing-pro-grid">
+      <div class="billing-box">
+        <h4>Invoice Alerts</h4>
+        <div id="billingInvoiceAlerts" class="invoice-alert-list"><div class="empty">Loading billing alerts...</div></div>
+      </div>
+      <div class="billing-box">
+        <h4>Aging Buckets</h4>
+        <div id="billingAgingBuckets" class="age-grid"><div class="empty">Loading aging buckets...</div></div>
+      </div>
+      <div class="billing-box">
+        <h4>Collections Snapshot</h4>
+        <div id="billingCollectionsSnapshot" class="metrics-grid"><div class="empty">Loading collection metrics...</div></div>
+      </div>
+      <div class="billing-box">
+        <h4>Recent Billing Activity</h4>
+        <div id="billingRecentActivity" class="activity-list"><div class="empty">Loading billing activity...</div></div>
+      </div>
     </div>
   </div>
 
@@ -1362,8 +1490,117 @@ function normalizeRevenueSummary(revenue, date){
   return {
     ...data,
     total_revenue_month: Number(monthlyRow && monthlyRow.revenue ? monthlyRow.revenue : 0),
-    unpaid_amount: Number(data.unpaid_amount || 0)
+    unpaid_amount: Number(data.unpaid_amount || 0),
+    billing_kpis: data.billing_kpis && typeof data.billing_kpis === "object" ? data.billing_kpis : {},
+    invoice_alerts: data.invoice_alerts && typeof data.invoice_alerts === "object" ? data.invoice_alerts : {},
+    aging_buckets: data.aging_buckets && typeof data.aging_buckets === "object" ? data.aging_buckets : {},
+    collections_snapshot: data.collections_snapshot && typeof data.collections_snapshot === "object" ? data.collections_snapshot : {},
+    recent_billing_activity: data.recent_billing_activity && typeof data.recent_billing_activity === "object" ? data.recent_billing_activity : {}
   };
+}
+
+function renderBillingAlerts(alerts){
+  const host = document.getElementById("billingInvoiceAlerts");
+  if(!host) return;
+  const overdue = Array.isArray(alerts.overdue) ? alerts.overdue.slice(0, 4) : [];
+  const dueSoon = Array.isArray(alerts.due_soon) ? alerts.due_soon.slice(0, 4) : [];
+  const partial = Array.isArray(alerts.partially_paid) ? alerts.partially_paid.slice(0, 4) : [];
+  const unpaid = Array.isArray(alerts.unpaid) ? alerts.unpaid.slice(0, 4) : [];
+  const sections = [
+    { label: "Overdue invoices", rows: overdue },
+    { label: "Due in 7 days", rows: dueSoon },
+    { label: "Partially paid", rows: partial },
+    { label: "Unpaid invoices", rows: unpaid }
+  ];
+  const hasRows = sections.some(section => section.rows.length > 0);
+  if(!hasRows){
+    host.innerHTML = '<div class="empty">No invoice alerts right now.</div>';
+    return;
+  }
+  host.innerHTML = sections.map(section => {
+    if(!section.rows.length){
+      return '<div class="invoice-alert-row"><strong>' + escapeHtml(section.label) + '</strong><div class="invoice-alert-meta">No items</div></div>';
+    }
+    return section.rows.map(row => {
+      const invoiceLabel = row.invoice_number || ("#" + row.invoice_id);
+      return '<div class="invoice-alert-row">' +
+        '<strong>' + escapeHtml(section.label) + ': ' + escapeHtml(invoiceLabel) + '</strong>' +
+        '<div class="invoice-alert-meta">' +
+          '<span>' + escapeHtml(row.client_name || "Client") + '</span>' +
+          '<span>Due ' + escapeHtml(normalizeDate(row.due_date) || "-") + '</span>' +
+          '<span>Remaining ' + escapeHtml(formatMoney(row.remaining_balance || 0)) + '</span>' +
+        '</div>' +
+        '<div><button type="button" class="btn secondary" data-billing-open-invoice="' + Number(row.invoice_id || row.id || 0) + '">Open invoice</button></div>' +
+      '</div>';
+    }).join("");
+  }).join("");
+}
+
+function renderAgingBuckets(aging){
+  const host = document.getElementById("billingAgingBuckets");
+  if(!host) return;
+  const rows = [
+    ["Current", Number(aging.current || 0)],
+    ["1-30 days", Number(aging.overdue_1_30 || 0)],
+    ["31-60 days", Number(aging.overdue_31_60 || 0)],
+    ["61+ days", Number(aging.overdue_61_plus || 0)]
+  ];
+  host.innerHTML = rows.map(item =>
+    '<div class="metric-card"><span>' + escapeHtml(item[0]) + '</span><strong>' + escapeHtml(formatMoney(item[1])) + '</strong></div>'
+  ).join("");
+}
+
+function renderCollectionsSnapshot(snapshot){
+  const host = document.getElementById("billingCollectionsSnapshot");
+  if(!host) return;
+  const rows = [
+    ["Invoices sent this month", Number(snapshot.invoices_sent_this_month || 0)],
+    ["Invoices paid this month", Number(snapshot.invoices_paid_this_month || 0)],
+    ["Collection rate", Number(snapshot.collection_rate_this_month || 0).toFixed(2) + "%"],
+    ["Average invoice value", formatMoney(snapshot.average_invoice_value || 0)]
+  ];
+  host.innerHTML = rows.map(item =>
+    '<div class="metric-card"><span>' + escapeHtml(item[0]) + '</span><strong>' + escapeHtml(String(item[1])) + '</strong></div>'
+  ).join("");
+}
+
+function renderRecentBillingActivity(activity){
+  const host = document.getElementById("billingRecentActivity");
+  if(!host) return;
+  const payments = Array.isArray(activity.payments) ? activity.payments.slice(0, 5).map(row => ({
+    at: row.date,
+    title: "Payment",
+    subtitle: (row.invoice_number || ("#" + row.invoice_id)) + " • " + (row.client_name || "Client"),
+    value: "+" + formatMoney(row.amount || 0)
+  })) : [];
+  const refunds = Array.isArray(activity.refunds) ? activity.refunds.slice(0, 5).map(row => ({
+    at: row.created_at,
+    title: "Refund",
+    subtitle: (row.invoice_number || ("#" + row.invoice_id)) + " • " + (row.client_name || "Client"),
+    value: "-" + formatMoney(row.amount || 0)
+  })) : [];
+  const statuses = Array.isArray(activity.invoice_status_changes) ? activity.invoice_status_changes.slice(0, 5).map(row => ({
+    at: row.at,
+    title: "Invoice status",
+    subtitle: (row.invoice_number || (row.invoice_id ? "#" + row.invoice_id : "Invoice")) +
+      " • " + (row.before_status ? row.before_status + " → " + (row.after_status || "updated") : (row.after_status || "updated")),
+    value: ""
+  })) : [];
+
+  const rows = payments.concat(refunds, statuses)
+    .sort((a, b) => String(b.at || "").localeCompare(String(a.at || "")))
+    .slice(0, 8);
+
+  if(!rows.length){
+    host.innerHTML = '<div class="empty">No recent billing activity.</div>';
+    return;
+  }
+  host.innerHTML = rows.map(row =>
+    '<div class="activity-row">' +
+      '<strong>' + escapeHtml(row.title) + ' ' + (row.value ? '<span style="color:#1f5c3a;">' + escapeHtml(row.value) + '</span>' : '') + '</strong>' +
+      '<div class="activity-meta"><span>' + escapeHtml(row.subtitle) + '</span><span>' + escapeHtml(normalizeDate(row.at) || "-") + '</span></div>' +
+    '</div>'
+  ).join("");
 }
 
 function formatTime(value){
@@ -1699,8 +1936,15 @@ async function init(){
     document.getElementById("revenueThisMonth").innerText =
       formatMoney(safeMoney.total_revenue_month || 0);
 
+    const kpis = safeMoney.billing_kpis || {};
+    document.getElementById("totalCollected").innerText = formatMoney(kpis.total_collected || 0);
+
     document.getElementById("unpaidAmount").innerText =
-      formatMoney(safeMoney.unpaid_amount || 0);
+      formatMoney((kpis.unpaid_balance != null ? kpis.unpaid_balance : safeMoney.unpaid_amount) || 0);
+    document.getElementById("overdueBalance").innerText = formatMoney(kpis.overdue_balance || 0);
+    document.getElementById("activeInvoices").innerText = Number(kpis.active_invoices || 0);
+    document.getElementById("paidThisMonth").innerText = formatMoney(kpis.paid_this_month || 0);
+    document.getElementById("refundsThisMonth").innerText = formatMoney(kpis.refunds_this_month || 0);
 
     document.getElementById("jobsTodayCount").innerText = jobsToday.length;
     document.getElementById("activeSubscriptionsCount").innerText = activeSubscriptions.length;
@@ -1712,6 +1956,10 @@ async function init(){
     });
 
     renderTodayJobs(jobsToday, safeWorkers);
+    renderBillingAlerts(safeMoney.invoice_alerts || {});
+    renderAgingBuckets(safeMoney.aging_buckets || {});
+    renderCollectionsSnapshot(safeMoney.collections_snapshot || {});
+    renderRecentBillingActivity(safeMoney.recent_billing_activity || {});
 
     await loadDashNotifications();
 
@@ -1761,6 +2009,13 @@ function bindDashboardUiHandlers(){
   document.getElementById("dashOpenSettings").addEventListener("click", () => openInControl("settings.html"));
   document.getElementById("companyBillingBody").addEventListener("click", handleDashBillingClick);
   document.getElementById("todayJobsList").addEventListener("click", handleDashJobClick);
+  document.getElementById("billingInvoiceAlerts").addEventListener("click", event => {
+    const btn = event.target.closest("[data-billing-open-invoice]");
+    if(!btn) return;
+    const invoiceId = Number(btn.getAttribute("data-billing-open-invoice") || 0);
+    if(!invoiceId) return;
+    openInControl("invoice.html?id=" + encodeURIComponent(invoiceId));
+  });
 }
 
 bindDashboardUiHandlers();

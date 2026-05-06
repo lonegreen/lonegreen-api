@@ -1,0 +1,190 @@
+const express = require("express");
+const jwt = require("jsonwebtoken");
+const pool = require("../db/pool");
+const { SECRET } = require("../config/env");
+const { sendSafeServerError } = require("../services/safeServerError");
+const { sendOperationalEmailSafe } = require("../services/emailService");
+
+const router = express.Router();
+
+function queueSafeEmail(payload, options) {
+  Promise.resolve()
+    .then(() => sendOperationalEmailSafe(payload, options))
+    .catch(() => {});
+}
+
+function customerAuth(req, res, next) {
+  const header = req.headers.authorization || "";
+  const parts = String(header).trim().split(/\s+/);
+  const token = parts.length === 2 && parts[0] === "Bearer" ? parts[1] : "";
+  if (!token) {
+    return res.status(401).json({ error: "Customer login required" });
+  }
+
+  try {
+    const decoded = jwt.verify(token, SECRET);
+    const isLegacyPortalToken = decoded.portal === "customer";
+    const isCustomerRoleToken = String(decoded.role || "").toLowerCase() === "customer";
+
+    if (!isLegacyPortalToken && !isCustomerRoleToken) {
+      return res.status(403).json({ error: "Forbidden" });
+    }
+
+    if (!decoded.client_id) {
+      return res.status(403).json({ error: "Forbidden" });
+    }
+
+    req.customer = {
+      ...decoded,
+      portal: isLegacyPortalToken ? "customer" : "customer_account",
+      role: isCustomerRoleToken ? "customer" : decoded.role
+    };
+    return next();
+  } catch (err) {
+    return res.status(401).json({ error: "Invalid customer token" });
+  }
+}
+
+function cleanReviewText(value) {
+  const text = String(value || "").trim();
+  return text ? text : null;
+}
+
+async function resolveCustomerCompanyId(customer) {
+  if (customer.company_id) {
+    return Number(customer.company_id);
+  }
+  const result = await pool.query(
+    "SELECT company_id FROM clients WHERE id = $1 LIMIT 1",
+    [customer.client_id]
+  );
+  if (!result.rows.length) {
+    return null;
+  }
+  return Number(result.rows[0].company_id);
+}
+
+router.post("/reviews", customerAuth, async (req, res) => {
+  try {
+    const jobId = Number(req.body && req.body.job_id);
+    const rating = Number(req.body && req.body.rating);
+    const reviewText = cleanReviewText(req.body && req.body.review_text);
+
+    if (!Number.isInteger(jobId) || jobId <= 0) {
+      return res.status(400).json({ error: "Invalid job_id" });
+    }
+    if (!Number.isInteger(rating) || rating < 1 || rating > 5) {
+      return res.status(400).json({ error: "rating must be an integer between 1 and 5" });
+    }
+
+    const companyId = await resolveCustomerCompanyId(req.customer);
+    if (!companyId) {
+      return res.status(403).json({ error: "Forbidden" });
+    }
+
+    const inserted = await pool.query(
+      `
+      INSERT INTO company_reviews (company_id, client_id, job_id, rating, review_text)
+      SELECT
+        j.company_id,
+        j.client_id,
+        j.id,
+        $4,
+        $5
+      FROM jobs j
+      WHERE j.id = $1
+        AND j.company_id = $2
+        AND j.client_id = $3
+        AND LOWER(COALESCE(j.status, '')) = 'completed'
+      RETURNING id, company_id, client_id, job_id, rating, review_text, is_public, created_at
+      `,
+      [jobId, companyId, req.customer.client_id, rating, reviewText]
+    );
+    if (!inserted.rows.length) {
+      return res.status(403).json({ error: "You can only review your own completed jobs" });
+    }
+
+    const review = inserted.rows[0];
+    const companyResult = await pool.query(
+      "SELECT id, name, email FROM companies WHERE id = $1 LIMIT 1",
+      [companyId]
+    );
+    const company = companyResult.rows[0] || null;
+    const companyEmail = company ? String(company.email || "").trim() : "";
+    if (companyEmail) {
+      queueSafeEmail({
+        to: companyEmail,
+        subject: "New review received",
+        text: `You received a new ${rating}-star review.${reviewText ? `\n\n"${reviewText}"` : ""}`,
+        html: `
+          <div style="font-family:system-ui,sans-serif;max-width:560px">
+            <h2>New review received</h2>
+            <p>Your company received a new <strong>${rating}</strong>-star review.</p>
+            ${reviewText ? `<p style="white-space:pre-wrap">"${String(reviewText).replace(/</g, "&lt;").replace(/>/g, "&gt;")}"</p>` : ""}
+          </div>
+        `
+      }, { kind: "new_review" });
+    }
+
+    return res.status(201).json(review);
+  } catch (err) {
+    if (err && err.code === "23505") {
+      return res.status(409).json({ error: "A review already exists for this job" });
+    }
+    if (err && (err.code === "23514" || err.code === "23503")) {
+      return res.status(400).json({ error: "Invalid review relationship" });
+    }
+    return sendSafeServerError(res, err, "REVIEWS CREATE ERROR");
+  }
+});
+
+router.get("/companies/:id/reviews", async (req, res) => {
+  try {
+    const companyId = Number(req.params.id);
+    if (!Number.isInteger(companyId) || companyId <= 0) {
+      return res.status(400).json({ error: "Invalid company id" });
+    }
+
+    const result = await pool.query(
+      `
+      SELECT rating, review_text, created_at
+      FROM company_reviews
+      WHERE company_id = $1
+        AND is_public = TRUE
+      ORDER BY created_at DESC, id DESC
+      `,
+      [companyId]
+    );
+
+    return res.json(result.rows);
+  } catch (err) {
+    return sendSafeServerError(res, err, "COMPANY PUBLIC REVIEWS LIST ERROR");
+  }
+});
+
+router.get("/companies/:id/reviews/summary", async (req, res) => {
+  try {
+    const companyId = Number(req.params.id);
+    if (!Number.isInteger(companyId) || companyId <= 0) {
+      return res.status(400).json({ error: "Invalid company id" });
+    }
+
+    const result = await pool.query(
+      `
+      SELECT
+        COALESCE(ROUND(AVG(rating)::numeric, 1), 0.0) AS average_rating,
+        COUNT(*)::INTEGER AS total_reviews
+      FROM company_reviews
+      WHERE company_id = $1
+        AND is_public = TRUE
+      `,
+      [companyId]
+    );
+
+    return res.json(result.rows[0] || { average_rating: 0.0, total_reviews: 0 });
+  } catch (err) {
+    return sendSafeServerError(res, err, "COMPANY PUBLIC REVIEWS SUMMARY ERROR");
+  }
+});
+
+module.exports = router;

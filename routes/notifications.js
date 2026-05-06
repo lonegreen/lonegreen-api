@@ -50,6 +50,44 @@ const {
 const { sendSafeServerError } = require("../services/safeServerError");
 
 const router = express.Router();
+const NOTIFICATION_EVENT_TYPES = new Set([
+  "new_message",
+  "new_review",
+  "new_favorite",
+  "new_follow",
+  "company_verified"
+]);
+
+function parseNotificationMetadata(value) {
+  if (value && typeof value === "object" && !Array.isArray(value)) {
+    return value;
+  }
+  return {};
+}
+
+async function markAllNotificationsRead(companyId, userId) {
+  await ensureNotificationsSchema();
+  return pool.query(`
+    UPDATE notifications
+    SET is_read = TRUE
+    WHERE company_id = $1
+      AND is_read = FALSE
+      AND (user_id IS NULL OR user_id = $2)
+    RETURNING id
+  `, [companyId, userId]);
+}
+
+async function markSingleNotificationRead(notificationId, companyId, userId) {
+  await ensureNotificationsSchema();
+  return pool.query(`
+    UPDATE notifications
+    SET is_read = TRUE
+    WHERE id = $1
+      AND company_id = $2
+      AND (user_id IS NULL OR user_id = $3)
+    RETURNING id, company_id, user_id, type, title, message, is_read, metadata, created_at
+  `, [notificationId, companyId, userId]);
+}
 
 /* ================= ACCOUNT / COMPANY / ACTIVITY / NOTIFICATIONS ================= */
 
@@ -388,15 +426,7 @@ router.get("/notifications/unread-count", auth, requireCompanyBillingForMutation
 
 router.put("/notifications/read-all", auth, requireCompanyBillingForMutations, requireMinimumRole("manager"), async (req, res) => {
   try {
-    await ensureNotificationsSchema();
-    const result = await pool.query(`
-      UPDATE notifications
-      SET is_read = TRUE
-      WHERE company_id = $1
-        AND is_read = FALSE
-        AND (user_id IS NULL OR user_id = $2)
-      RETURNING id
-    `, [req.user.company_id, req.user.id]);
+    const result = await markAllNotificationsRead(req.user.company_id, req.user.id);
 
     res.json({ updated: result.rowCount });
   } catch (err) {
@@ -405,19 +435,20 @@ router.put("/notifications/read-all", auth, requireCompanyBillingForMutations, r
   }
 });
 
+router.post("/notifications/read-all", auth, requireCompanyBillingForMutations, requireMinimumRole("manager"), async (req, res) => {
+  try {
+    const result = await markAllNotificationsRead(req.user.company_id, req.user.id);
+    res.json({ updated: result.rowCount });
+  } catch (err) {
+    console.log("READ ALL NOTIFICATIONS (POST) ERROR:", err);
+    sendSafeServerError(res, err, "routes/notifications");
+  }
+});
+
 router.put("/notifications/:id/read", auth, requireCompanyBillingForMutations, requireMinimumRole("manager"), async (req, res) => {
   try {
-    await ensureNotificationsSchema();
     const id = req.params.id;
-
-    const result = await pool.query(`
-      UPDATE notifications
-      SET is_read = TRUE
-      WHERE id = $1
-        AND company_id = $2
-        AND (user_id IS NULL OR user_id = $3)
-      RETURNING id, company_id, user_id, type, title, message, is_read, metadata, created_at
-    `, [id, req.user.company_id, req.user.id]);
+    const result = await markSingleNotificationRead(id, req.user.company_id, req.user.id);
 
     if (result.rows.length === 0) {
       return res.status(404).json({ error: "Notification not found" });
@@ -443,6 +474,92 @@ router.put("/notifications/:id/read", auth, requireCompanyBillingForMutations, r
     });
   } catch (err) {
     console.log("READ NOTIFICATION ERROR:", err);
+    sendSafeServerError(res, err, "routes/notifications");
+  }
+});
+
+router.post("/notifications/:id/read", auth, requireCompanyBillingForMutations, requireMinimumRole("manager"), async (req, res) => {
+  try {
+    const id = req.params.id;
+    const result = await markSingleNotificationRead(id, req.user.company_id, req.user.id);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: "Notification not found" });
+    }
+
+    const row = result.rows[0];
+
+    await logActivity({
+      companyId: req.user.company_id,
+      userId: req.user.id,
+      action: "notification_read",
+      entityType: "notification",
+      entityId: Number(id),
+      details: {
+        title: row.title,
+        type: row.type
+      }
+    });
+
+    res.json({
+      ...row,
+      metadata: safeJsonParse(row.metadata, {})
+    });
+  } catch (err) {
+    console.log("READ NOTIFICATION (POST) ERROR:", err);
+    sendSafeServerError(res, err, "routes/notifications");
+  }
+});
+
+router.post("/notifications/events", auth, requireCompanyBillingForMutations, requireMinimumRole("manager"), async (req, res) => {
+  try {
+    await ensureNotificationsSchema();
+    const type = String(req.body?.type || "").trim().toLowerCase();
+    if (!NOTIFICATION_EVENT_TYPES.has(type)) {
+      return res.status(400).json({ error: "Unsupported notification event type" });
+    }
+
+    const title = String(req.body?.title || "").trim();
+    const message = String(req.body?.message || "").trim();
+    if (!title || !message) {
+      return res.status(400).json({ error: "title and message are required" });
+    }
+
+    const rawUserId = req.body?.user_id;
+    const targetUserId = rawUserId === null || rawUserId === undefined || rawUserId === ""
+      ? null
+      : parseIntSafe(rawUserId);
+
+    if (targetUserId !== null && targetUserId !== req.user.id) {
+      return res.status(403).json({ error: "Forbidden" });
+    }
+
+    const metadata = parseNotificationMetadata(req.body?.metadata);
+
+    const created = await createNotification({
+      companyId: req.user.company_id,
+      userId: targetUserId,
+      type,
+      title,
+      message,
+      metadata
+    });
+
+    await logActivity({
+      companyId: req.user.company_id,
+      userId: req.user.id,
+      action: "notification_event_created",
+      entityType: "notification",
+      entityId: created && created.id ? created.id : null,
+      details: {
+        type,
+        target_user_id: targetUserId
+      }
+    });
+
+    res.status(201).json(created || { success: true });
+  } catch (err) {
+    console.log("CREATE NOTIFICATION EVENT ERROR:", err);
     sendSafeServerError(res, err, "routes/notifications");
   }
 });

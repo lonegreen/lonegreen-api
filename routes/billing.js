@@ -68,6 +68,25 @@ function num(value) {
   return Number(value || 0);
 }
 
+function parseIntSafe(value) {
+  const parsed = Number.parseInt(String(value), 10);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+}
+
+const TENANT_PROTECTED_BILLING_FIELDS = new Set([
+  "billing_status",
+  "trial_ends_at",
+  "billing_started_at",
+  "billing_cancelled_at",
+  "billing_grace_until",
+  "billing_last_payment_failed_at",
+  "billing_last_payment_succeeded_at",
+  "billing_suspended_at",
+  "billing_failure_reason",
+  "platform_suspended_at",
+  "platform_suspension_reason"
+]);
+
 function warningSummary(warnings) {
   const list = warnings && Array.isArray(warnings.warnings) ? warnings.warnings : [];
   return {
@@ -86,6 +105,66 @@ function resolveCheckoutPlanInput(raw) {
     return checkoutPlanFromInternalPlan(normalized);
   }
   return null;
+}
+
+async function getActiveSubscriptionPlans() {
+  const result = await pool.query(
+    `
+    SELECT
+      id,
+      name,
+      slug,
+      monthly_price,
+      max_users,
+      max_clients,
+      max_jobs,
+      max_invoices,
+      max_workers,
+      active,
+      created_at
+    FROM subscription_plans
+    WHERE active = TRUE
+    ORDER BY id ASC
+    `
+  );
+  return result.rows;
+}
+
+async function getCompanyCurrentPlanRecord(companyId) {
+  const result = await pool.query(
+    `
+    SELECT
+      c.id AS company_id,
+      c.plan,
+      c.plan_id,
+      c.billing_status,
+      p.id AS selected_plan_id,
+      p.name AS selected_plan_name,
+      p.slug AS selected_plan_slug,
+      p.monthly_price AS selected_plan_monthly_price,
+      p.max_users AS selected_plan_max_users,
+      p.max_clients AS selected_plan_max_clients,
+      p.max_jobs AS selected_plan_max_jobs,
+      p.max_invoices AS selected_plan_max_invoices,
+      p.max_workers AS selected_plan_max_workers,
+      p.active AS selected_plan_active,
+      p.created_at AS selected_plan_created_at
+    FROM companies c
+    LEFT JOIN subscription_plans p ON p.id = c.plan_id
+    WHERE c.id = $1
+    LIMIT 1
+    `,
+    [companyId]
+  );
+  return result.rows[0] || null;
+}
+
+function normalizeRequestedBillingStatus(raw, fallbackStatus) {
+  const normalized = String(raw || "").trim().toLowerCase();
+  if (!normalized) {
+    return normalizeBillingStatus(fallbackStatus || "active");
+  }
+  return normalizeBillingStatus(normalized);
 }
 
 function billingRouteError(res, err, label) {
@@ -388,6 +467,57 @@ router.post("/billing/reactivate", billingOwnerAdminOnly, async (req, res) => {
   }
 });
 
+router.get("/billing/plans", billingOwnerAdminOnly, async (req, res) => {
+  try {
+    const plans = await getActiveSubscriptionPlans();
+    res.json({
+      plans,
+      warning_mode: true
+    });
+  } catch (err) {
+    sendSafeServerError(res, err, "BILLING PLANS LIST ERROR");
+  }
+});
+
+router.get("/billing/current-plan", billingOwnerAdminOnly, async (req, res) => {
+  try {
+    if (!req.user.company_id) {
+      return res.status(400).json({ error: "Company billing is not available for this account" });
+    }
+
+    const row = await getCompanyCurrentPlanRecord(req.user.company_id);
+    if (!row) {
+      return res.status(404).json({ error: "Company not found" });
+    }
+
+    const selectedPlan = row.selected_plan_id
+      ? {
+        id: row.selected_plan_id,
+        name: row.selected_plan_name,
+        slug: row.selected_plan_slug,
+        monthly_price: row.selected_plan_monthly_price,
+        max_users: row.selected_plan_max_users,
+        max_clients: row.selected_plan_max_clients,
+        max_jobs: row.selected_plan_max_jobs,
+        max_invoices: row.selected_plan_max_invoices,
+        max_workers: row.selected_plan_max_workers,
+        active: row.selected_plan_active,
+        created_at: row.selected_plan_created_at
+      }
+      : null;
+
+    res.json({
+      company_id: row.company_id,
+      billing_status: normalizeBillingStatus(row.billing_status),
+      selected_plan: selectedPlan,
+      legacy_plan: normalizePlan(row.plan),
+      warning_mode: true
+    });
+  } catch (err) {
+    sendSafeServerError(res, err, "BILLING CURRENT PLAN ERROR");
+  }
+});
+
 async function handleStripeCheckoutSession(req, res) {
   try {
     if (!req.user.company_id) {
@@ -560,6 +690,104 @@ async function handleBillingPlanChange(req, res) {
   try {
     if (!req.user.company_id) {
       return res.status(400).json({ error: "Company billing is not available for this account" });
+    }
+
+    const protectedFieldAttempt = Object.keys(req.body || {}).find((key) => TENANT_PROTECTED_BILLING_FIELDS.has(key));
+    if (protectedFieldAttempt) {
+      return res.status(403).json({
+        error: "Billing status and protected billing fields are managed by Stripe or platform controls only.",
+        code: "PROTECTED_BILLING_FIELD",
+        field: protectedFieldAttempt,
+        warning_mode: true
+      });
+    }
+
+    const hasPlanTableSelection = req.body && (
+      req.body.plan_id !== undefined ||
+      req.body.plan_slug !== undefined
+    );
+
+    if (hasPlanTableSelection) {
+      const requestedPlanId = req.body.plan_id !== undefined
+        ? parseIntSafe(req.body.plan_id)
+        : null;
+      const requestedPlanSlug = req.body.plan_slug !== undefined
+        ? String(req.body.plan_slug || "").trim().toLowerCase()
+        : "";
+
+      if (!requestedPlanId && !requestedPlanSlug) {
+        return res.status(400).json({
+          error: "Provide plan_id or plan_slug",
+          warning_mode: true
+        });
+      }
+
+      const planLookup = await pool.query(
+        `
+        SELECT
+          id,
+          name,
+          slug,
+          monthly_price,
+          max_users,
+          max_clients,
+          max_jobs,
+          max_invoices,
+          max_workers,
+          active,
+          created_at
+        FROM subscription_plans
+        WHERE active = TRUE
+          AND (
+            ($1::int IS NOT NULL AND id = $1)
+            OR
+            ($2::text <> '' AND LOWER(slug) = LOWER($2))
+          )
+        ORDER BY id ASC
+        LIMIT 1
+        `,
+        [requestedPlanId || null, requestedPlanSlug]
+      );
+
+      if (!planLookup.rows.length) {
+        return res.status(404).json({
+          error: "Plan not found",
+          warning_mode: true
+        });
+      }
+
+      const selectedPlan = planLookup.rows[0];
+      const existingCompany = await pool.query(
+        `
+        SELECT id, billing_status
+        FROM companies
+        WHERE id = $1
+        LIMIT 1
+        `,
+        [req.user.company_id]
+      );
+      if (!existingCompany.rows.length) {
+        return res.status(404).json({ error: "Company not found" });
+      }
+
+      await pool.query(
+        `
+        UPDATE companies
+        SET
+          plan_id = $2
+        WHERE id = $1
+        `,
+        [req.user.company_id, selectedPlan.id]
+      );
+
+      const payload = await currentBillingPayload(req.user.company_id);
+      return res.json({
+        selected_plan: selectedPlan,
+        billing_status: normalizeBillingStatus(existingCompany.rows[0].billing_status),
+        summary: payload,
+        warning_mode: true,
+        stripe_updated: false
+      });
     }
 
     const targetCheckout = resolveCheckoutPlanInput(req.body && req.body.plan);

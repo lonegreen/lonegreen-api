@@ -3,6 +3,7 @@ const bcrypt = require("bcrypt");
 const pool = require("../db/pool");
 const auth = require("../middleware/auth");
 const requireCompanyBillingForMutations = require("../middleware/requireCompanyBillingForMutations");
+const { enforcePlanLimits } = require("../middleware/enforcePlanLimits");
 const { requireMinimumRole, normalizeRole } = auth;
 const {
   warnDeprecatedRoute,
@@ -52,10 +53,11 @@ const {
 const { sendSafeServerError } = require("../services/safeServerError");
 
 const router = express.Router();
+const enforceJobPlanLimit = enforcePlanLimits("jobs");
 
 /* ================= JOBS ================= */
 
-router.post("/jobs", auth, requireCompanyBillingForMutations, requireMinimumRole("manager"), async (req, res) => {
+router.post("/jobs", auth, requireCompanyBillingForMutations, enforceJobPlanLimit, requireMinimumRole("manager"), async (req, res) => {
   try {
     warnDeprecatedRoute("/jobs", "/workflow/jobs");
     const {
@@ -714,7 +716,7 @@ router.get("/workflow/jobs", auth, requireCompanyBillingForMutations, requireMin
   }
 });
 
-router.post("/workflow/jobs", auth, requireCompanyBillingForMutations, requireMinimumRole("manager"), async (req, res) => {
+router.post("/workflow/jobs", auth, requireCompanyBillingForMutations, enforceJobPlanLimit, requireMinimumRole("manager"), async (req, res) => {
   try {
     await ensureWorkflowSchema();
     const companyId = req.user.company_id;

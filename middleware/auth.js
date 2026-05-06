@@ -2,6 +2,7 @@
 const { SECRET } = require("../config/env");
 
 const ROLE_RANK = {
+  customer: 0,
   worker: 1,
   manager: 2,
   admin: 3,
@@ -11,7 +12,7 @@ const ROLE_RANK = {
 
 function normalizeRole(role) {
   const normalized = String(role || "").trim().toLowerCase();
-  return ROLE_RANK[normalized] ? normalized : null;
+  return Object.prototype.hasOwnProperty.call(ROLE_RANK, normalized) ? normalized : null;
 }
 
 function isValidRole(role) {

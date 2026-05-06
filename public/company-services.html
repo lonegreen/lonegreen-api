@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Company Services</title>
+  <link rel="stylesheet" href="/app-shell.css">
+  <style>
+    * { box-sizing: border-box; font-family: Inter, Arial, sans-serif; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: linear-gradient(180deg, #edf5f0 0%, #f7f9f8 180px, #f4f6f8 100%);
+      color: #173327;
+      padding: 20px;
+    }
+    .page {
+      width: min(1120px, 100%);
+      margin: 0 auto;
+      display: grid;
+      gap: 14px;
+    }
+    .hero {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    h1 {
+      margin: 0 0 6px;
+      color: #1f5c3a;
+      font-size: 32px;
+    }
+    .muted {
+      margin: 0;
+      color: #648076;
+      line-height: 1.45;
+    }
+    .actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .btn {
+      border: none;
+      border-radius: 12px;
+      padding: 12px 16px;
+      font-size: 14px;
+      font-weight: 800;
+      cursor: pointer;
+      transition: 0.18s ease;
+    }
+    .btn.primary {
+      background: linear-gradient(135deg, #1f5c3a, #2d8b55);
+      color: #fff;
+      box-shadow: 0 12px 28px rgba(31,92,58,0.2);
+    }
+    .btn.secondary {
+      background: #eef2f0;
+      color: #1f5c3a;
+      border: 1px solid #dbe7df;
+    }
+    .btn:disabled { opacity: 0.65; cursor: not-allowed; }
+    .btn:hover:not(:disabled) { transform: translateY(-1px); }
+    .status {
+      min-height: 20px;
+      color: #5f6e66;
+      font-size: 14px;
+    }
+    .status.error { color: #b42318; font-weight: 700; }
+    .status.success { color: #027a48; font-weight: 700; }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+    .card {
+      background: #fff;
+      border: 1px solid #dbe7df;
+      border-radius: 16px;
+      box-shadow: 0 14px 30px rgba(16,24,40,0.06);
+      padding: 16px;
+      display: grid;
+      gap: 12px;
+    }
+    .head {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 10px;
+    }
+    .name {
+      margin: 0;
+      font-size: 20px;
+      color: #1f5c3a;
+      line-height: 1.2;
+    }
+    .desc {
+      margin: 0;
+      color: #648076;
+      line-height: 1.45;
+      font-size: 14px;
+    }
+    .toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      font-weight: 800;
+      color: #173327;
+      user-select: none;
+    }
+    .toggle input {
+      width: 18px;
+      height: 18px;
+      margin: 0;
+    }
+    .field {
+      display: grid;
+      gap: 6px;
+    }
+    label {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: #648076;
+      font-weight: 800;
+    }
+    input[type="text"] {
+      width: 100%;
+      border: 1px solid #cfe0d5;
+      border-radius: 11px;
+      padding: 10px 12px;
+      font-size: 14px;
+      color: #173327;
+      outline: none;
+      background: #fff;
+      transition: 0.18s ease;
+    }
+    input[type="text"]:focus {
+      border-color: #2c8b55;
+      box-shadow: 0 0 0 4px rgba(44,139,85,0.12);
+    }
+    .inactive {
+      opacity: 0.7;
+    }
+    .empty {
+      border: 1px dashed #cfe0d5;
+      background: #f8fcf9;
+      border-radius: 14px;
+      padding: 18px;
+      text-align: center;
+      color: #648076;
+      line-height: 1.5;
+      grid-column: 1 / -1;
+    }
+    @media (max-width: 860px) {
+      body { padding: 14px; }
+      .grid { grid-template-columns: 1fr; }
+      h1 { font-size: 28px; }
+      .actions { width: 100%; }
+      .btn { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <section class="hero">
+      <div>
+        <h1>Company Services</h1>
+        <p class="muted">Select which service categories your company offers and optionally set custom display names.</p>
+      </div>
+      <div class="actions">
+        <button id="refreshBtn" class="btn secondary" type="button">Refresh</button>
+        <button id="saveBtn" class="btn primary" type="button">Save Services</button>
+      </div>
+    </section>
+
+    <div id="status" class="status" role="status" aria-live="polite"></div>
+    <section id="servicesGrid" class="grid"></section>
+  </main>
+
+  <script src="/js/api.js"></script>
+  <script>
+    const API_BASE = (window.AppAPI && window.AppAPI.base) || window.location.origin;
+    const token = localStorage.getItem("token");
+    let currentUser = null;
+    try { currentUser = JSON.parse(localStorage.getItem("user") || "null"); } catch (_) { currentUser = null; }
+
+    const state = {
+      categories: [],
+      selectedByCategoryId: {}
+    };
+
+    const els = {
+      status: document.getElementById("status"),
+      grid: document.getElementById("servicesGrid"),
+      saveBtn: document.getElementById("saveBtn"),
+      refreshBtn: document.getElementById("refreshBtn")
+    };
+
+    function setStatus(message, type) {
+      els.status.textContent = message || "";
+      els.status.className = "status" + (type ? " " + type : "");
+    }
+
+    function authHeaders(extra) {
+      const headers = Object.assign({}, extra || {});
+      if (token) headers.Authorization = "Bearer " + token;
+      return headers;
+    }
+
+    function companyId() {
+      const id = currentUser && Number(currentUser.company_id);
+      return Number.isInteger(id) && id > 0 ? id : 0;
+    }
+
+    function render() {
+      if (!state.categories.length) {
+        els.grid.innerHTML = '<div class="empty">No service categories are available yet.</div>';
+        return;
+      }
+
+      els.grid.innerHTML = state.categories.map((cat) => {
+        const selected = state.selectedByCategoryId[cat.id] || { active: false, custom_name: "" };
+        const inactiveClass = selected.active ? "" : "inactive";
+        return (
+          '<article class="card ' + inactiveClass + '">' +
+            '<div class="head">' +
+              '<div>' +
+                '<h2 class="name">' + cat.name + '</h2>' +
+                '<p class="desc">' + (cat.description || "Standard reusable category") + '</p>' +
+              '</div>' +
+              '<label class="toggle">' +
+                '<input type="checkbox" data-action="toggle" data-category-id="' + cat.id + '"' + (selected.active ? " checked" : "") + '>' +
+                '<span>' + (selected.active ? "Active" : "Inactive") + '</span>' +
+              '</label>' +
+            '</div>' +
+            '<div class="field">' +
+              '<label>Custom Service Name (Optional)</label>' +
+              '<input type="text" data-action="custom-name" data-category-id="' + cat.id + '" value="' + (selected.custom_name || "").replace(/"/g, "&quot;") + '" placeholder="Use category default if blank">' +
+            '</div>' +
+          '</article>'
+        );
+      }).join("");
+    }
+
+    function readPayload() {
+      return state.categories.map((cat) => {
+        const selected = state.selectedByCategoryId[cat.id] || { active: false, custom_name: "" };
+        return {
+          category_id: cat.id,
+          active: selected.active === true,
+          custom_name: String(selected.custom_name || "").trim()
+        };
+      });
+    }
+
+    async function loadData() {
+      if (!token || !companyId()) {
+        setStatus("Missing account session. Sign in first.", "error");
+        return;
+      }
+
+      setStatus("Loading service categories...", "");
+      try {
+        const [categoriesRes, companyServicesRes] = await Promise.all([
+          fetch(API_BASE + "/services/categories"),
+          fetch(API_BASE + "/companies/" + encodeURIComponent(companyId()) + "/services")
+        ]);
+
+        const categoriesData = await categoriesRes.json().catch(() => []);
+        const companyServicesData = await companyServicesRes.json().catch(() => []);
+
+        if (!categoriesRes.ok) {
+          throw new Error((categoriesData && categoriesData.error) || "Unable to load categories.");
+        }
+        if (!companyServicesRes.ok) {
+          throw new Error((companyServicesData && companyServicesData.error) || "Unable to load company services.");
+        }
+
+        state.categories = Array.isArray(categoriesData) ? categoriesData : [];
+        state.selectedByCategoryId = {};
+
+        for (const item of Array.isArray(companyServicesData) ? companyServicesData : []) {
+          const categoryId = Number(item.category_id);
+          if (!Number.isInteger(categoryId)) continue;
+          state.selectedByCategoryId[categoryId] = {
+            active: item.active !== false,
+            custom_name: String(item.custom_name || "")
+          };
+        }
+
+        render();
+        setStatus("Service categories loaded.", "");
+      } catch (err) {
+        setStatus(err.message || "Unable to load services.", "error");
+        els.grid.innerHTML = '<div class="empty">Unable to load company services right now.</div>';
+      }
+    }
+
+    async function saveServices() {
+      if (!token || !companyId()) {
+        setStatus("Missing account session. Sign in first.", "error");
+        return;
+      }
+
+      const payload = { services: readPayload() };
+      els.saveBtn.disabled = true;
+      setStatus("Saving services...", "");
+      try {
+        const res = await fetch(API_BASE + "/companies/services", {
+          method: "PUT",
+          headers: authHeaders({ "Content-Type": "application/json" }),
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.error || "Unable to save company services.");
+        setStatus("Company services saved successfully.", "success");
+        await loadData();
+      } catch (err) {
+        setStatus(err.message || "Unable to save company services.", "error");
+      } finally {
+        els.saveBtn.disabled = false;
+      }
+    }
+
+    els.grid.addEventListener("input", function(event) {
+      const target = event.target;
+      if (!target) return;
+      const action = target.getAttribute("data-action");
+      const categoryId = Number(target.getAttribute("data-category-id"));
+      if (!action || !Number.isInteger(categoryId)) return;
+
+      if (!state.selectedByCategoryId[categoryId]) {
+        state.selectedByCategoryId[categoryId] = { active: false, custom_name: "" };
+      }
+
+      if (action === "toggle") {
+        state.selectedByCategoryId[categoryId].active = target.checked === true;
+        render();
+      } else if (action === "custom-name") {
+        state.selectedByCategoryId[categoryId].custom_name = String(target.value || "");
+      }
+    });
+
+    els.saveBtn.addEventListener("click", saveServices);
+    els.refreshBtn.addEventListener("click", loadData);
+
+    loadData();
+  </script>
+</body>
+</html>

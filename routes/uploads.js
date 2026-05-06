@@ -23,6 +23,8 @@ const uploadLimiter = rateLimit({
 });
 
 const PHOTO_TYPES = new Set(["before", "after"]);
+const COMPANY_LOGO_ALLOWED_MIME = new Set(["image/jpeg", "image/png", "image/webp"]);
+const COMPANY_LOGO_MAX_SIZE = 2 * 1024 * 1024;
 
 function forbidden(res) {
   return res.status(403).json({ error: "Forbidden" });
@@ -86,6 +88,11 @@ async function verifyUploadContent(req, res, next) {
     }
     return res.status(400).json({ error: err.message || "File content validation failed" });
   }
+}
+
+function isSafeLocalUploadUrl(value) {
+  const url = String(value || "").trim();
+  return /^\/uploads\/[a-zA-Z0-9._-]+$/.test(url);
 }
 
 router.post("/uploads/job/:jobId/photo", auth, requireCompanyBillingForMutations, uploadLimiter, handleUpload, verifyUploadContent, async (req, res) => {
@@ -211,6 +218,82 @@ router.delete("/uploads/job/photos/:photoId", auth, requireCompanyBillingForMuta
   } catch (err) {
     console.log("DELETE JOB PHOTO ERROR:", err);
     sendSafeServerError(res, err, "routes/uploads");
+  }
+});
+
+router.post("/uploads/company/logo", auth, requireCompanyBillingForMutations, requireMinimumRole("manager"), uploadLimiter, handleUpload, verifyUploadContent, async (req, res) => {
+  try {
+    const companyId = req.user && req.user.company_id;
+    if (!companyId) {
+      if (req.file) {
+        await deleteLocalUpload(publicUploadUrl(req.file.filename));
+      }
+      return res.status(403).json({ error: "Forbidden" });
+    }
+
+    if (!req.file) {
+      return res.status(400).json({ error: "File is required" });
+    }
+
+    const mimeType = String(req.file.mimetype || "").toLowerCase();
+    if (!COMPANY_LOGO_ALLOWED_MIME.has(mimeType)) {
+      await deleteLocalUpload(publicUploadUrl(req.file.filename));
+      return res.status(400).json({ error: "Only JPG, PNG, and WEBP logo images are allowed" });
+    }
+
+    if (Number(req.file.size || 0) > COMPANY_LOGO_MAX_SIZE) {
+      await deleteLocalUpload(publicUploadUrl(req.file.filename));
+      return res.status(400).json({ error: "Logo file too large. Max size is 2MB." });
+    }
+
+    const currentCompany = await pool.query(
+      `
+      SELECT id, invoice_logo_url
+      FROM companies
+      WHERE id = $1
+      LIMIT 1
+      `,
+      [companyId]
+    );
+
+    if (!currentCompany.rows.length) {
+      await deleteLocalUpload(publicUploadUrl(req.file.filename));
+      return res.status(404).json({ error: "Company not found" });
+    }
+
+    const previousLogoUrl = String(currentCompany.rows[0].invoice_logo_url || "");
+    const nextLogoUrl = publicUploadUrl(req.file.filename);
+
+    await pool.query(
+      `
+      UPDATE companies
+      SET invoice_logo_url = $2
+      WHERE id = $1
+      `,
+      [companyId, nextLogoUrl]
+    );
+
+    if (previousLogoUrl && previousLogoUrl !== nextLogoUrl && isSafeLocalUploadUrl(previousLogoUrl)) {
+      await deleteLocalUpload(previousLogoUrl);
+    }
+
+    await logActivity({
+      companyId,
+      userId: req.user.id,
+      action: "company_logo_uploaded",
+      entityType: "company",
+      entityId: Number(companyId),
+      details: {
+        invoice_logo_url: nextLogoUrl
+      }
+    });
+
+    return res.json({ url: nextLogoUrl });
+  } catch (err) {
+    if (req.file) {
+      await deleteLocalUpload(publicUploadUrl(req.file.filename));
+    }
+    sendSafeServerError(res, err, "UPLOAD COMPANY LOGO ERROR");
   }
 });
 
