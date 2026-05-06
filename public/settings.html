@@ -570,6 +570,70 @@
               <label for="company_hours">Business Hours</label>
               <textarea id="company_hours" name="company_hours" placeholder="Mon-Fri 8:00 AM - 5:00 PM"></textarea>
             </div>
+
+            <div class="field full">
+              <div class="section-divider"></div>
+            </div>
+
+            <div class="field full">
+              <h2>Invoice Branding</h2>
+              <p class="note">These optional fields are used on invoices and fall back to the company profile above when left blank.</p>
+            </div>
+
+            <div class="field full">
+              <label for="invoice_logo_url">Invoice Logo URL</label>
+              <input id="invoice_logo_url" name="invoice_logo_url" type="url" placeholder="https://example.com/logo.png">
+            </div>
+            <div class="field">
+              <label for="invoice_display_name">Billing Display Name</label>
+              <input id="invoice_display_name" name="invoice_display_name" placeholder="Shown on invoices">
+            </div>
+            <div class="field">
+              <label for="invoice_prefix">Invoice Prefix</label>
+              <input id="invoice_prefix" name="invoice_prefix" maxlength="16" placeholder="INV">
+            </div>
+            <div class="field">
+              <label for="invoice_phone">Billing Phone</label>
+              <input id="invoice_phone" name="invoice_phone">
+            </div>
+            <div class="field">
+              <label for="invoice_email">Billing Email</label>
+              <input id="invoice_email" name="invoice_email" type="email">
+            </div>
+            <div class="field full">
+              <label for="invoice_website">Website</label>
+              <input id="invoice_website" name="invoice_website" placeholder="https://example.com">
+            </div>
+            <div class="field full">
+              <label for="invoice_address">Billing Address</label>
+              <textarea id="invoice_address" name="invoice_address" placeholder="Leave blank to use company address"></textarea>
+            </div>
+
+            <div class="field full">
+              <div class="section-divider"></div>
+            </div>
+
+            <div class="field full">
+              <h2>Payment Instructions</h2>
+              <p class="note">Add customer-facing payment notes for branded invoices.</p>
+            </div>
+
+            <div class="field full">
+              <label for="payment_instructions">Payment Instructions</label>
+              <textarea id="payment_instructions" name="payment_instructions" placeholder="Example: Please send payment by Zelle after service is complete."></textarea>
+            </div>
+            <div class="field">
+              <label for="zelle_name">Zelle Name</label>
+              <input id="zelle_name" name="zelle_name">
+            </div>
+            <div class="field">
+              <label for="zelle_contact">Zelle Contact</label>
+              <input id="zelle_contact" name="zelle_contact" placeholder="Email or phone">
+            </div>
+            <div class="field full">
+              <label for="invoice_footer">Invoice Footer</label>
+              <textarea id="invoice_footer" name="invoice_footer" placeholder="Thank you for your business."></textarea>
+            </div>
           </div>
 
           <div class="toolbar">
@@ -977,6 +1041,17 @@ function fillCompanyForm(company){
   document.getElementById("company_address").value = company && company.address ? company.address : "";
   document.getElementById("company_service_area").value = company && company.service_area ? company.service_area : "";
   document.getElementById("company_hours").value = company && company.business_hours ? company.business_hours : "";
+  document.getElementById("invoice_logo_url").value = company && company.invoice_logo_url ? company.invoice_logo_url : "";
+  document.getElementById("invoice_display_name").value = company && company.invoice_display_name ? company.invoice_display_name : "";
+  document.getElementById("invoice_phone").value = company && company.invoice_phone ? company.invoice_phone : "";
+  document.getElementById("invoice_email").value = company && company.invoice_email ? company.invoice_email : "";
+  document.getElementById("invoice_website").value = company && company.invoice_website ? company.invoice_website : "";
+  document.getElementById("invoice_address").value = company && company.invoice_address ? company.invoice_address : "";
+  document.getElementById("invoice_footer").value = company && company.invoice_footer ? company.invoice_footer : "";
+  document.getElementById("payment_instructions").value = company && company.payment_instructions ? company.payment_instructions : "";
+  document.getElementById("zelle_name").value = company && company.zelle_name ? company.zelle_name : "";
+  document.getElementById("zelle_contact").value = company && company.zelle_contact ? company.zelle_contact : "";
+  document.getElementById("invoice_prefix").value = company && company.invoice_prefix ? company.invoice_prefix : "";
 }
 
 async function loadProfile(){
@@ -1065,7 +1140,18 @@ async function saveCompany(event){
         email: document.getElementById("company_email").value.trim(),
         address: document.getElementById("company_address").value.trim(),
         service_area: document.getElementById("company_service_area").value.trim(),
-        business_hours: document.getElementById("company_hours").value.trim()
+        business_hours: document.getElementById("company_hours").value.trim(),
+        invoice_logo_url: document.getElementById("invoice_logo_url").value.trim(),
+        invoice_display_name: document.getElementById("invoice_display_name").value.trim(),
+        invoice_phone: document.getElementById("invoice_phone").value.trim(),
+        invoice_email: document.getElementById("invoice_email").value.trim(),
+        invoice_website: document.getElementById("invoice_website").value.trim(),
+        invoice_address: document.getElementById("invoice_address").value.trim(),
+        invoice_footer: document.getElementById("invoice_footer").value.trim(),
+        payment_instructions: document.getElementById("payment_instructions").value.trim(),
+        zelle_name: document.getElementById("zelle_name").value.trim(),
+        zelle_contact: document.getElementById("zelle_contact").value.trim(),
+        invoice_prefix: document.getElementById("invoice_prefix").value.trim()
       })
     });
 

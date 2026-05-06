@@ -1,0 +1,11 @@
+ALTER TABLE companies ADD COLUMN IF NOT EXISTS invoice_logo_url TEXT;
+ALTER TABLE companies ADD COLUMN IF NOT EXISTS invoice_display_name TEXT;
+ALTER TABLE companies ADD COLUMN IF NOT EXISTS invoice_phone TEXT;
+ALTER TABLE companies ADD COLUMN IF NOT EXISTS invoice_email TEXT;
+ALTER TABLE companies ADD COLUMN IF NOT EXISTS invoice_website TEXT;
+ALTER TABLE companies ADD COLUMN IF NOT EXISTS invoice_address TEXT;
+ALTER TABLE companies ADD COLUMN IF NOT EXISTS invoice_footer TEXT;
+ALTER TABLE companies ADD COLUMN IF NOT EXISTS payment_instructions TEXT;
+ALTER TABLE companies ADD COLUMN IF NOT EXISTS zelle_name TEXT;
+ALTER TABLE companies ADD COLUMN IF NOT EXISTS zelle_contact TEXT;
+ALTER TABLE companies ADD COLUMN IF NOT EXISTS invoice_prefix TEXT;

@@ -83,7 +83,26 @@ router.get("/me", auth, async (req, res) => {
 router.get("/company", auth, requireCompanyBillingForMutations, requireMinimumRole("admin"), async (req, res) => {
   try {
     const result = await pool.query(`
-      SELECT id, name, phone, email, address, service_area, business_hours, created_at
+      SELECT
+        id,
+        name,
+        phone,
+        email,
+        address,
+        service_area,
+        business_hours,
+        invoice_logo_url,
+        invoice_display_name,
+        invoice_phone,
+        invoice_email,
+        invoice_website,
+        invoice_address,
+        invoice_footer,
+        payment_instructions,
+        zelle_name,
+        zelle_contact,
+        invoice_prefix,
+        created_at
       FROM companies
       WHERE id = $1
       LIMIT 1
@@ -109,11 +128,40 @@ router.put("/company", auth, requireCompanyBillingForMutations, requireMinimumRo
       email,
       address,
       service_area,
-      business_hours
+      business_hours,
+      invoice_logo_url,
+      invoice_display_name,
+      invoice_phone,
+      invoice_email,
+      invoice_website,
+      invoice_address,
+      invoice_footer,
+      payment_instructions,
+      zelle_name,
+      zelle_contact,
+      invoice_prefix
     } = req.body;
 
     const current = await pool.query(`
-      SELECT id, name, phone, email, address, service_area, business_hours
+      SELECT
+        id,
+        name,
+        phone,
+        email,
+        address,
+        service_area,
+        business_hours,
+        invoice_logo_url,
+        invoice_display_name,
+        invoice_phone,
+        invoice_email,
+        invoice_website,
+        invoice_address,
+        invoice_footer,
+        payment_instructions,
+        zelle_name,
+        zelle_contact,
+        invoice_prefix
       FROM companies
       WHERE id = $1
       LIMIT 1
@@ -133,9 +181,39 @@ router.put("/company", auth, requireCompanyBillingForMutations, requireMinimumRo
         email = $3,
         address = $4,
         service_area = $5,
-        business_hours = $6
-      WHERE id = $7
-      RETURNING id, name, phone, email, address, service_area, business_hours, created_at
+        business_hours = $6,
+        invoice_logo_url = $7,
+        invoice_display_name = $8,
+        invoice_phone = $9,
+        invoice_email = $10,
+        invoice_website = $11,
+        invoice_address = $12,
+        invoice_footer = $13,
+        payment_instructions = $14,
+        zelle_name = $15,
+        zelle_contact = $16,
+        invoice_prefix = $17
+      WHERE id = $18
+      RETURNING
+        id,
+        name,
+        phone,
+        email,
+        address,
+        service_area,
+        business_hours,
+        invoice_logo_url,
+        invoice_display_name,
+        invoice_phone,
+        invoice_email,
+        invoice_website,
+        invoice_address,
+        invoice_footer,
+        payment_instructions,
+        zelle_name,
+        zelle_contact,
+        invoice_prefix,
+        created_at
     `, [
       name || existing.name || "",
       phone || "",
@@ -143,6 +221,17 @@ router.put("/company", auth, requireCompanyBillingForMutations, requireMinimumRo
       address || "",
       service_area || "",
       business_hours || "",
+      invoice_logo_url !== undefined ? invoice_logo_url || "" : existing.invoice_logo_url || "",
+      invoice_display_name !== undefined ? invoice_display_name || "" : existing.invoice_display_name || "",
+      invoice_phone !== undefined ? invoice_phone || "" : existing.invoice_phone || "",
+      invoice_email !== undefined ? invoice_email || "" : existing.invoice_email || "",
+      invoice_website !== undefined ? invoice_website || "" : existing.invoice_website || "",
+      invoice_address !== undefined ? invoice_address || "" : existing.invoice_address || "",
+      invoice_footer !== undefined ? invoice_footer || "" : existing.invoice_footer || "",
+      payment_instructions !== undefined ? payment_instructions || "" : existing.payment_instructions || "",
+      zelle_name !== undefined ? zelle_name || "" : existing.zelle_name || "",
+      zelle_contact !== undefined ? zelle_contact || "" : existing.zelle_contact || "",
+      invoice_prefix !== undefined ? invoice_prefix || "" : existing.invoice_prefix || "",
       company_id
     ]);
 
