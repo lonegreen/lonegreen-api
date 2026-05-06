@@ -282,24 +282,6 @@
       margin-bottom: 4px;
     }
 
-    .photo-placeholders {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 10px;
-    }
-
-    .photo-placeholder {
-      min-height: 86px;
-      display: grid;
-      place-items: center;
-      text-align: center;
-      padding: 12px;
-      border: 1px dashed #cfe0d5;
-      border-radius: 14px;
-      background: #f8fbf9;
-      color: #648076;
-      font-weight: 800;
-    }
 
     .notes-box {
       width: 100%;
@@ -388,10 +370,6 @@
       .actions,
       .quick-links,
       .detail-grid,
-      .photo-placeholders {
-        grid-template-columns: 1fr;
-      }
-
       .job-top {
         flex-direction: column;
       }
@@ -417,7 +395,7 @@
 
   <div class="worker-bar" id="workerPicker">
     <select id="workerSelect"></select>
-    <button class="btn primary" onclick="saveWorkerChoice()">Open Today's Jobs</button>
+    <button type="button" class="btn primary" id="workerBtnOpenJobs">Open Today's Jobs</button>
   </div>
 
   <div id="workerHint" class="page-hint" style="display:none;">
@@ -531,6 +509,21 @@ function renderInlineError(title, message, actionsHtml = ""){
   `;
 }
 
+function workerEmptyState(title, message, actions){
+  const actionHtml = (actions || []).map(a => {
+    const key = a.dataWorkerEmpty;
+    if(!key) return "";
+    return `<button type="button" class="${escapeHtml(a.className || "btn primary")}" data-worker-empty="${escapeHtml(key)}">${escapeHtml(a.label || "Action")}</button>`;
+  }).join("");
+  return `
+    <div class="empty">
+      <strong>${safeText(title)}</strong>
+      <div>${safeText(message)}</div>
+      ${actionHtml ? `<div style="margin-top:12px;">${actionHtml}</div>` : ""}
+    </div>
+  `;
+}
+
 function saveWorkerChoice(){
   if(isWorkerUser()) return;
 
@@ -603,12 +596,12 @@ function renderJobs(){
   const list = document.getElementById("list");
 
   if(!jobs.length){
-    list.innerHTML = AppUI.emptyState(
+    list.innerHTML = workerEmptyState(
       currentWorkerId() ? "No assigned jobs for today." : "Choose a worker to view today's jobs.",
       currentWorkerId() ? "This route is clear right now." : "Select an active worker above to load today's assigned jobs.",
       currentWorkerId()
-        ? [{ label: "Refresh", onClick: "loadJobs()", className: "btn primary" }]
-        : [{ label: "Select Worker", onClick: "document.getElementById('workerSelect').focus()", className: "btn primary" }]
+        ? [{ label: "Refresh", dataWorkerEmpty: "refresh", className: "btn primary" }]
+        : [{ label: "Select Worker", dataWorkerEmpty: "focus-worker", className: "btn primary" }]
     );
     return;
   }
@@ -637,7 +630,7 @@ function renderJobs(){
           ${address ? `<a class="quick-link" href="${escapeHtml(mapHref(address))}" target="_blank" rel="noopener">Open Map</a>` : `<span class="quick-link">No Address</span>`}
         </div>
 
-        <button class="btn secondary" onclick="toggleDetails(${jobId})">Job Details</button>
+        <button type="button" class="btn secondary" data-worker-job-action="toggle-details" data-job-id="${jobId}">Job Details</button>
 
         <div class="details" id="details_${jobId}">
           <div class="detail-grid">
@@ -649,18 +642,14 @@ function renderJobs(){
             <div class="detail"><span>Status</span>${safeText(statusLabel(job.status))}</div>
           </div>
 
-          <div class="photo-placeholders">
-            <div class="photo-placeholder">Before photo placeholder</div>
-            <div class="photo-placeholder">After photo placeholder</div>
-          </div>
         </div>
 
         <textarea id="notes_${jobId}" class="notes-box" placeholder="Add a quick note...">${safeText(job.internal_notes)}</textarea>
 
         <div class="actions">
-          <button class="btn save-btn" onclick="saveNotes(${jobId}, this)">Save Notes</button>
-          <button class="btn start-btn" onclick="updateJob(${jobId}, 'in_progress', this)" ${isComplete ? "disabled" : ""}>Start Job</button>
-          <button class="btn done-btn" onclick="updateJob(${jobId}, 'completed', this)" ${isComplete ? "disabled" : ""}>${isComplete ? "Completed" : "Complete Job"}</button>
+          <button type="button" class="btn save-btn" data-worker-job-action="save-notes" data-job-id="${jobId}">Save Notes</button>
+          <button type="button" class="btn start-btn" data-worker-job-action="update-job" data-job-id="${jobId}" data-status="in_progress" ${isComplete ? "disabled" : ""}>Start Job</button>
+          <button type="button" class="btn done-btn" data-worker-job-action="update-job" data-job-id="${jobId}" data-status="completed" ${isComplete ? "disabled" : ""}>${isComplete ? "Completed" : "Complete Job"}</button>
         </div>
       </div>
     `;
@@ -723,10 +712,10 @@ async function loadJobs(){
     jobs = [];
     renderSummary();
 
-    document.getElementById("list").innerHTML = AppUI.emptyState(
+    document.getElementById("list").innerHTML = workerEmptyState(
       "Choose a worker to view today's jobs.",
       "Select an active worker above to open today's assigned route.",
-      [{ label: "Select Worker", onClick: "document.getElementById('workerSelect').focus()", className: "btn primary" }]
+      [{ label: "Select Worker", dataWorkerEmpty: "focus-worker", className: "btn primary" }]
     );
 
     renderWorkers();
@@ -747,7 +736,7 @@ async function loadJobs(){
       document.getElementById("list").innerHTML = renderInlineError(
         "Unable to load today's jobs",
         getErrorMessage(data, "Please refresh and try again."),
-        `<button class="btn primary" onclick="loadJobs()">Refresh</button>`
+        `<button type="button" class="btn primary" data-worker-empty="reload">Refresh</button>`
       );
 
       AppUI.showToast(getErrorMessage(data, "Unable to load today's jobs."), "error");
@@ -765,7 +754,7 @@ async function loadJobs(){
     document.getElementById("list").innerHTML = renderInlineError(
       "Unable to load today's jobs",
       "Please refresh and try again.",
-      `<button class="btn primary" onclick="loadJobs()">Refresh</button>`
+      `<button type="button" class="btn primary" data-worker-empty="load-jobs">Refresh</button>`
     );
 
     AppUI.showToast("Unable to load today's jobs.", "error");
@@ -807,7 +796,7 @@ async function load(){
       document.getElementById("list").innerHTML = renderInlineError(
         "Unable to load workers",
         getErrorMessage(data, "Please refresh and try again."),
-        `<button class="btn primary" onclick="load()">Refresh</button>`
+        `<button type="button" class="btn primary" data-worker-empty="load-app">Refresh</button>`
       );
 
       AppUI.showToast(getErrorMessage(data, "Unable to load workers."), "error");
@@ -826,7 +815,7 @@ async function load(){
     document.getElementById("list").innerHTML = renderInlineError(
       "Unable to load workers",
       "Please refresh and try again.",
-      `<button class="btn primary" onclick="load()">Refresh</button>`
+      `<button type="button" class="btn primary" data-worker-empty="load-app">Refresh</button>`
     );
 
     AppUI.showToast("Unable to load workers.", "error");
@@ -835,6 +824,31 @@ async function load(){
   }
 }
 
+function handleWorkerDelegatedClick(ev){
+  const jobBtn = ev.target.closest("[data-worker-job-action]");
+  if(jobBtn){
+    const act = jobBtn.getAttribute("data-worker-job-action");
+    const jid = Number(jobBtn.getAttribute("data-job-id"));
+    if(act === "toggle-details") toggleDetails(jid);
+    else if(act === "save-notes") saveNotes(jid, jobBtn);
+    else if(act === "update-job") updateJob(jid, jobBtn.getAttribute("data-status"), jobBtn);
+    return;
+  }
+  const emptyBtn = ev.target.closest("[data-worker-empty]");
+  if(!emptyBtn) return;
+  const k = emptyBtn.getAttribute("data-worker-empty");
+  if(k === "refresh" || k === "reload") loadJobs();
+  else if(k === "load-jobs") loadJobs();
+  else if(k === "load-app") load();
+  else if(k === "focus-worker") document.getElementById("workerSelect").focus();
+}
+
+function bindWorkerUiHandlers(){
+  document.getElementById("workerBtnOpenJobs").addEventListener("click", () => saveWorkerChoice());
+  document.getElementById("list").addEventListener("click", handleWorkerDelegatedClick);
+}
+
+bindWorkerUiHandlers();
 load();
 </script>
 </body>

@@ -677,7 +677,7 @@
             <h2>Notifications</h2>
             <p class="note">Recent system updates for your company and account.</p>
           </div>
-          <button class="secondary small" onclick="loadNotifications()">Refresh</button>
+          <button type="button" class="secondary small" id="settingsNotifRefresh">Refresh</button>
         </div>
         <div id="notificationsList" class="list"></div>
       </div>
@@ -717,7 +717,7 @@
           <a href="/data-processing.html" target="_blank" rel="noopener">Data Processing Policy</a>
         </div>
         <div class="toolbar" style="margin-top:14px;">
-          <button type="button" id="acceptLegalBtn" onclick="acceptLegalTerms()">Accept Current Legal Terms</button>
+          <button type="button" id="acceptLegalBtn">Accept Current Legal Terms</button>
           <div class="status muted" id="legalStatus"></div>
         </div>
       </div>
@@ -728,7 +728,7 @@
             <h2>Activity Log</h2>
             <p class="note">Important workspace actions, displayed in a readable format.</p>
           </div>
-          <button class="secondary small" onclick="loadActivity()">Refresh</button>
+          <button type="button" class="secondary small" id="settingsActivityRefresh">Refresh</button>
         </div>
         <div id="activityList" class="list"></div>
       </div>
@@ -1238,7 +1238,7 @@ async function loadNotifications(){
           </div>
           <div class="toolbar">
             <span class="pill ${item.is_read ? "" : "unread"}">${item.is_read ? "Read" : "Unread"}</span>
-            ${item.is_read ? "" : `<button class="secondary small" onclick="markNotificationRead(${Number(item.id)})">Mark Read</button>`}
+            ${item.is_read ? "" : `<button type="button" class="secondary small" data-notification-mark-read="${Number(item.id)}">Mark Read</button>`}
           </div>
         </div>
         <div class="item-body">${escapeHtml(item.message || "")}</div>
@@ -1301,6 +1301,15 @@ async function init(){
 
 document.getElementById("companyForm").addEventListener("submit", saveCompany);
 document.getElementById("passwordForm").addEventListener("submit", changePassword);
+document.getElementById("settingsNotifRefresh").addEventListener("click", () => loadNotifications());
+document.getElementById("settingsActivityRefresh").addEventListener("click", () => loadActivity());
+document.getElementById("acceptLegalBtn").addEventListener("click", () => acceptLegalTerms());
+document.getElementById("notificationsList").addEventListener("click", function(ev){
+  const btn = ev.target.closest("[data-notification-mark-read]");
+  if(!btn) return;
+  const id = btn.getAttribute("data-notification-mark-read");
+  if(id) markNotificationRead(Number(id));
+});
 init();
 </script>
 </body>

@@ -389,15 +389,15 @@
       <h1>Analytics</h1>
       <p>Internal business reporting for revenue, work, workers, and clients.</p>
     </div>
-    <button class="btn" onclick="load()">Refresh</button>
+    <button type="button" class="btn" id="analyticsRefreshBtn">Refresh</button>
   </div>
 
   <div class="tabs">
-    <button class="tab active" onclick="showSection('overview', this)">Overview</button>
-    <button class="tab" onclick="showSection('revenue', this)">Revenue</button>
-    <button class="tab" onclick="showSection('pro', this)">Pro</button>
-    <button class="tab" onclick="showSection('workers', this)">Workers</button>
-    <button class="tab" onclick="showSection('clients', this)">Clients</button>
+    <button type="button" class="tab active" data-analytics-tab="overview">Overview</button>
+    <button type="button" class="tab" data-analytics-tab="revenue">Revenue</button>
+    <button type="button" class="tab" data-analytics-tab="pro">Pro</button>
+    <button type="button" class="tab" data-analytics-tab="workers">Workers</button>
+    <button type="button" class="tab" data-analytics-tab="clients">Clients</button>
   </div>
 
   <div id="overview" class="section active">
@@ -831,6 +831,10 @@ async function load(){
   }
 }
 
+document.getElementById("analyticsRefreshBtn").addEventListener("click", () => load());
+document.querySelectorAll("[data-analytics-tab]").forEach(btn => {
+  btn.addEventListener("click", () => showSection(btn.getAttribute("data-analytics-tab"), btn));
+});
 load();
 </script>
 </body>

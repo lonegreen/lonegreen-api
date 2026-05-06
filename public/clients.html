@@ -545,7 +545,7 @@
       </div>
     </div>
     <div class="card-actions">
-      <button class="add" onclick="addClient()">Add Client</button>
+      <button type="button" class="add" id="clientsBtnAdd">Add Client</button>
     </div>
   </div>
 
@@ -592,8 +592,8 @@
     </div>
 
     <div class="modal-actions">
-      <button class="add" onclick="confirmSub()">Add</button>
-      <button class="edit-btn" onclick="closeSub()">Cancel</button>
+      <button type="button" class="add" id="clientsBtnConfirmSub">Add</button>
+      <button type="button" class="edit-btn" id="clientsBtnCancelSub">Cancel</button>
     </div>
   </div>
 </div>
@@ -622,8 +622,8 @@
     </div>
 
     <div class="modal-actions">
-      <button class="add" onclick="confirmJob()">Add</button>
-      <button class="edit-btn" onclick="closeJob()">Cancel</button>
+      <button type="button" class="add" id="clientsBtnConfirmJob">Add</button>
+      <button type="button" class="edit-btn" id="clientsBtnCancelJob">Cancel</button>
     </div>
   </div>
 </div>
@@ -654,8 +654,8 @@
       </div>
     </div>
     <div class="modal-actions">
-      <button class="add" onclick="saveClientEdit(this)">Save</button>
-      <button class="edit-btn" onclick="closeEditClient()">Cancel</button>
+      <button type="button" class="add" id="clientsBtnSaveEdit">Save</button>
+      <button type="button" class="edit-btn" id="clientsBtnCancelEdit">Cancel</button>
     </div>
   </div>
 </div>
@@ -665,8 +665,8 @@
     <h3>Delete Client</h3>
     <p>This will safely archive, cancel, deactivate, or delete only when safe.</p>
     <div class="modal-actions">
-      <button class="edit-btn" onclick="closeDeleteClient()">Cancel</button>
-      <button class="delete" onclick="confirmDeleteClient(this)">Delete</button>
+      <button type="button" class="edit-btn" id="clientsBtnCancelDelete">Cancel</button>
+      <button type="button" class="delete" id="clientsBtnConfirmDelete">Delete</button>
     </div>
   </div>
 </div>
@@ -697,15 +697,20 @@ const SafeUI = {
   },
 
   emptyState(title, message, actions){
-    if(window.AppUI && typeof window.AppUI.emptyState === "function"){
-      return window.AppUI.emptyState(title, message, actions || []);
-    }
-
-    const actionHtml = (actions || []).map(action => `
-      <button class="${escapeHtml(action.className || "add")}" onclick="${escapeHtml(action.onClick || "")}">
+    const actionHtml = (actions || []).map(action => {
+      let key = action.dataClientsEmpty;
+      if(!key && action.onClick){
+        const oc = String(action.onClick);
+        if(oc.includes("search")) key = "clear-search";
+        else if(oc.includes("focus")) key = "focus-add";
+        else if(oc.includes("load()")) key = "reload";
+      }
+      if(!key) return "";
+      return `
+      <button type="button" class="${escapeHtml(action.className || "add")}" data-clients-empty="${escapeHtml(key)}">
         ${escapeHtml(action.label || "Action")}
-      </button>
-    `).join("");
+      </button>`;
+    }).join("");
 
     return `
       <div class="empty">
@@ -1179,7 +1184,7 @@ function renderClients(){
     list.innerHTML = SafeUI.emptyState(
       allClients.length ? "No clients match that search." : "No clients yet.",
       allClients.length ? "Try a different search or clear the filter to see your client list." : "Create your first client to unlock jobs, subscriptions, and invoicing.",
-      allClients.length ? [{ label: "Clear Search", onClick: "document.getElementById('search').value=''; renderClients()", className: "edit-btn" }] : [{ label: "Add First Client", onClick: "document.getElementById('name').focus()", className: "add" }]
+      allClients.length ? [{ label: "Clear Search", dataClientsEmpty: "clear-search", className: "edit-btn" }] : [{ label: "Add First Client", dataClientsEmpty: "focus-add", className: "add" }]
     );
     return;
   }
@@ -1204,7 +1209,7 @@ async function load(){
     document.getElementById("list").innerHTML = SafeUI.emptyState(
       "Unable to load clients right now.",
       "Refresh and try again. The system could not read the client list.",
-      [{ label: "Refresh", onClick: "load()", className: "add" }]
+      [{ label: "Refresh", dataClientsEmpty: "reload", className: "add" }]
     );
     SafeUI.showToast("Unable to load clients.", "error");
   } finally {
@@ -1399,6 +1404,34 @@ window.addEventListener("click", event => {
   }
 });
 
+function handleClientsEmptyClick(ev){
+  const btn = ev.target.closest("[data-clients-empty]");
+  if(!btn) return;
+  const k = btn.getAttribute("data-clients-empty");
+  if(k === "clear-search"){
+    document.getElementById("search").value = "";
+    renderClients();
+  } else if(k === "focus-add"){
+    document.getElementById("name").focus();
+  } else if(k === "reload"){
+    load();
+  }
+}
+
+function bindClientsUiHandlers(){
+  document.getElementById("clientsBtnAdd").addEventListener("click", () => addClient());
+  document.getElementById("clientsBtnConfirmSub").addEventListener("click", () => confirmSub());
+  document.getElementById("clientsBtnCancelSub").addEventListener("click", () => closeSub());
+  document.getElementById("clientsBtnConfirmJob").addEventListener("click", () => confirmJob());
+  document.getElementById("clientsBtnCancelJob").addEventListener("click", () => closeJob());
+  document.getElementById("clientsBtnSaveEdit").addEventListener("click", e => saveClientEdit(e.currentTarget));
+  document.getElementById("clientsBtnCancelEdit").addEventListener("click", () => closeEditClient());
+  document.getElementById("clientsBtnCancelDelete").addEventListener("click", () => closeDeleteClient());
+  document.getElementById("clientsBtnConfirmDelete").addEventListener("click", e => confirmDeleteClient(e.currentTarget));
+  document.getElementById("list").addEventListener("click", handleClientsEmptyClick);
+}
+
+bindClientsUiHandlers();
 window.onload = load;
 </script>
 

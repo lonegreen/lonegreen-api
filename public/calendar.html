@@ -630,19 +630,24 @@ function today(){
   load();
 }
 
-document.addEventListener("DOMContentLoaded", load);
+document.addEventListener("DOMContentLoaded", function(){
+  document.getElementById("calPrevWeek").addEventListener("click", prevWeek);
+  document.getElementById("calToday").addEventListener("click", today);
+  document.getElementById("calNextWeek").addEventListener("click", nextWeek);
+  load();
+});
 </script>
 
 <div class="topbar">
-  <button onclick="prevWeek()">⬅ Prev</button>
+  <button type="button" id="calPrevWeek">⬅ Prev</button>
 
   <h2>
     Calendar
     <span class="sub" id="weekLabel">Loading week...</span>
   </h2>
 
-  <button onclick="today()">Today</button>
-  <button class="primary" onclick="nextWeek()">Next ➡</button>
+  <button type="button" id="calToday">Today</button>
+  <button type="button" class="primary" id="calNextWeek">Next ➡</button>
 </div>
 
 <div class="page">

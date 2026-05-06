@@ -682,15 +682,15 @@
       <div class="section-note">The most common actions stay above the fold.</div>
     </div>
     <div class="action-grid">
-      <button class="primary-action" onclick="openInControl('clients.html')">
+      <button type="button" class="primary-action" id="dashQuickClients">
         <strong>+ Client</strong>
         <span>Add a new customer and open the client workflow.</span>
       </button>
-      <button class="primary-action" onclick="openInControl('jobs.html')">
+      <button type="button" class="primary-action" id="dashQuickJobs">
         <strong>+ Job</strong>
         <span>Schedule work, assign a worker, and manage today's route.</span>
       </button>
-      <button class="primary-action" onclick="openInControl('invoices.html')">
+      <button type="button" class="primary-action" id="dashQuickInvoices">
         <strong>+ Invoice</strong>
         <span>Open the finance area and continue invoicing from client records.</span>
       </button>
@@ -701,7 +701,7 @@
     <div class="section-head">
       <h3>Notifications</h3>
       <span id="notifUnreadBadge" class="month-badge" style="display:none;">0 unread</span>
-      <button type="button" class="btn secondary" onclick="openInControl('settings.html')">Manage in settings</button>
+      <button type="button" class="btn secondary" id="dashOpenSettings">Manage in settings</button>
     </div>
     <p class="section-note">Recent company alerts (managers and above). Mark items read from Settings.</p>
     <div id="dashNotificationsList" class="alert-list">Loading…</div>
@@ -1038,118 +1038,6 @@ async function loadCompanyBillingPanel(){
   const limits = data.limits || {};
   const trial = data.trial || {};
   const warnPack = data.warnings && Array.isArray(data.warnings.warnings) ? data.warnings.warnings : [];
-
-  const pu = usagePercent(u.users_count, limits.max_users);
-  const pc = usagePercent(u.clients_count, limits.max_clients);
-  const pj = usagePercent(u.jobs_this_month, limits.max_jobs_per_month);
-
-  let trialLine = "No trial end date set.";
-  if(trial.trial_ends_at){
-    const days = trial.days_remaining;
-    trialLine = days != null
-      ? ("Trial ends " + escapeHtml(String(trial.trial_ends_at).split("T")[0]) + " (" + (days >= 0 ? days + " days left" : "expired") + ").")
-      : ("Trial ends " + escapeHtml(String(trial.trial_ends_at).split("T")[0]) + ".");
-  }
-
-  let billingActionLine = "";
-  if(data.is_suspended){
-    billingActionLine = '<p style="margin:0;font-size:13px;color:#9b2424;line-height:1.5;">Billing is suspended. Your company data is preserved; contact the platform owner to reactivate.</p>';
-  } else if(data.is_past_due){
-    const days = data.grace_days_remaining;
-    billingActionLine = '<p style="margin:0;font-size:13px;color:#9b2424;line-height:1.5;">Payment failed. ' +
-      escapeHtml(days != null && days > 0
-        ? ("Grace period ends in " + days + " day" + (days === 1 ? "." : "s."))
-        : "Grace period has expired or is not set.") +
-      '</p>';
-  }
-
-  const warnItems = warnPack.map(function(w){
-    const sev = w.severity === "danger" ? "danger" : "";
-    return "<li class=\"" + escapeHtml(sev) + "\">" + escapeHtml(w.message || "Billing notice.") + "</li>";
-  }).join("");
-
-  const plan = String(b.plan || "starter");
-  const state = String(subscription.status || data.subscription_state || b.status || b.billing_status || "trial");
-  const plans = ["starter", "pro", "enterprise"];
-  const planActions = plans.filter(function(item){ return item !== plan; }).map(function(item){
-    const action = plans.indexOf(item) > plans.indexOf(plan) ? "upgrade" : "downgrade";
-    return '<button type="button" class="btn secondary" onclick="changeCompanyBillingPlan(\'' + action + '\', \'' + item + '\')">' + escapeHtml(item.charAt(0).toUpperCase() + item.slice(1)) + '</button>';
-  }).join("");
-  let lifecycleActions = "";
-  if(!subscription.id){
-    lifecycleActions = '<button type="button" class="btn" onclick="subscribeCompanyBilling(\'' + plan + '\')">Start subscription</button>';
-  } else if(subscription.cancel_at_period_end || state === "cancelled"){
-    lifecycleActions = '<button type="button" class="btn" onclick="reactivateCompanyBilling()">Reactivate</button>';
-  } else if(state !== "expired"){
-    lifecycleActions = '<button type="button" class="btn secondary" onclick="cancelCompanyBilling()">Cancel at period end</button>';
-  }
-
-  box.innerHTML =
-    '<div class="billing-dash-top">' +
-      '<div class="billing-chip"><span>Plan</span><strong>' + escapeHtml(String(b.plan || "starter")) + '</strong></div>' +
-      '<div class="billing-chip"><span>Billing status</span><strong>' + escapeHtml(String(b.billing_status || "trial")) + '</strong></div>' +
-      '<div class="billing-chip"><span>Subscription state</span><strong>' + escapeHtml(state) + '</strong></div>' +
-      '<div class="billing-chip"><span>Monthly price</span><strong>' + escapeHtml(formatMoney(b.monthly_price)) + '</strong></div>' +
-      '<div class="billing-chip"><span>Renews</span><strong>' + escapeHtml(subscription.current_period_end ? normalizeDate(subscription.current_period_end) : "-") + '</strong></div>' +
-    '</div>' +
-    '<p style="margin:0;font-size:13px;color:#678075;line-height:1.5;">' + trialLine + '</p>' +
-    (subscription.cancel_at_period_end
-      ? '<p style="margin:0;font-size:13px;color:#6f4400;line-height:1.5;">Cancellation is scheduled for the end of the current period.</p>'
-      : '') +
-    billingActionLine +
-    '<div class="usage-row">' +
-      '<label><span>Users</span><span>' + escapeHtml(String(u.users_count || 0)) + " / " + escapeHtml(limits.max_users == null ? "∞" : String(limits.max_users)) + "</span></label>" +
-      '<div class="usage-track"><div class="usage-fill ' + escapeHtml(usageBarClass(pu)) + '" style="width:' + pu + '%"></div></div>' +
-    '</div>' +
-    '<div class="usage-row">' +
-      '<label><span>Clients</span><span>' + escapeHtml(String(u.clients_count || 0)) + " / " + escapeHtml(limits.max_clients == null ? "∞" : String(limits.max_clients)) + "</span></label>" +
-      '<div class="usage-track"><div class="usage-fill ' + escapeHtml(usageBarClass(pc)) + '" style="width:' + pc + '%"></div></div>' +
-    '</div>' +
-    '<div class="usage-row">' +
-      '<label><span>Jobs this month</span><span>' + escapeHtml(String(u.jobs_this_month || 0)) + " / " + escapeHtml(limits.max_jobs_per_month == null ? "∞" : String(limits.max_jobs_per_month)) + "</span></label>" +
-      '<div class="usage-track"><div class="usage-fill ' + escapeHtml(usageBarClass(pj)) + '" style="width:' + pj + '%"></div></div>' +
-    '</div>' +
-    '<div class="billing-upgrade-actions" style="margin-top:14px;display:flex;flex-wrap:wrap;gap:8px;align-items:center;">' +
-      '<span style="font-size:13px;color:#678075;">A32 plan controls:</span>' +
-      planActions +
-      lifecycleActions +
-    '</div>' +
-    (data.checkout_available
-      ? ('<div class="billing-upgrade-actions" style="margin-top:14px;display:flex;flex-wrap:wrap;gap:8px;align-items:center;">' +
-          '<span style="font-size:13px;color:#678075;">Upgrade (Stripe test):</span>' +
-          '<button type="button" class="btn secondary" onclick="startStripeCheckout(\'basic\')">Basic</button>' +
-          '<button type="button" class="btn secondary" onclick="startStripeCheckout(\'pro\')">Pro</button>' +
-          '<button type="button" class="btn secondary" onclick="startStripeCheckout(\'business\')">Business</button>' +
-          (data.portal_available ? '<button type="button" class="btn" onclick="openBillingPortal()">Manage billing</button>' : '') +
-        "</div>")
-      : ('<p style="margin:12px 0 0;font-size:12px;color:#678075;">Stripe Checkout is not configured. Add Stripe test keys and price IDs in the server environment.</p>')) +
-    (warnItems ? '<div><h4 style="margin:8px 0 6px;font-size:15px;color:#1f5c3a;">Warnings</h4><ul class="billing-warn-list">' + warnItems + "</ul></div>" : "");
-}
-
-async function loadCompanyBillingPanel(){
-  const panel = document.getElementById("companyBillingPanel");
-  const box = document.getElementById("companyBillingBody");
-
-  if(!panel || !box || !canViewBillingWarning()){
-    if(panel) panel.style.display = "none";
-    return;
-  }
-
-  const data = await fetchDashboardJson("/billing/me", null);
-
-  if(!data || !data.billing){
-    panel.style.display = "none";
-    return;
-  }
-
-  panel.style.display = "block";
-
-  const b = data.billing;
-  const subscription = data.subscription || {};
-  const u = data.usage || {};
-  const limits = data.limits || {};
-  const trial = data.trial || {};
-  const warnPack = data.warnings && Array.isArray(data.warnings.warnings) ? data.warnings.warnings : [];
   const plan = String(b.plan || "starter");
   const state = String(subscription.status || data.subscription_state || b.status || b.billing_status || "trial");
   const planOrder = ["starter", "pro", "enterprise"];
@@ -1198,8 +1086,8 @@ async function loadCompanyBillingPanel(){
     const button = isCurrent
       ? '<button type="button" class="btn secondary" disabled>Current plan</button>'
       : (hasStripeSubscription
-        ? '<button type="button" class="btn" onclick="changeCompanyBillingPlan(\'change\', \'' + internalPlan + '\')">Choose ' + escapeHtml(item.title) + '</button>'
-        : '<button type="button" class="btn" onclick="startStripeCheckout(\'' + item.checkout + '\')">Choose ' + escapeHtml(item.title) + '</button>');
+        ? '<button type="button" class="btn" data-dash-billing="change-plan" data-billing-mode="change" data-billing-plan="' + escapeHtml(internalPlan) + '">Choose ' + escapeHtml(item.title) + '</button>'
+        : '<button type="button" class="btn" data-dash-billing="stripe-checkout" data-checkout="' + escapeHtml(item.checkout) + '">Choose ' + escapeHtml(item.title) + '</button>');
 
     return '<div class="billing-plan-card ' + (isCurrent ? "current" : "") + '">' +
       '<strong>' + escapeHtml(item.title) + '</strong>' +
@@ -1265,11 +1153,11 @@ async function loadCompanyBillingPanel(){
         '<div class="billing-subsection">' +
           '<h4>Billing actions</h4>' +
           '<div class="billing-action-row">' +
-            '<button type="button" class="btn" onclick="changeCompanyBillingPlan(\'change\', \'' + upgradeTarget + '\')" ' + (canUpgrade ? "" : "disabled") + '>Upgrade Plan</button>' +
-            '<button type="button" class="btn secondary" onclick="changeCompanyBillingPlan(\'change\', \'' + downgradeTarget + '\')" ' + (canDowngrade ? "" : "disabled") + '>Downgrade Plan</button>' +
-            '<button type="button" class="btn secondary" onclick="openBillingPortal()" ' + (data.portal_available ? "" : "disabled") + '>Manage Billing</button>' +
-            '<button type="button" class="btn secondary" onclick="cancelCompanyBilling()" ' + (canCancel ? "" : "disabled") + '>Cancel Subscription</button>' +
-            '<button type="button" class="btn" onclick="reactivateCompanyBilling()" ' + (canReactivate ? "" : "disabled") + '>Reactivate Subscription</button>' +
+            '<button type="button" class="btn" data-dash-billing="change-plan" data-billing-mode="change" data-billing-plan="' + escapeHtml(upgradeTarget) + '" ' + (canUpgrade ? "" : "disabled") + '>Upgrade Plan</button>' +
+            '<button type="button" class="btn secondary" data-dash-billing="change-plan" data-billing-mode="change" data-billing-plan="' + escapeHtml(downgradeTarget) + '" ' + (canDowngrade ? "" : "disabled") + '>Downgrade Plan</button>' +
+            '<button type="button" class="btn secondary" data-dash-billing="billing-portal" ' + (data.portal_available ? "" : "disabled") + '>Manage Billing</button>' +
+            '<button type="button" class="btn secondary" data-dash-billing="cancel-subscription" ' + (canCancel ? "" : "disabled") + '>Cancel Subscription</button>' +
+            '<button type="button" class="btn" data-dash-billing="reactivate-subscription" ' + (canReactivate ? "" : "disabled") + '>Reactivate Subscription</button>' +
           '</div>' +
         '</div>' +
         '<div class="billing-subsection"><h4>Billing warnings</h4>' + warningsMarkup + '</div>' +
@@ -1739,10 +1627,10 @@ function renderTodayJobs(jobsToday, workers){
         </div>
         <div class="job-actions">
           ${!isClosed ? `<select id="todayWorker-${job.id}">${workerOptions}</select>` : ""}
-          ${!isClosed ? `<button class="btn secondary" onclick="assignWorker(${job.id})">Assign</button>` : ""}
-          ${!isClosed && !isInProgress ? `<button class="btn" onclick="startJob(${job.id})">Start</button>` : ""}
-          ${!isClosed ? `<button class="btn" onclick="completeJob(${job.id})">Complete</button>` : ""}
-          <button class="btn secondary" onclick="openClientProfile(${job.client_id || 0})">Open</button>
+          ${!isClosed ? `<button type="button" class="btn secondary" data-dash-job-action="assign" data-job-id="${job.id}">Assign</button>` : ""}
+          ${!isClosed && !isInProgress ? `<button type="button" class="btn" data-dash-job-action="start" data-job-id="${job.id}">Start</button>` : ""}
+          ${!isClosed ? `<button type="button" class="btn" data-dash-job-action="complete" data-job-id="${job.id}">Complete</button>` : ""}
+          <button type="button" class="btn secondary" data-dash-job-action="open-client" data-client-id="${job.client_id || 0}">Open</button>
         </div>
       `;
 
@@ -1839,6 +1727,43 @@ async function init(){
   }
 }
 
+function handleDashBillingClick(ev){
+  const btn = ev.target.closest("[data-dash-billing]");
+  if(!btn || btn.disabled) return;
+  const kind = btn.getAttribute("data-dash-billing");
+  if(kind === "change-plan"){
+    changeCompanyBillingPlan(btn.getAttribute("data-billing-mode"), btn.getAttribute("data-billing-plan"));
+  } else if(kind === "stripe-checkout"){
+    startStripeCheckout(btn.getAttribute("data-checkout"));
+  } else if(kind === "billing-portal"){
+    openBillingPortal();
+  } else if(kind === "cancel-subscription"){
+    cancelCompanyBilling();
+  } else if(kind === "reactivate-subscription"){
+    reactivateCompanyBilling();
+  }
+}
+
+function handleDashJobClick(ev){
+  const btn = ev.target.closest("[data-dash-job-action]");
+  if(!btn) return;
+  const act = btn.getAttribute("data-dash-job-action");
+  if(act === "assign") assignWorker(Number(btn.getAttribute("data-job-id")));
+  else if(act === "start") startJob(Number(btn.getAttribute("data-job-id")));
+  else if(act === "complete") completeJob(Number(btn.getAttribute("data-job-id")));
+  else if(act === "open-client") openClientProfile(Number(btn.getAttribute("data-client-id")));
+}
+
+function bindDashboardUiHandlers(){
+  document.getElementById("dashQuickClients").addEventListener("click", () => openInControl("clients.html"));
+  document.getElementById("dashQuickJobs").addEventListener("click", () => openInControl("jobs.html"));
+  document.getElementById("dashQuickInvoices").addEventListener("click", () => openInControl("invoices.html"));
+  document.getElementById("dashOpenSettings").addEventListener("click", () => openInControl("settings.html"));
+  document.getElementById("companyBillingBody").addEventListener("click", handleDashBillingClick);
+  document.getElementById("todayJobsList").addEventListener("click", handleDashJobClick);
+}
+
+bindDashboardUiHandlers();
 init();
 </script>
 

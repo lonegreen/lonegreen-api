@@ -348,7 +348,7 @@
       <h1>Workers</h1>
       <p>Manage your active field team, daily load, and completion performance.</p>
     </div>
-    <button class="btn primary" onclick="openModal()">Add Worker</button>
+    <button type="button" class="btn primary" id="workersBtnAdd">Add Worker</button>
   </div>
 
   <div class="summary">
@@ -360,7 +360,7 @@
 
   <div class="panel toolbar">
     <input id="search" placeholder="Search workers by name or phone">
-    <button class="btn blue" onclick="load()">Refresh</button>
+    <button type="button" class="btn blue" id="workersBtnRefresh">Refresh</button>
   </div>
 
   <div id="list" class="grid"></div>
@@ -375,8 +375,8 @@
       <label class="check-row"><input id="worker_active" type="checkbox" checked> Active worker</label>
     </div>
     <div class="modal-actions">
-      <button class="btn primary" onclick="saveWorker()">Save</button>
-      <button class="btn gray" onclick="closeModal()">Cancel</button>
+      <button type="button" class="btn primary" id="workersBtnSave">Save</button>
+      <button type="button" class="btn gray" id="workersBtnCancelModal">Cancel</button>
     </div>
   </div>
 </div>
@@ -386,8 +386,8 @@
     <h3>Delete Worker</h3>
     <p>This will safely archive, cancel, deactivate, or delete only when safe.</p>
     <div class="modal-actions">
-      <button class="btn gray" onclick="closeDeleteWorker()">Cancel</button>
-      <button class="btn red" onclick="confirmDeleteWorker(this)">Delete</button>
+      <button type="button" class="btn gray" id="workersBtnCancelDelete">Cancel</button>
+      <button type="button" class="btn red" id="workersBtnConfirmDelete">Delete</button>
     </div>
   </div>
 </div>
@@ -509,9 +509,9 @@ function render(){
         </div>
 
         <div class="actions">
-          <button class="btn blue" onclick="openModal(${Number(worker.id)})">Edit</button>
-          <button class="btn orange" onclick="toggleStatus(${Number(worker.id)})">${active ? "Deactivate" : "Activate"}</button>
-          ${canDeleteWorkers() ? `<button class="btn red" onclick="openDeleteWorker(${Number(worker.id)})">Delete</button>` : ""}
+          <button type="button" class="btn blue" data-workers-action="edit" data-worker-id="${Number(worker.id)}">Edit</button>
+          <button type="button" class="btn orange" data-workers-action="toggle" data-worker-id="${Number(worker.id)}">${active ? "Deactivate" : "Activate"}</button>
+          ${canDeleteWorkers() ? `<button type="button" class="btn red" data-workers-action="delete" data-worker-id="${Number(worker.id)}">Delete</button>` : ""}
         </div>
       </div>
     `;
@@ -656,14 +656,14 @@ async function load(){
 
 document.getElementById("search").addEventListener("input", render);
 
-window.onclick = function(e){
+window.addEventListener("click", function(e){
   if(e.target === document.getElementById("workerModal")){
     closeModal();
   }
   if(e.target === document.getElementById("deleteWorkerModal")){
     closeDeleteWorker();
   }
-};
+});
 
 document.addEventListener("keydown", function(e){
   if(e.key === "Escape"){
@@ -672,6 +672,27 @@ document.addEventListener("keydown", function(e){
   }
 });
 
+function handleWorkersListClick(ev){
+  const btn = ev.target.closest("[data-workers-action]");
+  if(!btn) return;
+  const act = btn.getAttribute("data-workers-action");
+  const wid = Number(btn.getAttribute("data-worker-id"));
+  if(act === "edit") openModal(wid);
+  else if(act === "toggle") toggleStatus(wid);
+  else if(act === "delete") openDeleteWorker(wid);
+}
+
+function bindWorkersUiHandlers(){
+  document.getElementById("workersBtnAdd").addEventListener("click", () => openModal());
+  document.getElementById("workersBtnRefresh").addEventListener("click", () => load());
+  document.getElementById("workersBtnSave").addEventListener("click", () => saveWorker());
+  document.getElementById("workersBtnCancelModal").addEventListener("click", () => closeModal());
+  document.getElementById("workersBtnCancelDelete").addEventListener("click", () => closeDeleteWorker());
+  document.getElementById("workersBtnConfirmDelete").addEventListener("click", e => confirmDeleteWorker(e.currentTarget));
+  document.getElementById("list").addEventListener("click", handleWorkersListClick);
+}
+
+bindWorkersUiHandlers();
 load();
 </script>
 </body>

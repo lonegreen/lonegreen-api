@@ -608,10 +608,10 @@
       <p>Today route, assignments, open work, and completion control.</p>
     </div>
     <div class="hero-actions">
-      <button class="btn primary" onclick="openModal()">+ Add Job</button>
-      <button class="btn gray" onclick="setQuickFilter('today')">Today</button>
-      <button class="btn gray" onclick="setQuickFilter('unassigned')">Unassigned</button>
-      <button class="btn gray" onclick="window.print()">Export / Print</button>
+      <button type="button" class="btn primary" id="jobsBtnAddJob">+ Add Job</button>
+      <button type="button" class="btn gray" id="jobsBtnQuickToday">Today</button>
+      <button type="button" class="btn gray" id="jobsBtnQuickUnassigned">Unassigned</button>
+      <button type="button" class="btn gray" id="jobsBtnPrint">Export / Print</button>
     </div>
   </div>
 
@@ -623,11 +623,11 @@
   <div class="panel filter-panel">
     <div class="filter-top">
       <div class="quick-filters">
-        <button class="filter-chip active" id="quickFilter-all" onclick="setQuickFilter('all')">All</button>
-        <button class="filter-chip" id="quickFilter-today" onclick="setQuickFilter('today')">Today</button>
-        <button class="filter-chip" id="quickFilter-week" onclick="setQuickFilter('week')">This Week</button>
-        <button class="filter-chip" id="quickFilter-unassigned" onclick="setQuickFilter('unassigned')">Unassigned</button>
-        <button class="filter-chip" id="quickFilter-completed" onclick="setQuickFilter('completed')">Completed</button>
+        <button type="button" class="filter-chip active" id="quickFilter-all">All</button>
+        <button type="button" class="filter-chip" id="quickFilter-today">Today</button>
+        <button type="button" class="filter-chip" id="quickFilter-week">This Week</button>
+        <button type="button" class="filter-chip" id="quickFilter-unassigned">Unassigned</button>
+        <button type="button" class="filter-chip" id="quickFilter-completed">Completed</button>
       </div>
     </div>
 
@@ -651,7 +651,7 @@
         <option value="unpaid">Unpaid</option>
         <option value="overdue">Overdue</option>
       </select>
-      <button class="btn gray" onclick="resetFilters()">Reset</button>
+      <button type="button" class="btn gray" id="jobsBtnResetFilters">Reset</button>
     </div>
   </div>
 
@@ -701,8 +701,8 @@
     </div>
 
     <div class="modal-actions">
-      <button id="saveJobButton" class="btn primary" onclick="saveJob(this)">Save Job</button>
-      <button class="btn gray" onclick="closeModal()">Cancel</button>
+      <button type="button" id="saveJobButton" class="btn primary">Save Job</button>
+      <button type="button" class="btn gray" id="jobsBtnCancelJobModal">Cancel</button>
     </div>
   </div>
 </div>
@@ -713,8 +713,8 @@
     <p>This will safely archive, cancel, deactivate, or delete only when safe.</p>
 
     <div class="modal-actions">
-      <button class="btn gray" onclick="closeDeleteModal()">Cancel</button>
-      <button class="btn red" onclick="confirmDeleteJob()">Delete Job</button>
+      <button type="button" class="btn gray" id="jobsBtnCancelDeleteModal">Cancel</button>
+      <button type="button" class="btn red" id="jobsBtnConfirmDelete">Delete Job</button>
     </div>
   </div>
 </div>
@@ -743,15 +743,20 @@ const SafeUI = {
   },
 
   emptyState(title, message, actions){
-    if(window.AppUI && typeof window.AppUI.emptyState === "function"){
-      return window.AppUI.emptyState(title, message, actions || []);
-    }
-
-    const actionHtml = (actions || []).map(action => `
-      <button class="${escapeHtml(action.className || "btn primary")}" onclick="${escapeHtml(action.onClick || "")}">
+    const actionHtml = (actions || []).map(action => {
+      let key = action.dataJobsEmpty;
+      if(!key && action.onClick){
+        const oc = String(action.onClick).trim();
+        if(oc.startsWith("resetFilters")) key = "reset-filters";
+        else if(oc.startsWith("openModal")) key = "open-modal";
+        else if(oc.startsWith("load")) key = "reload";
+      }
+      if(!key) return "";
+      return `
+      <button type="button" class="${escapeHtml(action.className || "btn primary")}" data-jobs-empty="${escapeHtml(key)}">
         ${escapeHtml(action.label || "Action")}
-      </button>
-    `).join("");
+      </button>`;
+    }).join("");
 
     return `
       <div class="empty">
@@ -1053,7 +1058,7 @@ function renderJobCard(job){
       </div>
 
       <div class="job-actions">
-        <button class="btn gray" onclick="editJob(${Number(job.id)})">Edit</button>
+        <button type="button" class="btn gray" data-job-action="edit" data-job-id="${Number(job.id)}">Edit</button>
 
         <select id="workerAssign-${Number(job.id)}">
           <option value="">${job.worker_id ? "Keep current worker" : "Select worker"}</option>
@@ -1064,14 +1069,14 @@ function renderJobCard(job){
           `).join("")}
         </select>
 
-        ${canAssign ? `<button class="btn blue" onclick="assignWorker(${Number(job.id)}, this)">Assign</button>` : ""}
-        ${canStart ? `<button class="btn orange" onclick="setJobStatus(${Number(job.id)}, 'in_progress', this)">Start</button>` : ""}
-        ${canComplete ? `<button class="btn primary" onclick="setJobStatus(${Number(job.id)}, 'completed', this)">Complete</button>` : ""}
+        ${canAssign ? `<button type="button" class="btn blue" data-job-action="assign" data-job-id="${Number(job.id)}">Assign</button>` : ""}
+        ${canStart ? `<button type="button" class="btn orange" data-job-action="set-status" data-job-id="${Number(job.id)}" data-status="in_progress">Start</button>` : ""}
+        ${canComplete ? `<button type="button" class="btn primary" data-job-action="set-status" data-job-id="${Number(job.id)}" data-status="completed">Complete</button>` : ""}
         <span class="action-divider"></span>
-        <button class="btn gray" onclick="openClientProfile(${Number(job.client_id || 0)})">Open Client</button>
-        <button class="btn gray" onclick="openInvoiceForJob(${Number(job.id)})">Invoice</button>
-        ${canCancel ? `<button class="btn red" onclick="setJobStatus(${Number(job.id)}, 'cancelled', this)">Cancel</button>` : ""}
-        ${currentUser && ["owner", "admin", "manager"].includes(currentUser.role) ? `<button class="btn red" onclick="deleteJob(${Number(job.id)})">Delete</button>` : ""}
+        <button type="button" class="btn gray" data-job-action="open-client" data-client-id="${Number(job.client_id || 0)}">Open Client</button>
+        <button type="button" class="btn gray" data-job-action="invoice" data-job-id="${Number(job.id)}">Invoice</button>
+        ${canCancel ? `<button type="button" class="btn red" data-job-action="set-status" data-job-id="${Number(job.id)}" data-status="cancelled">Cancel</button>` : ""}
+        ${currentUser && ["owner", "admin", "manager"].includes(currentUser.role) ? `<button type="button" class="btn red" data-job-action="delete" data-job-id="${Number(job.id)}">Delete</button>` : ""}
       </div>
     </div>
   `;
@@ -1088,8 +1093,8 @@ function render() {
     wrap.innerHTML = SafeUI.emptyState(
       jobs.length ? "No jobs found" : "No jobs found",
       jobs.length ? "Try a different filter or reset the board to see all jobs." : "Create your first job to start dispatching work.",
-      jobs.length ? [{ label: "Reset Filters", onClick: "resetFilters()", className: "btn gray" }] : [
-        { label: "Add First Job", onClick: "openModal()", className: "btn primary" }
+      jobs.length ? [{ label: "Reset Filters", dataJobsEmpty: "reset-filters", className: "btn gray" }] : [
+        { label: "Add First Job", dataJobsEmpty: "open-modal", className: "btn primary" }
       ]
     );
     return;
@@ -1369,7 +1374,7 @@ async function load() {
     document.getElementById("list").innerHTML = SafeUI.emptyState(
       "Unable to load jobs right now.",
       "Refresh the page to try again. Your data has not been changed.",
-      [{ label: "Refresh", onClick: "load()", className: "btn primary" }]
+      [{ label: "Refresh", dataJobsEmpty: "reload", className: "btn primary" }]
     );
   } finally {
     SafeUI.setLoading(false);
@@ -1383,11 +1388,59 @@ document.getElementById("dateFilter").addEventListener("change", render);
 document.getElementById("paymentFilter").addEventListener("change", render);
 document.getElementById("job_client_id").addEventListener("input", updateWorkerSuggestion);
 
-window.onclick = function(e){
+window.addEventListener("click", function(e){
   if(e.target === document.getElementById("jobModal")) closeModal();
   if(e.target === document.getElementById("deleteJobModal")) closeDeleteModal();
-};
+});
 
+function handleJobsDelegatedClick(ev){
+  const emptyBtn = ev.target.closest("[data-jobs-empty]");
+  if(emptyBtn){
+    const cmd = emptyBtn.getAttribute("data-jobs-empty");
+    if(cmd === "reset-filters") resetFilters();
+    else if(cmd === "open-modal") openModal();
+    else if(cmd === "reload") load();
+    return;
+  }
+
+  const jobBtn = ev.target.closest("[data-job-action]");
+  if(!jobBtn) return;
+  const action = jobBtn.getAttribute("data-job-action");
+  const jobId = Number(jobBtn.getAttribute("data-job-id"));
+
+  if(action === "edit") editJob(jobId);
+  else if(action === "assign") assignWorker(jobId, jobBtn);
+  else if(action === "set-status"){
+    const st = jobBtn.getAttribute("data-status");
+    setJobStatus(jobId, st, jobBtn);
+  }
+  else if(action === "open-client"){
+    const cid = Number(jobBtn.getAttribute("data-client-id"));
+    openClientProfile(cid);
+  }
+  else if(action === "invoice") openInvoiceForJob(jobId);
+  else if(action === "delete") deleteJob(jobId);
+}
+
+function bindJobsUiHandlers(){
+  document.getElementById("jobsBtnAddJob").addEventListener("click", () => openModal());
+  document.getElementById("jobsBtnQuickToday").addEventListener("click", () => setQuickFilter("today"));
+  document.getElementById("jobsBtnQuickUnassigned").addEventListener("click", () => setQuickFilter("unassigned"));
+  document.getElementById("jobsBtnPrint").addEventListener("click", () => window.print());
+  document.getElementById("quickFilter-all").addEventListener("click", () => setQuickFilter("all"));
+  document.getElementById("quickFilter-today").addEventListener("click", () => setQuickFilter("today"));
+  document.getElementById("quickFilter-week").addEventListener("click", () => setQuickFilter("week"));
+  document.getElementById("quickFilter-unassigned").addEventListener("click", () => setQuickFilter("unassigned"));
+  document.getElementById("quickFilter-completed").addEventListener("click", () => setQuickFilter("completed"));
+  document.getElementById("jobsBtnResetFilters").addEventListener("click", () => resetFilters());
+  document.getElementById("saveJobButton").addEventListener("click", e => saveJob(e.currentTarget));
+  document.getElementById("jobsBtnCancelJobModal").addEventListener("click", () => closeModal());
+  document.getElementById("jobsBtnCancelDeleteModal").addEventListener("click", () => closeDeleteModal());
+  document.getElementById("jobsBtnConfirmDelete").addEventListener("click", () => confirmDeleteJob());
+  document.getElementById("list").addEventListener("click", handleJobsDelegatedClick);
+}
+
+bindJobsUiHandlers();
 load();
 </script>
 </body>

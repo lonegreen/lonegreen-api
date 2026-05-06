@@ -360,7 +360,7 @@
       <h1>Subscriptions</h1>
       <div class="muted">Pause/resume subscriptions, track billing history, and review upcoming visits at a glance.</div>
     </div>
-    <button class="btn add" onclick="load()">Refresh</button>
+    <button type="button" class="btn add" id="subsBtnRefresh">Refresh</button>
   </div>
 
   <div id="earn" class="panel earn">Loading...</div>
@@ -414,8 +414,8 @@
       </div>
     </div>
     <div class="modal-actions">
-      <button class="btn add" onclick="saveSubscriptionEdit()">Save</button>
-      <button class="btn soft" onclick="closeSubscriptionEdit()">Cancel</button>
+      <button type="button" class="btn add" id="subsBtnSaveEdit">Save</button>
+      <button type="button" class="btn soft" id="subsBtnCancelEdit">Cancel</button>
     </div>
   </div>
 </div>
@@ -425,8 +425,8 @@
     <h3>Delete Subscription</h3>
     <p>This will safely archive, cancel, deactivate, or delete only when safe.</p>
     <div class="modal-actions">
-      <button class="btn soft" onclick="closeDeleteSubscription()">Cancel</button>
-      <button class="btn danger" onclick="confirmDeleteSubscription(this)">Delete</button>
+      <button type="button" class="btn soft" id="subsBtnCancelDelete">Cancel</button>
+      <button type="button" class="btn danger" id="subsBtnConfirmDelete">Delete</button>
     </div>
   </div>
 </div>
@@ -576,12 +576,12 @@ function renderSubscription(sub){
     <div class="history"><span class="badge">MRR ${escapeHtml(formatMoney(sub.price || 0))}</span></div>
 
     <div class="row" style="margin-top:14px;">
-      <button class="btn edit" onclick="openSubscriptionEdit(${Number(sub.id)})">Edit</button>
-      ${normalizedStatus === "active" ? `<button class="btn pause" onclick="setStatus(${Number(sub.id)}, 'paused')">Pause</button>` : ""}
-      ${normalizedStatus === "paused" ? `<button class="btn activate" onclick="setStatus(${Number(sub.id)}, 'active')">Resume</button>` : ""}
-      ${normalizedStatus === "cancelled" ? "" : `<button class="btn danger" onclick="setStatus(${Number(sub.id)}, 'cancelled')">Cancel</button>`}
-      ${canBillSubscriptions() ? `<button class="btn edit" onclick="markPaid(${Number(sub.id)})">Bill & Mark Paid</button>` : ""}
-      ${canDeleteSubscriptions() ? `<button class="btn danger" onclick="openDeleteSubscription(${Number(sub.id)})">Delete</button>` : ""}
+      <button type="button" class="btn edit" data-sub-action="edit" data-sub-id="${Number(sub.id)}">Edit</button>
+      ${normalizedStatus === "active" ? `<button type="button" class="btn pause" data-sub-action="set-status" data-sub-id="${Number(sub.id)}" data-status="paused">Pause</button>` : ""}
+      ${normalizedStatus === "paused" ? `<button type="button" class="btn activate" data-sub-action="set-status" data-sub-id="${Number(sub.id)}" data-status="active">Resume</button>` : ""}
+      ${normalizedStatus === "cancelled" ? "" : `<button type="button" class="btn danger" data-sub-action="set-status" data-sub-id="${Number(sub.id)}" data-status="cancelled">Cancel</button>`}
+      ${canBillSubscriptions() ? `<button type="button" class="btn edit" data-sub-action="mark-paid" data-sub-id="${Number(sub.id)}">Bill & Mark Paid</button>` : ""}
+      ${canDeleteSubscriptions() ? `<button type="button" class="btn danger" data-sub-action="delete" data-sub-id="${Number(sub.id)}">Delete</button>` : ""}
     </div>
   </div>`;
 }
@@ -812,6 +812,27 @@ document.addEventListener("keydown", event => {
   }
 });
 
+function handleSubsListClick(ev){
+  const btn = ev.target.closest("[data-sub-action]");
+  if(!btn) return;
+  const act = btn.getAttribute("data-sub-action");
+  const sid = Number(btn.getAttribute("data-sub-id"));
+  if(act === "edit") openSubscriptionEdit(sid);
+  else if(act === "set-status") setStatus(sid, btn.getAttribute("data-status"));
+  else if(act === "mark-paid") markPaid(sid);
+  else if(act === "delete") openDeleteSubscription(sid);
+}
+
+function bindSubscriptionsUiHandlers(){
+  document.getElementById("subsBtnRefresh").addEventListener("click", () => load());
+  document.getElementById("subsBtnSaveEdit").addEventListener("click", () => saveSubscriptionEdit());
+  document.getElementById("subsBtnCancelEdit").addEventListener("click", () => closeSubscriptionEdit());
+  document.getElementById("subsBtnCancelDelete").addEventListener("click", () => closeDeleteSubscription());
+  document.getElementById("subsBtnConfirmDelete").addEventListener("click", e => confirmDeleteSubscription(e.currentTarget));
+  document.getElementById("list").addEventListener("click", handleSubsListClick);
+}
+
+bindSubscriptionsUiHandlers();
 load();
 </script>
 </body>

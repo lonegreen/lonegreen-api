@@ -397,7 +397,7 @@
       <option value="6">Saturday</option>
       <option value="0">Sunday</option>
     </select>
-    <button class="add" onclick="addGroup()">Add Group</button>
+    <button type="button" class="add" id="zipBtnAddGroup">Add Group</button>
   </div>
 
   <div id="list"></div>
@@ -524,7 +524,7 @@ function renderGroup(group){
             ? zips.map(zip => `
               <span class="zip">
                 ${escapeHtml(zip.zip)}
-                <button class="delete" onclick="delZip(${Number(zip.id)})">x</button>
+                <button type="button" class="delete" data-zip-action="del-zip" data-zip-id="${Number(zip.id)}">x</button>
               </span>
             `).join("")
             : '<span class="muted">No ZIPs yet.</span>'
@@ -533,7 +533,7 @@ function renderGroup(group){
 
       <div class="zip-form">
         <input id="zip-${groupId}" placeholder="Add ZIP">
-        <button class="add" onclick="addZip(${groupId})">Add ZIP</button>
+        <button type="button" class="add" data-zip-action="add-zip" data-group-id="${groupId}">Add ZIP</button>
       </div>
 
       <div class="row">
@@ -555,12 +555,12 @@ function renderGroup(group){
           ${workerOptions(groupWorkers, groupId)}
         </div>
         <div class="details-actions">
-          <button class="edit" onclick="saveWorkers(${groupId})">Save Workers</button>
+          <button type="button" class="edit" data-zip-action="save-workers" data-group-id="${groupId}">Save Workers</button>
         </div>
       </details>
 
       <div class="danger-row">
-        <button class="delete" onclick="delGroup(${groupId})">Delete Group</button>
+        <button type="button" class="delete" data-zip-action="del-group" data-group-id="${groupId}">Delete Group</button>
       </div>
     </div>
   `;
@@ -704,6 +704,19 @@ async function delGroup(id){
 
   load();
 }
+
+function handleZipListClick(ev){
+  const btn = ev.target.closest("[data-zip-action]");
+  if(!btn) return;
+  const act = btn.getAttribute("data-zip-action");
+  if(act === "del-zip") delZip(Number(btn.getAttribute("data-zip-id")));
+  else if(act === "add-zip") addZip(Number(btn.getAttribute("data-group-id")));
+  else if(act === "save-workers") saveWorkers(Number(btn.getAttribute("data-group-id")));
+  else if(act === "del-group") delGroup(Number(btn.getAttribute("data-group-id")));
+}
+
+document.getElementById("zipBtnAddGroup").addEventListener("click", () => addGroup());
+document.getElementById("list").addEventListener("click", handleZipListClick);
 
 load();
 </script>

@@ -632,15 +632,15 @@
       <div class="section-copy">Keep everything inside the client record.</div>
     </div>
     <div class="action-bar">
-      <button class="action-btn" onclick="openJobModal()">
+      <button type="button" class="action-btn" id="clientQuickAddJob">
         <strong>+ Add Job</strong>
         <span>Schedule work, assign a worker, and keep this client moving.</span>
       </button>
-      <button class="action-btn" onclick="openSubModal()">
+      <button type="button" class="action-btn" id="clientQuickAddSub">
         <strong>+ Add Subscription</strong>
         <span>Create recurring service without leaving the client page.</span>
       </button>
-      <button class="action-btn" onclick="openInvoiceModal()">
+      <button type="button" class="action-btn" id="clientQuickAddInvoice">
         <strong>+ Create Invoice</strong>
         <span>Bill work from this client record and track payment status here.</span>
       </button>
@@ -648,11 +648,11 @@
   </div>
 
   <div class="tabs">
-    <button class="tab active" id="overviewTab" onclick="showTab('overview')">Overview</button>
-    <button class="tab" id="jobsTab" onclick="showTab('jobs')">Jobs</button>
-    <button class="tab" id="subsTab" onclick="showTab('subs')">Subscriptions</button>
-    <button class="tab" id="invoicesTab" onclick="showTab('invoices')">Invoices</button>
-    <button class="tab" id="notesTab" onclick="showTab('notes')">Notes</button>
+    <button type="button" class="tab active" id="overviewTab">Overview</button>
+    <button type="button" class="tab" id="jobsTab">Jobs</button>
+    <button type="button" class="tab" id="subsTab">Subscriptions</button>
+    <button type="button" class="tab" id="invoicesTab">Invoices</button>
+    <button type="button" class="tab" id="notesTab">Notes</button>
   </div>
 
   <div id="overviewSection" class="panel section active">
@@ -681,7 +681,7 @@
         <h2>Jobs</h2>
         <div class="section-copy">Track status, start work, and complete jobs without leaving the client.</div>
       </div>
-      <button class="btn primary" onclick="openJobModal()">+ Add Job</button>
+      <button type="button" class="btn primary" id="clientJobsSectionAdd">+ Add Job</button>
     </div>
     <div id="jobsList" class="list"></div>
   </div>
@@ -692,7 +692,7 @@
         <h2>Subscriptions</h2>
         <div class="section-copy">See next visit, frequency, and status clearly.</div>
       </div>
-      <button class="btn primary" onclick="openSubModal()">+ Add Subscription</button>
+      <button type="button" class="btn primary" id="clientSubsSectionAdd">+ Add Subscription</button>
     </div>
     <div id="subsList" class="list"></div>
   </div>
@@ -703,7 +703,7 @@
         <h2>Invoices</h2>
         <div class="section-copy">Review billing totals and mark invoices paid from here.</div>
       </div>
-      <button class="btn primary" onclick="openInvoiceModal()">+ Create Invoice</button>
+      <button type="button" class="btn primary" id="clientInvoicesSectionAdd">+ Create Invoice</button>
     </div>
     <div id="invoiceSummary" class="summary-grid"></div>
     <div id="invoicesList" class="list"></div>
@@ -715,7 +715,7 @@
         <h2>Notes</h2>
         <div class="section-copy">Save internal notes directly on the client profile.</div>
       </div>
-      <button class="btn primary" onclick="saveClientNotes()">Save Notes</button>
+      <button type="button" class="btn primary" id="clientSaveNotesBtn">Save Notes</button>
     </div>
     <textarea id="clientNotes" class="notes-box" placeholder="No notes yet. Add internal client notes, access details, billing notes, or worker instructions here."></textarea>
   </div>
@@ -746,8 +746,8 @@
       <textarea id="job_internal_notes" class="wide" rows="4" placeholder="Internal notes"></textarea>
     </div>
     <div class="modal-actions">
-      <button class="btn primary" onclick="saveJob()">Save Job</button>
-      <button class="btn gray" onclick="closeModal('jobModal')">Cancel</button>
+      <button type="button" class="btn primary" id="clientSaveJobBtn">Save Job</button>
+      <button type="button" class="btn gray" id="clientCancelJobModalBtn">Cancel</button>
     </div>
   </div>
 </div>
@@ -769,8 +769,8 @@
       </select>
     </div>
     <div class="modal-actions">
-      <button class="btn primary" onclick="saveSubscription()">Save Subscription</button>
-      <button class="btn gray" onclick="closeModal('subModal')">Cancel</button>
+      <button type="button" class="btn primary" id="clientSaveSubBtn">Save Subscription</button>
+      <button type="button" class="btn gray" id="clientCancelSubModalBtn">Cancel</button>
     </div>
   </div>
 </div>
@@ -794,8 +794,8 @@
       <textarea id="invoice_notes" class="wide" rows="4" placeholder="Invoice notes"></textarea>
     </div>
     <div class="modal-actions">
-      <button class="btn primary" onclick="saveInvoice()">Create Invoice</button>
-      <button class="btn gray" onclick="closeModal('invoiceModal')">Cancel</button>
+      <button type="button" class="btn primary" id="clientSaveInvoiceBtn">Create Invoice</button>
+      <button type="button" class="btn gray" id="clientCancelInvoiceModalBtn">Cancel</button>
     </div>
   </div>
 </div>
@@ -805,8 +805,8 @@
     <h3>Remove Subscription Visit</h3>
     <p>This will safely cancel this generated subscription visit without deleting subscription, invoice, or payment history.</p>
     <div class="modal-actions">
-      <button class="btn gray" onclick="closeDeleteSubscriptionVisitModal()">Cancel</button>
-      <button class="btn red" onclick="confirmDeleteSubscriptionVisit()">Remove Visit</button>
+      <button type="button" class="btn gray" id="clientCancelDeleteVisitBtn">Cancel</button>
+      <button type="button" class="btn red" id="clientConfirmDeleteVisitBtn">Remove Visit</button>
     </div>
   </div>
 </div>
@@ -1192,7 +1192,7 @@ function renderTimeline(){
 function renderJobs(){
   const wrap = document.getElementById("jobsList");
   if(!state.jobs.length){
-    wrap.innerHTML = `<div class="empty"><strong>No jobs scheduled</strong>This client does not have any jobs yet.<div style="margin-top:12px;"><button class="btn primary" onclick="openJobModal()">+ Add Job</button></div></div>`;
+    wrap.innerHTML = `<div class="empty"><strong>No jobs scheduled</strong>This client does not have any jobs yet.<div style="margin-top:12px;"><button type="button" class="btn primary" data-client-action="open-job-modal">+ Add Job</button></div></div>`;
     return;
   }
 
@@ -1222,12 +1222,12 @@ function renderJobs(){
       </div>
       ${job.internal_notes ? `<div class="sub">Notes: ${escapeHtml(job.internal_notes)}</div>` : ""}
       <div class="actions">
-        <button class="btn gray" onclick="openJobModal(${Number(job.id)})">Edit</button>
-        ${!isClosed && !isInProgress ? `<button class="btn blue" onclick="updateJobStatus(${Number(job.id)}, 'in_progress')">Start</button>` : ""}
-        ${!isClosed ? `<button class="btn primary" onclick="updateJobStatus(${Number(job.id)}, 'completed')">Complete</button>` : ""}
-        ${!isClosed ? `<button class="btn red" onclick="updateJobStatus(${Number(job.id)}, 'cancelled')">Cancel</button>` : ""}
-        <button class="btn gray" onclick="openInvoiceModal(${Number(job.id)}, ${Number(job.price || 0)})">Create Invoice</button>
-        ${(job.type === 'subscription_visit' || job.source_subscription_id) && currentUser && ["owner", "admin", "manager"].includes(currentUser.role) ? `<button class="btn red" onclick="deleteSubscriptionVisit(${Number(job.id)})">Remove Visit</button>` : ""}
+        <button type="button" class="btn gray" data-client-action="open-job-modal" data-job-id="${Number(job.id)}">Edit</button>
+        ${!isClosed && !isInProgress ? `<button type="button" class="btn blue" data-client-action="job-status" data-job-id="${Number(job.id)}" data-status="in_progress">Start</button>` : ""}
+        ${!isClosed ? `<button type="button" class="btn primary" data-client-action="job-status" data-job-id="${Number(job.id)}" data-status="completed">Complete</button>` : ""}
+        ${!isClosed ? `<button type="button" class="btn red" data-client-action="job-status" data-job-id="${Number(job.id)}" data-status="cancelled">Cancel</button>` : ""}
+        <button type="button" class="btn gray" data-client-action="open-invoice-modal" data-job-id="${Number(job.id)}" data-job-price="${Number(job.price || 0)}">Create Invoice</button>
+        ${(job.type === 'subscription_visit' || job.source_subscription_id) && currentUser && ["owner", "admin", "manager"].includes(currentUser.role) ? `<button type="button" class="btn red" data-client-action="delete-sub-visit" data-job-id="${Number(job.id)}">Remove Visit</button>` : ""}
       </div>
     </div>
   `}).join("");
@@ -1268,7 +1268,7 @@ function renderEstimates(){
 function renderSubs(){
   const wrap = document.getElementById("subsList");
   if(!state.subscriptions.length){
-    wrap.innerHTML = `<div class="empty"><strong>No subscriptions yet</strong>Create recurring service without leaving this client profile.<div style="margin-top:12px;"><button class="btn primary" onclick="openSubModal()">+ Add Subscription</button></div></div>`;
+    wrap.innerHTML = `<div class="empty"><strong>No subscriptions yet</strong>Create recurring service without leaving this client profile.<div style="margin-top:12px;"><button type="button" class="btn primary" data-client-action="open-sub-modal">+ Add Subscription</button></div></div>`;
     return;
   }
 
@@ -1294,9 +1294,9 @@ function renderSubs(){
       </div>
       <div class="sub">${sub.status === "active" ? "Active recurring service is currently running." : sub.status === "paused" ? "This recurring service is paused." : "Subscription status stored on this client."}</div>
       <div class="actions">
-        <button class="btn gray" onclick="openSubModal(${Number(sub.id)})">Edit</button>
-        ${sub.status === "active" ? `<button class="btn orange" onclick="updateSubscriptionStatus(${Number(sub.id)}, 'paused')">Pause</button><button class="btn red" onclick="updateSubscriptionStatus(${Number(sub.id)}, 'cancelled')">Cancel</button>` : ""}
-        ${sub.status === "paused" ? `<button class="btn blue" onclick="updateSubscriptionStatus(${Number(sub.id)}, 'active')">Resume</button><button class="btn red" onclick="updateSubscriptionStatus(${Number(sub.id)}, 'cancelled')">Cancel</button>` : ""}
+        <button type="button" class="btn gray" data-client-action="open-sub-modal" data-sub-id="${Number(sub.id)}">Edit</button>
+        ${sub.status === "active" ? `<button type="button" class="btn orange" data-client-action="sub-status" data-sub-id="${Number(sub.id)}" data-status="paused">Pause</button><button type="button" class="btn red" data-client-action="sub-status" data-sub-id="${Number(sub.id)}" data-status="cancelled">Cancel</button>` : ""}
+        ${sub.status === "paused" ? `<button type="button" class="btn blue" data-client-action="sub-status" data-sub-id="${Number(sub.id)}" data-status="active">Resume</button><button type="button" class="btn red" data-client-action="sub-status" data-sub-id="${Number(sub.id)}" data-status="cancelled">Cancel</button>` : ""}
       </div>
     </div>
   `).join("");
@@ -1328,7 +1328,7 @@ function renderInvoices(){
   renderInvoiceSummary();
 
   if(!state.invoices.length){
-    wrap.innerHTML = `<div class="empty"><strong>No invoices yet</strong>Create an invoice from this client record when work is ready to bill.<div style="margin-top:12px;"><button class="btn primary" onclick="openInvoiceModal()">+ Create Invoice</button></div></div>`;
+    wrap.innerHTML = `<div class="empty"><strong>No invoices yet</strong>Create an invoice from this client record when work is ready to bill.<div style="margin-top:12px;"><button type="button" class="btn primary" data-client-action="open-invoice-modal">+ Create Invoice</button></div></div>`;
     return;
   }
 
@@ -1348,9 +1348,9 @@ function renderInvoices(){
         <div class="detail"><span class="label">Job</span>${escapeHtml(inv.job_id || "-")}</div>
       </div>
       <div class="actions">
-        ${normalizeStatus(inv.status) === "paid" ? "" : `<button class="btn primary" onclick="setInvoiceStatus(${Number(inv.id)}, 'paid')">Mark as Paid</button>`}
-        ${["paid", "cancelled", "canceled"].includes(normalizeStatus(inv.status)) ? "" : `<button class="btn orange" onclick="setInvoiceStatus(${Number(inv.id)}, 'overdue')">Mark Overdue</button>`}
-        ${["cancelled", "canceled"].includes(normalizeStatus(inv.status)) ? "" : `<button class="btn red" onclick="setInvoiceStatus(${Number(inv.id)}, 'cancelled')">Cancel</button>`}
+        ${normalizeStatus(inv.status) === "paid" ? "" : `<button type="button" class="btn primary" data-client-action="inv-status" data-inv-id="${Number(inv.id)}" data-status="paid">Mark as Paid</button>`}
+        ${["paid", "cancelled", "canceled"].includes(normalizeStatus(inv.status)) ? "" : `<button type="button" class="btn orange" data-client-action="inv-status" data-inv-id="${Number(inv.id)}" data-status="overdue">Mark Overdue</button>`}
+        ${["cancelled", "canceled"].includes(normalizeStatus(inv.status)) ? "" : `<button type="button" class="btn red" data-client-action="inv-status" data-inv-id="${Number(inv.id)}" data-status="cancelled">Cancel</button>`}
       </div>
     </div>
   `).join("");
@@ -1593,7 +1593,7 @@ function renderLoadError(message){
       <strong>Unable to load client profile.</strong>
       <div>${escapeHtml(message || "Refresh and try again.")}</div>
       <div style="margin-top:12px;">
-        <button class="btn primary" onclick="load()">Refresh</button>
+        <button type="button" class="btn primary" data-client-action="reload">Refresh</button>
       </div>
     </div>
   `;
@@ -1692,7 +1692,7 @@ async function confirmDeleteSubscriptionVisit() {
   }
 }
 
-window.onclick = function(e){
+window.addEventListener("click", function(e){
   if (e.target === document.getElementById("deleteSubscriptionVisitModal")) {
     closeDeleteSubscriptionVisitModal();
   }
@@ -1700,8 +1700,75 @@ window.onclick = function(e){
     const modal = document.getElementById(id);
     if(e.target === modal) closeModal(id);
   });
-};
+});
 
+function handleClientDelegatedClick(ev){
+  const el = ev.target.closest("[data-client-action]");
+  if(!el) return;
+  const act = el.getAttribute("data-client-action");
+  if(act === "open-job-modal"){
+    const jid = el.getAttribute("data-job-id");
+    openJobModal(jid != null && jid !== "" ? Number(jid) : null);
+    return;
+  }
+  if(act === "open-sub-modal"){
+    const sid = el.getAttribute("data-sub-id");
+    openSubModal(sid != null && sid !== "" ? Number(sid) : null);
+    return;
+  }
+  if(act === "open-invoice-modal"){
+    const jid = el.getAttribute("data-job-id");
+    const price = el.getAttribute("data-job-price");
+    if(jid != null && jid !== "") openInvoiceModal(Number(jid), Number(price || 0));
+    else openInvoiceModal();
+    return;
+  }
+  if(act === "job-status"){
+    updateJobStatus(Number(el.getAttribute("data-job-id")), el.getAttribute("data-status"));
+    return;
+  }
+  if(act === "sub-status"){
+    updateSubscriptionStatus(Number(el.getAttribute("data-sub-id")), el.getAttribute("data-status"));
+    return;
+  }
+  if(act === "inv-status"){
+    setInvoiceStatus(Number(el.getAttribute("data-inv-id")), el.getAttribute("data-status"));
+    return;
+  }
+  if(act === "delete-sub-visit"){
+    deleteSubscriptionVisit(Number(el.getAttribute("data-job-id")));
+    return;
+  }
+  if(act === "reload"){
+    load();
+  }
+}
+
+function bindClientUiHandlers(){
+  document.body.addEventListener("click", handleClientDelegatedClick);
+  document.getElementById("clientQuickAddJob").addEventListener("click", () => openJobModal());
+  document.getElementById("clientQuickAddSub").addEventListener("click", () => openSubModal());
+  document.getElementById("clientQuickAddInvoice").addEventListener("click", () => openInvoiceModal());
+  document.getElementById("overviewTab").addEventListener("click", () => showTab("overview"));
+  document.getElementById("jobsTab").addEventListener("click", () => showTab("jobs"));
+  document.getElementById("subsTab").addEventListener("click", () => showTab("subs"));
+  document.getElementById("invoicesTab").addEventListener("click", () => showTab("invoices"));
+  document.getElementById("notesTab").addEventListener("click", () => showTab("notes"));
+  document.getElementById("clientJobsSectionAdd").addEventListener("click", () => openJobModal());
+  document.getElementById("clientSubsSectionAdd").addEventListener("click", () => openSubModal());
+  document.getElementById("clientInvoicesSectionAdd").addEventListener("click", () => openInvoiceModal());
+  document.getElementById("clientSaveNotesBtn").addEventListener("click", () => saveClientNotes());
+  document.getElementById("clientSaveJobBtn").addEventListener("click", () => saveJob());
+  document.getElementById("clientCancelJobModalBtn").addEventListener("click", () => closeModal("jobModal"));
+  document.getElementById("clientSaveSubBtn").addEventListener("click", () => saveSubscription());
+  document.getElementById("clientCancelSubModalBtn").addEventListener("click", () => closeModal("subModal"));
+  document.getElementById("clientSaveInvoiceBtn").addEventListener("click", () => saveInvoice());
+  document.getElementById("clientCancelInvoiceModalBtn").addEventListener("click", () => closeModal("invoiceModal"));
+  document.getElementById("clientCancelDeleteVisitBtn").addEventListener("click", () => closeDeleteSubscriptionVisitModal());
+  document.getElementById("clientConfirmDeleteVisitBtn").addEventListener("click", () => confirmDeleteSubscriptionVisit());
+}
+
+bindClientUiHandlers();
 load();
 </script>
 </body>

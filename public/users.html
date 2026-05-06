@@ -335,7 +335,7 @@
       <h1>Users</h1>
       <p>Manage team access for this company workspace.</p>
     </div>
-    <button class="btn gray" onclick="load()">Refresh</button>
+    <button type="button" class="btn gray" id="usersBtnRefresh">Refresh</button>
   </div>
 
   <div class="grid">
@@ -345,7 +345,7 @@
         <label>Username <input id="username" autocomplete="off" required></label>
         <label>Password <input id="password" type="password" required minlength="4"></label>
         <label>Role
-          <select id="role" onchange="toggleWorkerField()">
+          <select id="role">
             <option value="admin">Admin</option>
             <option value="manager">Manager</option>
             <option value="worker">Worker</option>
@@ -372,8 +372,8 @@
     <h3>Delete User</h3>
     <p>This will safely archive, cancel, deactivate, or delete only when safe.</p>
     <div class="modal-actions">
-      <button class="btn danger" onclick="confirmDeleteUser(this)">Delete</button>
-      <button class="btn gray" onclick="closeDeleteUser()">Cancel</button>
+      <button type="button" class="btn danger" id="usersBtnConfirmDelete">Delete</button>
+      <button type="button" class="btn gray" id="usersBtnCancelDelete">Cancel</button>
     </div>
   </div>
 </div>
@@ -488,15 +488,15 @@ function renderUsers(){
         ).join("");
 
       const deleteButton = canDeleteUsers() && userId !== Number(currentUser().id)
-        ? '<button class="btn danger" onclick="openDeleteUser(' + userId + ')">Delete</button>'
+        ? '<button type="button" class="btn danger" data-user-delete="' + userId + '">Delete</button>'
         : '';
 
       return '<tr>' +
         '<td><strong>' + esc(user.username) + '</strong><div class="muted">#' + esc(user.id) + '</div></td>' +
-        '<td><select onchange="updateUser(' + userId + ', { role: this.value })">' + roleOptions + '</select></td>' +
-        '<td><select onchange="updateUser(' + userId + ', { worker_id: this.value ? Number(this.value) : null })" ' + (user.role === "worker" ? "" : "disabled") + '>' + workerOptions + '</select></td>' +
+        '<td><select class="user-role-select" data-user-id="' + userId + '">' + roleOptions + '</select></td>' +
+        '<td><select class="user-worker-select" data-user-id="' + userId + '" ' + (user.role === "worker" ? "" : "disabled") + '>' + workerOptions + '</select></td>' +
         '<td><span class="badge ' + (user.active ? "active" : "inactive") + '">' + (user.active ? "Active" : "Inactive") + '</span></td>' +
-        '<td><div class="actions"><button class="btn gray" onclick="updateUser(' + userId + ', { active: ' + (!user.active) + ' }, this)">' + (user.active ? "Deactivate" : "Activate") + '</button>' + deleteButton + '</div></td>' +
+        '<td><div class="actions"><button type="button" class="btn gray" data-user-toggle="' + userId + '" data-user-active="' + (user.active ? "1" : "0") + '">' + (user.active ? "Deactivate" : "Activate") + '</button>' + deleteButton + '</div></td>' +
       '</tr>';
     }).join("") +
     '</tbody></table></div>';
@@ -597,6 +597,35 @@ window.addEventListener("click", event => {
     closeDeleteUser();
   }
 });
+
+document.getElementById("role").addEventListener("change", toggleWorkerField);
+
+document.getElementById("usersBox").addEventListener("change", function(ev){
+  const el = ev.target;
+  if(el.classList.contains("user-role-select")){
+    updateUser(Number(el.getAttribute("data-user-id")), { role: el.value });
+  } else if(el.classList.contains("user-worker-select")){
+    updateUser(Number(el.getAttribute("data-user-id")), { worker_id: el.value ? Number(el.value) : null });
+  }
+});
+
+document.getElementById("usersBox").addEventListener("click", function(ev){
+  const delBtn = ev.target.closest("[data-user-delete]");
+  if(delBtn){
+    openDeleteUser(Number(delBtn.getAttribute("data-user-delete")));
+    return;
+  }
+  const toggleBtn = ev.target.closest("[data-user-toggle]");
+  if(toggleBtn){
+    const id = Number(toggleBtn.getAttribute("data-user-toggle"));
+    const wasActive = toggleBtn.getAttribute("data-user-active") === "1";
+    updateUser(id, { active: !wasActive }, toggleBtn);
+  }
+});
+
+document.getElementById("usersBtnRefresh").addEventListener("click", () => load());
+document.getElementById("usersBtnConfirmDelete").addEventListener("click", e => confirmDeleteUser(e.currentTarget));
+document.getElementById("usersBtnCancelDelete").addEventListener("click", () => closeDeleteUser());
 
 document.getElementById("userForm").addEventListener("submit", async event => {
   event.preventDefault();

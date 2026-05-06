@@ -25,11 +25,13 @@
     <input id="clientId" inputmode="numeric" placeholder="Example: 104">
     <label for="phone">Phone</label>
     <input id="phone" inputmode="tel" placeholder="Phone on file">
-    <button onclick="login()">Open Portal</button>
+    <button type="button" id="customerLoginBtn">Open Portal</button>
     <div id="error" class="error"></div>
   </div>
   <script>
     const API = window.location.origin;
+    document.getElementById("customerLoginBtn").addEventListener("click", login);
+
     async function login(){
       const error = document.getElementById("error");
       error.textContent = "";

@@ -53,7 +53,7 @@
       <h1>System Health</h1>
       <p>Launch readiness checks for database, migrations, billing, Stripe, email, uploads, scheduler, and environment blockers.</p>
     </div>
-    <button class="btn gray" onclick="load()">Refresh</button>
+    <button type="button" class="btn gray" id="healthRefreshBtn">Refresh</button>
   </div>
   <div id="healthBox" class="grid"></div>
 </div>
@@ -127,6 +127,7 @@ async function load(){
   }
 }
 
+document.getElementById("healthRefreshBtn").addEventListener("click", () => load());
 load();
 </script>
 </body>

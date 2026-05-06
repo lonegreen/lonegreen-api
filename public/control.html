@@ -706,6 +706,15 @@
       const token = getToken();
 
       if (!token || !user || (!user.company_id && currentRole() !== "platform_owner")) {
+        const missingCompanyIdForNonPlatformOwner = Boolean(
+          user && !user.company_id && currentRole() !== "platform_owner"
+        );
+        console.warn("AUTH_SESSION_INVALID", {
+          hasToken: Boolean(token),
+          hasUser: Boolean(user),
+          role: user && user.role ? user.role : null,
+          missingCompanyIdForNonPlatformOwner
+        });
         logout();
         return false;
       }

@@ -480,7 +480,7 @@
       <p id="pageSubtitle">Review estimates, approve quoted work, and convert approved estimates into clients or jobs.</p>
       <p class="page-note">Archive only duplicates, tests, or inactive records. Active leads and estimates should remain available for conversion or follow-up.</p>
     </div>
-    <button class="btn primary" id="newLeadButton" onclick="openLeadModal()">+ New Lead</button>
+    <button type="button" class="btn primary" id="newLeadButton">+ New Lead</button>
   </div>
 
   <div class="toolbar">
@@ -489,8 +489,8 @@
   </div>
 
   <div class="tabs">
-    <button class="tab active" id="leadTab" onclick="setTab('leads')">Leads</button>
-    <button class="tab" id="estimateTab" onclick="setTab('estimates')">Estimates</button>
+    <button type="button" class="tab active" id="leadTab">Leads</button>
+    <button type="button" class="tab" id="estimateTab">Estimates</button>
   </div>
 
   <div class="summary">
@@ -524,8 +524,8 @@
       <textarea id="lead_notes" class="wide" rows="4" placeholder="Lead notes"></textarea>
     </div>
     <div class="modal-actions">
-      <button type="button" class="btn primary" onclick="saveLead(event)">Save Lead</button>
-      <button type="button" class="btn gray" onclick="closeModal('leadModal')">Cancel</button>
+      <button type="button" class="btn primary" id="btnSaveLead">Save Lead</button>
+      <button type="button" class="btn gray" id="btnCancelLeadModal">Cancel</button>
     </div>
   </div>
 </div>
@@ -550,8 +550,8 @@
       <textarea id="estimate_notes" class="wide" rows="4" placeholder="Estimate notes"></textarea>
     </div>
     <div class="modal-actions">
-      <button type="button" class="btn primary" onclick="saveEstimate(event)">Save Estimate</button>
-      <button type="button" class="btn gray" onclick="closeModal('estimateModal')">Cancel</button>
+      <button type="button" class="btn primary" id="btnSaveEstimate">Save Estimate</button>
+      <button type="button" class="btn gray" id="btnCancelEstimateModal">Cancel</button>
     </div>
   </div>
 </div>
@@ -575,8 +575,8 @@
       <textarea id="convert_job_notes" class="wide" rows="4" placeholder="Internal notes"></textarea>
     </div>
     <div class="modal-actions">
-      <button type="button" class="btn primary" onclick="submitConvertToJob()">Create Job</button>
-      <button type="button" class="btn gray" onclick="closeModal('convertJobModal')">Cancel</button>
+      <button type="button" class="btn primary" id="btnSubmitConvertJob">Create Job</button>
+      <button type="button" class="btn gray" id="btnCancelConvertJobModal">Cancel</button>
     </div>
   </div>
 </div>
@@ -586,8 +586,8 @@
     <h3>Archive Record</h3>
     <p id="archiveModalMessage">This will archive the record and hide it from active workflow. Use this only for test, duplicate, or inactive records.</p>
     <div class="modal-actions">
-      <button type="button" class="btn gray" onclick="closeArchiveModal()">Cancel</button>
-      <button type="button" class="btn red" onclick="confirmArchive(event)">Archive</button>
+      <button type="button" class="btn gray" id="btnCancelArchiveModal">Cancel</button>
+      <button type="button" class="btn red" id="btnConfirmArchive">Archive</button>
     </div>
   </div>
 </div>
@@ -597,8 +597,8 @@
     <h3 id="deleteModalTitle">Delete Record</h3>
     <p id="deleteModalMessage">Are you sure you want to permanently delete this record? This should only be used for test or incorrect records.</p>
     <div class="modal-actions">
-      <button type="button" class="btn gray" onclick="closeDeleteModal()">Cancel</button>
-      <button type="button" class="btn red" onclick="confirmDelete(event)">Delete</button>
+      <button type="button" class="btn gray" id="btnCancelDeleteModal">Cancel</button>
+      <button type="button" class="btn red" id="btnConfirmDelete">Delete</button>
     </div>
   </div>
 </div>
@@ -729,7 +729,7 @@ function renderFilters(){
   if(!bar) return;
   const quickFilters = currentTab === "leads" ? leadFilters : estimateFilters;
   bar.innerHTML = quickFilters.map(filter => `
-    <button class="filter-chip ${filter === currentFilter ? "active" : ""}" onclick="setFilter('${filter}')">${escapeHtml(filter)}</button>
+    <button type="button" class="filter-chip ${filter === currentFilter ? "active" : ""}" data-est-filter="${escapeHtml(filter)}">${escapeHtml(filter)}</button>
   `).join("");
 }
 
@@ -997,12 +997,12 @@ function renderLeadCard(item){
     <div class="notes">${escapeHtml(item.notes || "No notes yet.")}</div>
 
     <div class="actions">
-      <button class="btn blue" onclick="openLeadModalById(${Number(item.id)})">Edit</button>
-      ${!isConvertedLead ? `<button class="btn orange" onclick="convertLeadToEstimate(${Number(item.id)})">Convert to Estimate</button>` : ""}
-      ${!isConvertedLead ? `<button class="btn gray" onclick="convertLeadToClient(${Number(item.id)})">Convert to Client</button>` : ""}
-      ${isConvertedLead && item.converted_client_id ? `<button class="btn primary" onclick="window.top.location.href='/client.html?id=${encodeURIComponent(item.converted_client_id)}'">Open Client</button>` : ""}
-      ${canDeleteRecords() ? `<button class="btn red" onclick="deleteLead(${Number(item.id)})">Delete</button>` : ""}
-      <button class="btn red" onclick="archiveLead(${Number(item.id)})">Archive</button>
+      <button type="button" class="btn blue" data-est-action="edit-lead" data-est-id="${Number(item.id)}">Edit</button>
+      ${!isConvertedLead ? `<button type="button" class="btn orange" data-est-action="convert-lead-to-estimate" data-est-id="${Number(item.id)}">Convert to Estimate</button>` : ""}
+      ${!isConvertedLead ? `<button type="button" class="btn gray" data-est-action="convert-lead-to-client" data-est-id="${Number(item.id)}">Convert to Client</button>` : ""}
+      ${isConvertedLead && item.converted_client_id ? `<button type="button" class="btn primary" data-est-action="navigate-client" data-est-client-id="${escapeHtml(String(item.converted_client_id))}">Open Client</button>` : ""}
+      ${canDeleteRecords() ? `<button type="button" class="btn red" data-est-action="delete-lead" data-est-id="${Number(item.id)}">Delete</button>` : ""}
+      <button type="button" class="btn red" data-est-action="archive-lead" data-est-id="${Number(item.id)}">Archive</button>
     </div>
   </div>`;
 }
@@ -1037,15 +1037,15 @@ function renderEstimateCard(item){
     <div class="notes">${escapeHtml(item.notes || "No notes yet.")}</div>
 
     <div class="actions">
-      <button class="btn blue" onclick="openEstimateModalById(${Number(item.id)})">Edit</button>
-      ${isDraftSentQuoted ? `<button class="btn blue" onclick="setEstimateStatus(${Number(item.id)}, 'approved')">Approve</button>` : ""}
-      ${isDraftSentQuoted ? `<button class="btn red" onclick="setEstimateStatus(${Number(item.id)}, 'rejected')">Reject</button>` : ""}
-      ${isApproved ? `<button class="btn gray" onclick="convertEstimateToClient(${Number(item.id)})">Convert to Client</button>` : ""}
-      ${isApproved ? `<button class="btn primary" onclick="openConvertEstimateJob(${Number(item.id)})">Convert to Job</button>` : ""}
-      ${isConvertedEstimate && item.converted_client_id ? `<button class="btn gray" onclick="window.top.location.href='/client.html?id=${encodeURIComponent(item.converted_client_id)}'">Open Client</button>` : ""}
-      ${isConvertedEstimate && item.converted_job_id ? `<button class="btn primary" onclick="window.top.location.href='/jobs.html?job_id=${encodeURIComponent(item.converted_job_id)}'">Open Job</button>` : ""}
-      ${canDeleteRecords() ? `<button class="btn red" onclick="deleteEstimate(${Number(item.id)})">Delete</button>` : ""}
-      <button class="btn red" onclick="archiveEstimate(${Number(item.id)})">Archive</button>
+      <button type="button" class="btn blue" data-est-action="edit-estimate" data-est-id="${Number(item.id)}">Edit</button>
+      ${isDraftSentQuoted ? `<button type="button" class="btn blue" data-est-action="set-estimate-status" data-est-id="${Number(item.id)}" data-est-status="approved">Approve</button>` : ""}
+      ${isDraftSentQuoted ? `<button type="button" class="btn red" data-est-action="set-estimate-status" data-est-id="${Number(item.id)}" data-est-status="rejected">Reject</button>` : ""}
+      ${isApproved ? `<button type="button" class="btn gray" data-est-action="convert-estimate-client" data-est-id="${Number(item.id)}">Convert to Client</button>` : ""}
+      ${isApproved ? `<button type="button" class="btn primary" data-est-action="convert-estimate-job" data-est-id="${Number(item.id)}">Convert to Job</button>` : ""}
+      ${isConvertedEstimate && item.converted_client_id ? `<button type="button" class="btn gray" data-est-action="navigate-client" data-est-client-id="${escapeHtml(String(item.converted_client_id))}">Open Client</button>` : ""}
+      ${isConvertedEstimate && item.converted_job_id ? `<button type="button" class="btn primary" data-est-action="navigate-job" data-est-job-id="${escapeHtml(String(item.converted_job_id))}">Open Job</button>` : ""}
+      ${canDeleteRecords() ? `<button type="button" class="btn red" data-est-action="delete-estimate" data-est-id="${Number(item.id)}">Delete</button>` : ""}
+      <button type="button" class="btn red" data-est-action="archive-estimate" data-est-id="${Number(item.id)}">Archive</button>
     </div>
   </div>`;
 }
@@ -1174,8 +1174,8 @@ async function saveEstimate(event){
   }
 }
 
-async function convertLeadToEstimate(id){
-  const restoreButton = setButtonLoading(event && event.target ? event.target : null, "Converting...");
+async function convertLeadToEstimate(id, ev){
+  const restoreButton = setButtonLoading(ev && ev.target ? ev.target : null, "Converting...");
 
   try {
     const res = await apiFetch(API + "/workflow/leads/" + id + "/convert-to-estimate", { method: "POST" });
@@ -1193,8 +1193,8 @@ async function convertLeadToEstimate(id){
   }
 }
 
-async function convertLeadToClient(id){
-  const restoreButton = setButtonLoading(event && event.target ? event.target : null, "Converting...");
+async function convertLeadToClient(id, ev){
+  const restoreButton = setButtonLoading(ev && ev.target ? ev.target : null, "Converting...");
 
   try {
     const res = await apiFetch(API + "/workflow/leads/" + id + "/convert-to-client", { method: "POST" });
@@ -1227,8 +1227,8 @@ function openConvertEstimateJob(id){
   if(item) openConvertToJob(item, "estimate");
 }
 
-async function submitConvertToJob(){
-  const restoreButton = setButtonLoading(event && event.target ? event.target : null, "Creating...");
+async function submitConvertToJob(ev){
+  const restoreButton = setButtonLoading(ev && ev.target ? ev.target : null, "Creating...");
 
   try {
     if(!converting || !converting.id || !converting.type){
@@ -1276,8 +1276,8 @@ async function submitConvertToJob(){
   }
 }
 
-async function setEstimateStatus(id, status){
-  const restoreButton = setButtonLoading(event && event.target ? event.target : null, "Updating...");
+async function setEstimateStatus(id, status, ev){
+  const restoreButton = setButtonLoading(ev && ev.target ? ev.target : null, "Updating...");
 
   try {
     const estimate = estimates.find(item => Number(item.id) === Number(id));
@@ -1302,8 +1302,8 @@ async function setEstimateStatus(id, status){
   }
 }
 
-async function convertEstimateToClient(id){
-  const restoreButton = setButtonLoading(event && event.target ? event.target : null, "Converting...");
+async function convertEstimateToClient(id, ev){
+  const restoreButton = setButtonLoading(ev && ev.target ? ev.target : null, "Converting...");
 
   try {
     const res = await apiFetch(API + "/workflow/estimates/" + id + "/convert-to-client", { method: "POST" });
@@ -1433,6 +1433,58 @@ async function confirmDelete(event){
     restoreButton();
   }
 }
+
+document.getElementById("newLeadButton").addEventListener("click", () => openLeadModal());
+document.getElementById("leadTab").addEventListener("click", () => setTab("leads"));
+document.getElementById("estimateTab").addEventListener("click", () => setTab("estimates"));
+
+document.getElementById("filterBar").addEventListener("click", function(ev){
+  const chip = ev.target.closest("[data-est-filter]");
+  if(!chip || !document.getElementById("filterBar").contains(chip)) return;
+  setFilter(chip.getAttribute("data-est-filter"));
+});
+
+document.getElementById("list").addEventListener("click", function(e){
+  const btn = e.target.closest("[data-est-action]");
+  if(!btn || !document.getElementById("list").contains(btn)) return;
+  const action = btn.getAttribute("data-est-action");
+  const id = btn.getAttribute("data-est-id");
+  switch(action){
+    case "edit-lead": openLeadModalById(Number(id)); break;
+    case "convert-lead-to-estimate": void convertLeadToEstimate(Number(id), e); break;
+    case "convert-lead-to-client": void convertLeadToClient(Number(id), e); break;
+    case "navigate-client": {
+      const cid = btn.getAttribute("data-est-client-id");
+      if(cid) window.top.location.href = "/client.html?id=" + encodeURIComponent(cid);
+      break;
+    }
+    case "delete-lead": deleteLead(Number(id)); break;
+    case "archive-lead": archiveLead(Number(id)); break;
+    case "edit-estimate": openEstimateModalById(Number(id)); break;
+    case "set-estimate-status": void setEstimateStatus(Number(id), btn.getAttribute("data-est-status"), e); break;
+    case "convert-estimate-client": void convertEstimateToClient(Number(id), e); break;
+    case "convert-estimate-job": openConvertEstimateJob(Number(id)); break;
+    case "navigate-job": {
+      const jid = btn.getAttribute("data-est-job-id");
+      if(jid) window.top.location.href = "/jobs.html?job_id=" + encodeURIComponent(jid);
+      break;
+    }
+    case "delete-estimate": deleteEstimate(Number(id)); break;
+    case "archive-estimate": archiveEstimate(Number(id)); break;
+    default: break;
+  }
+});
+
+document.getElementById("btnSaveLead").addEventListener("click", saveLead);
+document.getElementById("btnCancelLeadModal").addEventListener("click", () => closeModal("leadModal"));
+document.getElementById("btnSaveEstimate").addEventListener("click", saveEstimate);
+document.getElementById("btnCancelEstimateModal").addEventListener("click", () => closeModal("estimateModal"));
+document.getElementById("btnSubmitConvertJob").addEventListener("click", submitConvertToJob);
+document.getElementById("btnCancelConvertJobModal").addEventListener("click", () => closeModal("convertJobModal"));
+document.getElementById("btnCancelArchiveModal").addEventListener("click", closeArchiveModal);
+document.getElementById("btnConfirmArchive").addEventListener("click", confirmArchive);
+document.getElementById("btnCancelDeleteModal").addEventListener("click", closeDeleteModal);
+document.getElementById("btnConfirmDelete").addEventListener("click", confirmDelete);
 
 document.getElementById("searchInput").addEventListener("input", render);
 

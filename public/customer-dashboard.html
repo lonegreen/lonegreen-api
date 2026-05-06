@@ -44,16 +44,16 @@
       <h1>Customer Portal</h1>
       <p id="welcome">Loading...</p>
     </div>
-    <button class="btn gray" onclick="logout()">Log Out</button>
+    <button type="button" class="btn gray" data-customer-action="logout">Log Out</button>
   </div>
   <div class="panel no-print" id="companyBox">Loading company contact...</div>
-  <div class="tabs no-print">
-    <button class="tab active" onclick="showTab('overview', this)">Overview</button>
-    <button class="tab" onclick="showTab('estimates', this)">Estimates</button>
-    <button class="tab" onclick="showTab('invoices', this)">Invoices</button>
-    <button class="tab" onclick="showTab('jobs', this)">Jobs</button>
-    <button class="tab" onclick="showTab('subscriptions', this)">Subscriptions</button>
-    <button class="tab" onclick="showTab('serviceRequest', this)">Service Request</button>
+  <div class="tabs no-print" id="customerPortalTabs">
+    <button type="button" class="tab active" data-customer-tab="overview">Overview</button>
+    <button type="button" class="tab" data-customer-tab="estimates">Estimates</button>
+    <button type="button" class="tab" data-customer-tab="invoices">Invoices</button>
+    <button type="button" class="tab" data-customer-tab="jobs">Jobs</button>
+    <button type="button" class="tab" data-customer-tab="subscriptions">Subscriptions</button>
+    <button type="button" class="tab" data-customer-tab="serviceRequest">Service Request</button>
   </div>
   <div id="overview" class="section active no-print"></div>
   <div id="estimates" class="section no-print"></div>
@@ -103,12 +103,12 @@ function renderOverview(){
 function renderEstimates(){
   const items = state.estimates || [];
   document.getElementById("estimates").innerHTML = items.length ? items.map(item => {
-    const decisionButtons = item.status === "converted" ? "" : '<button class="btn" onclick="setEstimateStatus(' + item.id + ', \'approve\')">Approve</button><button class="btn danger" onclick="setEstimateStatus(' + item.id + ', \'reject\')">Reject</button>';
+    const decisionButtons = item.status === "converted" ? "" : '<button type="button" class="btn" data-customer-action="estimate-decision" data-customer-estimate-id="' + item.id + '" data-customer-decision="approve">Approve</button><button type="button" class="btn danger" data-customer-action="estimate-decision" data-customer-estimate-id="' + item.id + '" data-customer-decision="reject">Reject</button>';
     return card(
       item.service || "Estimate",
       ["Visit: " + date(item.visit_date), "Quoted: " + money(item.quoted_price), esc(item.notes || "")],
       item.status,
-      decisionButtons + '<button class="btn gray" onclick="downloadPdf(\'/customer/estimates/' + item.id + '/pdf\', \'estimate-' + item.id + '.pdf\')">PDF</button>'
+      decisionButtons + '<button type="button" class="btn gray" data-customer-action="download-pdf" data-customer-pdf-path="/customer/estimates/' + item.id + '/pdf" data-customer-pdf-file="estimate-' + item.id + '.pdf">PDF</button>'
     );
   }).join("") : '<div class="panel">No estimates yet.</div>';
 }
@@ -118,7 +118,7 @@ function renderInvoices(){
     item.invoice_number || ("Invoice #" + item.id),
     ["Issued: " + date(item.issued_date), "Due: " + date(item.due_date), "Total: " + money(item.amount), "Remaining: " + money(item.remaining_balance)],
     item.status,
-    '<button class="btn" onclick="downloadPdf(\'/customer/invoices/' + item.id + '/pdf\', \'invoice-' + item.id + '.pdf\')">PDF</button><button class="btn gray" onclick="printInvoice(' + item.id + ')">Print View</button>'
+    '<button type="button" class="btn" data-customer-action="download-pdf" data-customer-pdf-path="/customer/invoices/' + item.id + '/pdf" data-customer-pdf-file="invoice-' + item.id + '.pdf">PDF</button><button type="button" class="btn gray" data-customer-action="print-invoice" data-customer-invoice-id="' + item.id + '">Print View</button>'
   )).join("") : '<div class="panel">No invoices yet.</div>';
 }
 function renderJobs(){
@@ -141,12 +141,14 @@ function renderSubscriptions(){
 }
 function renderServiceRequest(){
   document.getElementById("serviceRequest").innerHTML =
-    '<div class="panel"><form class="form-grid" onsubmit="submitServiceRequest(event)">' +
+    '<div class="panel"><form class="form-grid" id="customerServiceRequestForm">' +
     '<label>Service<input id="requestService" required placeholder="What service do you need?"></label>' +
     '<label>Preferred Date<input id="requestDate" type="date"></label>' +
     '<label>Notes<textarea id="requestNotes" placeholder="Add helpful details"></textarea></label>' +
     '<div class="actions"><button class="btn" type="submit">Send Request</button></div>' +
     '</form></div>';
+  const form = document.getElementById("customerServiceRequestForm");
+  if(form) form.addEventListener("submit", submitServiceRequest);
 }
 function renderCompany(){
   const c = state.company || {};
@@ -228,6 +230,34 @@ async function load(){
     AppUI.setLoading(false);
   }
 }
+
+document.getElementById("customerPortalTabs").addEventListener("click", function(ev){
+  const tab = ev.target.closest("[data-customer-tab]");
+  if(!tab || !document.getElementById("customerPortalTabs").contains(tab)) return;
+  showTab(tab.getAttribute("data-customer-tab"), tab);
+});
+
+document.querySelector(".page").addEventListener("click", function(ev){
+  const btn = ev.target.closest("[data-customer-action]");
+  if(!btn || !document.querySelector(".page").contains(btn)) return;
+  const action = btn.getAttribute("data-customer-action");
+  if(action === "logout"){
+    logout();
+    return;
+  }
+  if(action === "estimate-decision"){
+    void setEstimateStatus(btn.getAttribute("data-customer-estimate-id"), btn.getAttribute("data-customer-decision"));
+    return;
+  }
+  if(action === "download-pdf"){
+    void downloadPdf(btn.getAttribute("data-customer-pdf-path"), btn.getAttribute("data-customer-pdf-file"));
+    return;
+  }
+  if(action === "print-invoice"){
+    void printInvoice(Number(btn.getAttribute("data-customer-invoice-id")));
+  }
+});
+
 load();
 </script>
 </body>

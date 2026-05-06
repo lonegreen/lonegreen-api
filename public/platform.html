@@ -541,16 +541,16 @@
   </style>
 </head>
 <body>
-<div class="page">
+<div class="page" id="platformRoot">
   <header class="hero">
     <div>
       <h1 id="pageTitle">Platform Command Center</h1>
       <p id="pageSubtitle">Manage companies, plans, usage, payments, and platform health.</p>
     </div>
     <div class="top-actions">
-      <button class="btn" type="button" onclick="loadCurrentSection()">Refresh</button>
-      <button class="btn secondary" type="button" onclick="navigateSection('billing')">Billing & Subscriptions</button>
-      <button class="btn secondary" type="button" onclick="goControl()">Back to Control Panel</button>
+      <button class="btn" type="button" data-top-action="refresh">Refresh</button>
+      <button class="btn secondary" type="button" data-top-action="nav-billing">Billing & Subscriptions</button>
+      <button class="btn secondary" type="button" data-top-action="control">Back to Control Panel</button>
     </div>
   </header>
 
@@ -599,10 +599,10 @@
           </div>
           <div class="toolbar">
             <label>Search
-              <input id="searchInput" placeholder="Company, email, or phone" oninput="renderCompanies()">
+              <input id="searchInput" placeholder="Company, email, or phone">
             </label>
             <label>Plan
-              <select id="planFilter" onchange="renderCompanies()">
+              <select id="planFilter">
                 <option value="">All plans</option>
                 <option value="starter">Starter</option>
                 <option value="pro">Pro</option>
@@ -610,7 +610,7 @@
               </select>
             </label>
             <label>Billing Status
-              <select id="statusFilter" onchange="renderCompanies()">
+              <select id="statusFilter">
                 <option value="">All statuses</option>
                 <option value="trial">Trial</option>
                 <option value="active">Active</option>
@@ -620,7 +620,7 @@
               </select>
             </label>
             <label>Sort
-              <select id="sortSelect" onchange="renderCompanies()">
+              <select id="sortSelect">
                 <option value="newest">Newest</option>
                 <option value="users">Users</option>
                 <option value="clients">Clients</option>
@@ -661,7 +661,7 @@
         <div class="panel">
           <div class="section-head">
             <h2>Plans & Billing</h2>
-            <button class="btn secondary" type="button" onclick="evaluateBillingSuspensions()">Evaluate grace periods</button>
+            <button class="btn secondary" type="button" id="evaluateBillingSuspensionsBtn">Evaluate grace periods</button>
           </div>
           <div class="mini-grid" id="billingSummary">
             <div class="state">Loading billing summary...</div>
@@ -764,12 +764,12 @@
         </div>
       </div>
       <div class="tabs" id="detailTabs">
-        <button class="tab active" type="button" onclick="setDetailTab('overview')">Overview</button>
-        <button class="tab" type="button" onclick="setDetailTab('billing')">Billing</button>
-        <button class="tab" type="button" onclick="setDetailTab('users')">Users</button>
-        <button class="tab" type="button" onclick="setDetailTab('jobs')">Jobs</button>
-        <button class="tab" type="button" onclick="setDetailTab('invoices')">Invoices</button>
-        <button class="tab" type="button" onclick="setDetailTab('activity')">Activity</button>
+        <button class="tab active" type="button" data-detail-tab="overview">Overview</button>
+        <button class="tab" type="button" data-detail-tab="billing">Billing</button>
+        <button class="tab" type="button" data-detail-tab="users">Users</button>
+        <button class="tab" type="button" data-detail-tab="jobs">Jobs</button>
+        <button class="tab" type="button" data-detail-tab="invoices">Invoices</button>
+        <button class="tab" type="button" data-detail-tab="activity">Activity</button>
       </div>
       <div id="drawerBody" class="drawer-body">
         <div class="state">No company selected.</div>
@@ -1131,7 +1131,7 @@ function renderCompanies(){
   document.getElementById("companyCount").textContent = rows.length + (rows.length === 1 ? " company" : " companies");
 
   document.getElementById("companiesTable").innerHTML = rows.length ? rows.map(row =>
-    '<tr class="' + (String(row.id) === String(selectedCompanyId) ? "selected" : "") + '" onclick="loadCompany(' + Number(row.id) + ')">' +
+    '<tr class="' + (String(row.id) === String(selectedCompanyId) ? "selected" : "") + '" data-company-id="' + esc(String(row.id)) + '">' +
       '<td>' + companyTitle(row) + '</td>' +
       '<td>' + badge(row.plan || "starter") + '</td>' +
       '<td>' + badge(row.billing_status || "trial") + '</td>' +
@@ -1143,13 +1143,13 @@ function renderCompanies(){
       '<td>' + num(row.invoices_count) + '</td>' +
       '<td>' + money(row.payments_total) + '</td>' +
       '<td>' + num(row.active_subscriptions_count) + '</td>' +
-      '<td><button class="btn secondary" type="button" onclick="event.stopPropagation(); loadCompany(' + Number(row.id) + ')">View Details</button></td>' +
+      '<td><button class="btn secondary" type="button">View Details</button></td>' +
     '</tr>'
   ).join("") : '<tr><td colspan="12">No companies match the current filters.</td></tr>';
 
   document.getElementById("companiesCards").innerHTML = rows.length ? rows.map(row =>
     '<article class="company-card ' + (String(row.id) === String(selectedCompanyId) ? "selected" : "") + '">' +
-      '<div class="company-card-head"><div>' + companyTitle(row) + '</div><button class="btn secondary" type="button" onclick="loadCompany(' + Number(row.id) + ')">View</button></div>' +
+      '<div class="company-card-head"><div>' + companyTitle(row) + '</div><button class="btn secondary" type="button" data-company-id="' + esc(String(row.id)) + '">View</button></div>' +
       '<div>' + badge(row.plan || "starter") + ' ' + badge(row.billing_status || "trial") + ' ' + platformCell(row) + ' ' + warningBadges(row) + '</div>' +
       '<div class="mini-grid">' +
         metric("Users", num(row.users_count)) +
@@ -1212,7 +1212,7 @@ function renderBillingTable(){
   const rows = mergedCompanies();
   document.getElementById("billingCount").textContent = rows.length + (rows.length === 1 ? " company" : " companies");
   document.getElementById("billingTable").innerHTML = rows.length ? rows.map(row =>
-    '<tr class="' + (String(row.id) === String(selectedCompanyId) ? "selected" : "") + '" onclick="loadCompany(' + Number(row.id) + ')">' +
+    '<tr class="' + (String(row.id) === String(selectedCompanyId) ? "selected" : "") + '" data-company-id="' + esc(String(row.id)) + '">' +
       '<td>' + companyTitle(row) + '</td>' +
       '<td>' + badge(row.plan || "starter") + '</td>' +
       '<td>' + badge(row.billing_status || "trial") + '</td>' +
@@ -1222,7 +1222,7 @@ function renderBillingTable(){
       '<td>' + num(row.users_count) + '</td>' +
       '<td>' + num(row.clients_count) + '</td>' +
       '<td>' + num(row.usage && row.usage.jobs_this_month != null ? row.usage.jobs_this_month : 0) + '</td>' +
-      '<td><button class="btn secondary" type="button" onclick="event.stopPropagation(); loadCompany(' + Number(row.id) + ')">View Company</button></td>' +
+      '<td><button class="btn secondary" type="button">View Company</button></td>' +
     '</tr>'
   ).join("") : '<tr><td colspan="10">No billing records found.</td></tr>';
 }
@@ -1358,7 +1358,7 @@ async function loadSettings(){
 function setDetailTab(tab){
   detailTab = tab;
   document.querySelectorAll("#detailTabs .tab").forEach(item => {
-    item.classList.toggle("active", item.textContent.trim().toLowerCase() === tab);
+    item.classList.toggle("active", item.dataset.detailTab === tab);
   });
   renderDrawer();
 }
@@ -1645,7 +1645,7 @@ function renderDrawer(){
   if(detailTab === "billing"){
     const c = data.company || {};
     body.innerHTML =
-      '<form class="billing-form" id="platformBillingForm" onsubmit="submitCompanyBilling(event)">' +
+      '<form class="billing-form" id="platformBillingForm">' +
         '<label style="grid-column:1/-1">Plan<select id="pfPlan">' + billingPlanOptions(c.plan) + '</select></label>' +
         '<label style="grid-column:1/-1">Billing status<select id="pfStatus">' + billingStatusOptions(c.billing_status) + '</select></label>' +
         '<label style="grid-column:1/-1">Trial ends (local)<input id="pfTrial" type="datetime-local" value="' + esc(toDatetimeLocalValue(c.trial_ends_at)) + '" /></label>' +
@@ -1653,23 +1653,23 @@ function renderDrawer(){
         '<label style="grid-column:1/-1">Failure reason<input id="pfFailureReason" type="text" value="' + esc(c.billing_failure_reason || "") + '" /></label>' +
         '<button class="btn" type="submit">Save billing</button>' +
         '<div style="grid-column:1/-1;display:flex;gap:8px;flex-wrap:wrap;">' +
-          '<button type="button" class="btn secondary" onclick="billingQuick(\'suspend\')">Suspend billing</button>' +
-          '<button type="button" class="btn secondary" onclick="billingQuick(\'active\')">Activate / reactivate</button>' +
-          '<button type="button" class="btn secondary" onclick="billingQuick(\'grace7\')">Grace +7 days</button>' +
-          '<button type="button" class="btn secondary" onclick="billingQuick(\'trial14\')">Trial +14 days</button>' +
+          '<button type="button" class="btn secondary" data-billing-quick="suspend">Suspend billing</button>' +
+          '<button type="button" class="btn secondary" data-billing-quick="active">Activate / reactivate</button>' +
+          '<button type="button" class="btn secondary" data-billing-quick="grace7">Grace +7 days</button>' +
+          '<button type="button" class="btn secondary" data-billing-quick="trial14">Trial +14 days</button>' +
         '</div>' +
         '<h4 style="grid-column:1/-1;margin:12px 0 4px;">Platform suspension</h4>' +
         '<p style="grid-column:1/-1;margin:0;color:var(--muted);font-size:12px;line-height:1.45;">Blocks company staff from creating, updating, or deleting data (reads still allowed). Separate from billing suspension.</p>' +
         '<div style="grid-column:1/-1;display:flex;gap:8px;flex-wrap:wrap;align-items:center;">' +
-          '<button type="button" class="btn secondary" onclick="platformSuspendCompany()">Suspend company (platform)</button>' +
-          '<button type="button" class="btn secondary" onclick="platformUnsuspendCompany()">Unsuspend company</button>' +
+          '<button type="button" class="btn secondary" data-billing-admin="platform-suspend">Suspend company (platform)</button>' +
+          '<button type="button" class="btn secondary" data-billing-admin="platform-unsuspend">Unsuspend company</button>' +
         '</div>' +
         '<h4 style="grid-column:1/-1;margin:12px 0 4px;">Manual overrides</h4>' +
         '<div style="grid-column:1/-1;display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;">' +
           '<label>Extend trial (days)<input id="pfExtendDays" type="number" min="1" max="3650" value="7" style="max-width:100px;margin-left:6px;" /></label>' +
-          '<button type="button" class="btn secondary" onclick="billingExtendTrialDays()">Apply extension</button>' +
-          '<button type="button" class="btn secondary" onclick="billingClearFlags()">Clear billing flags</button>' +
-          '<button type="button" class="btn secondary" onclick="billingPlatformUnlock()">Platform unlock</button>' +
+          '<button type="button" class="btn secondary" data-billing-admin="extend-trial">Apply extension</button>' +
+          '<button type="button" class="btn secondary" data-billing-admin="clear-flags">Clear billing flags</button>' +
+          '<button type="button" class="btn secondary" data-billing-admin="platform-unlock">Platform unlock</button>' +
         '</div>' +
       '</form>' +
       '<div class="list" style="margin-top:12px;">' +
@@ -1722,7 +1722,7 @@ async function loadCompany(id){
     renderDrawer();
     selectedCompanyDetail = await apiFetch("/platform/companies/" + encodeURIComponent(id));
     detailTab = tabBefore === "billing" ? "billing" : "overview";
-    document.querySelectorAll("#detailTabs .tab").forEach(item => item.classList.toggle("active", item.textContent.trim().toLowerCase() === detailTab));
+    document.querySelectorAll("#detailTabs .tab").forEach(item => item.classList.toggle("active", item.dataset.detailTab === detailTab));
   } catch(err) {
     reportUiError(err, "Unable to load company detail.");
     document.getElementById("drawerBody").innerHTML = '<div class="state error">' + esc(err.message || "Unable to load company detail.") + '</div>';
@@ -1794,6 +1794,78 @@ async function loadCurrentSection(){
   }
 }
 
+function initPlatformEventBindings(){
+  document.getElementById("platformRoot").addEventListener("click", function(e){
+    const top = e.target.closest("[data-top-action]");
+    if(!top) return;
+    const action = top.getAttribute("data-top-action");
+    if(action === "refresh") loadCurrentSection();
+    else if(action === "nav-billing") navigateSection("billing");
+    else if(action === "control") goControl();
+  });
+
+  document.getElementById("searchInput").addEventListener("input", renderCompanies);
+  document.getElementById("planFilter").addEventListener("change", renderCompanies);
+  document.getElementById("statusFilter").addEventListener("change", renderCompanies);
+  document.getElementById("sortSelect").addEventListener("change", renderCompanies);
+
+  document.getElementById("evaluateBillingSuspensionsBtn").addEventListener("click", function(){
+    evaluateBillingSuspensions();
+  });
+
+  document.getElementById("detailTabs").addEventListener("click", function(e){
+    const tabBtn = e.target.closest("[data-detail-tab]");
+    if(!tabBtn) return;
+    setDetailTab(tabBtn.getAttribute("data-detail-tab"));
+  });
+
+  document.getElementById("companiesTable").addEventListener("click", function(e){
+    const tr = e.target.closest("tr[data-company-id]");
+    if(!tr) return;
+    if(e.target.closest("button")) e.stopPropagation();
+    const id = tr.getAttribute("data-company-id");
+    if(id) loadCompany(Number(id));
+  });
+
+  document.getElementById("companiesCards").addEventListener("click", function(e){
+    const btn = e.target.closest("button[data-company-id]");
+    if(!btn) return;
+    const id = btn.getAttribute("data-company-id");
+    if(id) loadCompany(Number(id));
+  });
+
+  document.getElementById("billingTable").addEventListener("click", function(e){
+    const tr = e.target.closest("tr[data-company-id]");
+    if(!tr) return;
+    if(e.target.closest("button")) e.stopPropagation();
+    const id = tr.getAttribute("data-company-id");
+    if(id) loadCompany(Number(id));
+  });
+
+  const drawerBody = document.getElementById("drawerBody");
+  drawerBody.addEventListener("submit", function(e){
+    if(e.target && e.target.id === "platformBillingForm"){
+      submitCompanyBilling(e);
+    }
+  });
+
+  drawerBody.addEventListener("click", function(e){
+    const quick = e.target.closest("[data-billing-quick]");
+    if(quick){
+      billingQuick(quick.getAttribute("data-billing-quick"));
+      return;
+    }
+    const admin = e.target.closest("[data-billing-admin]");
+    if(!admin) return;
+    const kind = admin.getAttribute("data-billing-admin");
+    if(kind === "platform-suspend") platformSuspendCompany();
+    else if(kind === "platform-unsuspend") platformUnsuspendCompany();
+    else if(kind === "extend-trial") billingExtendTrialDays();
+    else if(kind === "clear-flags") billingClearFlags();
+    else if(kind === "platform-unlock") billingPlatformUnlock();
+  });
+}
+
 window.addEventListener("hashchange", () => {
   try {
     showSection(sectionFromHash());
@@ -1805,6 +1877,7 @@ window.addEventListener("hashchange", () => {
 
 document.addEventListener("DOMContentLoaded", () => {
   if(!requirePlatform()) return;
+  initPlatformEventBindings();
   if(!location.hash) location.hash = "overview";
   try {
     showSection(sectionFromHash());

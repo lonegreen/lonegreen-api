@@ -400,10 +400,10 @@
 
   <div class="panel toolbar">
     <div class="filter-row">
-      <button class="filter-chip active" id="filter-all" onclick="setFilter('all')">All</button>
-      <button class="filter-chip" id="filter-unpaid" onclick="setFilter('unpaid')">Unpaid</button>
-      <button class="filter-chip" id="filter-paid" onclick="setFilter('paid')">Paid</button>
-      <button class="filter-chip" id="filter-overdue" onclick="setFilter('overdue')">Overdue</button>
+      <button type="button" class="filter-chip active" id="filter-all">All</button>
+      <button type="button" class="filter-chip" id="filter-unpaid">Unpaid</button>
+      <button type="button" class="filter-chip" id="filter-paid">Paid</button>
+      <button type="button" class="filter-chip" id="filter-overdue">Overdue</button>
     </div>
 
     <div class="summary">
@@ -577,10 +577,10 @@ function render(){
       </div>
 
       <div class="actions">
-        <button class="btn gray" onclick="openEditInvoice(${Number(invoice.id)})">Edit</button>
-        ${invoice.status === "cancelled" ? "" : `<button class="btn red" onclick="setInvoiceStatus(${Number(invoice.id)}, 'cancelled', this)">Void / Cancel</button>`}
-        <button class="btn primary" onclick="window.open('/invoice.html?id=${encodeURIComponent(invoice.id)}', '_blank')">Open Invoice</button>
-        ${canDeleteInvoices() ? `<button class="btn red" onclick="openDeleteInvoice(${Number(invoice.id)})">Delete</button>` : ""}
+        <button type="button" class="btn gray" data-invoice-action="edit" data-invoice-id="${Number(invoice.id)}">Edit</button>
+        ${invoice.status === "cancelled" ? "" : `<button type="button" class="btn red" data-invoice-action="void" data-invoice-id="${Number(invoice.id)}">Void / Cancel</button>`}
+        <button type="button" class="btn primary" data-invoice-action="open" data-invoice-id="${Number(invoice.id)}">Open Invoice</button>
+        ${canDeleteInvoices() ? `<button type="button" class="btn red" data-invoice-action="delete" data-invoice-id="${Number(invoice.id)}">Delete</button>` : ""}
       </div>
     </div>
   `).join("");
@@ -830,7 +830,33 @@ document.addEventListener("keydown", event => {
   }
 });
 
-load();
+function handleInvoiceListClick(ev){
+  const btn = ev.target.closest("[data-invoice-action]");
+  if(!btn) return;
+  const id = Number(btn.getAttribute("data-invoice-id"));
+  const act = btn.getAttribute("data-invoice-action");
+  if(act === "edit") openEditInvoice(id);
+  else if(act === "void") setInvoiceStatus(id, "cancelled", btn);
+  else if(act === "open") window.open("/invoice.html?id=" + encodeURIComponent(id), "_blank");
+  else if(act === "delete") openDeleteInvoice(id);
+}
+
+function bindInvoicesUiHandlers(){
+  document.getElementById("filter-all").addEventListener("click", () => setFilter("all"));
+  document.getElementById("filter-unpaid").addEventListener("click", () => setFilter("unpaid"));
+  document.getElementById("filter-paid").addEventListener("click", () => setFilter("paid"));
+  document.getElementById("filter-overdue").addEventListener("click", () => setFilter("overdue"));
+  document.getElementById("list").addEventListener("click", handleInvoiceListClick);
+  document.getElementById("saveInvoiceEditBtn").addEventListener("click", e => saveInvoiceEdit(e.currentTarget));
+  document.getElementById("cancelInvoiceEditBtn").addEventListener("click", () => closeEditInvoice());
+  document.getElementById("cancelDeleteInvoiceBtn").addEventListener("click", () => closeDeleteInvoice());
+  document.getElementById("confirmDeleteInvoiceBtn").addEventListener("click", e => confirmDeleteInvoice(e.currentTarget));
+}
+
+document.addEventListener("DOMContentLoaded", function(){
+  bindInvoicesUiHandlers();
+  load();
+});
 </script>
 
 <div id="invoiceEditModal" class="modal">
@@ -866,8 +892,8 @@ load();
     </div>
 
     <div class="modal-actions">
-      <button class="btn primary" onclick="saveInvoiceEdit(this)">Save</button>
-      <button class="btn gray" onclick="closeEditInvoice()">Cancel</button>
+      <button type="button" class="btn primary" id="saveInvoiceEditBtn">Save</button>
+      <button type="button" class="btn gray" id="cancelInvoiceEditBtn">Cancel</button>
     </div>
   </div>
 </div>
@@ -877,8 +903,8 @@ load();
     <h3>Delete Invoice</h3>
     <p>This will safely archive, cancel, deactivate, or delete only when safe.</p>
     <div class="modal-actions">
-      <button class="btn gray" onclick="closeDeleteInvoice()">Cancel</button>
-      <button class="btn red" onclick="confirmDeleteInvoice(this)">Delete</button>
+      <button type="button" class="btn gray" id="cancelDeleteInvoiceBtn">Cancel</button>
+      <button type="button" class="btn red" id="confirmDeleteInvoiceBtn">Delete</button>
     </div>
   </div>
 </div>
