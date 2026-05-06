@@ -10,79 +10,168 @@
     body {
       margin: 0;
       font-family: Arial, sans-serif;
-      background: linear-gradient(180deg, #eef4f0 0%, #f7faf8 180px, #eef4f0 100%);
+      background: #eef4f0;
       color: #163328;
+      padding: 24px;
     }
 
     .page {
-      max-width: 1080px;
-      margin: 24px auto;
+      max-width: 1120px;
+      margin: 0 auto;
       background: rgba(255,255,255,0.98);
-      border-radius: 20px;
+      border-radius: 8px;
       box-shadow: 0 18px 42px rgba(16,24,40,0.08);
       overflow: hidden;
       border: 1px solid #dbe8df;
     }
 
     .header {
-      padding: 28px;
-      background: linear-gradient(135deg, #0f2e1c, #1f5c3a);
-      color: white;
-      display: flex;
-      justify-content: space-between;
-      gap: 20px;
-      flex-wrap: wrap;
+      padding: 30px 34px;
+      background: #ffffff;
+      color: #173327;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(260px, auto);
+      gap: 28px;
+      border-bottom: 1px solid #dce8e1;
+      align-items: start;
     }
 
     .header h1 {
-      margin: 0 0 6px;
-      font-size: 32px;
+      margin: 0 0 10px;
+      font-size: 42px;
       letter-spacing: -0.03em;
+      color: #10291f;
     }
 
     #invoiceNumber {
-      opacity: .92;
-      font-weight: 700;
+      color: #60766b;
+      font-weight: 800;
     }
 
     #companyBlock {
       line-height: 1.55;
-      opacity: .96;
+      color: #334d43;
+    }
+
+    .brand-wrap {
+      display: flex;
+      gap: 16px;
+      align-items: flex-start;
+      min-width: 0;
+    }
+
+    .brand-copy {
+      min-width: 0;
+    }
+
+    .brand-name {
+      font-size: 24px;
+      font-weight: 900;
+      color: #10291f;
+      line-height: 1.2;
+      margin-bottom: 8px;
+      word-break: break-word;
+    }
+
+    .brand-lines,
+    .client-lines,
+    .detail-lines {
+      color: #587067;
+      line-height: 1.6;
+      word-break: break-word;
+    }
+
+    .brand-logo {
+      display: block;
+      width: 96px;
+      max-width: 96px;
+      max-height: 72px;
+      object-fit: contain;
+      border: 1px solid #dce8e1;
+      border-radius: 8px;
+      padding: 8px;
+      background: white;
+      flex: 0 0 auto;
+    }
+
+    .invoice-head {
+      text-align: right;
+      display: grid;
+      gap: 10px;
+      justify-items: end;
+    }
+
+    .invoice-meta {
+      display: grid;
+      gap: 6px;
+      min-width: 240px;
+    }
+
+    .meta-row,
+    .total-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 18px;
+      align-items: baseline;
+    }
+
+    .meta-row span,
+    .total-row span {
+      color: #60766b;
+      font-size: 13px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .meta-row strong,
+    .total-row strong {
+      color: #173327;
+      text-align: right;
     }
 
     .badge {
       display: inline-flex;
       align-items: center;
-      padding: 8px 12px;
+      justify-content: center;
+      padding: 8px 11px;
       border-radius: 999px;
       font-size: 12px;
       font-weight: 800;
       text-transform: uppercase;
-      letter-spacing: 0.05em;
+      letter-spacing: 0.04em;
+      background: #eef2f0;
+      color: #4b6358;
     }
 
-    .paid-badge {
-      background: #d7f7e3;
-      color: #166534;
-      margin-bottom: 10px;
-    }
+    .status-draft { background: #eef2f0; color: #4b6358; }
+    .status-sent { background: #eff6ff; color: #175cd3; }
+    .status-unpaid { background: #fff7ed; color: #c2410c; }
+    .status-partially_paid { background: #fff7df; color: #9a5b05; }
+    .status-paid { background: #ecfdf3; color: #027a48; }
+    .status-overdue { background: #fef2f2; color: #b42318; }
+    .status-cancelled { background: #f1f5f3; color: #6b7280; }
 
     .body {
-      padding: 28px;
+      padding: 30px 34px 24px;
     }
 
     .grid {
       display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 18px;
-      margin-bottom: 22px;
+      grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+
+    .grid.three {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
     }
 
     .box {
       border: 1px solid #dce8e1;
-      border-radius: 16px;
-      padding: 16px;
-      background: #f8fbf9;
+      border-radius: 8px;
+      padding: 16px 17px;
+      background: #fbfdfc;
       line-height: 1.55;
       word-break: break-word;
     }
@@ -93,7 +182,7 @@
       text-transform: uppercase;
       letter-spacing: 0.05em;
       color: #6a8278;
-      margin-bottom: 6px;
+      margin-bottom: 8px;
     }
 
     .table-wrap {
@@ -101,7 +190,7 @@
       overflow-x: auto;
       margin-bottom: 22px;
       border: 1px solid #e4ece7;
-      border-radius: 16px;
+      border-radius: 8px;
       background: white;
     }
 
@@ -131,6 +220,12 @@
       background: #f8fbf9;
     }
 
+    td.amount,
+    th.amount {
+      text-align: right;
+      white-space: nowrap;
+    }
+
     td {
       color: #173327;
       line-height: 1.45;
@@ -139,39 +234,44 @@
 
     .summary {
       display: grid;
-      grid-template-columns: 1.05fr 0.95fr;
+      grid-template-columns: minmax(0, 1.1fr) minmax(300px, 0.9fr);
       gap: 18px;
       margin-bottom: 22px;
     }
 
     .payment-box {
       border: 1px solid #dce8e1;
-      border-radius: 16px;
+      border-radius: 8px;
       padding: 18px;
       background: #f8fbf9;
     }
 
     .totals-grid {
       display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 12px;
+      gap: 8px;
     }
 
     .money-card {
       border: 1px solid #dce8e1;
-      border-radius: 16px;
-      padding: 18px;
-      background: #f8fbf9;
+      border-radius: 8px;
+      padding: 12px 14px;
+      background: white;
       min-width: 0;
     }
 
     .money-card strong {
-      display: block;
-      margin-top: 6px;
-      font-size: 28px;
+      font-size: 18px;
       color: #1f5c3a;
-      letter-spacing: -0.03em;
       word-break: break-word;
+    }
+
+    .money-card.grand {
+      background: #f1f8f4;
+      border-color: #cfe2d6;
+    }
+
+    .money-card.grand strong {
+      font-size: 24px;
     }
 
     .money-card.remaining strong {
@@ -184,15 +284,24 @@
 
     .actions {
       display: flex;
-      justify-content: flex-end;
+      justify-content: space-between;
+      align-items: center;
       gap: 10px;
-      padding: 0 28px 28px;
+      padding: 16px 34px;
+      flex-wrap: wrap;
+      background: #f8fbf9;
+      border-top: 1px solid #dce8e1;
+    }
+
+    .action-group {
+      display: flex;
+      gap: 10px;
       flex-wrap: wrap;
     }
 
     .btn {
       border: none;
-      border-radius: 12px;
+      border-radius: 8px;
       padding: 11px 16px;
       font-weight: 800;
       cursor: pointer;
@@ -335,6 +444,53 @@
       word-break: break-word;
     }
 
+    .payment-copy {
+      line-height: 1.6;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .payment-instructions {
+      border: 1px solid #dce8e1;
+      border-radius: 8px;
+      padding: 16px 17px;
+      background: #fbfdfc;
+      margin-bottom: 18px;
+    }
+
+    .payment-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 12px;
+      padding: 11px 0;
+      border-bottom: 1px solid #e4ece7;
+    }
+
+    .payment-row:last-child {
+      border-bottom: 0;
+    }
+
+    .payment-row strong {
+      color: #173327;
+    }
+
+    .payment-row span {
+      color: #60766b;
+      font-size: 13px;
+    }
+
+    .footer-message {
+      color: #587067;
+      text-align: center;
+      padding: 8px 0 0;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .muted {
+      color: #7a8d84;
+    }
+
     .empty {
       color: #6a8278;
       font-size: 14px;
@@ -355,34 +511,234 @@
       margin-bottom: 6px;
     }
 
+    /* Screen-only: Save-as-PDF hint sits next to Print (hidden when printing). */
+    .print-action-wrap {
+      display: inline-flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 6px;
+      vertical-align: middle;
+    }
+
+    .invoice-print-hint {
+      font-size: 12px;
+      font-weight: 600;
+      color: #6a8278;
+      line-height: 1.35;
+      max-width: 240px;
+      text-align: right;
+    }
+
+    @page {
+      size: letter;
+      margin: 0.5in;
+    }
+
     @media print {
+      html,
       body {
-        background: white;
+        background: #fff !important;
+        color: #111 !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        -webkit-print-color-adjust: economy;
+        print-color-adjust: economy;
       }
 
-      .page {
-        box-shadow: none;
-        margin: 0;
-        max-width: none;
-        border-radius: 0;
-        border: none;
-      }
-
-      .actions,
-      .modal {
+      /* App shell: toasts / status strip should never appear on PDF */
+      .page-status,
+      .toast-stack,
+      .page-toast {
         display: none !important;
       }
 
+      .actions,
+      .modal,
+      .invoice-print-hint {
+        display: none !important;
+      }
+
+      .page {
+        box-shadow: none !important;
+        margin: 0 !important;
+        max-width: none !important;
+        border-radius: 0 !important;
+        border: none !important;
+        background: #fff !important;
+        overflow: visible !important;
+      }
+
+      .header {
+        break-inside: avoid;
+        page-break-inside: avoid;
+        padding: 12px 0 14px !important;
+        background: #fff !important;
+        border-bottom: 1px solid #999 !important;
+      }
+
+      .header h1,
+      .brand-name {
+        color: #000 !important;
+      }
+
+      #invoiceNumber,
+      .meta-row span,
+      .meta-row strong,
+      .total-row span,
+      .total-row strong,
+      .label,
+      td,
+      th,
+      .brand-lines,
+      .client-lines,
+      .detail-lines,
+      .notes,
+      .payment-copy,
+      .footer-message,
+      .payment-row strong,
+      .payment-row span {
+        color: #111 !important;
+      }
+
+      .muted,
+      .empty {
+        color: #333 !important;
+      }
+
+      .brand-logo {
+        max-width: 72px !important;
+        max-height: 56px !important;
+        width: auto !important;
+        height: auto !important;
+        padding: 4px !important;
+        border: 1px solid #999 !important;
+        background: #fff !important;
+        box-shadow: none !important;
+      }
+
+      /* Status badge: readable when printed in grayscale */
+      .badge {
+        border: 1px solid #555 !important;
+        background: #eee !important;
+        color: #000 !important;
+        box-shadow: none !important;
+      }
+
+      .body {
+        padding: 14px 0 10px !important;
+      }
+
+      /* Bill To + Invoice Details: keep paired; three-column row may span pages on long invoices */
+      .grid:not(.three) {
+        break-inside: avoid;
+        page-break-inside: avoid;
+      }
+
+      .summary {
+        break-inside: auto;
+        page-break-inside: auto;
+      }
+
+      .totals-grid {
+        break-inside: avoid;
+        page-break-inside: avoid;
+      }
+
+      .box,
+      .payment-box,
+      .payment-instructions {
+        break-inside: avoid;
+        page-break-inside: avoid;
+        background: #fff !important;
+        border: 1px solid #999 !important;
+        box-shadow: none !important;
+      }
+
+      #notesBox {
+        break-inside: avoid;
+        page-break-inside: avoid;
+      }
+
       .table-wrap {
-        overflow: visible;
+        overflow: visible !important;
+        border: 1px solid #999 !important;
+        background: #fff !important;
+        break-inside: auto;
       }
 
       table {
-        min-width: 0;
+        min-width: 0 !important;
+        border-collapse: collapse !important;
+      }
+
+      thead {
+        display: table-header-group;
+      }
+
+      th {
+        background: #f0f0f0 !important;
+        color: #000 !important;
+        border-bottom: 1px solid #666 !important;
+      }
+
+      td {
+        border-bottom: 1px solid #ccc !important;
+      }
+
+      tbody tr:last-child td {
+        border-bottom: 1px solid #ccc !important;
+      }
+
+      tr {
+        break-inside: avoid;
+        page-break-inside: avoid;
+      }
+
+      .money-card {
+        background: #fff !important;
+        border: 1px solid #999 !important;
+        box-shadow: none !important;
+      }
+
+      .money-card strong {
+        color: #000 !important;
+      }
+
+      .money-card.grand {
+        background: #fff !important;
+        border: 2px solid #333 !important;
+      }
+
+      .money-card.remaining strong,
+      .money-card.paid strong {
+        color: #000 !important;
+      }
+
+      .payment-row {
+        border-bottom: 1px solid #ccc !important;
+      }
+
+      .footer-message {
+        break-inside: avoid;
+        page-break-inside: avoid;
+        padding-top: 10px !important;
+      }
+
+      a {
+        color: #000 !important;
+        text-decoration: underline;
+      }
+
+      .btn {
+        box-shadow: none !important;
       }
     }
 
     @media (max-width: 820px) {
+      body {
+        padding: 0;
+      }
+
       .page {
         margin: 0;
         border-radius: 0;
@@ -395,7 +751,9 @@
         padding-right: 18px;
       }
 
+      .header,
       .grid,
+      .grid.three,
       .summary,
       .totals-grid,
       .form-grid,
@@ -403,12 +761,25 @@
         grid-template-columns: 1fr;
       }
 
+      .invoice-head {
+        justify-items: start;
+        text-align: left;
+      }
+
+      .invoice-meta {
+        width: 100%;
+      }
+
+      .brand-wrap {
+        flex-direction: column;
+      }
+
       .actions .btn {
         flex: 1 1 150px;
       }
 
-      .header > div:last-child {
-        text-align: left !important;
+      .action-group {
+        width: 100%;
       }
     }
   </style>
@@ -442,30 +813,48 @@
 </script>
 <div class="page">
   <div class="header">
-    <div>
+    <div id="companyBlock">
+      <div class="brand-wrap">
+        <div class="brand-copy">
+          <div class="brand-name">Loading company...</div>
+          <div class="brand-lines">Preparing invoice details.</div>
+        </div>
+      </div>
+    </div>
+    <div class="invoice-head">
+      <div id="paidBadge"></div>
       <h1>Invoice</h1>
       <div id="invoiceNumber">Loading...</div>
-    </div>
-    <div style="text-align:right;">
-      <div id="paidBadge"></div>
-      <div id="companyBlock"></div>
+      <div class="invoice-meta">
+        <div class="meta-row"><span>Issued</span><strong id="issuedDateText">-</strong></div>
+        <div class="meta-row"><span>Due</span><strong id="dueDateText">-</strong></div>
+        <div class="meta-row"><span>Balance</span><strong id="headerBalanceText">$0.00</strong></div>
+      </div>
     </div>
   </div>
 
   <div class="body">
     <div class="grid">
-      <div class="box"><div class="label">Bill To</div><div id="clientBlock"></div></div>
-      <div class="box"><div class="label">Invoice Details</div><div id="invoiceBlock"></div></div>
+      <div class="box"><div class="label">Bill To</div><div id="clientBlock" class="client-lines"></div></div>
+      <div class="box"><div class="label">Invoice Details</div><div id="invoiceBlock" class="detail-lines"></div></div>
+    </div>
+
+    <div class="grid three">
+      <div class="box"><div class="label">Service</div><div id="serviceBlock" class="detail-lines">-</div></div>
+      <div class="box"><div class="label">Payment Status</div><div id="paymentStatusBlock" class="detail-lines">-</div></div>
+      <div class="box"><div class="label">Service Address</div><div id="serviceAddressBlock" class="detail-lines">-</div></div>
     </div>
 
     <div class="table-wrap">
       <table>
         <thead>
-          <tr><th>Description</th><th>Qty</th><th>Price</th><th>Line Total</th></tr>
+          <tr><th>Description</th><th>Qty</th><th class="amount">Unit Price</th><th class="amount">Amount</th></tr>
         </thead>
         <tbody id="lineItems"></tbody>
       </table>
     </div>
+
+    <div id="paymentInstructionsBlock" class="payment-instructions" style="display:none;"></div>
 
     <div class="summary">
       <div class="payment-box">
@@ -475,6 +864,9 @@
 
       <div class="totals-grid">
         <div class="money-card">
+          <div class="total-row"><span>Subtotal</span><strong id="subtotalAmount">$0.00</strong></div>
+        </div>
+        <div class="money-card grand">
           <div class="label">Total</div>
           <strong id="invoiceTotal">$0.00</strong>
         </div>
@@ -490,17 +882,25 @@
     </div>
 
     <div class="box" id="notesBox" style="display:none;"></div>
+    <div id="footerMessage" class="footer-message" style="display:none;"></div>
     <div id="invoiceEmpty" style="display:none;"></div>
   </div>
 
   <div class="actions">
-    <button class="btn gray" onclick="openEditInvoice()">Edit Invoice</button>
-    <button class="btn primary" id="markPaidButton" onclick="markAsPaid(this)">Mark as Paid</button>
-    <button class="btn blue" id="recordPaymentButton" onclick="recordPayment(this)">Record Payment</button>
-    <button class="btn red" onclick="cancelInvoice(this)">Void / Cancel</button>
-    <button class="btn red" id="deleteInvoiceButton" onclick="openDeleteInvoice()">Delete</button>
-    <button class="btn gray" onclick="window.close()">Close</button>
-    <button class="btn primary" onclick="window.print()">Print Invoice</button>
+    <div class="action-group">
+      <button class="btn gray" onclick="openEditInvoice()">Edit Invoice</button>
+      <button class="btn blue" id="recordPaymentButton" onclick="recordPayment(this)">Record Payment</button>
+      <button class="btn primary" id="markPaidButton" onclick="markAsPaid(this)">Mark as Paid</button>
+    </div>
+    <div class="action-group">
+      <button class="btn red" onclick="cancelInvoice(this)">Void / Cancel</button>
+      <button class="btn red" id="deleteInvoiceButton" onclick="openDeleteInvoice()">Delete</button>
+      <button class="btn gray" onclick="window.close()">Close</button>
+      <div class="print-action-wrap">
+        <button class="btn primary" onclick="window.print()">Print Invoice</button>
+        <span class="invoice-print-hint">Use Print, then choose Save as PDF.</span>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -624,6 +1024,53 @@ function getErrorMessage(data, fallback){
   return fallback;
 }
 
+function cleanText(value){
+  return String(value || "").trim();
+}
+
+function displayText(value, fallback = "-"){
+  const text = cleanText(value);
+  return text ? escapeHtml(text) : escapeHtml(fallback);
+}
+
+function invoiceNumberText(invoice, branding){
+  const raw = cleanText(invoice && invoice.invoice_number);
+  if(raw) return raw;
+  const prefix = cleanText(branding && branding.invoice_prefix) || cleanText(invoice && invoice.invoice_prefix) || "INV";
+  return prefix + "-" + String(invoice && invoice.id ? invoice.id : "").padStart(5, "0");
+}
+
+function getDisplayStatus(invoice){
+  const status = cleanText(invoice && invoice.status).toLowerCase() || "draft";
+  const paid = Number(invoice && invoice.paid_amount || 0);
+  const remaining = Number(invoice && invoice.remaining_balance || 0);
+
+  if(!["paid", "cancelled", "overdue"].includes(status) && paid > 0 && remaining > 0){
+    return "partially_paid";
+  }
+
+  return status === "sent" ? "sent" : status;
+}
+
+function statusLabel(status){
+  return String(status || "draft").replace(/_/g, " ");
+}
+
+function statusBadge(status){
+  const safeStatus = String(status || "draft").replace(/[^a-z_]/g, "");
+  return `<span class="badge status-${safeStatus}">${escapeHtml(statusLabel(status))}</span>`;
+}
+
+function contactLines(lines, emptyText){
+  const markup = lines
+    .map(line => cleanText(line))
+    .filter(Boolean)
+    .map(line => `<div>${escapeHtml(line)}</div>`)
+    .join("");
+
+  return markup || `<span class="muted">${escapeHtml(emptyText || "-")}</span>`;
+}
+
 function currentRole(){
   try {
     return String((JSON.parse(localStorage.getItem("user") || "{}").role) || "").toLowerCase();
@@ -645,7 +1092,7 @@ function getLineAmount(item){
   const price = Number(item.price || 0);
   const amount = Number(item.amount);
 
-  if(Number.isFinite(amount) && amount > 0) return amount;
+  if(Number.isFinite(amount) && amount >= 0) return amount;
   return quantity * price;
 }
 
@@ -698,18 +1145,30 @@ function collectInvoiceLineItems(){
 
 function renderLoadError(message){
   document.getElementById("invoiceNumber").textContent = "Invoice unavailable";
-  document.getElementById("companyBlock").innerHTML = "";
+  document.getElementById("companyBlock").innerHTML =
+    '<div class="brand-wrap"><div class="brand-copy"><div class="brand-name">Company unavailable</div><div class="brand-lines">Unable to load company branding.</div></div></div>';
   document.getElementById("clientBlock").innerHTML = `<div class="empty">Unable to load client details.</div>`;
   document.getElementById("invoiceBlock").innerHTML = `<div class="empty">${escapeHtml(message)}</div>`;
+  document.getElementById("serviceBlock").innerHTML = `<span class="muted">No service details available.</span>`;
+  document.getElementById("paymentStatusBlock").innerHTML = `<span class="muted">Unavailable</span>`;
+  document.getElementById("serviceAddressBlock").innerHTML = `<span class="muted">No service address available.</span>`;
   document.getElementById("lineItems").innerHTML = `<tr><td colspan="4"><div class="empty">No invoice line items available.</div></td></tr>`;
   document.getElementById("paymentsList").innerHTML = `<div class="empty">No payment history available.</div>`;
+  document.getElementById("subtotalAmount").textContent = formatMoney(0);
   document.getElementById("invoiceTotal").textContent = formatMoney(0);
   document.getElementById("paidAmount").textContent = formatMoney(0);
   document.getElementById("remainingBalance").textContent = formatMoney(0);
+  document.getElementById("headerBalanceText").textContent = formatMoney(0);
+  document.getElementById("issuedDateText").textContent = "-";
+  document.getElementById("dueDateText").textContent = "-";
   document.getElementById("paidBadge").innerHTML = "";
   document.getElementById("markPaidButton").style.display = "inline-flex";
   document.getElementById("recordPaymentButton").style.display = "none";
   document.getElementById("deleteInvoiceButton").style.display = "none";
+  document.getElementById("paymentInstructionsBlock").style.display = "none";
+  document.getElementById("paymentInstructionsBlock").innerHTML = "";
+  document.getElementById("footerMessage").style.display = "none";
+  document.getElementById("footerMessage").innerHTML = "";
 
   const notesBox = document.getElementById("notesBox");
   notesBox.style.display = "none";
@@ -740,29 +1199,60 @@ async function load(){
 
     currentInvoice = data;
 
-    document.getElementById("invoiceNumber").textContent =
-      currentInvoice.invoice_number || ("Invoice #" + currentInvoice.id);
+    const branding = currentInvoice.invoice_branding || {};
+    const companyName = branding.display_name || currentInvoice.branded_company_name || currentInvoice.company_name || "Company";
+    const companyPhone = branding.phone || currentInvoice.branded_company_phone || currentInvoice.company_phone || "";
+    const companyEmail = branding.email || currentInvoice.branded_company_email || currentInvoice.company_email || "";
+    const companyAddress = branding.address || currentInvoice.branded_company_address || currentInvoice.company_address || "";
+    const companyWebsite = branding.website || currentInvoice.branded_company_website || "";
+    const logoUrl = branding.logo_url || currentInvoice.invoice_logo_url || "";
+    const invoiceNumber = invoiceNumberText(currentInvoice, branding);
+    const displayStatus = getDisplayStatus(currentInvoice);
+
+    document.getElementById("invoiceNumber").textContent = invoiceNumber;
+    document.getElementById("issuedDateText").textContent = formatDate(currentInvoice.issued_date);
+    document.getElementById("dueDateText").textContent = formatDate(currentInvoice.due_date);
+    document.getElementById("headerBalanceText").textContent = formatMoney(currentInvoice.remaining_balance || 0);
 
     document.getElementById("companyBlock").innerHTML =
-      `<strong>${escapeHtml(currentInvoice.company_name || "Company")}</strong><br>` +
-      `${escapeHtml(currentInvoice.company_phone || "")}<br>` +
-      `${escapeHtml(currentInvoice.company_email || "")}<br>` +
-      `${escapeHtml(currentInvoice.company_address || "")}`;
+      `<div class="brand-wrap">` +
+        `${logoUrl ? `<img class="brand-logo" src="${escapeHtml(logoUrl)}" alt="">` : ""}` +
+        `<div class="brand-copy">` +
+          `<div class="brand-name">${escapeHtml(companyName)}</div>` +
+          `<div class="brand-lines">${contactLines([companyPhone, companyEmail, companyWebsite, companyAddress], "No company contact details provided.")}</div>` +
+        `</div>` +
+      `</div>`;
 
     document.getElementById("clientBlock").innerHTML =
-      `<strong>${escapeHtml(currentInvoice.client_name || "Client")}</strong><br>` +
-      `${escapeHtml(currentInvoice.client_phone || "")}<br>` +
-      `${escapeHtml(currentInvoice.client_address || "")}<br>` +
-      `${escapeHtml(currentInvoice.client_zip || "")}`;
+      `<strong>${displayText(currentInvoice.client_name, "Client")}</strong>` +
+      contactLines([
+        currentInvoice.client_phone,
+        currentInvoice.client_email,
+        currentInvoice.client_address,
+        currentInvoice.client_zip
+      ], "No client contact details provided.");
 
     document.getElementById("invoiceBlock").innerHTML =
-      `Status: ${escapeHtml(currentInvoice.status || "draft")}<br>` +
-      `Issued: ${formatDate(currentInvoice.issued_date)}<br>` +
-      `Due: ${formatDate(currentInvoice.due_date)}<br>` +
-      `Job: ${escapeHtml(currentInvoice.job_service || "-")} ${currentInvoice.job_date ? "(" + formatDate(currentInvoice.job_date) + ")" : ""}`;
+      contactLines([
+        "Number: " + invoiceNumber,
+        "Issued: " + formatDate(currentInvoice.issued_date),
+        "Due: " + formatDate(currentInvoice.due_date),
+        "Source: " + (currentInvoice.source_type || (currentInvoice.source_subscription_id ? "subscription" : "job"))
+      ], "No invoice details available.");
 
-    document.getElementById("paidBadge").innerHTML =
-      currentInvoice.status === "paid" ? `<span class="badge paid-badge">PAID</span>` : "";
+    document.getElementById("serviceBlock").innerHTML = contactLines([
+      currentInvoice.job_service || (Array.isArray(currentInvoice.line_items) && currentInvoice.line_items[0] && currentInvoice.line_items[0].description),
+      currentInvoice.job_date ? "Service date: " + formatDate(currentInvoice.job_date) : "",
+      currentInvoice.source_subscription_id ? "Subscription invoice" : ""
+    ], "No service details available.");
+
+    document.getElementById("paymentStatusBlock").innerHTML =
+      `${statusBadge(displayStatus)}<div style="margin-top:8px;">Paid ${formatMoney(currentInvoice.paid_amount || 0)} of ${formatMoney(currentInvoice.amount || 0)}</div>`;
+
+    document.getElementById("serviceAddressBlock").innerHTML =
+      contactLines([currentInvoice.client_address, currentInvoice.client_zip], "No service address available.");
+
+    document.getElementById("paidBadge").innerHTML = statusBadge(displayStatus);
 
     document.getElementById("markPaidButton").style.display =
       currentInvoice.status === "paid" ? "none" : "inline-flex";
@@ -789,19 +1279,32 @@ async function load(){
       return `<tr>
         <td>${escapeHtml(item.description || "Service")}</td>
         <td>${Number.isFinite(quantity) ? quantity : 1}</td>
-        <td>${formatMoney(Number.isFinite(price) ? price : 0)}</td>
-        <td>${formatMoney(Number.isFinite(lineAmount) ? lineAmount : 0)}</td>
+        <td class="amount">${formatMoney(Number.isFinite(price) ? price : 0)}</td>
+        <td class="amount">${formatMoney(Number.isFinite(lineAmount) ? lineAmount : 0)}</td>
       </tr>`;
     }).join("");
 
     const payments = Array.isArray(currentInvoice.payments) ? currentInvoice.payments : [];
+    const refunds = Array.isArray(currentInvoice.refunds) ? currentInvoice.refunds : [];
 
-    document.getElementById("paymentsList").innerHTML = payments.length
+    document.getElementById("paymentsList").innerHTML = payments.length || refunds.length
       ? payments.map(payment => `
-          <div style="padding:12px 0; border-bottom:1px solid #e4ece7;">
+          <div class="payment-row">
+            <div>
+              <strong>${escapeHtml(payment.method || "cash")}</strong>
+              <span>${formatDate(payment.date)}</span>
+              ${payment.notes ? `<div class="muted">${escapeHtml(payment.notes)}</div>` : ""}
+            </div>
             <strong>${formatMoney(payment.amount || 0)}</strong>
-            <div style="margin-top:4px; color:#35574a;">${escapeHtml(payment.method || "cash")} • ${formatDate(payment.date)}</div>
-            ${payment.notes ? `<div style="margin-top:4px; color:#6a8278;">${escapeHtml(payment.notes)}</div>` : ""}
+          </div>
+        `).join("") + refunds.map(refund => `
+          <div class="payment-row">
+            <div>
+              <strong>Refund</strong>
+              <span>${formatDate(refund.created_at)}</span>
+              ${refund.notes || refund.reason ? `<div class="muted">${escapeHtml(refund.notes || refund.reason)}</div>` : ""}
+            </div>
+            <strong>-${formatMoney(refund.amount || 0)}</strong>
           </div>
         `).join("")
       : AppUI.emptyState(
@@ -810,11 +1313,34 @@ async function load(){
           canRecordPayments() ? [{ label: "Record Payment", onClick: "recordPayment()", className: "btn blue" }] : []
         );
 
+    document.getElementById("subtotalAmount").textContent =
+      formatMoney(currentInvoice.subtotal != null ? currentInvoice.subtotal : currentInvoice.amount || 0);
     document.getElementById("invoiceTotal").textContent = formatMoney(currentInvoice.amount || 0);
     document.getElementById("paidAmount").textContent = formatMoney(currentInvoice.paid_amount || 0);
     document.getElementById("remainingBalance").textContent = formatMoney(currentInvoice.remaining_balance || 0);
 
     const notesBox = document.getElementById("notesBox");
+    const instructionsBox = document.getElementById("paymentInstructionsBlock");
+    const footerBox = document.getElementById("footerMessage");
+
+    const paymentParts = [];
+    if(branding.payment_instructions || currentInvoice.payment_instructions){
+      paymentParts.push(branding.payment_instructions || currentInvoice.payment_instructions);
+    }
+    if(branding.zelle_name || currentInvoice.zelle_name){
+      paymentParts.push("Zelle name: " + (branding.zelle_name || currentInvoice.zelle_name));
+    }
+    if(branding.zelle_contact || currentInvoice.zelle_contact){
+      paymentParts.push("Zelle contact: " + (branding.zelle_contact || currentInvoice.zelle_contact));
+    }
+    if(paymentParts.length){
+      instructionsBox.style.display = "block";
+      instructionsBox.innerHTML =
+        `<div class="label">Payment Instructions</div><div class="payment-copy">${escapeHtml(paymentParts.join("\n"))}</div>`;
+    } else {
+      instructionsBox.style.display = "none";
+      instructionsBox.innerHTML = "";
+    }
 
     if(currentInvoice.notes){
       notesBox.style.display = "block";
@@ -822,6 +1348,15 @@ async function load(){
     } else {
       notesBox.style.display = "none";
       notesBox.innerHTML = "";
+    }
+
+    const footerMessage = branding.footer || currentInvoice.invoice_footer || "";
+    if(footerMessage){
+      footerBox.style.display = "block";
+      footerBox.innerHTML = escapeHtml(footerMessage);
+    } else {
+      footerBox.style.display = "none";
+      footerBox.innerHTML = "";
     }
   } catch(err){
     AppUI.showToast("Unable to load invoice.", "error");
