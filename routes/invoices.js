@@ -185,7 +185,7 @@ function sanitizeFilenamePart(value, fallback) {
 function buildInvoicePdfFilename(invoice) {
   const numberPart = sanitizeFilenamePart(invoice && invoice.invoice_number, String(invoice && invoice.id ? invoice.id : "invoice"));
   const clientPart = sanitizeFilenamePart(invoice && invoice.client_name, String(invoice && invoice.id ? invoice.id : "client"));
-  return `LoneGreen-${numberPart}-${clientPart}.pdf`;
+  return `FairLinx-${numberPart}-${clientPart}.pdf`;
 }
 
 
@@ -408,7 +408,9 @@ router.post("/workflow/invoices", auth, requireCompanyBillingForMutations, enfor
     const invoiceNumber = await nextInvoiceNumber(companyId);
 
 
-    const invoice = await pool.query(`
+    let invoice;
+    try {
+      invoice = await pool.query(`
 
 
       INSERT INTO invoices
@@ -423,7 +425,7 @@ router.post("/workflow/invoices", auth, requireCompanyBillingForMutations, enfor
       RETURNING *
 
 
-    `, [
+      `, [
 
 
       companyId,
@@ -465,7 +467,25 @@ router.post("/workflow/invoices", auth, requireCompanyBillingForMutations, enfor
       JSON.stringify(normalizedInvoice.line_items)
 
 
-    ]);
+      ]);
+    } catch (insertErr) {
+      if (insertErr && insertErr.code === "23505" && Number(job_id) > 0) {
+        const existingJobInvoice = await pool.query(`
+          SELECT id
+          FROM invoices
+          WHERE job_id = $1
+            AND company_id = $2
+            AND status <> 'cancelled'
+          ORDER BY id DESC
+          LIMIT 1
+        `, [job_id, companyId]);
+        if (existingJobInvoice.rows.length > 0) {
+          const existingInvoice = await hydrateInvoice(companyId, existingJobInvoice.rows[0].id);
+          return res.json(existingInvoice || existingJobInvoice.rows[0]);
+        }
+      }
+      throw insertErr;
+    }
 
 
 
@@ -1301,7 +1321,7 @@ router.post("/workflow/invoices/:id/send-invoice-email", auth, requireCompanyBil
       });
     }
     try {
-      enqueueEmailTask(payload);
+      await enqueueEmailTask(payload);
     } catch (qErr) {
       logger.warn("INVOICE_EMAIL_ENQUEUE_FAILED", { error: qErr && qErr.message });
       return res.status(503).json({ error: "Mail queue unavailable. Try again shortly." });
@@ -1333,7 +1353,7 @@ router.post("/workflow/invoices/:id/send-payment-reminder-email", auth, requireC
       });
     }
     try {
-      enqueueEmailTask(payload);
+      await enqueueEmailTask(payload);
     } catch (qErr) {
       logger.warn("PAYMENT_REMINDER_EMAIL_ENQUEUE_FAILED", { error: qErr && qErr.message });
       return res.status(503).json({ error: "Mail queue unavailable. Try again shortly." });

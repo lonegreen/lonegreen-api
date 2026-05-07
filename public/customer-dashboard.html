@@ -147,7 +147,7 @@ function esc(v){ return AppFormat.escapeHtml(v || ""); }
 function money(v){ return AppFormat.formatMoney(v || 0); }
 function date(v){ return v ? String(v).split("T")[0] : "-"; }
 
-function logout(){ localStorage.removeItem("customerToken"); localStorage.removeItem("customer"); window.location.href="/customer-login.html"; }
+function logout(){ localStorage.removeItem("customerToken"); localStorage.removeItem("customer"); window.location.href="/customer-login-v2.html"; }
 
 async function customerFetch(url, options){
   const res = await fetch(url, Object.assign({}, options || {}, { headers: Object.assign({}, (options && options.headers) || {}, headers()) }));
@@ -495,7 +495,7 @@ async function submitServiceRequest(event){
 }
 
 async function load(){
-  if(!token()){ window.location.href = "/customer-login.html"; return; }
+  if(!token()){ window.location.href = "/customer-login-v2.html"; return; }
   AppUI.setLoading(true, "Loading portal...");
   try {
     const res = await customerFetch(API + "/customer/dashboard");

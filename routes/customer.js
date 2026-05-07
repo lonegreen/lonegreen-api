@@ -1,8 +1,5 @@
 const express = require("express");
-const rateLimit = require("express-rate-limit");
-const jwt = require("jsonwebtoken");
 const pool = require("../db/pool");
-const { SECRET } = require("../config/env");
 const {
   safeJsonParse,
   normalizeJobStatus,
@@ -12,95 +9,12 @@ const {
   ensureSubscriptionBillingSchema,
   logActivity
 } = require("../services/routeHelpers");
+const { verifyCustomerBearerToken } = require("../middleware/auth");
 const { generateInvoicePdf, generateEstimatePdf } = require("../services/pdfService");
 const logger = require("../services/logger");
 const { sendSafeServerError } = require("../services/safeServerError");
 
 const router = express.Router();
-
-const CUSTOMER_LOGIN_GENERIC_FAILURE = "Unable to sign in. Verify your client ID and phone number.";
-const CUSTOMER_LOGIN_RATE_MESSAGE = "Too many sign-in attempts from this address. Please try again later.";
-const CUSTOMER_LOGIN_LOCKOUT_MESSAGE = "Too many failed attempts. Please try again later.";
-
-const customerLoginLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 12,
-  standardHeaders: true,
-  legacyHeaders: false,
-  message: { error: CUSTOMER_LOGIN_RATE_MESSAGE }
-});
-
-const CUSTOMER_LOGIN_MAX_FAILURES = 8;
-const CUSTOMER_LOGIN_LOCKOUT_MS = 15 * 60 * 1000;
-
-const customerLoginFailures = new Map();
-
-function customerLoginThrottleKey(req) {
-  return String(req.ip || req.socket?.remoteAddress || "unknown");
-}
-
-function getCustomerLoginGate(key) {
-  const row = customerLoginFailures.get(key);
-  if (!row) {
-    return { lockedUntil: 0, fails: 0 };
-  }
-  const now = Date.now();
-  if (row.lockedUntil && row.lockedUntil > now) {
-    return row;
-  }
-  if (row.lockedUntil && row.lockedUntil <= now) {
-    customerLoginFailures.delete(key);
-    return { lockedUntil: 0, fails: 0 };
-  }
-  if (row.firstFailAt && now - row.firstFailAt > 15 * 60 * 1000) {
-    customerLoginFailures.delete(key);
-    return { lockedUntil: 0, fails: 0 };
-  }
-  return row;
-}
-
-function recordCustomerLoginFailure(key) {
-  const now = Date.now();
-  const prev = customerLoginFailures.get(key);
-  if (!prev || !prev.firstFailAt || now - prev.firstFailAt > 15 * 60 * 1000) {
-    customerLoginFailures.set(key, {
-      fails: 1,
-      firstFailAt: now,
-      lockedUntil: 0
-    });
-    logger.warn("CUSTOMER PORTAL LOGIN FAILED", {
-      ip: key,
-      failures: 1
-    });
-    return;
-  }
-
-  const fails = prev.fails + 1;
-  let lockedUntil = prev.lockedUntil || 0;
-
-  if (fails >= CUSTOMER_LOGIN_MAX_FAILURES) {
-    lockedUntil = now + CUSTOMER_LOGIN_LOCKOUT_MS;
-    logger.warn("CUSTOMER PORTAL LOCKOUT", {
-      ip: key,
-      failures: fails
-    });
-  } else {
-    logger.warn("CUSTOMER PORTAL LOGIN FAILED", {
-      ip: key,
-      failures: fails
-    });
-  }
-
-  customerLoginFailures.set(key, {
-    fails,
-    firstFailAt: prev.firstFailAt,
-    lockedUntil
-  });
-}
-
-function clearCustomerLoginFailures(key) {
-  customerLoginFailures.delete(key);
-}
 
 function portalEstimateStatus(status) {
   return status === "converted" ? "converted" : normalizeEstimateStatus(status);
@@ -146,11 +60,6 @@ function attachCustomerInvoicePresentation(invoice) {
   };
 }
 
-function normalizePhone(value) {
-  const digits = String(value || "").replace(/\D/g, "");
-  return digits.length > 24 ? digits.slice(0, 24) : digits;
-}
-
 function cleanEmail(value) {
   return String(value || "").trim().toLowerCase();
 }
@@ -172,53 +81,19 @@ function sanitizeFilenamePart(value, fallback) {
 function buildInvoicePdfFilename(invoice) {
   const numberPart = sanitizeFilenamePart(invoice && invoice.invoice_number, String(invoice && invoice.id ? invoice.id : "invoice"));
   const clientPart = sanitizeFilenamePart(invoice && invoice.client_name, String(invoice && invoice.id ? invoice.id : "client"));
-  return `LoneGreen-${numberPart}-${clientPart}.pdf`;
-}
-
-function signCustomerToken(client) {
-  return jwt.sign({
-    portal: "customer",
-    client_id: client.id,
-    company_id: client.company_id,
-    name: client.name || "Customer"
-  }, SECRET, { expiresIn: "14d" });
+  return `FairLinx-${numberPart}-${clientPart}.pdf`;
 }
 
 function customerAuth(req, res, next) {
-  const header = req.headers.authorization || "";
-  const parts = String(header).trim().split(/\s+/);
-  const token = parts.length === 2 && parts[0] === "Bearer" ? parts[1] : "";
-  if (!token) return res.status(401).json({ error: "Customer login required" });
-
   try {
-    const decoded = jwt.verify(token, SECRET);
-    const isLegacyPortalToken = decoded.portal === "customer";
-    const isCustomerRoleToken = String(decoded.role || "").toLowerCase() === "customer";
-
-    if (!isLegacyPortalToken && !isCustomerRoleToken) {
-      return res.status(403).json({ error: "Forbidden" });
-    }
-
-    if (!decoded.client_id) {
-      return res.status(403).json({ error: "Forbidden" });
-    }
-
-    req.customer = {
-      ...decoded,
-      portal: isLegacyPortalToken ? "customer" : "customer_account",
-      role: isCustomerRoleToken ? "customer" : decoded.role
-    };
+    req.customer = verifyCustomerBearerToken(req.headers.authorization);
     return next();
   } catch (err) {
-    return res.status(401).json({ error: "Invalid customer token" });
+    return res.status(err.status || 401).json({ error: err.message || "Invalid customer token" });
   }
 }
 
 async function getClient(customer) {
-  if (customer.company_id) {
-    const result = await pool.query("SELECT * FROM clients WHERE id=$1 AND company_id=$2 LIMIT 1", [customer.client_id, customer.company_id]);
-    return result.rows[0] || null;
-  }
   const result = await pool.query("SELECT * FROM clients WHERE id=$1 LIMIT 1", [customer.client_id]);
   return result.rows[0] || null;
 }
@@ -382,47 +257,13 @@ async function getInvoices(customer) {
   return invoices;
 }
 
-router.post("/customer/login", customerLoginLimiter, async (req, res) => {
-  const throttleKey = customerLoginThrottleKey(req);
-
-  try {
-    const gate = getCustomerLoginGate(throttleKey);
-    if (gate.lockedUntil > Date.now()) {
-      return res.status(429).json({ error: CUSTOMER_LOGIN_LOCKOUT_MESSAGE });
-    }
-
-    const clientId = Number(req.body.client_id);
-    const phone = normalizePhone(req.body.phone);
-    if (!clientId || !phone) {
-      return res.status(400).json({ error: "Client ID and phone are required" });
-    }
-
-    const clientCheck = await pool.query("SELECT id, company_id FROM clients WHERE id=$1 LIMIT 1", [clientId]);
-    if (!clientCheck.rows.length) {
-      recordCustomerLoginFailure(throttleKey);
-      return res.status(401).json({ error: CUSTOMER_LOGIN_GENERIC_FAILURE });
-    }
-
-    const companyId = clientCheck.rows[0].company_id;
-
-    const result = await pool.query(
-      "SELECT * FROM clients WHERE id=$1 AND company_id=$2 AND COALESCE(archived, FALSE)=FALSE LIMIT 1",
-      [clientId, companyId]
-    );
-    const client = result.rows[0];
-    if (!client || normalizePhone(client.phone) !== phone) {
-      recordCustomerLoginFailure(throttleKey);
-      return res.status(401).json({ error: CUSTOMER_LOGIN_GENERIC_FAILURE });
-    }
-
-    clearCustomerLoginFailures(throttleKey);
-    res.json({
-      token: signCustomerToken(client),
-      customer: { id: client.id, name: client.name, phone: client.phone }
-    });
-  } catch (err) {
-    sendSafeServerError(res, err, "CUSTOMER LOGIN ERROR");
-  }
+router.post("/customer/login", async (req, res) => {
+  logger.warn("LEGACY CUSTOMER LOGIN BLOCKED", {
+    ip: req.ip || req.socket?.remoteAddress || "unknown"
+  });
+  return res.status(410).json({
+    error: "Legacy customer login is disabled. Use /auth/customer-login."
+  });
 });
 
 router.get("/customer/me", customerAuth, async (req, res) => {
@@ -529,10 +370,15 @@ router.put("/customer/profile", customerAuth, async (req, res) => {
         email = $4,
         address = $5
       WHERE id = $1
+        AND company_id = $6
       RETURNING id, company_id, name, phone, email, address, zip
       `,
-      [client.id, [firstName, lastName].filter(Boolean).join(" "), phone, email, address || client.address || ""]
+      [client.id, [firstName, lastName].filter(Boolean).join(" "), phone, email, address || client.address || "", client.company_id]
     );
+
+    if (!updatedClientResult.rows.length) {
+      return res.status(403).json({ error: "Forbidden" });
+    }
 
     const updatedClient = updatedClientResult.rows[0];
     if (!ensureCustomerCompanyIsolation(req.customer, updatedClient)) {
@@ -583,15 +429,23 @@ router.get("/customer/requests", customerAuth, async (req, res) => {
 
 router.get("/customer/dashboard", customerAuth, async (req, res) => {
   try {
-    const [client, company, estimates, invoices, jobs, subscriptions] = await Promise.all([
-      getClient(req.customer),
-      getCompany(req.customer.company_id),
-      getEstimates(req.customer),
-      getInvoices(req.customer),
-      getJobs(req.customer),
-      getSubscriptions(req.customer)
-    ]);
+    const client = await getClient(req.customer);
     if (!client) return res.status(404).json({ error: "Customer not found" });
+    if (!ensureCustomerCompanyIsolation(req.customer, client)) {
+      return res.status(403).json({ error: "Forbidden" });
+    }
+
+    const scopedCustomer = {
+      ...req.customer,
+      company_id: req.customer.company_id || client.company_id
+    };
+    const [company, estimates, invoices, jobs, subscriptions] = await Promise.all([
+      getCompany(scopedCustomer.company_id),
+      getEstimates(scopedCustomer),
+      getInvoices(scopedCustomer),
+      getJobs(scopedCustomer),
+      getSubscriptions(scopedCustomer)
+    ]);
     const today = new Date().toISOString().split("T")[0];
     res.json({
       client,

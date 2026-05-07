@@ -68,7 +68,7 @@ function collectPdf(doc) {
 
 function addHeader(doc, title, company = {}, meta = {}) {
   const topY = doc.y;
-  const companyName = text(company.name, "LoneGreen");
+  const companyName = text(company.name, "FairLinx");
   const compactCompanyName = companyName.length > 64 ? `${companyName.slice(0, 61)}...` : companyName;
   doc.fontSize(12).fillColor("#1f5c3a").text(compactCompanyName, 50, topY, { width: 300 });
   doc.fontSize(8).fillColor("#4b6358");
@@ -303,7 +303,7 @@ async function generateInvoicePdf(invoice) {
     );
   }
   doc.info = doc.info || {};
-  doc.info.Title = `LoneGreen ${invoiceNumber}`;
+  doc.info.Title = `FairLinx ${invoiceNumber}`;
   return collectPdf(doc);
 }
 

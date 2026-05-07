@@ -1,6 +1,6 @@
 # API Map
 
-Phase 6 cleanup status map for the LoneGreen backend. Routes are grouped by file and marked as `canonical`, `legacy`, `compatibility alias`, `duplicate`, or `unused`.
+Phase 6 cleanup status map for the FairLinx backend. Routes are grouped by file and marked as `canonical`, `legacy`, `compatibility alias`, `duplicate`, or `unused`.
 
 ## auth.js
 

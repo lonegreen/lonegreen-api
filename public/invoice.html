@@ -1123,7 +1123,7 @@ function sanitizeFilePart(value, fallback){
 function buildPdfFilename(invoice, invoiceNumber){
   const client = sanitizeFilePart(invoice && invoice.client_name, "Client");
   const number = sanitizeFilePart(invoiceNumber, "invoice");
-  return `LoneGreen-${number}-${client}.pdf`;
+  return `FairLinx-${number}-${client}.pdf`;
 }
 
 function sanitizeTitlePart(value){
@@ -1139,10 +1139,10 @@ function buildInvoicePageTitle(invoice, invoiceNumber){
   const numberPart = sanitizeTitlePart(invoiceNumber);
   const clientPart = sanitizeTitlePart(invoice && invoice.client_name);
   if (numberPart && clientPart) {
-    return `LoneGreen-${numberPart}-${clientPart}`;
+    return `FairLinx-${numberPart}-${clientPart}`;
   }
   const invoiceId = sanitizeTitlePart(invoice && invoice.id);
-  return `LoneGreen-Invoice-${invoiceId || "Invoice"}`;
+  return `FairLinx-Invoice-${invoiceId || "Invoice"}`;
 }
 
 function renderInvoiceEditorRows(lineItems){
@@ -1193,7 +1193,7 @@ function collectInvoiceLineItems(){
 }
 
 function renderLoadError(message){
-  document.title = "LoneGreen-Invoice";
+  document.title = "FairLinx-Invoice";
   document.getElementById("invoiceNumber").textContent = "Invoice unavailable";
   document.getElementById("companyBlock").innerHTML =
     '<div class="brand-wrap"><div class="brand-copy"><div class="brand-name">Company unavailable</div><div class="brand-lines">Unable to load company branding.</div></div></div>';

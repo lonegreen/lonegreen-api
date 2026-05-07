@@ -29,20 +29,40 @@ function createStatus(name, schedule) {
     last_run: null,
     last_success: null,
     last_error: null,
-    run_count: 0
+    run_count: 0,
+    running: false
   };
 }
 
 async function runTask(status, handler) {
+  if (status.running) {
+    logger.warn("SCHEDULER_TASK_SKIPPED_OVERLAP", {
+      task: status.name
+    });
+    return;
+  }
+  status.running = true;
   status.last_run = nowIso();
   status.run_count += 1;
   const startedAt = Date.now();
+  const lockName = `scheduler:${status.name}`;
+  let advisoryLockAcquired = false;
   logger.info("SCHEDULER_TASK_STARTED", {
     task: status.name,
     run_count: status.run_count
   });
 
   try {
+    const lockResult = await pool.query(
+      "SELECT pg_try_advisory_lock(hashtext($1)) AS acquired",
+      [lockName]
+    );
+    advisoryLockAcquired = Boolean(lockResult.rows[0] && lockResult.rows[0].acquired);
+    if (!advisoryLockAcquired) {
+      logger.info("SCHEDULER_TASK_SKIPPED_DISTRIBUTED_LOCK", { task: status.name });
+      status.last_error = null;
+      return;
+    }
     await handler();
     status.last_success = nowIso();
     status.last_error = null;
@@ -57,6 +77,19 @@ async function runTask(status, handler) {
       duration_ms: Date.now() - startedAt,
       error: err
     });
+  }
+  finally {
+    if (advisoryLockAcquired) {
+      try {
+        await pool.query("SELECT pg_advisory_unlock(hashtext($1))", [lockName]);
+      } catch (unlockErr) {
+        logger.error("SCHEDULER_TASK_UNLOCK_ERROR", {
+          task: status.name,
+          error: unlockErr
+        });
+      }
+    }
+    status.running = false;
   }
 }
 
@@ -93,7 +126,7 @@ async function runBillingLifecycleAutomation() {
 
   if (typeof backgroundTasks.enqueueBillingLifecycleTask === "function") {
     logger.info("Scheduler billing_lifecycle: dispatched to job queue");
-    backgroundTasks.enqueueBillingLifecycleTask();
+    await backgroundTasks.enqueueBillingLifecycleTask();
     return;
   }
 

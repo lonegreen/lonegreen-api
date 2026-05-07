@@ -24,6 +24,7 @@ const uploadLimiter = rateLimit({
 
 const PHOTO_TYPES = new Set(["before", "after"]);
 const COMPANY_LOGO_ALLOWED_MIME = new Set(["image/jpeg", "image/png", "image/webp"]);
+const JOB_PHOTO_ALLOWED_MIME = new Set(["image/jpeg", "image/png", "image/webp"]);
 const COMPANY_LOGO_MAX_SIZE = 2 * 1024 * 1024;
 
 function forbidden(res) {
@@ -109,6 +110,11 @@ router.post("/uploads/job/:jobId/photo", auth, requireCompanyBillingForMutations
 
     if (!req.file) {
       return res.status(400).json({ error: "File is required" });
+    }
+    const photoMime = String(req.file.mimetype || "").toLowerCase();
+    if (!JOB_PHOTO_ALLOWED_MIME.has(photoMime)) {
+      await deleteLocalUpload(publicUploadUrl(req.file.filename));
+      return res.status(400).json({ error: "Only JPG, PNG, and WEBP job photos are allowed" });
     }
 
     const job = await getAccessibleJob(req, res, req.params.jobId);

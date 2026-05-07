@@ -305,7 +305,7 @@ router.post("/workflow/invoices/:id/payments", auth, requireCompanyBillingForMut
         overrideTo: req.body && req.body.notify_email
       });
       if (mailPayload) {
-        enqueueEmailTask(mailPayload);
+        await enqueueEmailTask(mailPayload);
       } else {
         logger.warn("PAYMENT_RECEIPT_EMAIL_SKIPPED", {
           company_id: req.user.company_id,

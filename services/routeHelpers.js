@@ -10,6 +10,22 @@ const base = {
 
 const LEAD_STATUSES = ["new", "contacted", "quoted", "approved", "rejected", "converted"];
 const ESTIMATE_STATUSES = ["new", "contacted", "quoted", "approved", "rejected", "converted"];
+const LEAD_STATUS_TRANSITIONS = {
+  new: new Set(["new", "contacted", "quoted", "approved", "rejected", "converted"]),
+  contacted: new Set(["contacted", "quoted", "approved", "rejected", "converted"]),
+  quoted: new Set(["quoted", "approved", "rejected", "converted"]),
+  approved: new Set(["approved", "converted"]),
+  rejected: new Set(["rejected", "contacted", "quoted"]),
+  converted: new Set(["converted"])
+};
+const ESTIMATE_STATUS_TRANSITIONS = {
+  new: new Set(["new", "contacted", "quoted", "approved", "rejected", "converted"]),
+  contacted: new Set(["contacted", "quoted", "approved", "rejected", "converted"]),
+  quoted: new Set(["quoted", "approved", "rejected", "converted"]),
+  approved: new Set(["approved", "converted"]),
+  rejected: new Set(["rejected", "contacted", "quoted"]),
+  converted: new Set(["converted"])
+};
 
 function normalizeLeadStatus(status) {
   return LEAD_STATUSES.includes(status) ? status : "new";
@@ -27,6 +43,32 @@ function normalizeEstimateStatus(status) {
   }
 
   return ESTIMATE_STATUSES.includes(normalized) ? normalized : "new";
+}
+
+function assertLeadStatusTransition(fromStatus, toStatus) {
+  const from = normalizeLeadStatus(fromStatus);
+  const to = normalizeLeadStatus(toStatus);
+  const allowed = LEAD_STATUS_TRANSITIONS[from];
+  if (!allowed || !allowed.has(to)) {
+    const err = new Error(`Invalid lead status transition: ${from} -> ${to}`);
+    err.code = "INVALID_LEAD_STATUS_TRANSITION";
+    err.statusCode = 400;
+    return err;
+  }
+  return null;
+}
+
+function assertEstimateStatusTransition(fromStatus, toStatus) {
+  const from = normalizeEstimateStatus(fromStatus);
+  const to = normalizeEstimateStatus(toStatus);
+  const allowed = ESTIMATE_STATUS_TRANSITIONS[from];
+  if (!allowed || !allowed.has(to)) {
+    const err = new Error(`Invalid estimate status transition: ${from} -> ${to}`);
+    err.code = "INVALID_ESTIMATE_STATUS_TRANSITION";
+    err.statusCode = 400;
+    return err;
+  }
+  return null;
 }
 
 function nextMonthDateString(baseDate) {
@@ -102,6 +144,8 @@ module.exports = {
   ...base,
   normalizeLeadStatus,
   normalizeEstimateStatus,
+  assertLeadStatusTransition,
+  assertEstimateStatusTransition,
   nextMonthDateString,
   getClientById,
   createClientFromContact,

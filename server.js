@@ -11,9 +11,9 @@ const helmet = require("helmet");
 
 const {
   NODE_ENV,
-  ALLOW_MAINTENANCE_ROUTES,
   getProductionEnvReadiness,
-  SUBSCRIPTION_INTERVAL_ENGINE
+  SUBSCRIPTION_INTERVAL_ENGINE,
+  PORT
 } = require("./config/env");
 
 const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS || "").split(",")
@@ -52,16 +52,16 @@ const { isStripeCheckoutConfigured } = require("./services/stripeService");
 const launchRoutes = require("./routes/launch");
 
 const { setupDatabase } = require("./db/setup");
+const pool = require("./db/pool");
 const { startSubscriptionEngine } = require("./services/subscriptionEngine");
-const { startQueue, getQueueStatus } = require("./services/jobQueue");
-const { startScheduler, getSchedulerStatus } = require("./services/schedulerService");
+const { startQueue, stopQueue, getQueueStatus } = require("./services/jobQueue");
+const { startScheduler, stopScheduler, getSchedulerStatus } = require("./services/schedulerService");
 const { getHealthReadiness } = require("./services/productionReadiness");
 const logger = require("./services/logger");
 const { logErrorEntry } = require("./services/errorLogService");
 
 const app = express();
 app.set("trust proxy", 1);
-const PORT = Number(process.env.PORT || 4000);
 const RUN_STARTUP_MIGRATIONS = String(process.env.RUN_STARTUP_MIGRATIONS || "").trim().toLowerCase() === "true";
 let hasLoggedCanonicalRouteNotice = false;
 let lastHealthWarningAt = 0;
@@ -145,14 +145,28 @@ const apiLimiter = rateLimit({
   legacyHeaders: false,
   message: { error: "Too many requests, please try again later" }
 });
+const healthLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 120,
+  standardHeaders: true,
+  legacyHeaders: false
+});
+const maintenanceLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Too many maintenance requests, please try again later" }
+});
 
 app.use(apiLimiter);
 
 /* Health */
-app.get("/health/live", (req, res) => {
+app.get("/health/live", healthLimiter, (req, res) => {
+  res.setHeader("Cache-Control", "no-store");
   res.json({
     ok: true,
-    app: "LoneGreen SaaS",
+    app: "FairLinx",
     process: {
       status: "ok",
       uptime_seconds: Math.round(process.uptime()),
@@ -162,8 +176,9 @@ app.get("/health/live", (req, res) => {
   });
 });
 
-app.get("/health", async (req, res) => {
+app.get("/health", healthLimiter, async (req, res) => {
   try {
+    res.setHeader("Cache-Control", "no-store");
     const readiness = await getHealthReadiness();
     if (!readiness.ok && Date.now() - lastHealthWarningAt > 60000) {
       lastHealthWarningAt = Date.now();
@@ -178,14 +193,13 @@ app.get("/health", async (req, res) => {
       ...readiness,
       env: NODE_ENV,
       port: PORT,
-      maintenanceRoutes: ALLOW_MAINTENANCE_ROUTES,
       time: new Date().toISOString()
     });
   } catch (err) {
     logger.error("HEALTH CHECK ERROR", err);
     res.status(503).json({
       ok: false,
-      app: "LoneGreen SaaS",
+      app: "FairLinx",
       env: NODE_ENV,
       error: "Health check failed",
       time: new Date().toISOString()
@@ -193,8 +207,9 @@ app.get("/health", async (req, res) => {
   }
 });
 
-app.get("/health/ready", async (req, res) => {
+app.get("/health/ready", healthLimiter, async (req, res) => {
   try {
+    res.setHeader("Cache-Control", "no-store");
     const readiness = await getHealthReadiness();
     res.status(readiness.ok ? 200 : 503).json({
       ok: readiness.ok,
@@ -211,7 +226,7 @@ app.get("/health/ready", async (req, res) => {
     logger.error("HEALTH_READY_CHECK_ERROR", err);
     res.status(503).json({
       ok: false,
-      app: "LoneGreen SaaS",
+      app: "FairLinx",
       error: "Readiness check failed",
       time: new Date().toISOString()
     });
@@ -282,7 +297,7 @@ app.use("/", marketplaceRoutes);
 app.use("/", launchRoutes);
 
 /* Setup DB route */
-app.get("/setup-db", maintenanceOnly, async (req, res) => {
+app.get("/setup-db", maintenanceOnly, maintenanceLimiter, async (req, res) => {
   try {
     await setupDatabase();
     res.send("Database Ready");
@@ -292,7 +307,7 @@ app.get("/setup-db", maintenanceOnly, async (req, res) => {
   }
 });
 
-app.post("/setup-db/backup", maintenanceOnly, async (req, res) => {
+app.post("/setup-db/backup", maintenanceOnly, maintenanceLimiter, async (req, res) => {
   try {
     const { runBackup } = require("./services/backupService");
     const summary = await runBackup({ trigger: "http_maintenance" });
@@ -345,6 +360,55 @@ app.use((err, req, res, next) => {
 });
 
 /* Start */
+let server = null;
+let shuttingDown = false;
+
+async function gracefulShutdown(signal) {
+  if (shuttingDown) {
+    return;
+  }
+  shuttingDown = true;
+  logger.warn("SERVER_SHUTDOWN_BEGIN", { signal });
+  let exitCode = 0;
+  try {
+    stopScheduler();
+    const queueStopStatus = await stopQueue({
+      drain: true,
+      timeoutMs: Number(process.env.SHUTDOWN_DRAIN_TIMEOUT_MS || 20000)
+    });
+    if (!queueStopStatus.drained) {
+      exitCode = 1;
+      logger.error("SERVER_SHUTDOWN_QUEUE_DRAIN_TIMEOUT", queueStopStatus);
+    }
+  } catch (err) {
+    exitCode = 1;
+    logger.error("SERVER_SHUTDOWN_STOP_TASKS_ERROR", err);
+  }
+
+  if (server) {
+    await new Promise((resolve) => server.close(resolve));
+  }
+  try {
+    await pool.end();
+  } catch (err) {
+    exitCode = 1;
+    logger.error("SERVER_SHUTDOWN_POOL_CLOSE_ERROR", err);
+  }
+  logger.warn("SERVER_SHUTDOWN_COMPLETE", { signal });
+  process.exit(exitCode);
+}
+
+process.on("SIGTERM", () => { gracefulShutdown("SIGTERM").catch(() => process.exit(1)); });
+process.on("SIGINT", () => { gracefulShutdown("SIGINT").catch(() => process.exit(1)); });
+process.on("uncaughtException", (err) => {
+  logger.error("UNCAUGHT_EXCEPTION", err);
+  gracefulShutdown("UNCAUGHT_EXCEPTION").catch(() => process.exit(1));
+});
+process.on("unhandledRejection", (err) => {
+  logger.error("UNHANDLED_REJECTION", err);
+  gracefulShutdown("UNHANDLED_REJECTION").catch(() => process.exit(1));
+});
+
 (async () => {
   try {
     logger.info("SERVER_STARTUP_BEGIN", {
@@ -376,7 +440,7 @@ app.use((err, req, res, next) => {
       console.warn("Run migrations explicitly with: node db/setup.js");
     }
 
-    startQueue();
+    await startQueue();
 
     logger.info("JOB_QUEUE_STARTED", getQueueStatus());
 
@@ -391,7 +455,7 @@ app.use((err, req, res, next) => {
       logger.info("SUBSCRIPTION PROCESSOR: hourly setInterval poll DISABLED — subscription visits run on scheduler only (cron + job queue path)");
     }
 
-    app.listen(PORT, () => {
+    server = app.listen(PORT, () => {
       logger.info("SERVER_LISTENING", {
         port: PORT,
         env: NODE_ENV

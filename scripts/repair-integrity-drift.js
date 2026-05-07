@@ -392,7 +392,7 @@ async function run() {
   const client = await pool.connect();
   const summary = {};
 
-  console.log(`LoneGreen integrity repair ${apply ? "APPLY" : "DRY-RUN"}`);
+  console.log(`FairLinx integrity repair ${apply ? "APPLY" : "DRY-RUN"}`);
   console.log(`repair_run_id: ${repairRunId}`);
 
   try {

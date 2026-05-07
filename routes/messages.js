@@ -2,6 +2,7 @@ const express = require("express");
 const jwt = require("jsonwebtoken");
 const pool = require("../db/pool");
 const { SECRET } = require("../config/env");
+const { classifyTokenBoundary, normalizeRole } = require("../middleware/auth");
 const { sendSafeServerError } = require("../services/safeServerError");
 const { sendOperationalEmailSafe } = require("../services/emailService");
 
@@ -24,26 +25,30 @@ function parseBearerToken(header) {
   return parts[1];
 }
 
-function normalizeRole(role) {
-  return String(role || "").trim().toLowerCase();
-}
-
 async function resolveCustomerActor(decoded) {
   const clientId = Number(decoded && decoded.client_id);
+  const tokenCompanyId = decoded && decoded.company_id ? Number(decoded.company_id) : null;
   if (!Number.isInteger(clientId) || clientId <= 0) {
     return null;
   }
+  if (tokenCompanyId !== null && (!Number.isInteger(tokenCompanyId) || tokenCompanyId <= 0)) {
+    return null;
+  }
 
-  const clientResult = await pool.query(
-    "SELECT id, company_id FROM clients WHERE id = $1 LIMIT 1",
-    [clientId]
-  );
+  const clientResult = tokenCompanyId
+    ? await pool.query(
+      "SELECT id, company_id FROM clients WHERE id = $1 AND company_id = $2 LIMIT 1",
+      [clientId, tokenCompanyId]
+    )
+    : await pool.query(
+      "SELECT id, company_id FROM clients WHERE id = $1 LIMIT 1",
+      [clientId]
+    );
   if (!clientResult.rows.length) {
     return null;
   }
 
   const client = clientResult.rows[0];
-  const tokenCompanyId = decoded && decoded.company_id ? Number(decoded.company_id) : null;
   const clientCompanyId = Number(client.company_id);
   if (tokenCompanyId && tokenCompanyId !== clientCompanyId) {
     return null;
@@ -60,8 +65,12 @@ function resolveCompanyActor(decoded) {
   const userId = Number(decoded && decoded.id);
   const role = normalizeRole(decoded && decoded.role);
   const companyId = Number(decoded && decoded.company_id);
+  const allowedCompanyRoles = new Set(["owner", "admin", "manager", "worker", "platform_owner"]);
 
   if (!Number.isInteger(userId) || userId <= 0 || !role) {
+    return null;
+  }
+  if (!allowedCompanyRoles.has(role)) {
     return null;
   }
   if (!Number.isInteger(companyId) || companyId <= 0) {
@@ -83,10 +92,11 @@ async function participantAuth(req, res, next) {
 
   try {
     const decoded = jwt.verify(token, SECRET);
-    const isCustomerToken = decoded && (
-      decoded.portal === "customer" ||
-      normalizeRole(decoded.role) === "customer"
-    );
+    const boundary = classifyTokenBoundary(decoded);
+    if (boundary.type === "mixed") {
+      return res.status(403).json({ error: "Mixed auth boundary token" });
+    }
+    const isCustomerToken = boundary.type === "customer";
 
     if (isCustomerToken) {
       const customerActor = await resolveCustomerActor(decoded);

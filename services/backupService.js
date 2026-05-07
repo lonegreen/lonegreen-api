@@ -8,7 +8,12 @@ const DUMP_NAME_RE = /^lonegreen-backup-\d{4}-\d{2}-\d{2}-\d{2}-\d{2}-\d{2}\.dum
 
 function getBackupDir() {
   const raw = String(process.env.BACKUP_DIR || "").trim();
-  return raw ? path.resolve(process.cwd(), raw) : DEFAULT_BACKUP_DIR;
+  const resolved = raw ? path.resolve(process.cwd(), raw) : DEFAULT_BACKUP_DIR;
+  const root = path.parse(resolved).root;
+  if (resolved === root) {
+    throw new Error("BACKUP_DIR cannot be filesystem root");
+  }
+  return resolved;
 }
 
 function timestampForFilename() {

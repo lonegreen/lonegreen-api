@@ -14,9 +14,6 @@ const {
   getPlatformBillingOverview,
   getCompanyBilling,
   getCompanySubscription,
-  createCompanySubscription,
-  upgradeCompanyPlan,
-  downgradeCompanyPlan,
   cancelCompanySubscription,
   reactivateCompanySubscription,
   normalizePlan,
@@ -24,7 +21,9 @@ const {
   computeTrialMeta,
   evaluatePastDueSuspensions,
   planRank,
-  hasUsageWithinLimits
+  hasUsageWithinLimits,
+  MAX_TENANT_TRIAL_DAYS,
+  normalizeTenantTrialDays
 } = require("../services/billingService");
 
 const {
@@ -68,11 +67,6 @@ function num(value) {
   return Number(value || 0);
 }
 
-function parseIntSafe(value) {
-  const parsed = Number.parseInt(String(value), 10);
-  return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
-}
-
 const TENANT_PROTECTED_BILLING_FIELDS = new Set([
   "billing_status",
   "trial_ends_at",
@@ -105,6 +99,58 @@ function resolveCheckoutPlanInput(raw) {
     return checkoutPlanFromInternalPlan(normalized);
   }
   return null;
+}
+
+function billingProviderRequiredResponse(res) {
+  return res.status(503).json({
+    error: "Stripe billing is required for tenant plan and subscription changes.",
+    code: "BILLING_PROVIDER_REQUIRED",
+    warning_mode: true
+  });
+}
+
+function tenantPlanFieldAttempt(body) {
+  const payload = body || {};
+  if (payload.plan_id !== undefined) return "plan_id";
+  if (payload.plan_slug !== undefined) return "plan_slug";
+  return null;
+}
+
+function validateTenantTrialDaysAtRoute(rawTrialDays) {
+  try {
+    return normalizeTenantTrialDays(rawTrialDays, 14);
+  } catch (err) {
+    if (err && err.code) {
+      err.statusCode = err.statusCode || 400;
+      throw err;
+    }
+    throw err;
+  }
+}
+
+async function logTenantBillingMutation({
+  req,
+  action,
+  details = {}
+}) {
+  try {
+    await activityLogService.ensureActivityLogSchema();
+    await activityLogService.logActivity({
+      companyId: req.user.company_id,
+      userId: req.user.id,
+      action,
+      entityType: "billing",
+      entityId: req.user.company_id,
+      details
+    });
+  } catch (err) {
+    logger.warn("TENANT_BILLING_AUDIT_LOG_FAILED", {
+      action,
+      company_id: req.user && req.user.company_id,
+      user_id: req.user && req.user.id,
+      error: err && err.message
+    });
+  }
 }
 
 async function getActiveSubscriptionPlans() {
@@ -251,32 +297,45 @@ router.post("/billing/subscribe", billingOwnerAdminOnly, async (req, res) => {
       return res.status(400).json({ error: "Company billing is not available for this account" });
     }
 
-    if (isStripeCheckoutConfigured()) {
-      const session = await createCheckoutSessionForCompany({
-        companyId: req.user.company_id,
-        checkoutPlan: resolveCheckoutPlanInput(req.body && req.body.plan),
-        billing_cycle: req.body && req.body.billing_cycle,
-        req
-      });
-
-      return res.json({
-        url: session.url,
-        session_id: session.id,
-        stripe_checkout: true,
+    const planField = tenantPlanFieldAttempt(req.body);
+    if (planField) {
+      return res.status(403).json({
+        error: "Direct plan_id/plan_slug changes are not allowed for tenant billing routes.",
+        code: "TENANT_PLAN_OVERRIDE_BLOCKED",
+        field: planField,
         warning_mode: true
       });
     }
 
-    const subscription = await createCompanySubscription(req.user.company_id, {
-      plan: req.body && req.body.plan,
-      billing_cycle: req.body && req.body.billing_cycle,
-      trial_days: req.body && req.body.trial_days
-    });
-    const summary = await currentBillingPayload(req.user.company_id);
+    const trialDays = validateTenantTrialDaysAtRoute(req.body && req.body.trial_days);
+    const selectedCheckoutPlan = resolveCheckoutPlanInput(req.body && req.body.plan);
 
-    res.status(201).json({
-      subscription,
-      summary,
+    if (!isStripeCheckoutConfigured()) {
+      return billingProviderRequiredResponse(res);
+    }
+
+    const session = await createCheckoutSessionForCompany({
+      companyId: req.user.company_id,
+      checkoutPlan: selectedCheckoutPlan,
+      billing_cycle: req.body && req.body.billing_cycle,
+      req
+    });
+
+    await logTenantBillingMutation({
+      req,
+      action: "tenant_billing_checkout_started",
+      details: {
+        checkout_plan: selectedCheckoutPlan,
+        billing_cycle: req.body && req.body.billing_cycle ? String(req.body.billing_cycle) : "monthly",
+        requested_trial_days: trialDays,
+        max_trial_days: MAX_TENANT_TRIAL_DAYS
+      }
+    });
+
+    return res.json({
+      url: session.url,
+      session_id: session.id,
+      stripe_checkout: true,
       warning_mode: true
     });
   } catch (err) {
@@ -290,35 +349,15 @@ router.post("/billing/upgrade", billingOwnerAdminOnly, async (req, res) => {
       return res.status(400).json({ error: "Company billing is not available for this account" });
     }
 
-    if (isStripeCheckoutConfigured()) {
-      const subscription = await getCompanySubscription(req.user.company_id);
-      const stripeSubId = subscription && subscription.stripe_subscription_id
-        ? String(subscription.stripe_subscription_id).trim()
-        : "";
-
-      if (!stripeSubId) {
-        return res.status(409).json({
-          error: "Use Stripe Checkout to start billing before changing plans.",
-          code: "STRIPE_SUBSCRIPTION_REQUIRED",
-          warning_mode: true
-        });
-      }
-
-      req.body = {
-        ...(req.body || {}),
-        plan: req.body && req.body.plan
-      };
-      return handleBillingPlanChange(req, res);
+    if (!isStripeCheckoutConfigured()) {
+      return billingProviderRequiredResponse(res);
     }
 
-    const subscription = await upgradeCompanyPlan(req.user.company_id, req.body && req.body.plan);
-    const summary = await currentBillingPayload(req.user.company_id);
-
-    res.json({
-      subscription,
-      summary,
-      warning_mode: true
-    });
+    req.body = {
+      ...(req.body || {}),
+      plan: req.body && req.body.plan
+    };
+    return handleBillingPlanChange(req, res);
   } catch (err) {
     billingRouteError(res, err, "BILLING UPGRADE ERROR");
   }
@@ -330,31 +369,11 @@ router.post("/billing/downgrade", billingOwnerAdminOnly, async (req, res) => {
       return res.status(400).json({ error: "Company billing is not available for this account" });
     }
 
-    if (isStripeCheckoutConfigured()) {
-      const subscription = await getCompanySubscription(req.user.company_id);
-      const stripeSubId = subscription && subscription.stripe_subscription_id
-        ? String(subscription.stripe_subscription_id).trim()
-        : "";
-
-      if (!stripeSubId) {
-        return res.status(409).json({
-          error: "Use Stripe Checkout to start billing before changing plans.",
-          code: "STRIPE_SUBSCRIPTION_REQUIRED",
-          warning_mode: true
-        });
-      }
-
-      return handleBillingPlanChange(req, res);
+    if (!isStripeCheckoutConfigured()) {
+      return billingProviderRequiredResponse(res);
     }
 
-    const subscription = await downgradeCompanyPlan(req.user.company_id, req.body && req.body.plan);
-    const summary = await currentBillingPayload(req.user.company_id);
-
-    res.json({
-      subscription,
-      summary,
-      warning_mode: true
-    });
+    return handleBillingPlanChange(req, res);
   } catch (err) {
     billingRouteError(res, err, "BILLING DOWNGRADE ERROR");
   }
@@ -702,91 +721,13 @@ async function handleBillingPlanChange(req, res) {
       });
     }
 
-    const hasPlanTableSelection = req.body && (
-      req.body.plan_id !== undefined ||
-      req.body.plan_slug !== undefined
-    );
-
-    if (hasPlanTableSelection) {
-      const requestedPlanId = req.body.plan_id !== undefined
-        ? parseIntSafe(req.body.plan_id)
-        : null;
-      const requestedPlanSlug = req.body.plan_slug !== undefined
-        ? String(req.body.plan_slug || "").trim().toLowerCase()
-        : "";
-
-      if (!requestedPlanId && !requestedPlanSlug) {
-        return res.status(400).json({
-          error: "Provide plan_id or plan_slug",
-          warning_mode: true
-        });
-      }
-
-      const planLookup = await pool.query(
-        `
-        SELECT
-          id,
-          name,
-          slug,
-          monthly_price,
-          max_users,
-          max_clients,
-          max_jobs,
-          max_invoices,
-          max_workers,
-          active,
-          created_at
-        FROM subscription_plans
-        WHERE active = TRUE
-          AND (
-            ($1::int IS NOT NULL AND id = $1)
-            OR
-            ($2::text <> '' AND LOWER(slug) = LOWER($2))
-          )
-        ORDER BY id ASC
-        LIMIT 1
-        `,
-        [requestedPlanId || null, requestedPlanSlug]
-      );
-
-      if (!planLookup.rows.length) {
-        return res.status(404).json({
-          error: "Plan not found",
-          warning_mode: true
-        });
-      }
-
-      const selectedPlan = planLookup.rows[0];
-      const existingCompany = await pool.query(
-        `
-        SELECT id, billing_status
-        FROM companies
-        WHERE id = $1
-        LIMIT 1
-        `,
-        [req.user.company_id]
-      );
-      if (!existingCompany.rows.length) {
-        return res.status(404).json({ error: "Company not found" });
-      }
-
-      await pool.query(
-        `
-        UPDATE companies
-        SET
-          plan_id = $2
-        WHERE id = $1
-        `,
-        [req.user.company_id, selectedPlan.id]
-      );
-
-      const payload = await currentBillingPayload(req.user.company_id);
-      return res.json({
-        selected_plan: selectedPlan,
-        billing_status: normalizeBillingStatus(existingCompany.rows[0].billing_status),
-        summary: payload,
-        warning_mode: true,
-        stripe_updated: false
+    const planField = tenantPlanFieldAttempt(req.body);
+    if (planField) {
+      return res.status(403).json({
+        error: "Direct plan_id/plan_slug changes are not allowed for tenant billing routes.",
+        code: "TENANT_PLAN_OVERRIDE_BLOCKED",
+        field: planField,
+        warning_mode: true
       });
     }
 
@@ -816,61 +757,64 @@ async function handleBillingPlanChange(req, res) {
       ? String(subscription.stripe_subscription_id).trim()
       : "";
 
-    if (isStripeCheckoutConfigured()) {
-      if (!stripeSubId) {
-        return res.status(409).json({
-          error: "Use Stripe Checkout to start billing before changing plans.",
-          code: "STRIPE_SUBSCRIPTION_REQUIRED",
-          warning_mode: true
-        });
-      }
+    if (!isStripeCheckoutConfigured()) {
+      return billingProviderRequiredResponse(res);
+    }
 
-      if (direction === "downgrade") {
-        const usage = await getUsageForCompany(req.user.company_id);
-        const limits = getPlanLimits(targetInternal);
-        const failures = hasUsageWithinLimits(usage, limits);
-        if (failures.length) {
-          return res.status(409).json({
-            error: "Current usage exceeds the target plan limits.",
-            code: "DOWNGRADE_BELOW_USAGE",
-            details: failures,
-            warning_mode: true
-          });
-        }
-      }
-
-      const proration = req.body && req.body.proration_behavior;
-      const refreshed = await changeStripeSubscriptionPlan({
-        companyId: req.user.company_id,
-        checkoutPlan: targetCheckout,
-        billing_cycle: req.body && req.body.billing_cycle,
-        proration_behavior: typeof proration === "string" && proration.trim()
-          ? proration.trim()
-          : "create_prorations"
-      });
-
-      await syncSubscriptionToCompany(refreshed, {});
-      const nextSub = await getCompanySubscription(req.user.company_id);
-      const summary = await currentBillingPayload(req.user.company_id);
-
-      return res.json({
-        subscription: nextSub,
-        summary,
-        warning_mode: true,
-        stripe_updated: true
+    if (!stripeSubId) {
+      return res.status(409).json({
+        error: "Use Stripe Checkout to start billing before changing plans.",
+        code: "STRIPE_SUBSCRIPTION_REQUIRED",
+        warning_mode: true
       });
     }
 
-    const updated = direction === "upgrade"
-      ? await upgradeCompanyPlan(req.user.company_id, targetInternal)
-      : await downgradeCompanyPlan(req.user.company_id, targetInternal);
+    if (direction === "downgrade") {
+      const usage = await getUsageForCompany(req.user.company_id);
+      const limits = getPlanLimits(targetInternal);
+      const failures = hasUsageWithinLimits(usage, limits);
+      if (failures.length) {
+        return res.status(409).json({
+          error: "Current usage exceeds the target plan limits.",
+          code: "DOWNGRADE_BELOW_USAGE",
+          details: failures,
+          warning_mode: true
+        });
+      }
+    }
+
+    const proration = req.body && req.body.proration_behavior;
+    const refreshed = await changeStripeSubscriptionPlan({
+      companyId: req.user.company_id,
+      checkoutPlan: targetCheckout,
+      billing_cycle: req.body && req.body.billing_cycle,
+      proration_behavior: typeof proration === "string" && proration.trim()
+        ? proration.trim()
+        : "create_prorations"
+    });
+
+    await syncSubscriptionToCompany(refreshed, {});
+    const nextSub = await getCompanySubscription(req.user.company_id);
     const summary = await currentBillingPayload(req.user.company_id);
+    await logTenantBillingMutation({
+      req,
+      action: "tenant_billing_plan_changed",
+      details: {
+        direction,
+        from_plan: currentInternal,
+        to_plan: targetInternal,
+        stripe_subscription_id: stripeSubId,
+        proration_behavior: typeof proration === "string" && proration.trim()
+          ? proration.trim()
+          : "create_prorations"
+      }
+    });
 
     res.json({
-      subscription: updated,
+      subscription: nextSub,
       summary,
       warning_mode: true,
-      stripe_updated: false
+      stripe_updated: true
     });
   } catch (err) {
     billingRouteError(res, err, "BILLING CHANGE PLAN ERROR");
@@ -1078,6 +1022,22 @@ router.put("/platform/billing/companies/:id", platformOnly, async (req, res) => 
       });
       didPlatformUnlock = true;
       auditExtras.platform_unlock = true;
+    }
+
+    const hasSensitiveOverride = Boolean(
+      patch.plan !== undefined
+      || patch.trial_ends_at !== undefined
+      || req.body.extend_trial_days !== undefined
+      || didPlatformUnlock
+    );
+    const auditReason = String(req.body && req.body.audit_reason || "").trim();
+    if (hasSensitiveOverride && !auditReason) {
+      return res.status(400).json({
+        error: "audit_reason is required for plan, trial, or platform unlock overrides"
+      });
+    }
+    if (auditReason) {
+      auditExtras.audit_reason = auditReason;
     }
 
     const hasPatchKeys = Object.keys(patch).length > 0;

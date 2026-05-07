@@ -892,6 +892,19 @@ function apiUrl(path){
   return new URL(path, API).toString();
 }
 
+function isAllowedBillingRedirect(url){
+  try {
+    const parsed = new URL(String(url || ""), window.location.origin);
+    const host = parsed.hostname.toLowerCase();
+    const appHost = window.location.hostname.toLowerCase();
+    if (parsed.origin === window.location.origin) return true;
+    if (host === appHost) return true;
+    return host === "stripe.com" || host.endsWith(".stripe.com");
+  } catch (_) {
+    return false;
+  }
+}
+
 function getToken(){
   return localStorage.getItem("token");
 }
@@ -1329,8 +1342,12 @@ async function subscribeCompanyBilling(plan){
       return;
     }
 
-    if(payload.url){
+    if(payload.url && isAllowedBillingRedirect(payload.url)){
       window.top.location.href = payload.url;
+      return;
+    }
+    if (payload.url && !isAllowedBillingRedirect(payload.url)) {
+      alert("Blocked unsafe redirect URL.");
       return;
     }
 
@@ -1417,10 +1434,10 @@ async function startStripeCheckout(plan){
       return;
     }
 
-    if(payload.url){
+    if(payload.url && isAllowedBillingRedirect(payload.url)){
       window.top.location.href = payload.url;
     } else {
-      alert("Checkout URL was not returned.");
+      alert(payload.url ? "Blocked unsafe redirect URL." : "Checkout URL was not returned.");
     }
   } catch(err) {
     console.warn("STRIPE CHECKOUT:", err);
@@ -1446,10 +1463,10 @@ async function openBillingPortal(){
       return;
     }
 
-    if(payload.url){
+    if(payload.url && isAllowedBillingRedirect(payload.url)){
       window.top.location.href = payload.url;
     } else {
-      alert("Billing portal URL was not returned.");
+      alert(payload.url ? "Blocked unsafe redirect URL." : "Billing portal URL was not returned.");
     }
   } catch(err) {
     console.warn("BILLING PORTAL:", err);

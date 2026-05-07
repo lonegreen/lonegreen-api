@@ -47,6 +47,7 @@ const COMPANY_SUBSCRIPTION_STATUSES = new Set([
 ]);
 const BILLING_CYCLES = new Set(["monthly", "yearly"]);
 const PLAN_ORDER = ["starter", "pro", "enterprise"];
+const MAX_TENANT_TRIAL_DAYS = 30;
 
 function num(value) {
   const parsed = Number(value || 0);
@@ -163,6 +164,33 @@ function subscriptionError(code, message, statusCode = 400, details = null) {
   err.statusCode = statusCode;
   if (details) err.details = details;
   return err;
+}
+
+function normalizeTenantTrialDays(rawValue, defaultDays = 14) {
+  if (rawValue === undefined || rawValue === null || rawValue === "") {
+    return defaultDays;
+  }
+
+  const parsed = Number(rawValue);
+  if (!Number.isFinite(parsed)) {
+    throw subscriptionError("INVALID_TRIAL_DAYS", "trial_days must be a valid number", 400);
+  }
+
+  const trialDays = Math.floor(parsed);
+  if (trialDays < 0) {
+    throw subscriptionError("INVALID_TRIAL_DAYS", "trial_days cannot be negative", 400);
+  }
+
+  if (trialDays > MAX_TENANT_TRIAL_DAYS) {
+    throw subscriptionError(
+      "TRIAL_DAYS_EXCEEDS_MAX",
+      `trial_days exceeds safe maximum of ${MAX_TENANT_TRIAL_DAYS}`,
+      400,
+      { max_trial_days: MAX_TENANT_TRIAL_DAYS }
+    );
+  }
+
+  return trialDays;
 }
 
 function graceDaysRemaining(graceUntil) {
@@ -878,7 +906,7 @@ async function createCompanySubscription(companyId, options = {}) {
     const limits = getPlanLimits(plan);
     const billingCycle = normalizeBillingCycle(options.billing_cycle);
     const now = new Date();
-    const trialDays = options.trial_days === undefined ? 14 : Math.max(0, Number(options.trial_days) || 0);
+    const trialDays = normalizeTenantTrialDays(options.trial_days, 14);
     const hasTrial = trialDays > 0;
     const trialEndsAt = hasTrial
       ? addDaysIso(trialDays, now)
@@ -2055,5 +2083,7 @@ module.exports = {
   isOverLimit,
   getBillingSummary,
   getStaffMutationBillingBlock,
-  hasUsageWithinLimits
+  hasUsageWithinLimits,
+  MAX_TENANT_TRIAL_DAYS,
+  normalizeTenantTrialDays
 };

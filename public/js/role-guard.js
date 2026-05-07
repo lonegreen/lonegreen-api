@@ -55,6 +55,18 @@
     window.top.location.href = "/login.html";
   }
 
+  function hardDeny(reason) {
+    try {
+      if (window.top && window.top !== window && window.top.location && window.top.location.origin === window.location.origin) {
+        window.top.location.href = "/control.html";
+      }
+    } catch (_) {}
+    try {
+      document.documentElement.innerHTML = "<body><h1 style='font-family:Arial,sans-serif;padding:24px;'>Access denied</h1></body>";
+    } catch (_) {}
+    throw new Error(reason || "Access denied");
+  }
+
   function redirectSafe(role) {
     if (role === "worker") {
       window.top.location.href = "/worker.html";
@@ -122,6 +134,8 @@
   if (!hasAccess(role, page)) {
     if (window === window.top) {
       redirectSafe(role);
+      return;
     }
+    hardDeny("Unauthorized page access");
   }
 })();

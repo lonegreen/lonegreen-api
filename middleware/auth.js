@@ -9,6 +9,7 @@ const ROLE_RANK = {
   owner: 4,
   platform_owner: 5
 };
+const STAFF_ROLES = new Set(["worker", "manager", "admin", "owner", "platform_owner"]);
 
 function normalizeRole(role) {
   const normalized = String(role || "").trim().toLowerCase();
@@ -33,6 +34,94 @@ function getBearerToken(header) {
   return parts[1];
 }
 
+function toPositiveInteger(value) {
+  const parsed = Number(value);
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : null;
+}
+
+function classifyTokenBoundary(decoded) {
+  const role = normalizeRole(decoded && decoded.role);
+  const portal = String((decoded && decoded.portal) || "").trim().toLowerCase();
+  const hasCustomerPortal = portal === "customer";
+  const hasCustomerRole = role === "customer";
+  const hasCustomerMarker = hasCustomerPortal || hasCustomerRole;
+  const hasStaffRole = STAFF_ROLES.has(role) && role !== "customer";
+  const hasClientId = toPositiveInteger(decoded && decoded.client_id) !== null;
+  const hasWorkerId = toPositiveInteger(decoded && decoded.worker_id) !== null;
+  const hasCompanyId = toPositiveInteger(decoded && decoded.company_id) !== null;
+
+  if ((hasCustomerMarker && hasStaffRole) || (hasCustomerMarker && hasWorkerId)) {
+    return { role, type: "mixed" };
+  }
+
+  if (hasCustomerMarker || hasClientId) {
+    if (hasStaffRole) {
+      return { role, type: "mixed" };
+    }
+    return { role, type: "customer" };
+  }
+
+  if (hasStaffRole || (role && role === "platform_owner")) {
+    return { role, type: "staff" };
+  }
+
+  if (hasCompanyId && role && role !== "customer") {
+    return { role, type: "staff" };
+  }
+
+  return { role, type: "unknown" };
+}
+
+function parseCustomerPrincipal(decoded) {
+  const boundary = classifyTokenBoundary(decoded);
+  if (boundary.type === "mixed") {
+    const error = new Error("Mixed auth boundary token");
+    error.status = 403;
+    throw error;
+  }
+  if (boundary.type !== "customer") {
+    const error = new Error("Forbidden");
+    error.status = 403;
+    throw error;
+  }
+
+  const clientId = toPositiveInteger(decoded && decoded.client_id);
+  if (!clientId) {
+    const error = new Error("Forbidden");
+    error.status = 403;
+    throw error;
+  }
+
+  return {
+    ...decoded,
+    client_id: clientId,
+    role: "customer",
+    portal: String((decoded && decoded.portal) || "").trim().toLowerCase() === "customer"
+      ? "customer"
+      : "customer_account"
+  };
+}
+
+function verifyCustomerBearerToken(header) {
+  const token = getBearerToken(header);
+  if (!token) {
+    const error = new Error("Customer login required");
+    error.status = 401;
+    throw error;
+  }
+
+  let decoded;
+  try {
+    decoded = jwt.verify(token, SECRET);
+  } catch {
+    const error = new Error("Invalid customer token");
+    error.status = 401;
+    throw error;
+  }
+
+  return parseCustomerPrincipal(decoded);
+}
+
 function auth(req, res, next) {
   const token = getBearerToken(req.headers.authorization);
 
@@ -42,8 +131,11 @@ function auth(req, res, next) {
 
   try {
     const decoded = jwt.verify(token, SECRET);
-
-    if (decoded && decoded.portal === "customer") {
+    const boundary = classifyTokenBoundary(decoded);
+    if (boundary.type === "mixed") {
+      return res.status(403).json({ error: "Mixed auth boundary token" });
+    }
+    if (boundary.type === "customer") {
       return res.status(403).json({ error: "Forbidden" });
     }
 
@@ -51,10 +143,14 @@ function auth(req, res, next) {
       return res.status(401).json({ error: "Invalid token payload" });
     }
 
-    const role = normalizeRole(decoded.role);
+    const role = boundary.role || normalizeRole(decoded.role);
 
-    if (!role) {
+    if (!role || !STAFF_ROLES.has(role) || role === "customer") {
       return res.status(403).json({ error: "Invalid role" });
+    }
+
+    if (role !== "platform_owner" && !toPositiveInteger(decoded.company_id)) {
+      return res.status(403).json({ error: "Invalid token payload" });
     }
 
     req.user = {
@@ -162,3 +258,6 @@ module.exports.isWorker = isWorker;
 module.exports.workerIdForUser = workerIdForUser;
 module.exports.normalizeRole = normalizeRole;
 module.exports.ROLE_RANK = ROLE_RANK;
+module.exports.getBearerToken = getBearerToken;
+module.exports.classifyTokenBoundary = classifyTokenBoundary;
+module.exports.verifyCustomerBearerToken = verifyCustomerBearerToken;

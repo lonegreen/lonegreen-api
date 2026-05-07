@@ -105,7 +105,7 @@ async function getHealthReadiness() {
 
   return {
     ok,
-    app: "LoneGreen SaaS",
+    app: "FairLinx",
     process: processStatus,
     database,
     migrations,

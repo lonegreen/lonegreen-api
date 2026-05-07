@@ -375,7 +375,7 @@ router.get("/platform/health", platformOnly, async (req, res) => {
     res.json({
       app: {
         status: "ok",
-        name: "LoneGreen SaaS",
+        name: "FairLinx",
         env: NODE_ENV,
         checked_at: new Date().toISOString()
       },

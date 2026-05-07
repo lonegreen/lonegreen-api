@@ -30,4 +30,4 @@ Stripe webhook: synced subscription
 stripe trigger checkout.session.completed
 ```
 
-Synthetic trigger events may not include a LoneGreen `company_id` or matching `client_reference_id`, so a `COMPANY_NOT_RESOLVED` webhook retry is expected unless you override fixture metadata or test through the app Checkout flow.
+Synthetic trigger events may not include a FairLinx `company_id` or matching `client_reference_id`, so a `COMPANY_NOT_RESOLVED` webhook retry is expected unless you override fixture metadata or test through the app Checkout flow.

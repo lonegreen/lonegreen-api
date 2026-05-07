@@ -43,6 +43,7 @@ const {
   ensureOperationsSchema,
   normalizeLeadStatus,
   normalizeEstimateStatus,
+  assertEstimateStatusTransition,
   nextMonthDateString,
   getClientById,
   createClientFromContact,
@@ -182,6 +183,10 @@ router.put("/workflow/estimates/:id", auth, requireCompanyBillingForMutations, r
       status,
       client_id: req.body.client_id !== undefined ? req.body.client_id : estimate.client_id
     };
+    const statusErr = assertEstimateStatusTransition(estimate.status, payload.status);
+    if (statusErr) {
+      return res.status(statusErr.statusCode || 400).json({ error: statusErr.message, code: statusErr.code });
+    }
 
     const result = await pool.query(`
       UPDATE estimates
@@ -783,6 +788,20 @@ router.put("/estimates/:id/status", auth, requireCompanyBillingForMutations, req
       return res.status(400).json({ error: "Invalid status" });
     }
 
+    const current = await pool.query(`
+      SELECT id, status
+      FROM estimates
+      WHERE id = $1 AND company_id = $2
+      LIMIT 1
+    `, [id, company_id]);
+    if (!current.rows.length) {
+      return res.status(404).json({ error: "Estimate not found" });
+    }
+    const transitionErr = assertEstimateStatusTransition(current.rows[0].status, status);
+    if (transitionErr) {
+      return res.status(transitionErr.statusCode || 400).json({ error: transitionErr.message, code: transitionErr.code });
+    }
+
     const result = await pool.query(`
       UPDATE estimates
       SET status = $1
@@ -832,44 +851,51 @@ router.delete("/estimates/:id", auth, requireCompanyBillingForMutations, require
 });
 
 router.post("/estimates/:id/convert-to-job", auth, requireCompanyBillingForMutations, requireMinimumRole("manager"), async (req, res) => {
+  const clientTx = await pool.connect();
   try {
     await ensureEstimateSchema();
     const id = req.params.id;
     const { date, start_time, end_time, worker_id, price } = req.body;
     const company_id = req.user.company_id;
 
-    const estimate = await pool.query(`
+    await clientTx.query("BEGIN");
+    const estimate = await clientTx.query(`
       SELECT * FROM estimates
       WHERE id = $1 AND company_id = $2
+      FOR UPDATE
     `, [id, company_id]);
 
     if (estimate.rows.length === 0) {
+      await clientTx.query("ROLLBACK");
       return res.status(404).json({ error: "Estimate not found" });
     }
 
     const e = estimate.rows[0];
 
     if (e.status === "converted") {
+      await clientTx.query("ROLLBACK");
       return res.status(400).json({ error: "Estimate already converted to job" });
     }
 
     if (e.status !== "approved") {
+      await clientTx.query("ROLLBACK");
       return res.status(400).json({ error: "Estimate must be approved before conversion" });
     }
 
-    const existingJob = await pool.query(
+    const existingJob = await clientTx.query(
       "SELECT * FROM jobs WHERE estimate_id=$1 AND company_id=$2 LIMIT 1",
       [id, company_id]
     );
 
     if (existingJob.rows.length > 0) {
+      await clientTx.query("COMMIT");
       return res.json(existingJob.rows[0]);
     }
 
     let resolvedClientId = e.client_id;
 
     if (!resolvedClientId) {
-      const clientResult = await pool.query(`
+      const clientResult = await clientTx.query(`
         INSERT INTO clients (name, phone, address, zip, company_id)
         VALUES ($1,$2,$3,$4,$5)
         RETURNING *
@@ -884,21 +910,23 @@ router.post("/estimates/:id/convert-to-job", auth, requireCompanyBillingForMutat
       resolvedClientId = clientResult.rows[0].id;
     }
 
-    const activeClient = await pool.query(
+    const activeClient = await clientTx.query(
       "SELECT id FROM clients WHERE id=$1 AND company_id=$2 AND COALESCE(archived, FALSE)=FALSE LIMIT 1",
       [resolvedClientId, company_id]
     );
 
     if (activeClient.rows.length === 0) {
+      await clientTx.query("ROLLBACK");
       return res.status(400).json({ error: "Client is archived or not found" });
     }
 
     const workerLookup = await resolveCompanyWorkerId(company_id, worker_id);
     if (!workerLookup.ok) {
+      await clientTx.query("ROLLBACK");
       return res.status(400).json({ error: "Worker not found in this company" });
     }
 
-    const jobResult = await pool.query(`
+    const jobResult = await clientTx.query(`
       INSERT INTO jobs
       (client_id, service, type, date, start_time, end_time, status, worker_id, price, company_id, payment_status, internal_notes, estimate_id)
       VALUES ($1,$2,'one_time_job',$3,$4,$5,'scheduled',$6,$7,$8,'unpaid',$9,$10)
@@ -916,7 +944,7 @@ router.post("/estimates/:id/convert-to-job", auth, requireCompanyBillingForMutat
       id
     ]);
 
-    await pool.query(`
+    await clientTx.query(`
       UPDATE estimates
       SET status = 'converted',
           client_id = $3,
@@ -926,14 +954,21 @@ router.post("/estimates/:id/convert-to-job", auth, requireCompanyBillingForMutat
       WHERE id = $1 AND company_id = $2
     `, [id, company_id, resolvedClientId, jobResult.rows[0].id]);
 
+    await clientTx.query("COMMIT");
     res.json(jobResult.rows[0]);
   } catch (err) {
+    try {
+      await clientTx.query("ROLLBACK");
+    } catch (_) {}
     console.log("CONVERT ESTIMATE TO JOB ERROR:", err);
     sendSafeServerError(res, err, "routes/estimates");
+  } finally {
+    clientTx.release();
   }
 });
 
 router.post("/estimates/:id/convert-to-subscription", auth, requireCompanyBillingForMutations, requireMinimumRole("admin"), async (req, res) => {
+  const clientTx = await pool.connect();
   try {
     await ensureEstimateSchema();
     await ensureSubscriptionBillingSchema();
@@ -941,25 +976,29 @@ router.post("/estimates/:id/convert-to-subscription", auth, requireCompanyBillin
     const { frequency, next_date, worker_id, price, start_date } = req.body;
     const company_id = req.user.company_id;
 
-    const estimate = await pool.query(`
+    await clientTx.query("BEGIN");
+    const estimate = await clientTx.query(`
       SELECT * FROM estimates
       WHERE id = $1 AND company_id = $2
+      FOR UPDATE
     `, [id, company_id]);
 
     if (estimate.rows.length === 0) {
+      await clientTx.query("ROLLBACK");
       return res.status(404).json({ error: "Estimate not found" });
     }
 
     const e = estimate.rows[0];
 
     if (e.status === "converted") {
+      await clientTx.query("ROLLBACK");
       return res.status(400).json({ error: "Estimate already converted to subscription" });
     }
 
     let resolvedClientId = e.client_id;
 
     if (!resolvedClientId) {
-      const clientResult = await pool.query(`
+      const clientResult = await clientTx.query(`
         INSERT INTO clients (name, phone, address, zip, company_id)
         VALUES ($1,$2,$3,$4,$5)
         RETURNING *
@@ -974,21 +1013,38 @@ router.post("/estimates/:id/convert-to-subscription", auth, requireCompanyBillin
       resolvedClientId = clientResult.rows[0].id;
     }
 
-    const activeClient = await pool.query(
+    const activeClient = await clientTx.query(
       "SELECT id FROM clients WHERE id=$1 AND company_id=$2 AND COALESCE(archived, FALSE)=FALSE LIMIT 1",
       [resolvedClientId, company_id]
     );
 
     if (activeClient.rows.length === 0) {
+      await clientTx.query("ROLLBACK");
       return res.status(400).json({ error: "Client is archived or not found" });
     }
 
     const workerLookup = await resolveCompanyWorkerId(company_id, worker_id);
     if (!workerLookup.ok) {
+      await clientTx.query("ROLLBACK");
       return res.status(400).json({ error: "Worker not found in this company" });
     }
 
-    const subResult = await pool.query(`
+    const existingSubscription = await clientTx.query(`
+      SELECT *
+      FROM subscriptions
+      WHERE company_id = $1
+        AND client_id = $2
+        AND service = $3
+        AND next_date = $4
+      ORDER BY id DESC
+      LIMIT 1
+    `, [company_id, resolvedClientId, e.service, next_date]);
+    if (existingSubscription.rows.length > 0) {
+      await clientTx.query("COMMIT");
+      return res.json(existingSubscription.rows[0]);
+    }
+
+    const subResult = await clientTx.query(`
       INSERT INTO subscriptions
       (client_id, service, frequency, next_date, price, worker_id, status, company_id, start_date, next_billing_date)
       VALUES ($1,$2,$3,$4,$5,$6,'active',$7,$8,$9)
@@ -1010,7 +1066,7 @@ router.post("/estimates/:id/convert-to-subscription", auth, requireCompanyBillin
     const visitDates = buildSubscriptionVisitDates(next_date, frequency, 8);
 
     for (const visitDate of visitDates) {
-      const exists = await pool.query(`
+      const exists = await clientTx.query(`
         SELECT id FROM jobs
         WHERE source_subscription_id = $1
           AND date = $2
@@ -1019,7 +1075,7 @@ router.post("/estimates/:id/convert-to-subscription", auth, requireCompanyBillin
       `, [createdSub.id, visitDate, company_id]);
 
       if (exists.rows.length === 0) {
-        await pool.query(`
+        await clientTx.query(`
           INSERT INTO jobs
           (client_id, service, type, date, start_time, end_time, status, worker_id, price, company_id, source_subscription_id, payment_status)
           VALUES ($1,$2,'subscription_visit',$3,'08:00','09:00','scheduled',$4,0,$5,$6,'included')
@@ -1034,16 +1090,22 @@ router.post("/estimates/:id/convert-to-subscription", auth, requireCompanyBillin
       }
     }
 
-    await pool.query(`
+    await clientTx.query(`
       UPDATE estimates
       SET status = 'converted', client_id = $3
       WHERE id = $1 AND company_id = $2
     `, [id, company_id, resolvedClientId]);
+    await clientTx.query("COMMIT");
 
     res.json(createdSub);
   } catch (err) {
+    try {
+      await clientTx.query("ROLLBACK");
+    } catch (_) {}
     console.log("CONVERT ESTIMATE TO SUBSCRIPTION ERROR:", err);
     sendSafeServerError(res, err, "routes/estimates");
+  } finally {
+    clientTx.release();
   }
 });
 

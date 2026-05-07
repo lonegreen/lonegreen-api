@@ -60,7 +60,32 @@ const ALLOW_SEED_ADMIN = booleanEnv(
 const ALLOWED_ORIGINS = listEnv("ALLOWED_ORIGINS");
 const PUBLIC_APP_URL = optionalEnv("PUBLIC_APP_URL");
 
+function assertValidAbsoluteUrl(value, name) {
+  try {
+    const url = new URL(String(value || ""));
+    if (!["http:", "https:"].includes(url.protocol)) {
+      throw new Error(`${name} must use http/https`);
+    }
+  } catch {
+    throw new Error(`${name} must be a valid absolute URL`);
+  }
+}
+
+function assertValidOriginList(origins) {
+  for (const origin of origins) {
+    assertValidAbsoluteUrl(origin, "ALLOWED_ORIGINS entry");
+  }
+}
+
+const PORT = integerEnv("PORT", 4000);
+if (!Number.isInteger(PORT) || PORT <= 0 || PORT > 65535) {
+  throw new Error("PORT must be an integer between 1 and 65535");
+}
+
 if (NODE_ENV === "production") {
+  assertValidOriginList(ALLOWED_ORIGINS);
+  assertValidAbsoluteUrl(PUBLIC_APP_URL, "PUBLIC_APP_URL");
+
   if (ALLOWED_ORIGINS.length === 0) {
     throw new Error("ALLOWED_ORIGINS is required in production");
   }
@@ -217,4 +242,6 @@ module.exports = {
   BILLING_LIFECYCLE_AUTOMATION,
   SUBSCRIPTION_INTERVAL_ENGINE,
   getProductionEnvReadiness
+  ,
+  PORT
 };

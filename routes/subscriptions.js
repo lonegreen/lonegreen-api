@@ -54,7 +54,7 @@ const { buildSubscriptionReminderPayload } = require("../services/emailService")
 const logger = require("../services/logger");
 const {
   appendPaymentLedgerEntry,
-  createPaymentRecord,
+  assertPaymentWithinRemaining,
   getNetPaidForInvoice
 } = require("../services/financialIntegrityService");
 
@@ -147,7 +147,15 @@ router.post("/subscriptions", auth, requireCompanyBillingForMutations, requireMi
         await pool.query(`
           INSERT INTO jobs
           (client_id, service, type, date, start_time, end_time, status, worker_id, price, company_id, source_subscription_id, payment_status)
-          VALUES ($1,$2,'subscription_visit',$3,'08:00','09:00','scheduled',$4,0,$5,$6,'included')
+          SELECT $1,$2,'subscription_visit',$3,'08:00','09:00','scheduled',$4,0,$5,$6,'included'
+          WHERE NOT EXISTS (
+            SELECT 1
+            FROM jobs
+            WHERE source_subscription_id = $6
+              AND date = $3
+              AND type = 'subscription_visit'
+              AND company_id = $5
+          )
         `, [
           client_id,
           service,
@@ -284,7 +292,7 @@ router.post("/subscriptions/:id/send-reminder-email", auth, requireCompanyBillin
     }
 
     try {
-      enqueueEmailTask(payload);
+      await enqueueEmailTask(payload);
     } catch (qErr) {
       logger.warn("SUBSCRIPTION_REMINDER_ENQUEUE_FAILED", { error: qErr && qErr.message });
       return res.status(503).json({ error: "Mail queue unavailable. Try again shortly." });
@@ -425,7 +433,15 @@ router.put("/subscriptions/:id", auth, requireCompanyBillingForMutations, requir
         await client.query(`
           INSERT INTO jobs
           (client_id, service, type, date, start_time, end_time, status, worker_id, price, company_id, source_subscription_id, payment_status)
-          VALUES ($1,$2,'subscription_visit',$3,'08:00','09:00','scheduled',$4,0,$5,$6,'included')
+          SELECT $1,$2,'subscription_visit',$3,'08:00','09:00','scheduled',$4,0,$5,$6,'included'
+          WHERE NOT EXISTS (
+            SELECT 1
+            FROM jobs
+            WHERE source_subscription_id = $6
+              AND date = $3
+              AND type = 'subscription_visit'
+              AND company_id = $5
+          )
         `, [
           client_id,
           service,
@@ -526,7 +542,15 @@ router.put("/subscriptions/:id/status", auth, requireCompanyBillingForMutations,
           await pool.query(`
             INSERT INTO jobs
             (client_id, service, type, date, start_time, end_time, status, worker_id, price, company_id, source_subscription_id, payment_status)
-            VALUES ($1,$2,'subscription_visit',$3,'08:00','09:00','scheduled',$4,0,$5,$6,'included')
+            SELECT $1,$2,'subscription_visit',$3,'08:00','09:00','scheduled',$4,0,$5,$6,'included'
+            WHERE NOT EXISTS (
+              SELECT 1
+              FROM jobs
+              WHERE source_subscription_id = $6
+                AND date = $3
+                AND type = 'subscription_visit'
+                AND company_id = $5
+            )
           `, [
             current.client_id,
             current.service,
@@ -565,6 +589,7 @@ router.put("/subscriptions/:id/mark-paid", auth, requireCompanyBillingForMutatio
         FROM subscriptions
         LEFT JOIN clients ON clients.id = subscriptions.client_id AND clients.company_id = subscriptions.company_id
         WHERE subscriptions.id = $1 AND subscriptions.company_id = $2
+        FOR UPDATE
         LIMIT 1
       `, [id, company_id]);
 
@@ -618,10 +643,27 @@ router.put("/subscriptions/:id/mark-paid", auth, requireCompanyBillingForMutatio
         invoiceId = invoiceInsert.rows[0].id;
       }
 
+      await client.query(
+        `
+        SELECT id
+        FROM invoices
+        WHERE id = $1 AND company_id = $2
+        LIMIT 1
+        FOR UPDATE
+        `,
+        [invoiceId, company_id]
+      );
       const alreadyPaid = await getNetPaidForInvoice(client, company_id, invoiceId);
       const remaining = Number(Math.max(invoiceAmount - alreadyPaid, 0).toFixed(2));
 
       if (remaining > 0) {
+        await assertPaymentWithinRemaining({
+          companyId: company_id,
+          invoiceId,
+          proposedPaymentAmount: remaining,
+          invoiceTotalAmount: invoiceAmount,
+          client
+        });
         const paymentInsert = await client.query(`
           INSERT INTO payments (invoice_id, amount, method, date, notes, company_id)
           VALUES ($1,$2,$3,CURRENT_DATE,$4,$5)
@@ -649,23 +691,21 @@ router.put("/subscriptions/:id/mark-paid", auth, requireCompanyBillingForMutatio
         });
       }
 
-      if (existingBilling.rows.length === 0) {
-        await client.query(`
-          INSERT INTO subscription_billings
-          (subscription_id, invoice_id, billing_month, billing_date, amount, status, notes, company_id)
-          VALUES ($1,$2,$3,CURRENT_DATE,$4,'paid',$5,$6)
-        `, [id, invoiceId, billedMonth, invoiceAmount, notes || "", company_id]);
-      } else {
-        await client.query(`
-          UPDATE subscription_billings
-          SET invoice_id = COALESCE(invoice_id, $1),
-              amount = $2,
-              status = 'paid',
-              notes = COALESCE(NULLIF($3, ''), notes),
-              billing_date = CURRENT_DATE
-          WHERE id = $4 AND company_id = $5
-        `, [invoiceId, invoiceAmount, notes || "", existingBilling.rows[0].id, company_id]);
-      }
+      await client.query(`
+        INSERT INTO subscription_billings
+        (subscription_id, invoice_id, billing_month, billing_date, amount, status, notes, company_id)
+        VALUES ($1,$2,$3,CURRENT_DATE,$4,'paid',$5,$6)
+        ON CONFLICT (company_id, subscription_id, billing_month)
+        DO UPDATE SET
+          invoice_id = COALESCE(subscription_billings.invoice_id, EXCLUDED.invoice_id),
+          amount = EXCLUDED.amount,
+          status = 'paid',
+          notes = CASE
+            WHEN COALESCE(NULLIF(EXCLUDED.notes, ''), '') = '' THEN subscription_billings.notes
+            ELSE EXCLUDED.notes
+          END,
+          billing_date = EXCLUDED.billing_date
+      `, [id, invoiceId, billedMonth, invoiceAmount, notes || "", company_id]);
 
       await client.query(`
         UPDATE invoices
@@ -974,7 +1014,15 @@ router.post("/ops/subscriptions", auth, requireCompanyBillingForMutations, requi
         await pool.query(`
           INSERT INTO jobs
           (client_id, service, type, date, start_time, end_time, status, worker_id, price, company_id, source_subscription_id, payment_status)
-          VALUES ($1,$2,'subscription_visit',$3,'08:00','09:00','scheduled',$4,0,$5,$6,'included')
+          SELECT $1,$2,'subscription_visit',$3,'08:00','09:00','scheduled',$4,0,$5,$6,'included'
+          WHERE NOT EXISTS (
+            SELECT 1
+            FROM jobs
+            WHERE source_subscription_id = $6
+              AND date = $3
+              AND type = 'subscription_visit'
+              AND company_id = $5
+          )
         `, [
           client_id,
           service,
@@ -1155,7 +1203,15 @@ router.put("/ops/subscriptions/:id/status", auth, requireCompanyBillingForMutati
           await pool.query(`
             INSERT INTO jobs
             (client_id, service, type, date, start_time, end_time, status, worker_id, price, company_id, source_subscription_id, payment_status)
-            VALUES ($1,$2,'subscription_visit',$3,'08:00','09:00','scheduled',$4,0,$5,$6,'included')
+            SELECT $1,$2,'subscription_visit',$3,'08:00','09:00','scheduled',$4,0,$5,$6,'included'
+            WHERE NOT EXISTS (
+              SELECT 1
+              FROM jobs
+              WHERE source_subscription_id = $6
+                AND date = $3
+                AND type = 'subscription_visit'
+                AND company_id = $5
+            )
           `, [
             current.client_id,
             current.service,
@@ -1202,105 +1258,132 @@ router.put("/ops/subscriptions/:id/mark-paid", auth, requireCompanyBillingForMut
     const companyId = req.user.company_id;
     const subscriptionId = Number(req.params.id);
     const { method = "cash", notes = "" } = req.body;
+    const tx = await pool.connect();
+    let invoiceId = null;
+    let billingMonth = "";
 
-    const subscriptionResult = await pool.query(`
-      SELECT
-        subscriptions.*,
-        clients.name AS client_name
-      FROM subscriptions
-      LEFT JOIN clients ON clients.id = subscriptions.client_id AND clients.company_id = subscriptions.company_id
-      WHERE subscriptions.id = $1 AND subscriptions.company_id = $2
-      LIMIT 1
-    `, [subscriptionId, companyId]);
+    try {
+      await tx.query("BEGIN");
+      const subscriptionResult = await tx.query(`
+        SELECT
+          subscriptions.*,
+          clients.name AS client_name
+        FROM subscriptions
+        LEFT JOIN clients ON clients.id = subscriptions.client_id AND clients.company_id = subscriptions.company_id
+        WHERE subscriptions.id = $1 AND subscriptions.company_id = $2
+        FOR UPDATE
+        LIMIT 1
+      `, [subscriptionId, companyId]);
 
-    if (subscriptionResult.rows.length === 0) {
-      return res.status(404).json({ error: "Subscription not found" });
-    }
+      if (subscriptionResult.rows.length === 0) {
+        await tx.query("ROLLBACK");
+        return res.status(404).json({ error: "Subscription not found" });
+      }
 
-    const subscription = subscriptionResult.rows[0];
-    const invoiceTotal = Number(subscription.price || 0);
-    if (!Number.isFinite(invoiceTotal) || invoiceTotal < 0) {
-      return res.status(400).json({ error: "Subscription price cannot be negative" });
-    }
+      const subscription = subscriptionResult.rows[0];
+      const invoiceTotal = Number(subscription.price || 0);
+      if (!Number.isFinite(invoiceTotal) || invoiceTotal < 0) {
+        await tx.query("ROLLBACK");
+        return res.status(400).json({ error: "Subscription price cannot be negative" });
+      }
 
-    const billingDate = normalizeDateOnly(subscription.next_billing_date || subscription.next_date || new Date().toISOString());
-    const billingMonth = billingDate.slice(0, 7);
+      const billingDate = normalizeDateOnly(subscription.next_billing_date || subscription.next_date || new Date().toISOString());
+      billingMonth = billingDate.slice(0, 7);
 
-    const existingBilling = await pool.query(`
-      SELECT *
-      FROM subscription_billings
-      WHERE subscription_id = $1
-        AND company_id = $2
-        AND billing_month = $3
-      ORDER BY id DESC
-      LIMIT 1
-    `, [subscriptionId, companyId, billingMonth]);
+      const existingBilling = await tx.query(`
+        SELECT *
+        FROM subscription_billings
+        WHERE subscription_id = $1
+          AND company_id = $2
+          AND billing_month = $3
+        ORDER BY id DESC
+        LIMIT 1
+      `, [subscriptionId, companyId, billingMonth]);
 
-    let invoiceId = existingBilling.rows[0] && existingBilling.rows[0].invoice_id ? existingBilling.rows[0].invoice_id : null;
+      invoiceId = existingBilling.rows[0] && existingBilling.rows[0].invoice_id ? existingBilling.rows[0].invoice_id : null;
 
-    if (!invoiceId) {
-      const invoiceNumberResult = await pool.query(`
-        SELECT COUNT(*)::int AS total
-        FROM invoices
-        WHERE company_id = $1
-      `, [companyId]);
+      if (!invoiceId) {
+        const invoiceNumber = await nextInvoiceNumber(companyId, tx);
+        const invoiceInsert = await tx.query(`
+          INSERT INTO invoices
+          (company_id, client_id, source_subscription_id, source_type, invoice_number, status, issued_date, due_date, subtotal, amount, notes, line_items)
+          VALUES ($1,$2,$3,'subscription',$4,'unpaid',$5,$5,$6,$6,$7,$8::jsonb)
+          RETURNING *
+        `, [
+          companyId,
+          subscription.client_id,
+          subscriptionId,
+          invoiceNumber,
+          billingDate,
+          invoiceTotal,
+          notes || "",
+          JSON.stringify([{
+            description: subscription.service || "Subscription billing",
+            quantity: 1,
+            price: invoiceTotal,
+            amount: invoiceTotal
+          }])
+        ]);
+        invoiceId = invoiceInsert.rows[0].id;
+      }
 
-      const invoiceNumber = `INV-${String(companyId).padStart(3, "0")}-${String((Number(invoiceNumberResult.rows[0]?.total || 0) + 1)).padStart(5, "0")}`;
+      const alreadyPaid = await getNetPaidForInvoice(tx, companyId, invoiceId);
+      const paymentAmount = Number(Math.max(invoiceTotal - alreadyPaid, 0).toFixed(2));
+      if (paymentAmount > 0) {
+        await assertPaymentWithinRemaining({
+          companyId,
+          invoiceId,
+          proposedPaymentAmount: paymentAmount,
+          invoiceTotalAmount: invoiceTotal,
+          client: tx
+        });
+        const paymentInsert = await tx.query(`
+          INSERT INTO payments (invoice_id, amount, method, date, notes, company_id)
+          VALUES ($1,$2,$3,$4,$5,$6)
+          RETURNING *
+        `, [
+          invoiceId,
+          paymentAmount,
+          normalizePaymentMethod(method),
+          billingDate,
+          notes || "",
+          companyId
+        ]);
+        await appendPaymentLedgerEntry(tx, {
+          company_id: companyId,
+          event_type: "payment_received",
+          invoice_id: Number(invoiceId),
+          payment_id: paymentInsert.rows[0].id,
+          amount: paymentAmount,
+          metadata: {
+            source: "ops_subscription_mark_paid",
+            billing_month: billingMonth,
+            method: normalizePaymentMethod(method)
+          },
+          created_by: req.user.id
+        });
+      }
 
-      const invoiceInsert = await pool.query(`
-        INSERT INTO invoices
-        (company_id, client_id, source_subscription_id, source_type, invoice_number, status, issued_date, due_date, subtotal, amount, notes, line_items)
-        VALUES ($1,$2,$3,'subscription',$4,'unpaid',$5,$5,$6,$6,$7,$8::jsonb)
-        RETURNING *
-      `, [
-        companyId,
-        subscription.client_id,
-        subscriptionId,
-        invoiceNumber,
-        billingDate,
-        invoiceTotal,
-        notes || "",
-        JSON.stringify([{
-          description: subscription.service || "Subscription billing",
-          quantity: 1,
-          price: invoiceTotal,
-          amount: invoiceTotal
-        }])
-      ]);
+      await tx.query(`
+        UPDATE invoices
+        SET status = 'paid', paid_at = COALESCE(paid_at, CURRENT_TIMESTAMP)
+        WHERE id = $1 AND company_id = $2
+      `, [invoiceId, companyId]);
 
-      invoiceId = invoiceInsert.rows[0].id;
-    }
-
-    const alreadyPaid = await getNetPaidForInvoice(null, companyId, invoiceId);
-    const paymentAmount = Number(Math.max(invoiceTotal - alreadyPaid, 0).toFixed(2));
-
-    if (paymentAmount > 0) {
-      await createPaymentRecord({
-        companyId,
-        invoiceId,
-        amount: paymentAmount,
-        method: normalizePaymentMethod(method),
-        date: billingDate,
-        notes: notes || "",
-        userId: req.user.id,
-        metadata: {
-          source: "ops_subscription_mark_paid",
-          billing_month: billingMonth
-        }
-      });
-    }
-
-    await pool.query(`
-      UPDATE invoices
-      SET status = 'paid', paid_at = COALESCE(paid_at, CURRENT_TIMESTAMP)
-      WHERE id = $1 AND company_id = $2
-    `, [invoiceId, companyId]);
-
-    if (existingBilling.rows.length === 0) {
-      await pool.query(`
+      await tx.query(`
         INSERT INTO subscription_billings
         (subscription_id, invoice_id, billing_month, billing_date, amount, status, notes, company_id)
         VALUES ($1,$2,$3,$4,$5,'paid',$6,$7)
+        ON CONFLICT (company_id, subscription_id, billing_month)
+        DO UPDATE SET
+          invoice_id = COALESCE(subscription_billings.invoice_id, EXCLUDED.invoice_id),
+          amount = EXCLUDED.amount,
+          status = 'paid',
+          notes = CASE
+            WHEN COALESCE(NULLIF(EXCLUDED.notes, ''), '') = '' THEN subscription_billings.notes
+            ELSE EXCLUDED.notes
+          END,
+          billing_date = EXCLUDED.billing_date
       `, [
         subscriptionId,
         invoiceId,
@@ -1310,35 +1393,35 @@ router.put("/ops/subscriptions/:id/mark-paid", auth, requireCompanyBillingForMut
         notes || "",
         companyId
       ]);
-    } else {
-      await pool.query(`
-        UPDATE subscription_billings
-        SET invoice_id = $1, status = 'paid', notes = $2
-        WHERE id = $3 AND company_id = $4
-      `, [invoiceId, notes || "", existingBilling.rows[0].id, companyId]);
+
+      const nextBillingDate = (() => {
+        const current = new Date(`${billingDate}T00:00:00Z`);
+        if (subscription.frequency === "weekly") {
+          current.setUTCDate(current.getUTCDate() + 7);
+        } else if (subscription.frequency === "biweekly") {
+          current.setUTCDate(current.getUTCDate() + 14);
+        } else {
+          current.setUTCMonth(current.getUTCMonth() + 1);
+        }
+        return current.toISOString().split("T")[0];
+      })();
+
+      await tx.query(`
+        UPDATE subscriptions
+        SET
+          last_billed_month = $1,
+          last_billed_at = $2,
+          last_billed_date = $2,
+          next_billing_date = $3
+        WHERE id = $4 AND company_id = $5
+      `, [billingMonth, billingDate, nextBillingDate, subscriptionId, companyId]);
+      await tx.query("COMMIT");
+    } catch (transactionErr) {
+      await tx.query("ROLLBACK");
+      throw transactionErr;
+    } finally {
+      tx.release();
     }
-
-    const nextBillingDate = (() => {
-      const current = new Date(`${billingDate}T00:00:00Z`);
-      if (subscription.frequency === "weekly") {
-        current.setUTCDate(current.getUTCDate() + 7);
-      } else if (subscription.frequency === "biweekly") {
-        current.setUTCDate(current.getUTCDate() + 14);
-      } else {
-        current.setUTCMonth(current.getUTCMonth() + 1);
-      }
-      return current.toISOString().split("T")[0];
-    })();
-
-    await pool.query(`
-      UPDATE subscriptions
-      SET
-        last_billed_month = $1,
-        last_billed_at = $2,
-        last_billed_date = $2,
-        next_billing_date = $3
-      WHERE id = $4 AND company_id = $5
-    `, [billingMonth, billingDate, nextBillingDate, subscriptionId, companyId]);
 
     await logActivity({
       companyId,

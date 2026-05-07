@@ -1,7 +1,7 @@
 # Production Deployment Guide
 
 ## Purpose
-This document captures the production readiness requirements and deployment guidance for the LoneGreen SaaS application. It is intended to help ensure a safe, repeatable, and secure rollout of the application to production.
+This document captures the production readiness requirements and deployment guidance for the FairLinx SaaS application. It is intended to help ensure a safe, repeatable, and secure rollout of the application to production.
 
 ## Required Environment Variables
 - `NODE_ENV=production`

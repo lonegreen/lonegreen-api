@@ -228,7 +228,7 @@ function buildInvoiceSentPayload({ invoice, companyName, overrideTo }) {
   }
   const invNo = invoice.invoice_number || `#${invoice.id}`;
   const amount = Number(invoice.amount || 0).toFixed(2);
-  const subject = `Invoice ${invNo} from ${companyName || "LoneGreen"}`;
+  const subject = `Invoice ${invNo} from ${companyName || "FairLinx"}`;
   const html = `
     <div style="font-family:system-ui,sans-serif;max-width:560px">
       <h2>Invoice ${escHtml(invNo)}</h2>
@@ -238,7 +238,7 @@ function buildInvoiceSentPayload({ invoice, companyName, overrideTo }) {
       <p>If you have questions, reply to this email or contact the business directly.</p>
     </div>
   `;
-  const text = `Invoice ${invNo} for $${amount}. From ${companyName || "LoneGreen"}.`;
+  const text = `Invoice ${invNo} for $${amount}. From ${companyName || "FairLinx"}.`;
   return { to, subject, html, text };
 }
 
@@ -304,7 +304,7 @@ function buildSubscriptionReminderPayload({ clientEmail, companyEmail, clientNam
 }
 
 async function sendPasswordResetVerificationEmail({ to, code, username }) {
-  const subject = "LoneGreen Password Reset Code";
+  const subject = "FairLinx Password Reset Code";
   const html = `
     <div style="font-family:system-ui,sans-serif;max-width:560px">
       <h2>Password reset</h2>

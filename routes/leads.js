@@ -41,6 +41,7 @@ const {
   ensureWorkflowSchema,
   ensureOperationsSchema,
   normalizeLeadStatus,
+  assertLeadStatusTransition,
   normalizeEstimateStatus,
   nextMonthDateString,
   getClientById,
@@ -162,6 +163,11 @@ router.put("/workflow/leads/:id", auth, requireCompanyBillingForMutations, requi
       status: normalizeLeadStatus(req.body.status || current.status)
     };
 
+    const statusErr = assertLeadStatusTransition(current.status, payload.status);
+    if (statusErr) {
+      return res.status(statusErr.statusCode || 400).json({ error: statusErr.message, code: statusErr.code });
+    }
+
     const result = await pool.query(`
       UPDATE estimates
       SET customer_name = $1,
@@ -219,15 +225,25 @@ router.put("/workflow/leads/:id", auth, requireCompanyBillingForMutations, requi
   }
 });
 router.post("/workflow/leads/:id/convert-to-estimate", auth, requireCompanyBillingForMutations, requireMinimumRole("manager"), async (req, res) => {
+  const client = await pool.connect();
   try {
     await ensureWorkflowSchema();
-    const lead = await getLead(req.user.company_id, req.params.id);
+    await client.query("BEGIN");
+    const leadResult = await client.query(`
+      SELECT *
+      FROM estimates
+      WHERE id = $1 AND company_id = $2 AND record_type = 'lead'
+      LIMIT 1
+      FOR UPDATE
+    `, [req.params.id, req.user.company_id]);
+    const lead = leadResult.rows[0] || null;
 
     if (!lead) {
+      await client.query("ROLLBACK");
       return res.status(404).json({ error: "Lead not found" });
     }
 
-    const existing = await pool.query(`
+    const existing = await client.query(`
       SELECT *
       FROM estimates
       WHERE company_id = $1 AND record_type = 'estimate' AND source_lead_id = $2
@@ -236,10 +252,11 @@ router.post("/workflow/leads/:id/convert-to-estimate", auth, requireCompanyBilli
     `, [req.user.company_id, lead.id]);
 
     if (existing.rows.length > 0) {
+      await client.query("COMMIT");
       return res.json(existing.rows[0]);
     }
 
-    const estimate = await pool.query(`
+    const estimate = await client.query(`
       INSERT INTO estimates
       (client_id, customer_name, phone, address, zip, service, status, quoted_price, visit_date, notes, company_id, record_type, source_lead_id)
       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,'estimate',$12)
@@ -259,11 +276,12 @@ router.post("/workflow/leads/:id/convert-to-estimate", auth, requireCompanyBilli
       lead.id
     ]);
 
-    await pool.query(`
+    await client.query(`
       UPDATE estimates
       SET status = 'converted', converted_at = CURRENT_TIMESTAMP
       WHERE id = $1 AND company_id = $2 AND record_type = 'lead'
     `, [lead.id, req.user.company_id]);
+    await client.query("COMMIT");
 
     await logActivity({
       companyId: req.user.company_id,
@@ -280,8 +298,13 @@ router.post("/workflow/leads/:id/convert-to-estimate", auth, requireCompanyBilli
 
     res.json(estimate.rows[0]);
   } catch (err) {
+    try {
+      await client.query("ROLLBACK");
+    } catch (_) {}
     console.log("LEAD TO ESTIMATE ERROR:", err);
     sendSafeServerError(res, err, "routes/leads");
+  } finally {
+    client.release();
   }
 });
 
@@ -449,12 +472,36 @@ router.post("/workflow/leads/:id/convert-to-client", auth, requireCompanyBilling
 });
 
 router.post("/workflow/leads/:id/convert-to-job", auth, requireCompanyBillingForMutations, requireMinimumRole("manager"), async (req, res) => {
+  const client = await pool.connect();
   try {
     await ensureWorkflowSchema();
-    const lead = await getLead(req.user.company_id, req.params.id);
+    await client.query("BEGIN");
+    const leadResult = await client.query(`
+      SELECT *
+      FROM estimates
+      WHERE id = $1 AND company_id = $2 AND record_type = 'lead'
+      LIMIT 1
+      FOR UPDATE
+    `, [req.params.id, req.user.company_id]);
+    const lead = leadResult.rows[0] || null;
 
     if (!lead) {
+      await client.query("ROLLBACK");
       return res.status(404).json({ error: "Lead not found" });
+    }
+
+    if (lead.converted_job_id) {
+      const existingJob = await client.query(
+        `SELECT * FROM jobs WHERE id = $1 AND company_id = $2 LIMIT 1`,
+        [lead.converted_job_id, req.user.company_id]
+      );
+      if (existingJob.rows.length > 0) {
+        await client.query("COMMIT");
+        const existingClient = existingJob.rows[0].client_id
+          ? await getClientById(req.user.company_id, existingJob.rows[0].client_id)
+          : null;
+        return res.json({ client: existingClient, job: existingJob.rows[0] });
+      }
     }
 
     let client = lead.client_id ? await getClientById(req.user.company_id, lead.client_id) : null;
@@ -471,10 +518,11 @@ router.post("/workflow/leads/:id/convert-to-job", auth, requireCompanyBillingFor
     const status = normalizeJobStatus(req.body.status || "scheduled");
     const workerLookup = await resolveCompanyWorkerId(req.user.company_id, req.body.worker_id);
     if (!workerLookup.ok) {
+      await client.query("ROLLBACK");
       return res.status(400).json({ error: "Worker not found in this company" });
     }
 
-    const job = await pool.query(`
+    const job = await client.query(`
       INSERT INTO jobs
       (client_id, service, type, date, start_time, end_time, status, worker_id, price, company_id, payment_status, internal_notes, status_reason, estimate_id)
       VALUES ($1,$2,'one_time_job',$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,NULL)
@@ -494,7 +542,7 @@ router.post("/workflow/leads/:id/convert-to-job", auth, requireCompanyBillingFor
       req.body.status_reason || ""
     ]);
 
-    await pool.query(`
+    await client.query(`
       UPDATE estimates
       SET client_id = $1,
           converted_client_id = $1,
@@ -503,6 +551,7 @@ router.post("/workflow/leads/:id/convert-to-job", auth, requireCompanyBillingFor
           converted_at = CURRENT_TIMESTAMP
       WHERE id = $3 AND company_id = $4 AND record_type = 'lead'
     `, [client.id, job.rows[0].id, lead.id, req.user.company_id]);
+    await client.query("COMMIT");
 
     await logActivity({
       companyId: req.user.company_id,
@@ -520,8 +569,13 @@ router.post("/workflow/leads/:id/convert-to-job", auth, requireCompanyBillingFor
 
     res.json({ client, job: job.rows[0] });
   } catch (err) {
+    try {
+      await client.query("ROLLBACK");
+    } catch (_) {}
     console.log("LEAD TO JOB ERROR:", err);
     sendSafeServerError(res, err, "routes/leads");
+  } finally {
+    client.release();
   }
 });
 

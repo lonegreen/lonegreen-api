@@ -116,6 +116,13 @@ function generateResetCode() {
   return crypto.randomBytes(24).toString("hex");
 }
 
+function hashResetToken(token) {
+  return crypto
+    .createHash("sha256")
+    .update(String(token || "").trim(), "utf8")
+    .digest("hex");
+}
+
 function isBcryptHash(value) {
   return /^\$2[aby]\$\d{2}\$/.test(String(value || ""));
 }
@@ -127,6 +134,44 @@ function resetCodesEqual(stored, provided) {
     return false;
   }
   return crypto.timingSafeEqual(a, b);
+}
+
+function resolveResetDeliveryEmail(user) {
+  return cleanEmail(user && user.email);
+}
+
+async function getCustomerResetAuditContext(accountId) {
+  const result = await pool.query(
+    `
+    SELECT
+      ca.id AS customer_account_id,
+      ca.client_id,
+      c.company_id
+    FROM customer_accounts ca
+    LEFT JOIN clients c
+      ON c.id = ca.client_id
+    WHERE ca.id = $1
+    LIMIT 1
+    `,
+    [accountId]
+  );
+  return result.rows[0] || null;
+}
+
+async function logCustomerResetActivity({ accountId, action, details = {} }) {
+  const context = await getCustomerResetAuditContext(accountId);
+  await logActivity({
+    companyId: context ? context.company_id : null,
+    userId: null,
+    action,
+    entityType: "customer_account",
+    entityId: accountId || null,
+    details: {
+      customer_account_id: accountId || null,
+      client_id: context ? context.client_id : null,
+      ...details
+    }
+  });
 }
 
 async function findAuthUser(identifier) {
@@ -249,13 +294,14 @@ router.post("/signup", async (req, res) => {
     const createdUser = await pool.query(
       `
       INSERT INTO users
-      (username, password, role, company_id, terms_accepted_at, terms_version, privacy_accepted_at, privacy_version)
+      (username, email, password, role, company_id, terms_accepted_at, terms_version, privacy_accepted_at, privacy_version)
       VALUES
-      ($1, $2, 'owner', $3, $4, $5, $4, $6)
+      ($1, $2, $3, 'owner', $4, $5, $6, $5, $7)
       RETURNING id, username, role, company_id
       `,
       [
         cleanUser,
+        cleanMail || null,
         hashedPassword,
         company_id,
         legal_accepted === true ? new Date().toISOString() : null,
@@ -595,21 +641,10 @@ router.post("/forgot-password", passwordResetLimiter, async (req, res) => {
       });
     }
 
-    let mailTo = "";
-    if (user.company_id) {
-      const companyResult = await pool.query(
-        `
-        SELECT email
-        FROM companies
-        WHERE id = $1
-        LIMIT 1
-        `,
-        [user.company_id]
-      );
-      mailTo = cleanEmail(companyResult.rows[0]?.email || "");
-    }
+    const mailTo = resolveResetDeliveryEmail(user);
 
     const code = generateResetCode();
+    const codeHash = hashResetToken(code);
 
     await pool.query(
       `
@@ -624,11 +659,11 @@ router.post("/forgot-password", passwordResetLimiter, async (req, res) => {
     await pool.query(
       `
       INSERT INTO password_resets
-      (user_id, code, expires_at, used)
+      (user_id, code, code_hash, expires_at, used)
       VALUES
-      ($1, $2, NOW() + INTERVAL '10 minutes', FALSE)
+      ($1, $2, $3, NOW() + INTERVAL '10 minutes', FALSE)
       `,
-      [user.id, code]
+      [user.id, codeHash, codeHash]
     );
 
     if (mailTo) {
@@ -651,7 +686,7 @@ router.post("/forgot-password", passwordResetLimiter, async (req, res) => {
 
     if (!mailTo && process.env.NODE_ENV !== "production") {
       console.log(
-        "RESET: no company email on file for delivery — DEV CODE:",
+        "RESET: no user email on file for delivery — DEV CODE:",
         code
       );
     }
@@ -663,7 +698,8 @@ router.post("/forgot-password", passwordResetLimiter, async (req, res) => {
       entityType: "user",
       entityId: user.id,
       details: {
-        username: user.username
+        username: user.username,
+        reset_delivery: mailTo ? "user_email" : "none"
       }
     });
 
@@ -713,7 +749,7 @@ router.post("/reset-password", passwordResetSubmitLimiter, async (req, res) => {
 
     const resetResult = await pool.query(
       `
-      SELECT id, code
+      SELECT id, code, code_hash
       FROM password_resets
       WHERE user_id = $1
       AND used = FALSE
@@ -731,8 +767,23 @@ router.post("/reset-password", passwordResetSubmitLimiter, async (req, res) => {
     }
 
     const latestReset = resetResult.rows[0];
+    const providedCodeHash = hashResetToken(code);
+    const storedCodeHash = String(latestReset.code_hash || "").trim();
+    const storedLegacyCode = String(latestReset.code || "").trim();
+    const codeMatchesHash = Boolean(storedCodeHash) && resetCodesEqual(storedCodeHash, providedCodeHash);
+    const codeMatchesLegacy = Boolean(storedLegacyCode) && resetCodesEqual(storedLegacyCode, code);
 
-    if (!resetCodesEqual(latestReset.code, code)) {
+    if (!codeMatchesHash && !codeMatchesLegacy) {
+      await logActivity({
+        companyId: user.company_id,
+        userId: user.id,
+        action: "password_reset_code_invalid",
+        entityType: "user",
+        entityId: user.id,
+        details: {
+          username: user.username
+        }
+      });
       return res.status(400).json({
         error: "Invalid or expired reset code"
       });
@@ -755,7 +806,9 @@ router.post("/reset-password", passwordResetSubmitLimiter, async (req, res) => {
     await pool.query(
       `
       UPDATE password_resets
-      SET used = TRUE
+      SET used = TRUE,
+          code = NULL,
+          code_hash = NULL
       WHERE id = $1
       `,
       [latestReset.id]
@@ -791,7 +844,7 @@ router.post("/customer-signup", authAttemptLimiter, async (req, res) => {
     const confirmPassword = String(req.body?.confirm_password || "");
     const providedClientId = Number(req.body?.client_id || 0);
     const inviteToken = String(req.body?.invite_token || "").trim();
-    const claimedByVerifiedOwnership = req.body?.verified_ownership === true;
+    const ownershipVerificationCode = String(req.body?.ownership_verification_code || "").trim();
 
     if (!firstName || !lastName || !email || !phone || !password) {
       return res.status(400).json({ error: "Missing required fields" });
@@ -867,22 +920,51 @@ router.post("/customer-signup", authAttemptLimiter, async (req, res) => {
       }
     }
 
-    if (!client && claimedByVerifiedOwnership && providedClientId > 0) {
+    if (!client && providedClientId > 0) {
+      if (!ownershipVerificationCode) {
+        return res.status(403).json({
+          error: "Ownership verification is required to link an existing client account"
+        });
+      }
+      const verificationHash = hashResetToken(ownershipVerificationCode);
       const verifiedOwnershipClient = await pool.query(
         `
-        SELECT id, company_id, name, phone, email
-        FROM clients
-        WHERE id = $1
-          AND LOWER(COALESCE(email, '')) = LOWER($2)
-          AND regexp_replace(COALESCE(phone, ''), '\\D', '', 'g') = $3
+        SELECT c.id, c.company_id, c.name, c.phone, c.email
+        FROM clients c
+        JOIN customer_signup_claims sc
+          ON sc.client_id = c.id
+        WHERE c.id = $1
+          AND LOWER(COALESCE(c.email, '')) = LOWER($2)
+          AND regexp_replace(COALESCE(c.phone, ''), '\\D', '', 'g') = $3
+          AND LOWER(sc.email) = LOWER($2)
+          AND regexp_replace(COALESCE(sc.phone, ''), '\\D', '', 'g') = $3
+          AND sc.verification_code_hash = $4
+          AND sc.used_at IS NULL
+          AND sc.expires_at > CURRENT_TIMESTAMP
+        ORDER BY sc.id DESC
         LIMIT 1
         `,
-        [providedClientId, email, normalizedPhone]
+        [providedClientId, email, normalizedPhone, verificationHash]
       );
       client = verifiedOwnershipClient.rows[0] || null;
-      if (client) {
-        claimMethod = "verified_ownership";
+      if (!client) {
+        return res.status(403).json({
+          error: "Ownership verification is invalid or expired"
+        });
       }
+      await pool.query(
+        `
+        UPDATE customer_signup_claims
+        SET used_at = CURRENT_TIMESTAMP
+        WHERE client_id = $1
+          AND LOWER(email) = LOWER($2)
+          AND regexp_replace(COALESCE(phone, ''), '\\D', '', 'g') = $3
+          AND verification_code_hash = $4
+          AND used_at IS NULL
+        `,
+        [providedClientId, email, normalizedPhone, verificationHash]
+      );
+      claimMethod = "verified_ownership";
     }
 
     if (!client) {
@@ -999,18 +1081,31 @@ router.post("/customer-forgot-password", passwordResetLimiter, async (req, res) 
     }
 
     const resetToken = generateResetCode();
+    const resetTokenHash = hashResetToken(resetToken);
     const expiresAt = new Date(Date.now() + 1000 * 60 * 30);
 
-    await pool.query(
+    const updateResult = await pool.query(
       `
       UPDATE customer_accounts
-      SET reset_token = $2,
+      SET reset_token = NULL,
+          reset_token_hash = $2,
           reset_token_expires = $3,
           updated_at = CURRENT_TIMESTAMP
       WHERE LOWER(email) = LOWER($1)
+      RETURNING id
       `,
-      [email, resetToken, expiresAt.toISOString()]
+      [email, resetTokenHash, expiresAt.toISOString()]
     );
+
+    if (updateResult.rows.length) {
+      await logCustomerResetActivity({
+        accountId: updateResult.rows[0].id,
+        action: "customer_password_reset_requested",
+        details: {
+          reset_delivery: "customer_email"
+        }
+      });
+    }
 
     return res.json({
       success: true,
@@ -1039,16 +1134,20 @@ router.post("/customer-reset-password", passwordResetSubmitLimiter, async (req, 
       return res.status(400).json({ error: "Passwords do not match" });
     }
 
+    const resetTokenHash = hashResetToken(resetToken);
     const accountResult = await pool.query(
       `
       SELECT id
       FROM customer_accounts
-      WHERE reset_token = $1
-        AND reset_token_expires IS NOT NULL
+      WHERE reset_token_expires IS NOT NULL
         AND reset_token_expires > CURRENT_TIMESTAMP
+        AND (
+          reset_token_hash = $1
+          OR reset_token = $2
+        )
       LIMIT 1
       `,
-      [resetToken]
+      [resetTokenHash, resetToken]
     );
 
     if (!accountResult.rows.length) {
@@ -1062,12 +1161,18 @@ router.post("/customer-reset-password", passwordResetSubmitLimiter, async (req, 
       UPDATE customer_accounts
       SET password_hash = $2,
           reset_token = NULL,
+          reset_token_hash = NULL,
           reset_token_expires = NULL,
           updated_at = CURRENT_TIMESTAMP
       WHERE id = $1
       `,
       [accountResult.rows[0].id, hashedPassword]
     );
+
+    await logCustomerResetActivity({
+      accountId: accountResult.rows[0].id,
+      action: "customer_password_reset_completed"
+    });
 
     return res.json({ success: true });
   } catch (err) {

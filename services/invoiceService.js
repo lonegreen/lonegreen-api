@@ -29,23 +29,20 @@ function dateOnly(value) {
 
 async function nextInvoiceNumber(companyId, db = pool) {
   const companyIdInt = Number(companyId);
+  if (!Number.isInteger(companyIdInt) || companyIdInt <= 0) {
+    throw new Error("Invalid company id for invoice numbering");
+  }
   const result = await db.query(`
-    SELECT COALESCE(
-      MAX(
-        CASE
-          WHEN invoice_number ~ ('^INV-' || LPAD($1::text, 3, '0') || '-[0-9]+$')
-          THEN substring(invoice_number from '[0-9]+$')::int
-          ELSE NULL
-        END
-      ),
-      COUNT(*)::int,
-      0
-    ) AS last_number
-    FROM invoices
-    WHERE company_id = $2::int
-  `, [companyIdInt, companyIdInt]);
+    INSERT INTO invoice_counters (company_id, last_value, updated_at)
+    VALUES ($1::int, 1, CURRENT_TIMESTAMP)
+    ON CONFLICT (company_id)
+    DO UPDATE SET
+      last_value = invoice_counters.last_value + 1,
+      updated_at = CURRENT_TIMESTAMP
+    RETURNING last_value
+  `, [companyIdInt]);
 
-  const next = Number(result.rows[0] && result.rows[0].last_number ? result.rows[0].last_number : 0) + 1;
+  const next = Number(result.rows[0] && result.rows[0].last_value ? result.rows[0].last_value : 1);
   return `INV-${String(companyIdInt).padStart(3, "0")}-${String(next).padStart(5, "0")}`;
 }
 

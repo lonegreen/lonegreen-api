@@ -1,7 +1,6 @@
 const express = require("express");
-const jwt = require("jsonwebtoken");
 const pool = require("../db/pool");
-const { SECRET } = require("../config/env");
+const { verifyCustomerBearerToken } = require("../middleware/auth");
 const { sendSafeServerError } = require("../services/safeServerError");
 const { sendOperationalEmailSafe } = require("../services/emailService");
 
@@ -14,34 +13,11 @@ function queueSafeEmail(payload, options) {
 }
 
 function customerAuth(req, res, next) {
-  const header = req.headers.authorization || "";
-  const parts = String(header).trim().split(/\s+/);
-  const token = parts.length === 2 && parts[0] === "Bearer" ? parts[1] : "";
-  if (!token) {
-    return res.status(401).json({ error: "Customer login required" });
-  }
-
   try {
-    const decoded = jwt.verify(token, SECRET);
-    const isLegacyPortalToken = decoded.portal === "customer";
-    const isCustomerRoleToken = String(decoded.role || "").toLowerCase() === "customer";
-
-    if (!isLegacyPortalToken && !isCustomerRoleToken) {
-      return res.status(403).json({ error: "Forbidden" });
-    }
-
-    if (!decoded.client_id) {
-      return res.status(403).json({ error: "Forbidden" });
-    }
-
-    req.customer = {
-      ...decoded,
-      portal: isLegacyPortalToken ? "customer" : "customer_account",
-      role: isCustomerRoleToken ? "customer" : decoded.role
-    };
+    req.customer = verifyCustomerBearerToken(req.headers.authorization);
     return next();
   } catch (err) {
-    return res.status(401).json({ error: "Invalid customer token" });
+    return res.status(err.status || 401).json({ error: err.message || "Invalid customer token" });
   }
 }
 

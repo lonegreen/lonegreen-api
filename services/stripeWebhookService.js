@@ -418,7 +418,12 @@ function enqueueSafeBillingEmail(payload) {
   if (!payload || typeof backgroundTasks.enqueueEmailTask !== "function") return;
 
   try {
-    backgroundTasks.enqueueEmailTask(payload);
+    const enqueueResult = backgroundTasks.enqueueEmailTask(payload);
+    if (enqueueResult && typeof enqueueResult.catch === "function") {
+      enqueueResult.catch((err) => {
+        logger.warn("BILLING_WEBHOOK_EMAIL_ENQUEUE_FAILED", { error: err && err.message });
+      });
+    }
   } catch (err) {
     logger.warn("BILLING_WEBHOOK_EMAIL_ENQUEUE_FAILED", { error: err && err.message });
   }

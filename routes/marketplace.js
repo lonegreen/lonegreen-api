@@ -1,41 +1,18 @@
 const express = require("express");
-const jwt = require("jsonwebtoken");
 const pool = require("../db/pool");
-const { SECRET } = require("../config/env");
 const companyAuth = require("../middleware/auth");
+const requireCompanyBillingForMutations = require("../middleware/requireCompanyBillingForMutations");
+const { requireMinimumRole, verifyCustomerBearerToken } = require("../middleware/auth");
 const { sendSafeServerError } = require("../services/safeServerError");
 
 const router = express.Router();
 
 function customerAuth(req, res, next) {
-  const header = req.headers.authorization || "";
-  const parts = String(header).trim().split(/\s+/);
-  const token = parts.length === 2 && parts[0] === "Bearer" ? parts[1] : "";
-  if (!token) {
-    return res.status(401).json({ error: "Customer login required" });
-  }
-
   try {
-    const decoded = jwt.verify(token, SECRET);
-    const isLegacyPortalToken = decoded.portal === "customer";
-    const isCustomerRoleToken = String(decoded.role || "").toLowerCase() === "customer";
-
-    if (!isLegacyPortalToken && !isCustomerRoleToken) {
-      return res.status(403).json({ error: "Forbidden" });
-    }
-
-    if (!decoded.client_id) {
-      return res.status(403).json({ error: "Forbidden" });
-    }
-
-    req.customer = {
-      ...decoded,
-      portal: isLegacyPortalToken ? "customer" : "customer_account",
-      role: isCustomerRoleToken ? "customer" : decoded.role
-    };
+    req.customer = verifyCustomerBearerToken(req.headers.authorization);
     return next();
   } catch (err) {
-    return res.status(401).json({ error: "Invalid customer token" });
+    return res.status(err.status || 401).json({ error: err.message || "Invalid customer token" });
   }
 }
 
@@ -444,7 +421,7 @@ router.get("/marketplace/requests/:id/matches", customerAuth, async (req, res) =
   }
 });
 
-router.post("/marketplace/requests/:id/offers", companyAuth, async (req, res) => {
+router.post("/marketplace/requests/:id/offers", companyAuth, requireCompanyBillingForMutations, requireMinimumRole("manager"), async (req, res) => {
   try {
     const requestId = Number(req.params.id);
     const companyId = Number(req.user && req.user.company_id);
@@ -621,7 +598,7 @@ router.post("/marketplace/offers/:id/accept", customerAuth, async (req, res) => 
   }
 });
 
-router.post("/marketplace/requests/:id/convert", companyAuth, async (req, res) => {
+router.post("/marketplace/requests/:id/convert", companyAuth, requireCompanyBillingForMutations, requireMinimumRole("manager"), async (req, res) => {
   const client = await pool.connect();
   try {
     const requestId = Number(req.params.id);
@@ -646,18 +623,13 @@ router.post("/marketplace/requests/:id/convert", companyAuth, async (req, res) =
         ca.first_name AS account_first_name,
         ca.last_name AS account_last_name,
         ca.phone AS account_phone,
-        src_client.name AS source_client_name,
-        src_client.phone AS source_client_phone,
-        src_client.address AS source_client_address,
-        src_client.zip AS source_client_zip
+        ca.email AS account_email
       FROM marketplace_requests mr
       JOIN marketplace_offers mo
         ON mo.request_id = mr.id
        AND mo.status = 'accepted'
       LEFT JOIN customer_accounts ca
         ON ca.id = mr.customer_account_id
-      LEFT JOIN clients src_client
-        ON src_client.id = mr.client_id
       WHERE mr.id = $1
         AND mo.company_id = $2
       LIMIT 1
@@ -688,11 +660,11 @@ router.post("/marketplace/requests/:id/convert", companyAuth, async (req, res) =
 
     const customerName = cleanText(
       [source.account_first_name, source.account_last_name].filter(Boolean).join(" ")
-    ) || cleanText(source.source_client_name) || "Marketplace Customer";
-    const phone = cleanText(source.account_phone) || cleanText(source.source_client_phone) || "";
+    ) || "Marketplace Customer";
+    const phone = cleanText(source.account_phone) || "";
     const normalizedPhone = normalizePhone(phone);
-    const address = cleanText(source.address) || cleanText(source.source_client_address) || "";
-    const zip = normalizeZip(source.zip_code) || normalizeZip(source.source_client_zip) || "";
+    const address = cleanText(source.address) || "";
+    const zip = normalizeZip(source.zip_code) || "";
     const serviceTitle = cleanText(source.title) || "Marketplace Service Request";
     const serviceNotes = cleanText(source.description);
     const requestDate = source.requested_date || new Date().toISOString().slice(0, 10);
@@ -899,6 +871,7 @@ router.post("/marketplace/requests/:id/convert", companyAuth, async (req, res) =
         converted_client_id = $6,
         converted_job_id = $7
       WHERE id = $1
+        AND accepted_offer_id = $2
       `,
       [
         requestId,

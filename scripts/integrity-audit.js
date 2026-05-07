@@ -487,7 +487,7 @@ const checks = [
 ];
 
 async function run() {
-  console.log("LoneGreen DB integrity audit (read-only)");
+  console.log("FairLinx DB integrity audit (read-only)");
   console.log("Started:", new Date().toISOString());
   console.log("");
 

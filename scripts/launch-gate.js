@@ -399,7 +399,7 @@ function checkDbGate() {
   }
 }
 
-console.log("LoneGreen launch gate");
+console.log("FairLinx launch gate");
 checkSyntax();
 checkSourceExpectations();
 checkPackageScripts();

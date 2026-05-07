@@ -387,6 +387,18 @@
         maximumFractionDigits: 2
       });
     }
+    function isAllowedBillingRedirect(url) {
+      try {
+        const parsed = new URL(String(url || ""), window.location.origin);
+        const host = parsed.hostname.toLowerCase();
+        const appHost = window.location.hostname.toLowerCase();
+        if (parsed.origin === window.location.origin) return true;
+        if (host === appHost) return true;
+        return host === "stripe.com" || host.endsWith(".stripe.com");
+      } catch (_) {
+        return false;
+      }
+    }
     function safeNumber(value) {
       const n = Number(value);
       return Number.isFinite(n) ? n : null;
@@ -651,6 +663,7 @@
         const data = await safeJson(res);
         if (!res.ok) throw new Error(data.error || "Unable to open billing portal.");
         if (!data.url) throw new Error("Portal URL is missing.");
+        if (!isAllowedBillingRedirect(data.url)) throw new Error("Blocked unsafe portal redirect URL.");
         window.top.location.href = data.url;
       } catch (err) {
         setStatus(err.message || "Unable to open portal.", "error");
@@ -677,6 +690,7 @@
           const checkoutData = await safeJson(checkoutRes);
           if (!checkoutRes.ok) throw new Error(checkoutData.error || "Unable to create checkout session.");
           if (!checkoutData.url) throw new Error("Checkout URL is missing.");
+          if (!isAllowedBillingRedirect(checkoutData.url)) throw new Error("Blocked unsafe checkout redirect URL.");
           window.top.location.href = checkoutData.url;
           return;
         }

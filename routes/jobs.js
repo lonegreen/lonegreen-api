@@ -54,6 +54,26 @@ const { sendSafeServerError } = require("../services/safeServerError");
 
 const router = express.Router();
 const enforceJobPlanLimit = enforcePlanLimits("jobs");
+const JOB_STATUS_TRANSITIONS = {
+  scheduled: new Set(["scheduled", "assigned", "cancelled"]),
+  assigned: new Set(["assigned", "in_progress", "scheduled", "cancelled"]),
+  in_progress: new Set(["in_progress", "completed", "cancelled"]),
+  completed: new Set(["completed", "cancelled"]),
+  cancelled: new Set(["cancelled", "scheduled"])
+};
+
+function assertJobStatusTransition(fromStatus, toStatus) {
+  const from = normalizeJobStatus(fromStatus);
+  const to = normalizeJobStatus(toStatus);
+  const allowed = JOB_STATUS_TRANSITIONS[from];
+  if (!allowed || !allowed.has(to)) {
+    const err = new Error(`Invalid job status transition: ${from} -> ${to}`);
+    err.code = "INVALID_JOB_STATUS_TRANSITION";
+    err.statusCode = 400;
+    return err;
+  }
+  return null;
+}
 
 /* ================= JOBS ================= */
 
@@ -413,6 +433,23 @@ router.put("/jobs/:id", auth, requireCompanyBillingForMutations, requireMinimumR
 
     const resolvedPaymentStatus = normalizeJobPaymentStatus(type, payment_status);
 
+    const currentJobResult = await pool.query(
+      `
+      SELECT id, status
+      FROM jobs
+      WHERE id = $1 AND company_id = $2
+      LIMIT 1
+    `,
+      [id, company_id]
+    );
+    if (!currentJobResult.rows.length) {
+      return res.status(404).json({ error: "Job not found" });
+    }
+    const transitionErr = assertJobStatusTransition(currentJobResult.rows[0].status, status);
+    if (transitionErr) {
+      return res.status(transitionErr.statusCode || 400).json({ error: transitionErr.message, code: transitionErr.code });
+    }
+
     const result = await pool.query(
       `
       UPDATE jobs
@@ -531,6 +568,10 @@ router.put("/jobs/:id/status", auth, requireCompanyBillingForMutations, requireM
       !["completed", "cancelled"].includes(normalizeJobStatus(nextStatus))
     ) {
       return res.status(400).json({ error: "Completed jobs cannot be reverted" });
+    }
+    const transitionErr = assertJobStatusTransition(currentJob.status, nextStatus);
+    if (transitionErr) {
+      return res.status(transitionErr.statusCode || 400).json({ error: transitionErr.message, code: transitionErr.code });
     }
 
     if (resolvedWorkerId) {
@@ -902,6 +943,12 @@ router.put("/workflow/jobs/:id", auth, requireCompanyBillingForMutations, requir
       return res.status(404).json({ error: "Job not found" });
     }
 
+    const nextStatus = normalizeJobStatus(req.body.status || beforeJob.rows[0].status);
+    const transitionErr = assertJobStatusTransition(beforeJob.rows[0].status, nextStatus);
+    if (transitionErr) {
+      return res.status(transitionErr.statusCode || 400).json({ error: transitionErr.message, code: transitionErr.code });
+    }
+
     const result = await pool.query(
       `
       UPDATE jobs
@@ -928,7 +975,7 @@ router.put("/workflow/jobs/:id", auth, requireCompanyBillingForMutations, requir
         req.body.date,
         req.body.start_time || "08:00",
         req.body.end_time || "09:00",
-        normalizeJobStatus(req.body.status || "scheduled"),
+        nextStatus,
         req.body.worker_id || null,
         req.body.type === "subscription_visit" ? 0 : req.body.price || 0,
         normalizePaymentStatus(
@@ -1025,6 +1072,10 @@ router.put("/workflow/jobs/:id/status", auth, requireCompanyBillingForMutations,
       !["completed", "cancelled"].includes(nextStatus)
     ) {
       return res.status(400).json({ error: "Completed jobs cannot be reverted" });
+    }
+    const transitionErr = assertJobStatusTransition(job.status, nextStatus);
+    if (transitionErr) {
+      return res.status(transitionErr.statusCode || 400).json({ error: transitionErr.message, code: transitionErr.code });
     }
 
     if (resolvedWorkerId) {

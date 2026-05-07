@@ -1,6 +1,6 @@
 # Backup & Recovery
 
-LoneGreen uses local PostgreSQL tools for backups and restores. The scripts read `DATABASE_URL` from the environment and do not store secrets in code.
+FairLinx uses local PostgreSQL tools for backups and restores. The scripts read `DATABASE_URL` from the environment and do not store secrets in code.
 
 ## Local Backup
 
