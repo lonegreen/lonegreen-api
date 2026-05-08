@@ -92,7 +92,37 @@ function buildInvoicePdfFilename(invoice) {
 function customerAuth(req, res, next) {
   try {
     req.customer = verifyCustomerBearerToken(req.headers.authorization);
-    return next();
+    return (async () => {
+      try {
+        const accountId = await resolveCustomerAccountId(req.customer);
+        if (!accountId) {
+          return res.status(403).json({ error: "Customer account not found" });
+        }
+        const statusResult = await pool.query(
+          `
+          SELECT status, deactivated_at
+          FROM customer_accounts
+          WHERE id = $1
+          LIMIT 1
+          `,
+          [accountId]
+        );
+        const row = statusResult.rows[0];
+        if (!row) {
+          return res.status(403).json({ error: "Customer account not found" });
+        }
+        const status = String(row.status || "").trim().toLowerCase();
+        if (row.deactivated_at || status === "deactivated") {
+          return res.status(403).json({ error: "Customer account is deactivated" });
+        }
+        if (status === "suspended") {
+          return res.status(403).json({ error: "Customer account is suspended" });
+        }
+        return next();
+      } catch (err) {
+        return sendSafeServerError(res, err, "CUSTOMER AUTH STATUS CHECK ERROR");
+      }
+    })();
   } catch (err) {
     return res.status(err.status || 401).json({ error: err.message || "Invalid customer token" });
   }
@@ -235,14 +265,8 @@ async function getCustomerEstimate(scopes, id) {
   if (!Number.isInteger(estimateId) || estimateId <= 0 || !scopes.length) {
     return null;
   }
-  const parts = [];
-  const params = [estimateId];
-  let p = 2;
-  for (const s of scopes) {
-    parts.push(`(company_id = $${p} AND (client_id = $${p + 1} OR converted_client_id = $${p + 1}))`);
-    params.push(s.company_id, s.client_id);
-    p += 2;
-  }
+  const { parts, params } = buildEstimateScopeFilter(scopes, 2);
+  params.unshift(estimateId);
   const result = await pool.query(
     `SELECT *
      FROM estimates
@@ -253,6 +277,18 @@ async function getCustomerEstimate(scopes, id) {
     params
   );
   return result.rows[0] || null;
+}
+
+function buildEstimateScopeFilter(scopes, startParam) {
+  const parts = [];
+  const params = [];
+  let p = startParam;
+  for (const s of scopes) {
+    parts.push(`(company_id = $${p} AND (client_id = $${p + 1} OR converted_client_id = $${p + 1}))`);
+    params.push(s.company_id, s.client_id);
+    p += 2;
+  }
+  return { parts, params };
 }
 
 async function updateCustomerEstimateStatus(req, res, status) {
@@ -269,16 +305,24 @@ async function updateCustomerEstimateStatus(req, res, status) {
       return res.status(400).json({ error: "Estimate is already converted" });
     }
 
+    const estimateId = Number(req.params.id);
+    if (!Number.isInteger(estimateId) || estimateId <= 0) {
+      return res.status(400).json({ error: "Invalid estimate id" });
+    }
+
+    const { parts, params } = buildEstimateScopeFilter(scopes, 3);
     const result = await pool.query(
       `UPDATE estimates
        SET status = $1
        WHERE id = $2
-         AND company_id = $3
          AND record_type = 'estimate'
-         AND (client_id = $4 OR converted_client_id = $4)
+         AND (${parts.join(" OR ")})
        RETURNING *`,
-      [status, req.params.id, estimate.company_id, estimate.client_id]
+      [status, estimateId, ...params]
     );
+    if (!result.rows.length) {
+      return res.status(404).json({ error: "Estimate not found" });
+    }
 
     await logActivity({
       companyId: estimate.company_id,

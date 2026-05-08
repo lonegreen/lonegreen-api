@@ -236,7 +236,8 @@ async function createPaymentRecord({
   date,
   notes,
   userId,
-  metadata = {}
+  metadata = {},
+  idempotencyKey = null
 }) {
   const client = await pool.connect();
 
@@ -266,6 +267,30 @@ async function createPaymentRecord({
       err.code = "INVOICE_CANCELLED";
       err.statusCode = 400;
       throw err;
+    }
+
+    const normalizedIdempotencyKey = String(idempotencyKey || "").trim() || null;
+    if (normalizedIdempotencyKey) {
+      const existing = await client.query(
+        `
+        SELECT p.*
+        FROM payment_ledger pl
+        JOIN payments p
+          ON p.id = pl.payment_id
+         AND p.company_id = pl.company_id
+        WHERE pl.company_id = $1
+          AND pl.invoice_id = $2
+          AND pl.event_type = 'payment_received'
+          AND pl.metadata->>'idempotency_key' = $3
+        ORDER BY pl.id DESC
+        LIMIT 1
+        `,
+        [companyId, invoiceId, normalizedIdempotencyKey]
+      );
+      if (existing.rows.length > 0) {
+        await client.query("COMMIT");
+        return existing.rows[0];
+      }
     }
 
     await assertPaymentWithinRemaining({
@@ -302,6 +327,7 @@ async function createPaymentRecord({
       amount: num(amount),
       metadata: {
         ...metadata,
+        ...(normalizedIdempotencyKey ? { idempotency_key: normalizedIdempotencyKey } : {}),
         method: paymentRow.method
       },
       created_by: userId || null
@@ -421,7 +447,8 @@ async function createRefundRecord({
   amount,
   reason,
   notes,
-  userId
+  userId,
+  idempotencyKey = null
 }) {
   const client = await pool.connect();
   try {
@@ -485,6 +512,31 @@ async function createRefundRecord({
       throw err;
     }
 
+    const normalizedIdempotencyKey = String(idempotencyKey || "").trim() || null;
+    if (normalizedIdempotencyKey) {
+      const existing = await client.query(
+        `
+        SELECT r.*
+        FROM payment_ledger pl
+        JOIN refunds r
+          ON r.id = pl.refund_id
+         AND r.company_id = pl.company_id
+        WHERE pl.company_id = $1
+          AND pl.invoice_id = $2
+          AND pl.payment_id = $3
+          AND pl.event_type = 'refund_issued'
+          AND pl.metadata->>'idempotency_key' = $4
+        ORDER BY pl.id DESC
+        LIMIT 1
+        `,
+        [companyId, invoiceId, paymentId, normalizedIdempotencyKey]
+      );
+      if (existing.rows.length > 0) {
+        await client.query("COMMIT");
+        return existing.rows[0];
+      }
+    }
+
     const refundInsert = await client.query(
       `
       INSERT INTO refunds (company_id, invoice_id, payment_id, amount, reason, notes, created_by)
@@ -514,7 +566,8 @@ async function createRefundRecord({
       metadata: {
         reason: reason || null,
         payment_id: paymentId,
-        refund_id: refundRow.id
+        refund_id: refundRow.id,
+        ...(normalizedIdempotencyKey ? { idempotency_key: normalizedIdempotencyKey } : {})
       },
       created_by: userId || null
     });

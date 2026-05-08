@@ -940,7 +940,7 @@ router.delete("/ops/subscriptions/:id/permanent", auth, requireCompanyBillingFor
 });
 
 
-router.get("/ops/subscriptions", auth, requireCompanyBillingForMutations, requireMinimumRole("manager"), async (req, res) => {
+router.get("/ops/subscriptions", auth, requireCompanyBillingForMutations, requireMinimumRole("admin"), async (req, res) => {
   try {
     await ensureOperationsSchema();
     const { limit, offset } = parsePagination(req.query);

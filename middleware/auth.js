@@ -96,6 +96,21 @@ function parseCustomerPrincipal(decoded) {
     toPositiveInteger(decoded && decoded.customer_account_id)
     || toPositiveInteger(decoded && decoded.id);
 
+  const customerStatus = String((decoded && decoded.customer_status) || "").trim().toLowerCase();
+  const customerDeactivatedAt = decoded && decoded.customer_deactivated_at
+    ? String(decoded.customer_deactivated_at).trim()
+    : "";
+  if (customerDeactivatedAt || customerStatus === "deactivated") {
+    const error = new Error("Customer account is deactivated");
+    error.status = 403;
+    throw error;
+  }
+  if (customerStatus === "suspended") {
+    const error = new Error("Customer account is suspended");
+    error.status = 403;
+    throw error;
+  }
+
   return {
     ...decoded,
     client_id: clientId,

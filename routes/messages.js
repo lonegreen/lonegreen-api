@@ -102,8 +102,32 @@ function resolveCompanyActor(decoded) {
   return {
     actor_type: "company",
     user_id: userId,
-    company_id: companyId
+    company_id: companyId,
+    role,
+    worker_id: Number(decoded && decoded.worker_id) || null
   };
+}
+
+function isWorkerActor(participant) {
+  return participant && participant.actor_type === "company" && participant.role === "worker";
+}
+
+async function workerHasClientAccess(companyId, workerId, clientId) {
+  if (!Number.isInteger(companyId) || companyId <= 0) return false;
+  if (!Number.isInteger(workerId) || workerId <= 0) return false;
+  if (!Number.isInteger(clientId) || clientId <= 0) return false;
+  const result = await pool.query(
+    `
+    SELECT 1
+    FROM jobs
+    WHERE company_id = $1
+      AND worker_id = $2
+      AND client_id = $3
+    LIMIT 1
+    `,
+    [companyId, workerId, clientId]
+  );
+  return result.rows.length > 0;
 }
 
 async function participantAuth(req, res, next) {
@@ -176,7 +200,17 @@ async function getConversationIfParticipant(conversationId, participant) {
     `,
     [conversationId, participant.company_id]
   );
-  return result.rows[0] || null;
+  const row = result.rows[0] || null;
+  if (!row) {
+    return null;
+  }
+  if (isWorkerActor(participant)) {
+    const allowed = await workerHasClientAccess(participant.company_id, participant.worker_id, Number(row.client_id));
+    if (!allowed) {
+      return null;
+    }
+  }
+  return row;
 }
 
 function withModerationFlag(payload, res) {
@@ -239,6 +273,12 @@ router.post("/conversations", participantAuth, async (req, res) => {
     if (Number(clientCheck.rows[0].company_id) !== req.participant.company_id) {
       return res.status(403).json({ error: "Forbidden" });
     }
+    if (isWorkerActor(req.participant)) {
+      const allowed = await workerHasClientAccess(req.participant.company_id, req.participant.worker_id, clientId);
+      if (!allowed) {
+        return res.status(403).json({ error: "Forbidden" });
+      }
+    }
 
     const conversation = await pool.query(
       `
@@ -284,7 +324,25 @@ router.get("/conversations", participantAuth, async (req, res) => {
         params
       );
     } else {
-      result = await pool.query(
+      if (isWorkerActor(req.participant)) {
+        result = await pool.query(
+          `
+          SELECT c.id, c.company_id, c.client_id, c.created_at
+          FROM conversations c
+          WHERE c.company_id = $1
+            AND EXISTS (
+              SELECT 1
+              FROM jobs j
+              WHERE j.company_id = c.company_id
+                AND j.client_id = c.client_id
+                AND j.worker_id = $2
+            )
+          ORDER BY c.created_at DESC, c.id DESC
+          `,
+          [req.participant.company_id, req.participant.worker_id || 0]
+        );
+      } else {
+        result = await pool.query(
         `
         SELECT id, company_id, client_id, created_at
         FROM conversations
@@ -293,6 +351,7 @@ router.get("/conversations", participantAuth, async (req, res) => {
         `,
         [req.participant.company_id]
       );
+      }
     }
     return res.json(result.rows);
   } catch (err) {

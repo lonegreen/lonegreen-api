@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Local Service Companies | FairLinx</title>
+  <meta name="description" content="Find trusted local service companies by city and service area.">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Local Service Companies | FairLinx">
+  <meta property="og:description" content="Browse top local service providers and request service today.">
+  <link rel="stylesheet" href="/css/brand.css">
+  <link rel="stylesheet" href="/app-shell.css">
+  <style>
+    * { box-sizing: border-box; font-family: Inter, Arial, sans-serif; }
+    body { margin: 0; min-height: 100vh; background: linear-gradient(180deg, #edf5f0 0%, #f7f9f8 190px, #f4f6f8 100%); color: var(--brand-black); padding: 20px; }
+    .page { width: min(1100px, 100%); margin: 0 auto; display: grid; gap: 14px; }
+    .hero, .panel { background: #fff; border: 1px solid var(--brand-border); border-radius: 16px; box-shadow: 0 14px 30px rgba(16,24,40,0.06); padding: 16px; }
+    .hero h1, .panel h2 { margin: 0; color: var(--brand-primary); }
+    .hero p, .muted { margin: 0; color: #60786e; line-height: 1.55; }
+    .hero { display: grid; gap: 10px; }
+    .actions { display: flex; gap: 10px; flex-wrap: wrap; }
+    .btn { border: none; border-radius: 10px; padding: 10px 14px; font-size: 13px; font-weight: 800; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; }
+    .btn.primary { background: linear-gradient(135deg, var(--brand-primary), var(--brand-primary-hover)); color: #fff; }
+    .btn.secondary { background: #fff; color: var(--brand-primary); border: 1px solid var(--brand-border); }
+    .status { min-height: 20px; color: #5f6e66; font-size: 14px; font-weight: 700; }
+    .status.error { color: #b42318; }
+    .cards { display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); }
+    .card { border: 1px solid #dce9e2; border-radius: 12px; background: #fbfdfc; padding: 12px; display: grid; gap: 8px; }
+    .company-head { display: flex; align-items: center; gap: 10px; min-width: 0; }
+    .logo, .logo-fallback { width: 48px; height: 48px; border-radius: 12px; border: 1px solid #dce9e2; flex-shrink: 0; }
+    .logo { object-fit: cover; background: #f4faf6; }
+    .logo-fallback { display: grid; place-items: center; font-weight: 900; color: var(--brand-primary); background: var(--brand-bg); }
+    .company-name { margin: 0; font-size: 16px; color: var(--brand-black); font-weight: 900; overflow-wrap: anywhere; }
+    .summary { margin: 0; font-size: 13px; color: #5c756b; line-height: 1.55; min-height: 38px; }
+    .chips { display: flex; gap: 6px; flex-wrap: wrap; }
+    .chip { border-radius: 999px; border: 1px solid #dce9e2; padding: 4px 8px; font-size: 11px; background: var(--brand-bg); color: #2f4f43; font-weight: 700; }
+    .chip.good { background: #e9f8ef; border-color: #cde9d7; color: #166534; }
+    .meta { margin: 0; font-size: 12px; color: #637b71; }
+    .empty { border: 1px dashed #d5e3db; border-radius: 12px; background: var(--brand-bg); padding: 16px; color: #657d73; text-align: center; }
+    .empty strong { display: block; margin-bottom: 5px; color: var(--brand-black); }
+    .seo-links { display: flex; flex-wrap: wrap; gap: 8px; }
+    .seo-links a { border: 1px solid var(--brand-border); border-radius: 999px; padding: 7px 11px; text-decoration: none; color: var(--brand-primary); background: #fff; font-size: 12px; font-weight: 800; }
+    @media (max-width: 760px) { body { padding: 14px; } .actions { display: grid; } .actions .btn { width: 100%; } }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <section class="hero">
+      <h1 id="heroTitle">Local Services Near You</h1>
+      <p id="heroIntro">Find trusted, reviewed companies in your city and service area.</p>
+      <div class="actions">
+        <a id="requestCta" class="btn primary" href="/marketplace.html">Request Service</a>
+        <a id="browseCta" class="btn secondary" href="/discover.html">Browse Companies</a>
+      </div>
+      <div id="status" class="status" role="status" aria-live="polite"></div>
+    </section>
+
+    <section class="panel">
+      <h2>Matching Companies</h2>
+      <div id="results" class="cards"></div>
+    </section>
+
+    <section class="panel">
+      <h2>Popular Local Searches</h2>
+      <div id="seoLinks" class="seo-links"></div>
+    </section>
+  </main>
+
+  <script>
+    (function() {
+      const params = new URLSearchParams(window.location.search);
+      const q = {
+        service: String(params.get("service") || "").trim(),
+        city: String(params.get("city") || "").trim(),
+        state: String(params.get("state") || "").trim().toUpperCase().slice(0, 2),
+        zip: String(params.get("zip") || "").replace(/\D/g, "").slice(0, 5)
+      };
+
+      const els = {
+        heroTitle: document.getElementById("heroTitle"),
+        heroIntro: document.getElementById("heroIntro"),
+        requestCta: document.getElementById("requestCta"),
+        browseCta: document.getElementById("browseCta"),
+        status: document.getElementById("status"),
+        results: document.getElementById("results"),
+        seoLinks: document.getElementById("seoLinks")
+      };
+
+      function esc(value) {
+        return String(value == null ? "" : value).replace(/[&<>"']/g, function(ch) {
+          return ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[ch];
+        });
+      }
+
+      function safeText(value, fallback) {
+        if (value === null || value === undefined || value === "") return fallback || "";
+        return String(value);
+      }
+
+      function setStatus(message, type) {
+        els.status.textContent = message || "";
+        els.status.className = "status" + (type ? " " + type : "");
+      }
+
+      function isSafeHttpUrl(value) {
+        const raw = String(value || "").trim();
+        if (!raw) return false;
+        if (raw.startsWith("/")) return true;
+        try {
+          const parsed = new URL(raw, window.location.origin);
+          return parsed.protocol === "http:" || parsed.protocol === "https:";
+        } catch (_) {
+          return false;
+        }
+      }
+
+      function fromSlug(slug) {
+        return String(slug || "").split("-").filter(Boolean).map(function(w) {
+          return w.charAt(0).toUpperCase() + w.slice(1);
+        }).join(" ");
+      }
+
+      function buildSearchLabel() {
+        const serviceLabel = q.service ? fromSlug(q.service) : "Home Services";
+        const locationLabel = q.city ? (q.city + (q.state ? ", " + q.state : "")) : (q.zip ? ("ZIP " + q.zip) : "Your Area");
+        return { serviceLabel, locationLabel };
+      }
+
+      function setMetadata(title, description) {
+        document.title = title;
+        const metaDescription = document.querySelector('meta[name="description"]');
+        if (metaDescription) metaDescription.setAttribute("content", description);
+        const ogTitle = document.querySelector('meta[property="og:title"]');
+        if (ogTitle) ogTitle.setAttribute("content", title);
+        const ogDescription = document.querySelector('meta[property="og:description"]');
+        if (ogDescription) ogDescription.setAttribute("content", description);
+        const canonicalHref = window.location.origin + window.location.pathname + "?" + new URLSearchParams({
+          service: q.service,
+          city: q.city,
+          state: q.state,
+          zip: q.zip
+        }).toString();
+        let canonical = document.querySelector('link[rel="canonical"]');
+        if (!canonical) {
+          canonical = document.createElement("link");
+          canonical.setAttribute("rel", "canonical");
+          document.head.appendChild(canonical);
+        }
+        canonical.setAttribute("href", canonicalHref);
+      }
+
+      function renderSeoLinks() {
+        const seeds = [
+          { service: "lawn-care", city: "Richmond", state: "TX" },
+          { service: "landscaping", city: "Sugar Land", state: "TX" },
+          { service: "pressure-washing", city: "Katy", state: "TX" }
+        ];
+        const links = seeds.map(function(seed) {
+          const url = "/service-area.html?" + new URLSearchParams(seed).toString();
+          return '<a href="' + esc(url) + '">' + esc(fromSlug(seed.service)) + " in " + esc(seed.city + ", " + seed.state) + "</a>";
+        }).join("");
+        els.seoLinks.innerHTML = links;
+      }
+
+      function renderCompanies(list) {
+        if (!Array.isArray(list) || !list.length) {
+          els.results.innerHTML = '<div class="empty" style="grid-column:1 / -1;"><strong>No matching companies yet</strong>Try a nearby city, a broader service keyword, or browse all public companies.</div>';
+          return;
+        }
+        els.results.innerHTML = list.map(function(c) {
+          const name = safeText(c.name, "Company");
+          const slug = safeText(c.slug, "");
+          const summary = safeText(c.public_description, "Public service details are being updated.");
+          const logo = isSafeHttpUrl(c.logo_url) ? String(c.logo_url).trim() : "";
+          const initials = name.split(/\s+/).map(function(p){ return p.charAt(0); }).join("").slice(0, 2).toUpperCase() || "CO";
+          const services = Array.isArray(c.services) ? c.services.slice(0, 3) : [];
+          const areas = Array.isArray(c.service_areas) ? c.service_areas.slice(0, 2) : [];
+          const trust = c.trust || {};
+          const verified = c.is_verified === true || trust.verification_status === "approved";
+          const rating = c.rating_summary || {};
+          const avg = Number(rating.average_rating || 0);
+          const count = Number(rating.review_count || 0);
+          return '<article class="card">' +
+            '<div class="company-head">' +
+              (logo ? '<img class="logo" src="' + esc(logo) + '" alt="' + esc(name) + ' logo">' : '<div class="logo-fallback" aria-hidden="true">' + esc(initials) + "</div>") +
+              '<div><h3 class="company-name">' + esc(name) + '</h3><p class="meta">' + esc(avg > 0 ? (avg.toFixed(1) + " rating • " + count + " reviews") : "No ratings yet") + "</p></div>" +
+            "</div>" +
+            '<p class="summary">' + esc(summary) + "</p>" +
+            '<div class="chips">' +
+              (verified ? '<span class="chip good">Verified</span>' : "") +
+              ((trust.insurance_status === "verified" || trust.insurance_status === "approved") && trust.insurance_expired !== true ? '<span class="chip good">Insured</span>' : "") +
+              ((trust.license_status === "verified" || trust.license_status === "approved") && trust.license_expired !== true ? '<span class="chip good">Licensed</span>' : "") +
+            "</div>" +
+            '<p class="meta"><strong>Services:</strong> ' + esc(services.length ? services.join(", ") : "Not listed") + "</p>" +
+            '<p class="meta"><strong>Coverage:</strong> ' + esc(areas.length ? areas.join(" • ") : "Not listed") + "</p>" +
+            '<div class="actions">' +
+              '<a class="btn secondary" href="/company-profile.html?slug=' + esc(encodeURIComponent(slug)) + '">View Profile</a>' +
+            "</div>" +
+          "</article>";
+        }).join("");
+      }
+
+      async function load() {
+        renderSeoLinks();
+        const labels = buildSearchLabel();
+        const title = labels.serviceLabel + " in " + labels.locationLabel + " | FairLinx";
+        const description = "Find trusted " + labels.serviceLabel.toLowerCase() + " providers in " + labels.locationLabel + ". Compare local companies, trust badges, and reviews.";
+        els.heroTitle.textContent = labels.serviceLabel + " in " + labels.locationLabel;
+        els.heroIntro.textContent = "Compare local companies, trust details, service coverage, and customer ratings before requesting service.";
+        setMetadata(title, description);
+
+        const discoverUrl = "/discover.html?" + new URLSearchParams({
+          search: q.service,
+          location: q.city || q.zip
+        }).toString();
+        const marketplaceUrl = "/marketplace.html";
+        els.requestCta.setAttribute("href", marketplaceUrl);
+        els.browseCta.setAttribute("href", discoverUrl);
+
+        if (!q.service && !q.city && !q.state && !q.zip) {
+          setStatus("Add query params like ?service=lawn-care&city=Richmond&state=TX.", "error");
+          renderCompanies([]);
+          return;
+        }
+
+        setStatus("Loading local company matches...", "");
+        try {
+          const url = "/companies/public/search?" + new URLSearchParams({
+            service: q.service,
+            city: q.city,
+            state: q.state,
+            zip: q.zip
+          }).toString();
+          const res = await fetch(url);
+          const data = await res.json().catch(function() { return {}; });
+          if (!res.ok) throw new Error(data.error || "Unable to load local matches.");
+          const companies = Array.isArray(data.companies) ? data.companies : [];
+          renderCompanies(companies);
+          setStatus(companies.length ? ("Showing " + companies.length + " matching companies.") : "No current matches for this location and service.", "");
+        } catch (err) {
+          renderCompanies([]);
+          setStatus(err.message || "Unable to load local company matches.", "error");
+        }
+      }
+
+      load();
+    })();
+  </script>
+</body>
+</html>

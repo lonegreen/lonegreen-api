@@ -686,6 +686,84 @@
           </div>
         </form>
       </div>
+
+      <div class="panel">
+        <div class="panel-header">
+          <div>
+            <h2>Trust Layer</h2>
+            <p class="note">Submit verification, insurance, and license details for platform review.</p>
+          </div>
+        </div>
+        <form id="trustVerificationForm">
+          <div class="field-grid">
+            <div class="field full">
+              <label>Current Trust Review</label>
+              <div id="trustReviewState" class="empty">Loading trust moderation state...</div>
+            </div>
+          </div>
+          <div class="field-grid">
+            <div class="field full">
+              <label for="verification_notes">Verification Notes</label>
+              <textarea id="verification_notes" placeholder="Provide any context for verification review."></textarea>
+            </div>
+          </div>
+          <div class="toolbar">
+            <button type="submit">Submit Verification</button>
+            <button type="button" class="secondary" id="resubmitVerificationBtn">Re-submit After Rejection</button>
+            <div class="status muted" id="verificationStatus"></div>
+          </div>
+        </form>
+        <div class="field-grid">
+          <div class="field full">
+            <label>Trust Alerts</label>
+            <div id="trustAlerts" class="empty">Loading trust alerts...</div>
+          </div>
+        </div>
+        <form id="trustInsuranceForm">
+          <div class="field-grid">
+            <div class="field">
+              <label for="insurance_provider">Insurance Provider</label>
+              <input id="insurance_provider" placeholder="Provider name">
+            </div>
+            <div class="field">
+              <label for="insurance_expiry_date">Insurance Expiry Date</label>
+              <input id="insurance_expiry_date" type="date">
+            </div>
+            <div class="field full">
+              <label for="insurance_document_url">Insurance Document URL</label>
+              <input id="insurance_document_url" type="url" placeholder="https://...">
+            </div>
+          </div>
+          <div class="toolbar">
+            <button type="submit">Upload Insurance</button>
+            <div class="status muted" id="insuranceStatus"></div>
+          </div>
+        </form>
+        <form id="trustLicenseForm">
+          <div class="field-grid">
+            <div class="field">
+              <label for="license_number">License Number</label>
+              <input id="license_number" placeholder="License number">
+            </div>
+            <div class="field">
+              <label for="license_state">License State</label>
+              <input id="license_state" maxlength="2" placeholder="NY">
+            </div>
+            <div class="field">
+              <label for="license_expiry_date">License Expiry Date</label>
+              <input id="license_expiry_date" type="date">
+            </div>
+            <div class="field full">
+              <label for="license_document_url">License Document URL</label>
+              <input id="license_document_url" type="url" placeholder="https://...">
+            </div>
+          </div>
+          <div class="toolbar">
+            <button type="submit">Upload License</button>
+            <div class="status muted" id="licenseStatus"></div>
+          </div>
+        </form>
+      </div>
     </section>
 
     <aside class="stack">
@@ -1050,6 +1128,11 @@ function updateSummary(){
   } else {
     setStatus("companyStatus", "", "muted");
   }
+
+  const canSubmitTrust = ["owner", "admin"].includes((currentUser && currentUser.role) || "");
+  Array.from(document.querySelectorAll("#trustVerificationForm input, #trustVerificationForm textarea, #trustVerificationForm button, #trustInsuranceForm input, #trustInsuranceForm textarea, #trustInsuranceForm button, #trustLicenseForm input, #trustLicenseForm textarea, #trustLicenseForm button")).forEach(el => {
+    el.disabled = !canSubmitTrust;
+  });
 }
 
 function fillCompanyForm(company){
@@ -1071,6 +1154,31 @@ function fillCompanyForm(company){
   document.getElementById("zelle_contact").value = company && company.zelle_contact ? company.zelle_contact : "";
   document.getElementById("invoice_prefix").value = company && company.invoice_prefix ? company.invoice_prefix : "";
   renderInvoiceLogoPreview();
+  renderTrustReviewState(company);
+}
+
+function renderTrustReviewState(company){
+  const host = document.getElementById("trustReviewState");
+  if(!host) return;
+  const verificationStatus = String(company && company.verification_status || "pending");
+  const insuranceStatus = String(company && company.insurance_status || "pending");
+  const licenseStatus = String(company && company.license_status || "pending");
+  const notes = String(company && company.verification_notes || "");
+  const reviewedAt = company && company.verification_reviewed_at ? formatDateTime(company.verification_reviewed_at) : "";
+  host.innerHTML =
+    '<div class="details-grid">' +
+      '<div class="detail-row"><div class="detail-key">Verification</div><div class="detail-value">' + escapeHtml(verificationStatus) + '</div></div>' +
+      '<div class="detail-row"><div class="detail-key">Insurance</div><div class="detail-value">' + escapeHtml(insuranceStatus) + '</div></div>' +
+      '<div class="detail-row"><div class="detail-key">License</div><div class="detail-value">' + escapeHtml(licenseStatus) + '</div></div>' +
+      '<div class="detail-row"><div class="detail-key">Reviewed At</div><div class="detail-value">' + escapeHtml(reviewedAt || "-") + '</div></div>' +
+      '<div class="detail-row"><div class="detail-key">Rejection / Notes</div><div class="detail-value">' + escapeHtml(notes || "-") + '</div></div>' +
+    '</div>';
+
+  const resubmitBtn = document.getElementById("resubmitVerificationBtn");
+  if(resubmitBtn){
+    const canResubmit = verificationStatus === "rejected";
+    resubmitBtn.disabled = !canResubmit;
+  }
 }
 
 function renderInvoiceLogoPreview(){
@@ -1170,6 +1278,31 @@ async function loadProfile(){
   }
 
   updateSummary();
+  await loadTrustAlerts();
+}
+
+async function loadTrustAlerts(){
+  const host = document.getElementById("trustAlerts");
+  if(!host) return;
+  host.innerHTML = "Loading trust alerts...";
+  try {
+    const res = await apiFetch(API + "/ops/company/trust/alerts");
+    const data = await safeJson(res);
+    if(!res.ok) throw new Error(data.error || "Unable to load trust alerts");
+    const alerts = Array.isArray(data.alerts) ? data.alerts : [];
+    if(!alerts.length){
+      host.innerHTML = "No trust alerts. Insurance and license are currently not expiring soon.";
+      return;
+    }
+    host.innerHTML = alerts.map(alert =>
+      '<div class="detail-row">' +
+        '<div class="detail-key">' + escapeHtml(String(alert.type || "alert").replace(/_/g, " ")) + '</div>' +
+        '<div class="detail-value">' + escapeHtml(alert.message || "") + '</div>' +
+      '</div>'
+    ).join("");
+  } catch (err) {
+    host.innerHTML = "Unable to load trust alerts.";
+  }
 }
 
 function renderLegalConsent(consent){
@@ -1392,6 +1525,90 @@ async function init(){
   }
 }
 
+async function submitVerification(event){
+  event.preventDefault();
+  setStatus("verificationStatus", "Submitting verification...", "muted");
+  try {
+    const res = await apiFetch(API + "/ops/company/verification/submit", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        verification_notes: document.getElementById("verification_notes").value.trim()
+      })
+    });
+    const data = await safeJson(res);
+    if(!res.ok) throw new Error(data.error || "Unable to submit verification.");
+    setStatus("verificationStatus", "Verification submitted for review.", "ok");
+    await loadProfile();
+  } catch (err) {
+    setStatus("verificationStatus", err.message || "Unable to submit verification.", "error");
+  }
+}
+
+async function submitInsurance(event){
+  event.preventDefault();
+  setStatus("insuranceStatus", "Uploading insurance details...", "muted");
+  try {
+    const res = await apiFetch(API + "/ops/company/insurance/upload", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        insurance_provider: document.getElementById("insurance_provider").value.trim(),
+        insurance_expiry_date: document.getElementById("insurance_expiry_date").value || null,
+        insurance_document_url: document.getElementById("insurance_document_url").value.trim()
+      })
+    });
+    const data = await safeJson(res);
+    if(!res.ok) throw new Error(data.error || "Unable to upload insurance details.");
+    setStatus("insuranceStatus", "Insurance details submitted.", "ok");
+    await loadProfile();
+  } catch (err) {
+    setStatus("insuranceStatus", err.message || "Unable to upload insurance details.", "error");
+  }
+}
+
+async function submitLicense(event){
+  event.preventDefault();
+  setStatus("licenseStatus", "Uploading license details...", "muted");
+  try {
+    const res = await apiFetch(API + "/ops/company/license/upload", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        license_number: document.getElementById("license_number").value.trim(),
+        license_state: document.getElementById("license_state").value.trim().toUpperCase(),
+        license_expiry_date: document.getElementById("license_expiry_date").value || null,
+        license_document_url: document.getElementById("license_document_url").value.trim()
+      })
+    });
+    const data = await safeJson(res);
+    if(!res.ok) throw new Error(data.error || "Unable to upload license details.");
+    setStatus("licenseStatus", "License details submitted.", "ok");
+    await loadProfile();
+  } catch (err) {
+    setStatus("licenseStatus", err.message || "Unable to upload license details.", "error");
+  }
+}
+
+async function resubmitVerification(){
+  setStatus("verificationStatus", "Re-submitting verification...", "muted");
+  try {
+    const res = await apiFetch(API + "/ops/company/verification/resubmit", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        verification_notes: document.getElementById("verification_notes").value.trim()
+      })
+    });
+    const data = await safeJson(res);
+    if(!res.ok) throw new Error(data.error || "Unable to re-submit verification.");
+    setStatus("verificationStatus", "Verification re-submitted.", "ok");
+    await loadProfile();
+  } catch (err) {
+    setStatus("verificationStatus", err.message || "Unable to re-submit verification.", "error");
+  }
+}
+
 document.getElementById("companyForm").addEventListener("submit", saveCompany);
 document.getElementById("passwordForm").addEventListener("submit", changePassword);
 document.getElementById("settingsNotifRefresh").addEventListener("click", () => loadNotifications());
@@ -1405,6 +1622,10 @@ document.getElementById("invoiceLogoFileInput").addEventListener("change", funct
   void uploadInvoiceLogo();
 });
 document.getElementById("invoice_logo_url").addEventListener("input", renderInvoiceLogoPreview);
+document.getElementById("trustVerificationForm").addEventListener("submit", submitVerification);
+document.getElementById("trustInsuranceForm").addEventListener("submit", submitInsurance);
+document.getElementById("trustLicenseForm").addEventListener("submit", submitLicense);
+document.getElementById("resubmitVerificationBtn").addEventListener("click", resubmitVerification);
 document.getElementById("notificationsList").addEventListener("click", function(ev){
   const btn = ev.target.closest("[data-notification-mark-read]");
   if(!btn) return;

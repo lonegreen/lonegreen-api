@@ -3,744 +3,557 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>FairLinx | Landscaping Business Management Software</title>
-  <meta name="description" content="FairLinx helps landscaping and outdoor service businesses manage leads, clients, estimates, jobs, invoices, subscriptions, workers, and analytics." />
+  <title>FairLinx | Landscaping & Outdoor Service Business SaaS</title>
+  <meta name="description" content="FairLinx is the SaaS operating system for landscaping and outdoor service companies with workflow management, marketplace opportunities, and a fair no-commission model." />
   <link rel="stylesheet" href="/css/brand.css">
-
   <style>
     :root {
-      --green-950: #111111;
-      --green-900: #1b1b1b;
-      --green-800: #2B2B2B;
-      --green-700: var(--brand-primary);
-      --green-600: var(--brand-primary-hover);
-      --green-500: var(--brand-primary-light);
-      --green-100: #fff3e8;
-      --green-50: var(--brand-bg);
+      --bg: #F5F5F5;
+      --surface: #FFFFFF;
+      --surface-soft: #FAFAFA;
       --text: #111111;
       --muted: #2B2B2B;
-      --line: var(--brand-border);
-      --white: #ffffff;
-      --shadow: 0 24px 70px rgba(7, 27, 18, 0.14);
-      --radius: 24px;
+      --line: #D9D9D9;
+      --brand: #FF5A00;
+      --brand-dark: #E64A00;
+      --brand-soft: #FF8A33;
+      --accent: #FF8A33;
+      --shadow: 0 16px 44px rgba(17, 17, 17, 0.08);
+      --radius: 22px;
     }
 
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      font-family: Inter, Arial, sans-serif;
-    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: Inter, Arial, sans-serif; }
+    html { scroll-behavior: smooth; }
+    body { background: var(--bg); color: var(--text); line-height: 1.6; }
+    a { color: inherit; text-decoration: none; }
 
-    html {
-      scroll-behavior: smooth;
-    }
-
-    body {
-      background: var(--green-50);
-      color: var(--text);
-      line-height: 1.6;
-    }
-
-    a {
-      color: inherit;
-      text-decoration: none;
-    }
-
-    .container {
-      width: min(1160px, calc(100% - 40px));
-      margin: 0 auto;
-    }
+    .container { width: min(1160px, calc(100% - 32px)); margin: 0 auto; }
 
     .navbar {
       position: sticky;
       top: 0;
       z-index: 100;
-      background: rgba(245, 251, 247, 0.86);
-      backdrop-filter: blur(16px);
-      border-bottom: 1px solid rgba(220, 232, 223, 0.8);
+      border-bottom: 1px solid rgba(217, 217, 217, 0.85);
+      background: rgba(255, 255, 255, 0.94);
+      backdrop-filter: blur(14px);
     }
 
     .nav-inner {
-      height: 78px;
+      min-height: 74px;
       display: flex;
       align-items: center;
       justify-content: space-between;
       gap: 20px;
+      padding: 10px 0;
     }
 
     .logo {
       display: flex;
       align-items: center;
-      gap: 12px;
-      font-weight: 900;
+      gap: 10px;
       font-size: 21px;
-      color: var(--green-900);
+      font-weight: 900;
+      color: var(--text);
     }
 
     .logo-mark {
-      width: 42px;
-      height: 42px;
+      width: 40px;
+      height: 40px;
       display: grid;
       place-items: center;
-      border-radius: 14px;
-      background: linear-gradient(135deg, var(--green-500), #ffd8bf);
-      box-shadow: 0 12px 30px rgba(230, 74, 0, 0.22);
+      border-radius: 12px;
+      background: linear-gradient(145deg, #FFF2E9, #FFE1CC);
+      border: 1px solid #FFD0AD;
     }
 
     .nav-links {
       display: flex;
       align-items: center;
-      gap: 26px;
-      color: #405146;
+      gap: 22px;
+      color: #2B2B2B;
       font-size: 14px;
       font-weight: 700;
     }
 
-    .nav-links a:hover {
-      color: var(--green-700);
-    }
+    .nav-links a:hover { color: var(--brand); }
 
-    .nav-actions {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
+    .nav-actions { display: flex; align-items: center; gap: 10px; }
 
     .btn {
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      gap: 8px;
-      min-height: 46px;
-      padding: 12px 18px;
+      min-height: 44px;
+      padding: 10px 16px;
       border-radius: 999px;
       border: 1px solid transparent;
       font-size: 14px;
-      font-weight: 900;
+      font-weight: 800;
+      transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
       cursor: pointer;
-      transition: 0.2s ease;
       white-space: nowrap;
     }
 
     .btn-primary {
-      background: linear-gradient(135deg, var(--green-700), var(--green-600));
-      color: white;
-      box-shadow: 0 14px 32px rgba(230, 74, 0, 0.2);
+      background: linear-gradient(140deg, var(--brand), var(--brand-dark));
+      color: #fff;
+      box-shadow: 0 10px 24px rgba(255, 90, 0, 0.24);
     }
 
-    .btn-primary:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 18px 38px rgba(230, 74, 0, 0.24);
-    }
+    .btn-primary:hover { transform: translateY(-1px); }
 
     .btn-secondary {
-      background: white;
+      background: #fff;
+      color: #111111;
       border-color: var(--line);
-      color: var(--green-800);
     }
 
-    .btn-secondary:hover {
-      border-color: var(--green-600);
-      color: var(--green-700);
-    }
+    .btn-secondary:hover { border-color: var(--brand); color: var(--brand); }
 
     .menu-btn {
       display: none;
+      width: 42px;
+      height: 42px;
       border: 1px solid var(--line);
-      background: white;
-      border-radius: 14px;
-      width: 46px;
-      height: 46px;
-      font-size: 24px;
+      border-radius: 12px;
+      background: #fff;
+      color: #111111;
+      font-size: 22px;
       cursor: pointer;
-      color: var(--green-900);
     }
 
+    main section { padding: 78px 0; }
+
     .hero {
-      position: relative;
-      overflow: hidden;
-      padding: 86px 0 70px;
+      padding: 82px 0 68px;
       background:
-        radial-gradient(circle at 12% 15%, rgba(255, 138, 51, 0.2), transparent 30%),
-        radial-gradient(circle at 90% 12%, rgba(255, 90, 0, 0.14), transparent 28%);
+        radial-gradient(60% 70% at 0% 0%, rgba(255, 138, 51, 0.22), transparent 60%),
+        radial-gradient(55% 55% at 100% 0%, rgba(255, 90, 0, 0.14), transparent 60%);
     }
 
     .hero-grid {
       display: grid;
-      grid-template-columns: 1.02fr 0.98fr;
-      gap: 54px;
+      grid-template-columns: 1.04fr 0.96fr;
+      gap: 36px;
       align-items: center;
     }
 
-    .badge {
+    .eyebrow {
       display: inline-flex;
       align-items: center;
       gap: 8px;
+      margin-bottom: 16px;
       padding: 8px 12px;
       border-radius: 999px;
-      background: var(--green-100);
-      color: var(--green-700);
-      font-size: 13px;
+      font-size: 12px;
       font-weight: 900;
-      margin-bottom: 22px;
-      border: 1px solid rgba(255, 90, 0, 0.18);
+      color: var(--brand-dark);
+      background: var(--brand-soft);
+      border: 1px solid #FFD0AD;
     }
 
     .hero h1 {
-      font-size: clamp(42px, 6vw, 72px);
-      line-height: 0.98;
-      letter-spacing: -2.7px;
-      color: var(--green-950);
-      margin-bottom: 24px;
+      font-size: clamp(34px, 5vw, 60px);
+      line-height: 1.05;
+      letter-spacing: -1.7px;
+      margin-bottom: 18px;
+      max-width: 780px;
     }
 
     .hero p {
-      font-size: 18px;
       color: var(--muted);
-      max-width: 620px;
-      margin-bottom: 30px;
+      font-size: 17px;
+      max-width: 690px;
+      margin-bottom: 24px;
     }
 
-    .hero-actions {
-      display: flex;
-      gap: 14px;
-      flex-wrap: wrap;
-      margin-bottom: 34px;
-    }
+    .hero-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 24px; }
 
-    .hero-points {
+    .trust-badges {
       display: flex;
       flex-wrap: wrap;
-      gap: 14px;
-      color: #506056;
-      font-size: 14px;
-      font-weight: 800;
+      gap: 10px;
+      list-style: none;
+      color: #2B2B2B;
+      font-size: 13px;
+      font-weight: 700;
     }
 
-    .hero-points span {
-      display: inline-flex;
-      align-items: center;
-      gap: 7px;
+    .trust-badges li {
+      padding: 8px 12px;
+      border-radius: 999px;
+      border: 1px solid #D9D9D9;
+      background: #fff;
     }
 
-    .mockup {
-      background: var(--white);
+    .panel {
+      background: #fff;
+      border-radius: 24px;
       border: 1px solid var(--line);
-      border-radius: 30px;
       box-shadow: var(--shadow);
       overflow: hidden;
     }
 
-    .mockup-top {
-      height: 58px;
+    .panel-top {
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--line);
+      background: #FAFAFA;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 0 20px;
-      border-bottom: 1px solid var(--line);
-      background: #fbfdfb;
+      font-size: 13px;
+      font-weight: 800;
+      color: #2B2B2B;
     }
 
-    .dots {
-      display: flex;
-      gap: 7px;
-    }
+    .panel-body { padding: 18px; }
 
-    .dots span {
-      width: 11px;
-      height: 11px;
-      border-radius: 999px;
-      background: #cad8ce;
-    }
-
-    .mockup-body {
-      padding: 24px;
-    }
-
-    .dashboard-grid {
+    .kpi-grid {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
-      gap: 14px;
-      margin-bottom: 18px;
+      gap: 10px;
+      margin-bottom: 10px;
     }
 
-    .mini-card {
-      padding: 18px;
-      border-radius: 20px;
-      background: var(--green-50);
+    .kpi {
       border: 1px solid var(--line);
+      border-radius: 16px;
+      background: var(--surface-soft);
+      padding: 12px;
     }
 
-    .mini-card small {
-      color: var(--muted);
-      font-weight: 800;
-    }
+    .kpi small { font-size: 12px; color: #2B2B2B; font-weight: 700; display: block; }
+    .kpi strong { font-size: 26px; line-height: 1.1; }
 
-    .mini-card strong {
-      display: block;
-      font-size: 28px;
-      color: var(--green-900);
-      margin-top: 4px;
-    }
-
-    .route-card {
-      padding: 20px;
-      border-radius: 22px;
-      background: linear-gradient(135deg, var(--green-900), var(--green-700));
-      color: white;
-    }
-
-    .route-row {
+    .job-rows { display: grid; gap: 8px; }
+    .job-row {
       display: flex;
       justify-content: space-between;
       gap: 10px;
-      padding: 12px 0;
-      border-bottom: 1px solid rgba(255,255,255,0.14);
-      font-size: 14px;
+      border: 1px solid #FFD0AD;
+      border-radius: 14px;
+      background: linear-gradient(120deg, #111111, #2B2B2B);
+      color: #FFFFFF;
+      padding: 10px 12px;
+      font-size: 13px;
+      font-weight: 700;
     }
 
-    .route-row:last-child {
-      border-bottom: none;
-    }
-
-    section {
-      padding: 86px 0;
-    }
-
-    .section-head {
-      max-width: 720px;
-      margin: 0 auto 42px;
-      text-align: center;
-    }
-
+    .section-head { max-width: 760px; margin: 0 auto 34px; text-align: center; }
     .section-head h2 {
-      font-size: clamp(32px, 4vw, 48px);
-      line-height: 1.05;
-      letter-spacing: -1.5px;
-      color: var(--green-950);
-      margin-bottom: 14px;
+      font-size: clamp(30px, 4vw, 46px);
+      line-height: 1.08;
+      letter-spacing: -1.1px;
+      margin-bottom: 12px;
+    }
+    .section-head p { color: var(--muted); }
+
+    .pain-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
     }
 
-    .section-head p {
-      color: var(--muted);
-      font-size: 16px;
+    .pain-card {
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 20px;
+    }
+
+    .pain-card h3 { font-size: 17px; margin-bottom: 8px; }
+    .pain-card p { color: var(--muted); font-size: 14px; }
+
+    .workflow { background: #fff; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+    .flow {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 10px;
+    }
+
+    .flow-step {
+      background: var(--surface-soft);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 14px 10px;
+      text-align: center;
+      font-weight: 800;
+      font-size: 14px;
     }
 
     .features-grid {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
-      gap: 18px;
+      gap: 14px;
     }
 
     .feature-card {
-      background: white;
+      background: #fff;
       border: 1px solid var(--line);
-      border-radius: var(--radius);
-      padding: 24px;
-      box-shadow: 0 16px 40px rgba(7, 27, 18, 0.06);
-      transition: 0.2s ease;
+      border-radius: 18px;
+      padding: 20px;
+      box-shadow: 0 8px 26px rgba(17, 17, 17, 0.06);
     }
 
-    .feature-card:hover {
-      transform: translateY(-4px);
-      box-shadow: var(--shadow);
-    }
-
-    .icon {
-      width: 48px;
-      height: 48px;
+    .feature-card .icon {
+      width: 44px;
+      height: 44px;
       display: grid;
       place-items: center;
-      border-radius: 16px;
-      background: var(--green-100);
-      margin-bottom: 18px;
-      font-size: 22px;
+      border-radius: 12px;
+      background: var(--brand-soft);
+      margin-bottom: 12px;
+      font-size: 20px;
+    }
+    .feature-card h3 { font-size: 17px; margin-bottom: 8px; }
+    .feature-card p { color: var(--muted); font-size: 14px; }
+
+    .marketplace {
+      background: linear-gradient(180deg, #111111, #1A1A1A);
+      color: #FFFFFF;
     }
 
-    .feature-card h3 {
-      font-size: 17px;
-      color: var(--green-950);
-      margin-bottom: 8px;
-    }
+    .marketplace .section-head p { color: #E8E8E8; }
 
-    .feature-card p {
-      color: var(--muted);
-      font-size: 14px;
-    }
-
-    .workflow {
-      background: white;
-    }
-
-    .workflow-line {
+    .market-grid {
       display: grid;
-      grid-template-columns: repeat(7, 1fr);
-      gap: 12px;
-    }
-
-    .step {
-      position: relative;
-      padding: 20px 16px;
-      border: 1px solid var(--line);
-      border-radius: 22px;
-      background: var(--green-50);
-      text-align: center;
-      font-weight: 900;
-      color: var(--green-900);
-    }
-
-    .step span {
-      display: grid;
-      place-items: center;
-      width: 34px;
-      height: 34px;
-      margin: 0 auto 10px;
-      border-radius: 999px;
-      background: var(--green-700);
-      color: white;
-      font-size: 13px;
-    }
-
-    .operations-grid {
-      display: grid;
-      grid-template-columns: 0.9fr 1.1fr;
-      gap: 26px;
-      align-items: center;
-    }
-
-    .benefit-list {
-      display: grid;
+      grid-template-columns: 1fr 1fr;
       gap: 16px;
+      margin-bottom: 16px;
     }
 
-    .benefit {
-      display: flex;
-      gap: 14px;
-      background: white;
-      border: 1px solid var(--line);
-      border-radius: 22px;
+    .market-card {
+      border: 1px solid rgba(255, 138, 51, 0.3);
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.04);
       padding: 18px;
-      box-shadow: 0 12px 34px rgba(7, 27, 18, 0.05);
     }
 
-    .check {
-      width: 30px;
-      height: 30px;
-      flex: 0 0 auto;
-      border-radius: 999px;
+    .market-card h3 { margin-bottom: 8px; font-size: 18px; }
+    .market-card p { color: #E8E8E8; font-size: 14px; }
+
+    .market-flow {
       display: grid;
-      place-items: center;
-      background: var(--green-100);
-      color: var(--green-700);
-      font-weight: 900;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      margin-top: 16px;
     }
 
-    .benefit h3 {
-      font-size: 16px;
-      margin-bottom: 4px;
+    .market-flow .flow-step {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 138, 51, 0.35);
+      color: #FFFFFF;
     }
 
-    .benefit p {
-      color: var(--muted);
-      font-size: 14px;
+    .fair-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
     }
+
+    .fair-card {
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 20px;
+    }
+
+    .fair-card h3 { margin-bottom: 8px; font-size: 18px; }
+    .fair-card p { color: var(--muted); font-size: 14px; }
+
+    .ops-grid {
+      display: grid;
+      grid-template-columns: 0.95fr 1.05fr;
+      gap: 16px;
+      align-items: stretch;
+    }
+
+    .ops-list {
+      display: grid;
+      gap: 10px;
+      align-content: start;
+    }
+
+    .ops-item {
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 14px;
+    }
+
+    .ops-item h3 { font-size: 16px; margin-bottom: 4px; }
+    .ops-item p { color: var(--muted); font-size: 14px; }
 
     .ops-panel {
-      background: var(--green-950);
-      color: white;
-      border-radius: 30px;
-      padding: 28px;
+      background: linear-gradient(160deg, #111111, #2B2B2B);
+      border: 1px solid #3A3A3A;
+      border-radius: 20px;
+      padding: 18px;
+      color: #FFFFFF;
       box-shadow: var(--shadow);
-      overflow: hidden;
     }
 
-    .ops-panel h3 {
-      font-size: 26px;
-      letter-spacing: -0.8px;
-      margin-bottom: 18px;
-    }
+    .ops-panel h3 { font-size: 22px; margin-bottom: 10px; }
 
     .ops-row {
       display: flex;
       justify-content: space-between;
-      gap: 12px;
-      padding: 16px;
-      border-radius: 18px;
-      background: rgba(255,255,255,0.08);
-      border: 1px solid rgba(255,255,255,0.12);
-      margin-bottom: 12px;
+      gap: 10px;
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 138, 51, 0.26);
+      background: rgba(255, 255, 255, 0.06);
       font-size: 14px;
+      margin-bottom: 8px;
     }
 
-    .ops-row strong {
-      color: #ffd9c0;
-    }
+    .ops-row strong { color: #FF8A33; }
 
     .pricing-grid {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
-      gap: 20px;
+      gap: 14px;
     }
 
     .price-card {
-      position: relative;
-      background: white;
+      background: #fff;
       border: 1px solid var(--line);
-      border-radius: 28px;
-      padding: 30px;
-      box-shadow: 0 16px 42px rgba(7, 27, 18, 0.07);
+      border-radius: 20px;
+      padding: 22px;
+      box-shadow: 0 10px 28px rgba(17, 17, 17, 0.07);
     }
 
     .price-card.featured {
-      border-color: rgba(255, 90, 0, 0.45);
+      border-color: #FF8A33;
       box-shadow: var(--shadow);
-      transform: translateY(-8px);
+      transform: translateY(-4px);
     }
 
     .pill {
-      position: absolute;
-      top: 22px;
-      right: 22px;
-      font-size: 12px;
-      font-weight: 900;
-      color: var(--green-700);
-      background: var(--green-100);
-      padding: 6px 10px;
+      display: inline-flex;
+      align-items: center;
       border-radius: 999px;
+      border: 1px solid #FFD0AD;
+      background: #FFF2E9;
+      color: #E64A00;
+      font-size: 12px;
+      font-weight: 800;
+      padding: 4px 10px;
+      margin-bottom: 10px;
     }
 
-    .price-card h3 {
-      font-size: 24px;
-      margin-bottom: 8px;
-    }
+    .price-card h3 { font-size: 24px; margin-bottom: 8px; }
+    .price-card p { color: var(--muted); font-size: 14px; margin-bottom: 10px; }
+    .price { font-size: 38px; font-weight: 900; line-height: 1.2; margin-bottom: 12px; }
+    .price small { font-size: 14px; color: var(--muted); font-weight: 700; }
+    .price-card ul { list-style: none; display: grid; gap: 8px; margin-bottom: 14px; color: #2B2B2B; font-size: 14px; font-weight: 700; }
+    .price-card li::before { content: "✓ "; color: var(--brand); font-weight: 900; }
 
-    .price {
-      font-size: 42px;
-      font-weight: 950;
-      color: var(--green-950);
-      margin: 18px 0 4px;
-    }
-
-    .price small {
-      font-size: 14px;
-      color: var(--muted);
-      font-weight: 700;
-    }
-
-    .price-card p {
-      color: var(--muted);
-      margin-bottom: 20px;
-      font-size: 14px;
-    }
-
-    .price-card ul {
-      list-style: none;
+    .faq-list {
       display: grid;
-      gap: 12px;
-      margin: 22px 0;
-      color: #415147;
-      font-size: 14px;
-      font-weight: 700;
+      gap: 10px;
+      max-width: 880px;
+      margin: 0 auto;
     }
 
-    .price-card li::before {
-      content: "✓";
-      color: var(--green-600);
-      font-weight: 900;
-      margin-right: 8px;
+    .faq-item {
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 16px;
     }
 
-    .cta {
-      padding: 76px 0;
-      background: linear-gradient(135deg, var(--green-950), var(--green-700));
-      color: white;
+    .faq-item h3 { font-size: 16px; margin-bottom: 6px; }
+    .faq-item p { color: var(--muted); font-size: 14px; }
+
+    .final-cta {
+      background: linear-gradient(145deg, #111111, #1F1F1F);
+      color: #fff;
       text-align: center;
     }
 
-    .cta h2 {
-      font-size: clamp(32px, 5vw, 52px);
-      line-height: 1.08;
-      letter-spacing: -1.6px;
-      max-width: 760px;
-      margin: 0 auto 18px;
+    .final-cta h2 {
+      font-size: clamp(30px, 4.5vw, 48px);
+      line-height: 1.1;
+      margin-bottom: 12px;
     }
 
-    .cta p {
-      color: rgba(255,255,255,0.78);
-      max-width: 640px;
-      margin: 0 auto 28px;
-    }
-
-    .cta .btn-secondary {
-      background: rgba(255,255,255,0.12);
-      border-color: rgba(255,255,255,0.18);
-      color: white;
-    }
+    .final-cta p { max-width: 680px; margin: 0 auto 20px; color: #E8E8E8; }
+    .final-cta .btn-secondary { background: rgba(255,255,255,0.08); color: #fff; border-color: rgba(255,255,255,0.22); }
+    .cta-actions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
 
     footer {
-      background: var(--green-950);
-      color: white;
-      padding: 34px 0;
-      border-top: 1px solid rgba(255,255,255,0.12);
+      background: #111111;
+      color: #FFFFFF;
+      border-top: 1px solid rgba(255, 138, 51, 0.25);
+      padding: 30px 0;
     }
 
     .footer-inner {
       display: flex;
-      align-items: center;
       justify-content: space-between;
+      align-items: center;
       gap: 20px;
       flex-wrap: wrap;
     }
 
     .footer-links {
       display: flex;
-      gap: 18px;
-      color: rgba(255,255,255,0.72);
+      flex-wrap: wrap;
+      gap: 14px;
       font-size: 14px;
       font-weight: 700;
+      color: #E8E8E8;
     }
 
-    .footer-links a:hover {
-      color: white;
-    }
+    .footer-links a:hover { color: #fff; }
 
     @media (max-width: 980px) {
       .hero-grid,
-      .operations-grid {
-        grid-template-columns: 1fr;
-      }
-
-      .features-grid {
-        grid-template-columns: repeat(2, 1fr);
-      }
-
-      .workflow-line {
-        grid-template-columns: repeat(2, 1fr);
-      }
-
-      .pricing-grid {
-        grid-template-columns: 1fr;
-      }
-
-      .price-card.featured {
-        transform: none;
-      }
+      .pain-grid,
+      .market-grid,
+      .fair-grid,
+      .ops-grid { grid-template-columns: 1fr; }
+      .flow { grid-template-columns: repeat(4, 1fr); }
+      .features-grid { grid-template-columns: repeat(2, 1fr); }
+      .pricing-grid { grid-template-columns: 1fr; }
+      .price-card.featured { transform: none; }
     }
 
     @media (max-width: 760px) {
-      .container {
-        width: min(100% - 28px, 1160px);
-      }
+      .menu-btn { display: grid; place-items: center; }
+      .nav-links, .nav-actions { display: none; }
+      .mobile-top { width: 100%; display: flex; justify-content: space-between; align-items: center; }
+      .navbar.open .nav-inner { align-items: flex-start; flex-direction: column; }
+      .navbar.open .nav-links, .navbar.open .nav-actions { display: flex; flex-direction: column; width: 100%; gap: 8px; }
+      .navbar.open .nav-links a, .navbar.open .nav-actions a { width: 100%; }
 
-      .nav-inner {
-        height: 70px;
-      }
-
-      .menu-btn {
-        display: block;
-      }
-
-      .nav-links,
-      .nav-actions {
-        display: none;
-      }
-
-      .navbar.open .nav-links,
-      .navbar.open .nav-actions {
-        display: flex;
-      }
-
-      .navbar.open .nav-inner {
-        height: auto;
-        padding: 16px 0;
-        align-items: flex-start;
-        flex-direction: column;
-      }
-
-      .navbar.open .nav-links,
-      .navbar.open .nav-actions {
-        width: 100%;
-        flex-direction: column;
-        align-items: stretch;
-        gap: 10px;
-      }
-
-      .navbar.open .nav-links a,
-      .navbar.open .nav-actions a {
-        width: 100%;
-      }
-
-      .mobile-top {
-        width: 100%;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-      }
-
-      .hero {
-        padding: 56px 0;
-      }
-
-      .hero h1 {
-        letter-spacing: -1.6px;
-      }
-
-      .hero p {
-        font-size: 16px;
-      }
-
-      .hero-actions .btn {
-        width: 100%;
-      }
-
-      section {
-        padding: 62px 0;
-      }
-
-      .features-grid,
-      .dashboard-grid,
-      .workflow-line {
-        grid-template-columns: 1fr;
-      }
-
-      .mockup-body {
-        padding: 16px;
-      }
-
-      .footer-inner {
-        flex-direction: column;
-        align-items: flex-start;
-      }
-    }
-
-    @media (min-width: 761px) {
-      .mobile-top {
-        display: contents;
-      }
+      .hero { padding-top: 64px; }
+      .hero-actions .btn, .cta-actions .btn { width: 100%; }
+      .flow { grid-template-columns: repeat(2, 1fr); }
+      .market-flow { grid-template-columns: 1fr; }
+      .features-grid, .kpi-grid { grid-template-columns: 1fr; }
+      .container { width: min(1160px, calc(100% - 24px)); }
+      main section { padding: 64px 0; }
     }
   </style>
 </head>
-
 <body>
   <header class="navbar" id="navbar">
     <div class="container nav-inner">
       <div class="mobile-top">
         <a href="/" class="logo" aria-label="FairLinx Home">
-          <span class="logo-mark">🌿</span>
+          <span class="logo-mark">FL</span>
           <span>FairLinx</span>
         </a>
-
         <button class="menu-btn" id="menuBtn" aria-label="Open menu">☰</button>
       </div>
-
       <nav class="nav-links" aria-label="Main navigation">
         <a href="#features">Features</a>
         <a href="#workflow">Workflow</a>
-        <a href="#operations">Operations</a>
+        <a href="#marketplace">Marketplace</a>
         <a href="#pricing">Pricing</a>
       </nav>
-
       <div class="nav-actions">
         <a class="btn btn-secondary" href="/login.html">Login</a>
         <a class="btn btn-primary" href="/signup.html">Sign Up</a>
@@ -752,133 +565,60 @@
     <section class="hero">
       <div class="container hero-grid">
         <div>
-          <div class="badge">Built for landscaping and outdoor service teams</div>
-
-          <h1>Run your service business from one clean dashboard.</h1>
-
+          <div class="eyebrow">Built for landscaping and outdoor service operations</div>
+          <h1>Run your service business. Win local opportunities. Keep more of what you earn.</h1>
           <p>
-            FairLinx helps you manage leads, clients, estimates, jobs, recurring subscriptions,
-            invoices, payments, workers, and daily operations without complicated software.
+            FairLinx gives landscaping and outdoor service teams one clean dashboard for leads, estimates, jobs, invoices, workers, recurring services, and marketplace opportunities - without commission fees or lead-selling games.
           </p>
-
           <div class="hero-actions">
             <a class="btn btn-primary" href="/signup.html">Start Free</a>
             <a class="btn btn-secondary" href="/login.html">Login</a>
+            <a class="btn btn-secondary" href="/discover.html">Find a Service</a>
+            <a class="btn btn-secondary" href="/marketplace.html">Request Service</a>
           </div>
-
-          <div class="hero-points">
-            <span>✓ Mobile friendly</span>
-            <span>✓ Fast workflow</span>
-            <span>✓ Built for field operations</span>
-          </div>
+          <ul class="trust-badges" aria-label="Trust badges">
+            <li>Mobile friendly</li>
+            <li>Built for field teams</li>
+            <li>No commission model</li>
+            <li>Marketplace-ready</li>
+          </ul>
         </div>
 
-        <div class="mockup" aria-label="Dashboard preview">
-          <div class="mockup-top">
-            <div class="dots">
-              <span></span>
-              <span></span>
-              <span></span>
-            </div>
-            <strong>Operations Dashboard</strong>
+        <aside class="panel" aria-label="Operations dashboard preview">
+          <div class="panel-top">
+            <span>FairLinx Operations Dashboard</span>
+            <span>Live View</span>
           </div>
-
-          <div class="mockup-body">
-            <div class="dashboard-grid">
-              <div class="mini-card">
-                <small>Today Jobs</small>
-                <strong>12</strong>
-              </div>
-              <div class="mini-card">
-                <small>Open Estimates</small>
-                <strong>7</strong>
-              </div>
-              <div class="mini-card">
-                <small>Monthly Revenue</small>
-                <strong>$18k</strong>
-              </div>
-              <div class="mini-card">
-                <small>Active Clients</small>
-                <strong>84</strong>
-              </div>
+          <div class="panel-body">
+            <div class="kpi-grid">
+              <div class="kpi"><small>Today Jobs</small><strong>12</strong></div>
+              <div class="kpi"><small>Open Estimates</small><strong>7</strong></div>
+              <div class="kpi"><small>Monthly Revenue</small><strong>$18k</strong></div>
+              <div class="kpi"><small>Active Clients</small><strong>84</strong></div>
             </div>
-
-            <div class="route-card">
-              <div class="route-row">
-                <span>8:00 AM · Lawn Care</span>
-                <strong>Assigned</strong>
-              </div>
-              <div class="route-row">
-                <span>10:30 AM · Tree Trimming</span>
-                <strong>In Progress</strong>
-              </div>
-              <div class="route-row">
-                <span>2:00 PM · Pressure Washing</span>
-                <strong>Scheduled</strong>
-              </div>
+            <div class="job-rows">
+              <div class="job-row"><span>8:00 AM - Lawn Care</span><strong>Assigned</strong></div>
+              <div class="job-row"><span>10:30 AM - Tree Trimming</span><strong>In Progress</strong></div>
+              <div class="job-row"><span>2:00 PM - Pressure Washing</span><strong>Scheduled</strong></div>
             </div>
           </div>
-        </div>
+        </aside>
       </div>
     </section>
 
-    <section id="features">
+    <section id="pain-points">
       <div class="container">
         <div class="section-head">
-          <h2>Everything your outdoor service business needs.</h2>
-          <p>
-            A simple system for daily operations, customer management, scheduling, and revenue tracking.
-          </p>
+          <h2>The problems outdoor service companies deal with every week</h2>
+          <p>FairLinx is built to replace scattered tools and disconnected workflows with one operating system.</p>
         </div>
-
-        <div class="features-grid">
-          <div class="feature-card">
-            <div class="icon">📥</div>
-            <h3>Lead Management</h3>
-            <p>Track new leads from first contact to estimate and conversion.</p>
-          </div>
-
-          <div class="feature-card">
-            <div class="icon">👥</div>
-            <h3>Client CRM</h3>
-            <p>Keep customer profiles, jobs, notes, invoices, and subscriptions organized.</p>
-          </div>
-
-          <div class="feature-card">
-            <div class="icon">📝</div>
-            <h3>Estimates</h3>
-            <p>Create estimates and move approved work into jobs faster.</p>
-          </div>
-
-          <div class="feature-card">
-            <div class="icon">📅</div>
-            <h3>Job Scheduling</h3>
-            <p>Plan daily work, assign workers, and track job progress.</p>
-          </div>
-
-          <div class="feature-card">
-            <div class="icon">🔁</div>
-            <h3>Subscriptions</h3>
-            <p>Manage weekly, biweekly, or monthly recurring service visits.</p>
-          </div>
-
-          <div class="feature-card">
-            <div class="icon">💳</div>
-            <h3>Invoices & Payments</h3>
-            <p>Track unpaid invoices, payments, revenue, and customer balances.</p>
-          </div>
-
-          <div class="feature-card">
-            <div class="icon">🧑‍🔧</div>
-            <h3>Worker Management</h3>
-            <p>Assign jobs, monitor work status, and keep crews organized.</p>
-          </div>
-
-          <div class="feature-card">
-            <div class="icon">📊</div>
-            <h3>Analytics</h3>
-            <p>See business performance, revenue trends, worker activity, and growth.</p>
-          </div>
+        <div class="pain-grid">
+          <article class="pain-card"><h3>Leads are scattered</h3><p>Requests come from calls, texts, social pages, and referrals, making follow-up inconsistent.</p></article>
+          <article class="pain-card"><h3>Estimates get lost</h3><p>Quotes are sent but approvals slip through the cracks and jobs never get scheduled.</p></article>
+          <article class="pain-card"><h3>Crews are hard to coordinate</h3><p>Without a shared schedule, worker assignment and route planning become daily friction.</p></article>
+          <article class="pain-card"><h3>Invoices stay unpaid</h3><p>Payment tracking and follow-up reminders are often manual and delayed.</p></article>
+          <article class="pain-card"><h3>Platforms take too much</h3><p>Commissions and lead-selling models cut into margins on work your team actually delivers.</p></article>
+          <article class="pain-card"><h3>Customers expect fast local service</h3><p>Homeowners want quick responses from nearby pros and a smooth path to booked work.</p></article>
         </div>
       </div>
     </section>
@@ -886,105 +626,118 @@
     <section class="workflow" id="workflow">
       <div class="container">
         <div class="section-head">
-          <h2>A complete workflow from lead to recurring revenue.</h2>
-          <p>
-            Built around the real process of landscaping and outdoor service businesses.
-          </p>
+          <h2>Your full SaaS workflow in one place</h2>
+          <p>Lead to recurring revenue, tracked end to end with clean handoffs across your team.</p>
         </div>
+        <div class="flow" aria-label="SaaS workflow">
+          <div class="flow-step">Lead</div>
+          <div class="flow-step">Estimate</div>
+          <div class="flow-step">Client</div>
+          <div class="flow-step">Job</div>
+          <div class="flow-step">Invoice</div>
+          <div class="flow-step">Payment</div>
+          <div class="flow-step">Subscription</div>
+        </div>
+      </div>
+    </section>
 
-        <div class="workflow-line">
-          <div class="step"><span>1</span>Lead</div>
-          <div class="step"><span>2</span>Estimate</div>
-          <div class="step"><span>3</span>Client</div>
-          <div class="step"><span>4</span>Job</div>
-          <div class="step"><span>5</span>Invoice</div>
-          <div class="step"><span>6</span>Payment</div>
-          <div class="step"><span>7</span>Subscription</div>
+    <section id="features">
+      <div class="container">
+        <div class="section-head">
+          <h2>Professional tools for real field operations</h2>
+          <p>Everything your landscaping and outdoor service business needs to run cleaner and faster.</p>
+        </div>
+        <div class="features-grid">
+          <article class="feature-card"><div class="icon">📥</div><h3>Lead Management</h3><p>Track new leads from first contact to estimate and conversion.</p></article>
+          <article class="feature-card"><div class="icon">👥</div><h3>Client CRM</h3><p>Keep customer profiles, jobs, notes, invoices, and subscriptions organized.</p></article>
+          <article class="feature-card"><div class="icon">📝</div><h3>Estimates</h3><p>Create estimates and move approved work into jobs faster.</p></article>
+          <article class="feature-card"><div class="icon">📅</div><h3>Job Scheduling</h3><p>Plan daily work, assign workers, and track job progress.</p></article>
+          <article class="feature-card"><div class="icon">🔁</div><h3>Subscriptions</h3><p>Manage weekly, biweekly, or monthly recurring service visits.</p></article>
+          <article class="feature-card"><div class="icon">💳</div><h3>Invoices & Payments</h3><p>Track unpaid invoices, payments, revenue, and customer balances.</p></article>
+          <article class="feature-card"><div class="icon">🧑‍🔧</div><h3>Worker Management</h3><p>Assign jobs, monitor work status, and keep crews organized.</p></article>
+          <article class="feature-card"><div class="icon">📊</div><h3>Analytics</h3><p>See business performance, revenue trends, worker activity, and growth.</p></article>
+        </div>
+      </div>
+    </section>
+
+    <section class="marketplace" id="marketplace">
+      <div class="container">
+        <div class="section-head">
+          <h2>Marketplace opportunities built into your dashboard</h2>
+          <p>FairLinx combines company operations software and local demand flow in one system.</p>
+        </div>
+        <div class="market-grid">
+          <article class="market-card">
+            <h3>How it works for companies</h3>
+            <p>Customers submit service requests, matching local companies see opportunities, and teams send offers from the same dashboard they use every day.</p>
+          </article>
+          <article class="market-card">
+            <h3>No commission complexity</h3>
+            <p>No commission, no payout split, and no Stripe Connect required. Accepted requests convert directly into the core FairLinx workflow.</p>
+          </article>
+        </div>
+        <div class="market-flow" aria-label="Marketplace workflow">
+          <div class="flow-step">Customer Request</div>
+          <div class="flow-step">Company Offer</div>
+          <div class="flow-step">Customer Accepts</div>
+          <div class="flow-step">Lead/Estimate/Job</div>
+        </div>
+      </div>
+    </section>
+
+    <section id="fair-model">
+      <div class="container">
+        <div class="section-head">
+          <h2>A fairer model for service businesses</h2>
+          <p>FairLinx is built to support business growth, not take a cut of completed jobs.</p>
+        </div>
+        <div class="fair-grid">
+          <article class="fair-card">
+            <h3>Keep your job revenue</h3>
+            <p>FairLinx does not take a percentage of your work and does not control your payout flow.</p>
+          </article>
+          <article class="fair-card">
+            <h3>Subscription-powered platform</h3>
+            <p>FairLinx revenue comes from company subscriptions, so businesses keep margins and customer relationships.</p>
+          </article>
         </div>
       </div>
     </section>
 
     <section id="operations">
-      <div class="container operations-grid">
+      <div class="container ops-grid">
         <div>
-          <div class="section-head" style="text-align:left; margin:0 0 28px;">
-            <h2>Designed for real daily operations.</h2>
-            <p>
-              Keep the office, field workers, and customer workflow connected from one simple control panel.
-            </p>
+          <div class="section-head" style="text-align:left; margin:0 0 18px;">
+            <h2>Operations preview for serious teams</h2>
+            <p>Keep office staff, field workers, estimates, billing, and recurring services aligned from one control panel.</p>
           </div>
-
-          <div class="benefit-list">
-            <div class="benefit">
-              <div class="check">✓</div>
-              <div>
-                <h3>Mobile friendly</h3>
-                <p>Workers and managers can use the system from phones, tablets, or desktops.</p>
-              </div>
-            </div>
-
-            <div class="benefit">
-              <div class="check">✓</div>
-              <div>
-                <h3>Fast scheduling</h3>
-                <p>See today’s work, upcoming jobs, assigned jobs, and recurring visits.</p>
-              </div>
-            </div>
-
-            <div class="benefit">
-              <div class="check">✓</div>
-              <div>
-                <h3>Simple business control</h3>
-                <p>Manage customers, operations, finance, and team access from one place.</p>
-              </div>
-            </div>
+          <div class="ops-list">
+            <article class="ops-item"><h3>Mobile friendly</h3><p>Workers and managers can use FairLinx from phones, tablets, or desktops.</p></article>
+            <article class="ops-item"><h3>Fast scheduling</h3><p>Track today's work, upcoming jobs, assignments, and recurring visits in one view.</p></article>
+            <article class="ops-item"><h3>Real control</h3><p>Manage customers, workflow, billing, and team roles from a single operating layer.</p></article>
           </div>
         </div>
-
-        <div class="ops-panel">
+        <aside class="ops-panel" aria-label="Operations preview cards">
           <h3>Today Operations</h3>
-
-          <div class="ops-row">
-            <span>Unassigned Jobs</span>
-            <strong>3</strong>
-          </div>
-
-          <div class="ops-row">
-            <span>In Progress</span>
-            <strong>5</strong>
-          </div>
-
-          <div class="ops-row">
-            <span>Invoices Due</span>
-            <strong>$2,450</strong>
-          </div>
-
-          <div class="ops-row">
-            <span>Recurring Visits</span>
-            <strong>18</strong>
-          </div>
-
-          <div class="ops-row">
-            <span>New Leads</span>
-            <strong>9</strong>
-          </div>
-        </div>
+          <div class="ops-row"><span>Unassigned Jobs</span><strong>3</strong></div>
+          <div class="ops-row"><span>In Progress</span><strong>5</strong></div>
+          <div class="ops-row"><span>Invoices Due</span><strong>$2,450</strong></div>
+          <div class="ops-row"><span>Recurring Visits</span><strong>18</strong></div>
+          <div class="ops-row"><span>New Leads</span><strong>9</strong></div>
+        </aside>
       </div>
     </section>
 
     <section id="pricing">
       <div class="container">
         <div class="section-head">
-          <h2>Simple plans for growing service businesses.</h2>
-          <p>
-            Start lean, then upgrade as your team, clients, and operations grow.
-          </p>
+          <h2>Pricing built for growth without commission pressure</h2>
+          <p>Start with demo access, then scale into a full operating system for your team.</p>
         </div>
-
         <div class="pricing-grid">
-          <div class="price-card">
+          <article class="price-card">
             <h3>Starter</h3>
-            <p>For small crews getting organized.</p>
+            <p>For small crews getting organized quickly.</p>
             <div class="price">$0 <small>/ demo</small></div>
             <ul>
               <li>Lead and client tracking</li>
@@ -993,12 +746,11 @@
               <li>Mobile access</li>
             </ul>
             <a class="btn btn-secondary" href="/signup.html" style="width:100%;">Get Started</a>
-          </div>
-
-          <div class="price-card featured">
+          </article>
+          <article class="price-card featured">
             <div class="pill">Popular</div>
             <h3>Pro</h3>
-            <p>For active service businesses.</p>
+            <p>For active service businesses running daily operations.</p>
             <div class="price">$49 <small>/ month</small></div>
             <ul>
               <li>Jobs and scheduling</li>
@@ -1007,11 +759,10 @@
               <li>Worker assignment</li>
             </ul>
             <a class="btn btn-primary" href="/signup.html" style="width:100%;">Start Pro</a>
-          </div>
-
-          <div class="price-card">
+          </article>
+          <article class="price-card">
             <h3>Business</h3>
-            <p>For teams that need more control.</p>
+            <p>For teams that need expanded control and structure.</p>
             <div class="price">Custom</div>
             <ul>
               <li>Advanced operations</li>
@@ -1020,19 +771,32 @@
               <li>Flexible business setup</li>
             </ul>
             <a class="btn btn-secondary" href="/signup.html" style="width:100%;">Contact Sales</a>
-          </div>
+          </article>
         </div>
       </div>
     </section>
 
-    <section class="cta">
+    <section id="faq">
       <div class="container">
-        <h2>Ready to manage your service business like a real SaaS operation?</h2>
-        <p>
-          Create your account, set up your company, and start managing daily operations from one clean system.
-        </p>
+        <div class="section-head">
+          <h2>Frequently asked questions</h2>
+          <p>Common questions from landscaping and outdoor service operators evaluating FairLinx.</p>
+        </div>
+        <div class="faq-list">
+          <article class="faq-item"><h3>Is FairLinx only for landscaping?</h3><p>FairLinx is built for landscaping first, but also supports broader outdoor service businesses with similar workflow and crew operations.</p></article>
+          <article class="faq-item"><h3>Does FairLinx take commission?</h3><p>No. FairLinx does not take a percentage of completed jobs. The platform uses company subscriptions.</p></article>
+          <article class="faq-item"><h3>Can workers use it on mobile?</h3><p>Yes. FairLinx is mobile friendly so field teams can check assignments and status updates from phones and tablets.</p></article>
+          <article class="faq-item"><h3>What happens when a marketplace request is accepted?</h3><p>Accepted marketplace work converts into your SaaS workflow so you can manage it as lead, estimate, and job inside your normal operations process.</p></article>
+          <article class="faq-item"><h3>Can I start with the demo/free plan?</h3><p>Yes. You can start on Starter and move to Pro as your team and workflow needs grow.</p></article>
+        </div>
+      </div>
+    </section>
 
-        <div class="hero-actions" style="justify-content:center; margin-bottom:0;">
+    <section class="final-cta">
+      <div class="container">
+        <h2>Start managing your service business like a real operation.</h2>
+        <p>Get your team on one dashboard for workflow, marketplace opportunities, and clean day-to-day execution.</p>
+        <div class="cta-actions">
           <a class="btn btn-primary" href="/signup.html">Create Account</a>
           <a class="btn btn-secondary" href="/login.html">Login</a>
         </div>
@@ -1042,18 +806,21 @@
 
   <footer>
     <div class="container footer-inner">
-      <a href="/" class="logo" style="color:white;">
-        <span class="logo-mark">🌿</span>
+      <a href="/" class="logo" style="color:#fff;">
+        <span class="logo-mark">FL</span>
         <span>FairLinx</span>
       </a>
-
-      <div class="footer-links">
+      <nav class="footer-links" aria-label="Footer links">
         <a href="#features">Features</a>
         <a href="#workflow">Workflow</a>
+        <a href="#marketplace">Marketplace</a>
         <a href="#pricing">Pricing</a>
+        <a href="/support.html">Support</a>
+        <a href="/terms.html">Terms</a>
+        <a href="/privacy.html">Privacy</a>
         <a href="/login.html">Login</a>
         <a href="/signup.html">Sign Up</a>
-      </div>
+      </nav>
     </div>
   </footer>
 

@@ -10,6 +10,8 @@
     body { margin:0; font-family:Arial,sans-serif; background:linear-gradient(180deg,var(--brand-bg) 0%,#f7f7f7 180px,#f3f3f3 100%); color:var(--brand-black); padding:20px; }
     .page { max-width:1180px; margin:0 auto; display:grid; gap:16px; }
     .hero { display:flex; justify-content:space-between; gap:14px; align-items:flex-end; flex-wrap:wrap; }
+    .customer-nav { display:flex; flex-wrap:wrap; gap:8px; margin-top:8px; }
+    .customer-nav a { border:1px solid var(--brand-border); background:white; color:var(--brand-primary); border-radius:999px; padding:8px 12px; font-size:13px; font-weight:800; text-decoration:none; }
     h1 { margin:0 0 6px; color:var(--brand-primary); font-size:32px; }
     p { margin:0; color:#648076; }
     .tabs { display:flex; flex-wrap:wrap; gap:8px; }
@@ -104,6 +106,14 @@
     <div>
       <h1>Customer Portal</h1>
       <p id="welcome">Loading...</p>
+      <nav class="customer-nav">
+        <a href="/customer-dashboard.html">Dashboard</a>
+        <a href="/marketplace.html">Marketplace</a>
+        <a href="/discover.html">Discover</a>
+        <a href="/messages.html">Messages</a>
+        <a href="/customer-profile.html">Profile</a>
+        <a href="#" data-customer-action="logout">Logout</a>
+      </nav>
     </div>
     <button type="button" class="btn gray" data-customer-action="logout">Log Out</button>
   </div>
@@ -113,6 +123,7 @@
     <button type="button" class="tab" data-customer-tab="estimates">Estimates</button>
     <button type="button" class="tab" data-customer-tab="invoices">Invoices</button>
     <button type="button" class="tab" data-customer-tab="jobs">Jobs</button>
+    <button type="button" class="tab" data-customer-tab="offers">Offers</button>
     <button type="button" class="tab" data-customer-tab="subscriptions">Subscriptions</button>
     <button type="button" class="tab" data-customer-tab="serviceRequest">Service Request</button>
   </div>
@@ -132,6 +143,7 @@
     </div>
   </div>
   <div id="jobs" class="section no-print"></div>
+  <div id="offers" class="section no-print"></div>
   <div id="subscriptions" class="section no-print"></div>
   <div id="serviceRequest" class="section no-print"></div>
 </div>
@@ -141,6 +153,7 @@
 const API = window.location.origin;
 let state = null;
 let currentInvoiceId = null;
+let marketplaceRequests = [];
 
 function token(){ return localStorage.getItem("customerToken"); }
 function headers(){ return { Authorization: "Bearer " + token() }; }
@@ -418,6 +431,17 @@ function renderJobs(){
     (history.length ? history.map(function(item){ return card(item.service || "Job", ["Date: " + date(item.date), "Time: " + (item.start_time || "") + " - " + (item.end_time || "")], item.status, ""); }).join("") : '<div class="panel empty-panel"><strong>No job history yet</strong>Past jobs will show here.</div>');
 }
 
+function renderOffers(){
+  const items = marketplaceRequests || [];
+  document.getElementById("offers").innerHTML =
+    '<div class="panel"><strong>Marketplace Offers</strong><br>Use Marketplace to review and accept company offers.</div>' +
+    '<div class="grid">' +
+    card("Active Requests", [String(items.length)], "", '<a class="btn gray" href="/marketplace.html">View Offers</a>') +
+    card("Messages", ["Message matched companies and track next steps."], "", '<a class="btn gray" href="/messages.html">Open Messages</a>') +
+    card("Profile", ["Keep contact details current for offer updates."], "", '<a class="btn gray" href="/customer-profile.html">Open Profile</a>') +
+    '</div>';
+}
+
 function renderSubscriptions(){
   const items = state.subscriptions || [];
   document.getElementById("subscriptions").innerHTML = items.length ? items.map(function(item){ return card(
@@ -505,8 +529,11 @@ async function load(){
       AppUI.showToast(state.error || "Unable to load portal.", "error");
       return;
     }
+    const marketRes = await customerFetch(API + "/marketplace/requests/me");
+    marketplaceRequests = await marketRes.json();
+    if(!Array.isArray(marketplaceRequests)) marketplaceRequests = [];
     closeInvoiceDetail();
-    renderCompany(); renderOverview(); renderEstimates(); renderInvoices(); renderJobs(); renderSubscriptions(); renderServiceRequest();
+    renderCompany(); renderOverview(); renderEstimates(); renderInvoices(); renderJobs(); renderOffers(); renderSubscriptions(); renderServiceRequest();
   } catch(err) {
     AppUI.showToast("Unable to load portal. Please refresh or sign in again.", "error");
   } finally {

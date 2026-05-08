@@ -1,7 +1,9 @@
 const express = require("express");
+const jwt = require("jsonwebtoken");
+const { SECRET } = require("../config/env");
 const pool = require("../db/pool");
 const auth = require("../middleware/auth");
-const { requireMinimumRole, requirePlatformOwner } = auth;
+const { requireMinimumRole, requirePlatformOwner, getBearerToken, classifyTokenBoundary, normalizeRole } = auth;
 const { sendSafeServerError } = require("../services/safeServerError");
 const { sendOperationalEmailSafe } = require("../services/emailService");
 
@@ -29,6 +31,10 @@ function cleanSlug(value) {
     .replace(/[^a-z0-9-]/g, "-")
     .replace(/-+/g, "-")
     .replace(/^-|-$/g, "");
+}
+
+function cleanSearchToken(value) {
+  return cleanSlug(value).replace(/-/g, " ");
 }
 
 function normalizeGallery(value) {
@@ -178,6 +184,15 @@ async function shapePublicCompany(row) {
     facebook_url: row.facebook_url || "",
     instagram_url: row.instagram_url || "",
     is_verified: row.is_verified === true,
+    trust: {
+      verification_status: row.verification_status || "pending",
+      insurance_status: row.insurance_status || "pending",
+      license_status: row.license_status || "pending",
+      insurance_expiry_date: row.insurance_expiry_date || null,
+      license_expiry_date: row.license_expiry_date || null,
+      insurance_expired: row.insurance_expired === true,
+      license_expired: row.license_expired === true
+    },
     ranking_score: Number(row.ranking_score || 0),
     rating_summary: {
       average_rating: Number(row.average_rating || 0),
@@ -246,6 +261,27 @@ function toMinutes(timeText) {
   return Number(parts[0]) * 60 + Number(parts[1]);
 }
 
+function canReadCompanyPrivateMetadata(req, targetCompanyId) {
+  try {
+    const token = getBearerToken(req && req.headers && req.headers.authorization);
+    if (!token) return false;
+    const decoded = jwt.verify(token, SECRET);
+    const boundary = classifyTokenBoundary(decoded);
+    if (boundary.type !== "staff") return false;
+    const role = normalizeRole(decoded && decoded.role);
+    if (role === "platform_owner") return true;
+    if (role !== "admin" && role !== "owner") return false;
+
+    const decodedCompanyId = Number(decoded && decoded.company_id);
+    const requestedCompanyId = Number(targetCompanyId);
+    if (!Number.isInteger(decodedCompanyId) || decodedCompanyId <= 0) return false;
+    if (!Number.isInteger(requestedCompanyId) || requestedCompanyId <= 0) return false;
+    return decodedCompanyId === requestedCompanyId;
+  } catch (_) {
+    return false;
+  }
+}
+
 router.get("/companies/public", async (req, res) => {
   try {
     const result = await pool.query(
@@ -274,6 +310,13 @@ router.get("/companies/public", async (req, res) => {
         follows_count,
         billing_bonus,
         verified_bonus,
+        verification_status,
+        insurance_status,
+        license_status,
+        insurance_expiry_date,
+        license_expiry_date,
+        insurance_expired,
+        license_expired,
         ranking_score
       FROM (
         SELECT
@@ -300,6 +343,19 @@ router.get("/companies/public", async (req, res) => {
           COALESCE(fol.follows_count, 0)::int AS follows_count,
           CASE WHEN c.billing_status IN ('active', 'trialing') OR c.billing_status IS NULL THEN 1 ELSE 0 END::numeric AS billing_bonus,
           CASE WHEN c.is_verified = TRUE THEN 1 ELSE 0 END::numeric AS verified_bonus,
+          c.verification_status,
+          c.insurance_status,
+          c.license_status,
+          c.insurance_expiry_date,
+          c.license_expiry_date,
+          CASE
+            WHEN c.insurance_expiry_date IS NOT NULL AND c.insurance_expiry_date < CURRENT_DATE THEN TRUE
+            ELSE FALSE
+          END AS insurance_expired,
+          CASE
+            WHEN c.license_expiry_date IS NOT NULL AND c.license_expiry_date < CURRENT_DATE THEN TRUE
+            ELSE FALSE
+          END AS license_expired,
           (
             (COALESCE(rev.average_rating, 0) / 5.0) * 32 +
             (LEAST(1, LN(1 + COALESCE(rev.review_count, 0)) / LN(51))) * 8 +
@@ -377,6 +433,129 @@ router.get("/companies/public", async (req, res) => {
   }
 });
 
+router.get("/companies/public/search", async (req, res) => {
+  try {
+    const serviceRaw = cleanText(req.query && req.query.service);
+    const cityRaw = cleanText(req.query && req.query.city);
+    const stateRaw = cleanText(req.query && req.query.state).toUpperCase().slice(0, 2);
+    const zipRaw = String(req.query && req.query.zip || "").replace(/\D/g, "").slice(0, 5);
+    const serviceToken = cleanSearchToken(serviceRaw);
+    const serviceSlug = cleanSlug(serviceRaw);
+    const cityToken = cityRaw.toLowerCase();
+
+    const result = await pool.query(
+      `
+      SELECT
+        c.id,
+        c.name,
+        c.is_verified,
+        c.public_slug,
+        c.public_description,
+        c.logo_url,
+        c.cover_image_url,
+        c.gallery_urls,
+        c.website_url,
+        c.facebook_url,
+        c.instagram_url,
+        c.phone,
+        c.email,
+        c.address,
+        COALESCE(rev.average_rating, 0)::numeric AS average_rating,
+        COALESCE(rev.review_count, 0)::int AS review_count,
+        c.verification_status,
+        c.insurance_status,
+        c.license_status,
+        c.insurance_expiry_date,
+        c.license_expiry_date,
+        CASE
+          WHEN c.insurance_expiry_date IS NOT NULL AND c.insurance_expiry_date < CURRENT_DATE THEN TRUE
+          ELSE FALSE
+        END AS insurance_expired,
+        CASE
+          WHEN c.license_expiry_date IS NOT NULL AND c.license_expiry_date < CURRENT_DATE THEN TRUE
+          ELSE FALSE
+        END AS license_expired,
+        0::numeric AS response_speed_score,
+        0::numeric AS acceptance_rate,
+        0::numeric AS completion_rate,
+        0::int AS favorites_count,
+        0::int AS follows_count,
+        0::numeric AS billing_bonus,
+        0::numeric AS verified_bonus,
+        0::numeric AS ranking_score
+      FROM companies c
+      LEFT JOIN (
+        SELECT
+          company_id,
+          AVG(rating)::numeric AS average_rating,
+          COUNT(*)::int AS review_count
+        FROM company_reviews
+        GROUP BY company_id
+      ) rev
+        ON rev.company_id = c.id
+      WHERE c.is_public = TRUE
+        AND COALESCE(NULLIF(TRIM(c.public_slug), ''), '') <> ''
+        AND EXISTS (
+          SELECT 1
+          FROM company_services cs
+          JOIN service_categories sc
+            ON sc.id = cs.category_id
+          WHERE cs.company_id = c.id
+            AND cs.active = TRUE
+            AND sc.active = TRUE
+            AND (
+              $1 = ''
+              OR LOWER(sc.slug) = LOWER($2)
+              OR LOWER(sc.name) LIKE '%' || LOWER($1) || '%'
+              OR LOWER(cs.custom_name) LIKE '%' || LOWER($1) || '%'
+            )
+        )
+        AND EXISTS (
+          SELECT 1
+          FROM company_service_areas csa
+          WHERE csa.company_id = c.id
+            AND csa.active = TRUE
+            AND (
+              ($3 = '' AND $4 = '' AND $5 = '')
+              OR ($3 <> '' AND LOWER(csa.city) = LOWER($3) AND ($4 = '' OR UPPER(csa.state) = UPPER($4)))
+              OR ($5 <> '' AND csa.zip_code = $5)
+              OR ($4 <> '' AND UPPER(csa.state) = UPPER($4))
+            )
+        )
+      ORDER BY c.is_verified DESC, COALESCE(rev.average_rating, 0) DESC, COALESCE(rev.review_count, 0) DESC, c.name ASC, c.id ASC
+      `,
+      [serviceToken, serviceSlug, cityToken, stateRaw, zipRaw]
+    );
+
+    const shaped = await Promise.all(result.rows.map(shapePublicCompany));
+    const items = shaped.map((company) => ({
+      id: company.id,
+      name: company.name,
+      slug: company.public_slug,
+      logo_url: company.logo_url,
+      public_description: company.public_description,
+      services: company.services,
+      service_areas: company.service_areas,
+      trust: company.trust,
+      is_verified: company.is_verified,
+      rating_summary: company.rating_summary
+    }));
+
+    return res.json({
+      query: {
+        service: serviceRaw,
+        city: cityRaw,
+        state: stateRaw,
+        zip: zipRaw
+      },
+      count: items.length,
+      companies: items
+    });
+  } catch (err) {
+    return sendSafeServerError(res, err, "COMPANIES PUBLIC SEARCH ERROR");
+  }
+});
+
 router.get("/companies/public/:slug", async (req, res) => {
   try {
     const slug = cleanSlug(req.params.slug);
@@ -398,6 +577,19 @@ router.get("/companies/public/:slug", async (req, res) => {
         website_url,
         facebook_url,
         instagram_url,
+        verification_status,
+        insurance_status,
+        license_status,
+        insurance_expiry_date,
+        license_expiry_date,
+        CASE
+          WHEN insurance_expiry_date IS NOT NULL AND insurance_expiry_date < CURRENT_DATE THEN TRUE
+          ELSE FALSE
+        END AS insurance_expired,
+        CASE
+          WHEN license_expiry_date IS NOT NULL AND license_expiry_date < CURRENT_DATE THEN TRUE
+          ELSE FALSE
+        END AS license_expired,
         phone,
         email,
         address
@@ -417,6 +609,130 @@ router.get("/companies/public/:slug", async (req, res) => {
     res.json(payload);
   } catch (err) {
     sendSafeServerError(res, err, "COMPANY PUBLIC DETAIL ERROR");
+  }
+});
+
+router.get("/companies/public/:id/activity", async (req, res) => {
+  try {
+    const companyId = Number(req.params.id);
+    if (!Number.isInteger(companyId) || companyId <= 0) {
+      return res.status(400).json({ error: "Invalid company id" });
+    }
+
+    const companyResult = await pool.query(
+      `
+      SELECT
+        id,
+        is_public,
+        is_verified,
+        verification_status,
+        insurance_status,
+        license_status
+      FROM companies
+      WHERE id = $1
+      LIMIT 1
+      `,
+      [companyId]
+    );
+    if (!companyResult.rows.length || companyResult.rows[0].is_public !== true) {
+      return res.status(404).json({ error: "Company not found" });
+    }
+    const company = companyResult.rows[0];
+
+    const [reviewsResult, servicesResult, areasResult] = await Promise.all([
+      pool.query(
+        `
+        SELECT rating, created_at
+        FROM company_reviews
+        WHERE company_id = $1
+          AND is_public = TRUE
+        ORDER BY created_at DESC, id DESC
+        LIMIT 3
+        `,
+        [companyId]
+      ),
+      pool.query(
+        `
+        SELECT
+          COALESCE(NULLIF(TRIM(cs.custom_name), ''), sc.name) AS service_name,
+          cs.created_at
+        FROM company_services cs
+        JOIN service_categories sc
+          ON sc.id = cs.category_id
+        WHERE cs.company_id = $1
+          AND cs.active = TRUE
+          AND sc.active = TRUE
+        ORDER BY cs.created_at DESC, cs.id DESC
+        LIMIT 3
+        `,
+        [companyId]
+      ),
+      pool.query(
+        `
+        SELECT city, state, zip_code, created_at
+        FROM company_service_areas
+        WHERE company_id = $1
+          AND active = TRUE
+        ORDER BY created_at DESC, id DESC
+        LIMIT 3
+        `,
+        [companyId]
+      )
+    ]);
+
+    const activities = [];
+
+    reviewsResult.rows.forEach((row) => {
+      activities.push({
+        type: "review_added",
+        title: "New public review",
+        detail: `${Number(row.rating || 0).toFixed(1)} star rating`,
+        occurred_at: row.created_at || null
+      });
+    });
+
+    servicesResult.rows.forEach((row) => {
+      activities.push({
+        type: "service_added",
+        title: "Service listed",
+        detail: row.service_name || "Service",
+        occurred_at: row.created_at || null
+      });
+    });
+
+    areasResult.rows.forEach((row) => {
+      const area = [row.city, row.state, row.zip_code].filter(Boolean).join(", ").replace(/, ([A-Z]{2}),/, ", $1 ");
+      activities.push({
+        type: "area_added",
+        title: "Coverage updated",
+        detail: area || "Service area listed",
+        occurred_at: row.created_at || null
+      });
+    });
+
+    activities.push({
+      type: "trust_badge_updated",
+      title: "Trust badge status",
+      detail: [
+        company.is_verified === true || company.verification_status === "approved" ? "Verified" : null,
+        company.insurance_status === "verified" || company.insurance_status === "approved" ? "Insured" : null,
+        company.license_status === "verified" || company.license_status === "approved" ? "Licensed" : null
+      ].filter(Boolean).join(" • ") || "Trust status available",
+      occurred_at: null
+    });
+
+    activities.sort((a, b) => {
+      const at = a.occurred_at ? new Date(a.occurred_at).getTime() : -1;
+      const bt = b.occurred_at ? new Date(b.occurred_at).getTime() : -1;
+      return bt - at;
+    });
+
+    return res.json({
+      company_id: companyId,
+      items: activities.slice(0, 12)
+    });
+  } catch (err) {
+    return sendSafeServerError(res, err, "COMPANY PUBLIC ACTIVITY ERROR");
   }
 });
 
@@ -734,6 +1050,7 @@ router.get("/companies/:id/service-areas", async (req, res) => {
       return res.status(400).json({ error: "Invalid company id" });
     }
 
+    const canReadPrivate = canReadCompanyPrivateMetadata(req, companyId);
     const result = await pool.query(
       `
       SELECT
@@ -748,9 +1065,15 @@ router.get("/companies/:id/service-areas", async (req, res) => {
       FROM company_service_areas
       WHERE company_id = $1
         AND active = TRUE
+        AND ($2::boolean = TRUE OR EXISTS (
+          SELECT 1
+          FROM companies c
+          WHERE c.id = company_service_areas.company_id
+            AND c.is_public = TRUE
+        ))
       ORDER BY id ASC
       `,
-      [companyId]
+      [companyId, canReadPrivate]
     );
 
     res.json(result.rows);
@@ -849,6 +1172,7 @@ router.get("/companies/:id/availability", async (req, res) => {
       return res.status(400).json({ error: "Invalid company id" });
     }
 
+    const canReadPrivate = canReadCompanyPrivateMetadata(req, companyId);
     const result = await pool.query(
       `
       SELECT
@@ -861,9 +1185,15 @@ router.get("/companies/:id/availability", async (req, res) => {
         created_at
       FROM company_availability
       WHERE company_id = $1
+        AND ($2::boolean = TRUE OR EXISTS (
+          SELECT 1
+          FROM companies c
+          WHERE c.id = company_availability.company_id
+            AND c.is_public = TRUE
+        ))
       ORDER BY day_of_week ASC
       `,
-      [companyId]
+      [companyId, canReadPrivate]
     );
 
     res.json(result.rows);

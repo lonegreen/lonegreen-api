@@ -159,6 +159,14 @@ const {
 
 const router = express.Router();
 
+function resolveIdempotencyKey(req) {
+  const headerKey = req && req.headers ? req.headers["idempotency-key"] : null;
+  const bodyKey = req && req.body ? req.body.idempotency_key : null;
+  const raw = headerKey != null ? headerKey : bodyKey;
+  const key = String(raw || "").trim();
+  return key ? key.slice(0, 200) : null;
+}
+
 
 
 
@@ -206,7 +214,8 @@ router.post("/workflow/invoices/:id/payments", auth, requireCompanyBillingForMut
         date: req.body.date || new Date().toISOString().split("T")[0],
         notes: req.body.notes || "",
         userId: req.user.id,
-        metadata: { source: "workflow_payment" }
+        metadata: { source: "workflow_payment" },
+        idempotencyKey: resolveIdempotencyKey(req)
       });
     } catch (payErr) {
       if (payErr && payErr.statusCode) {
@@ -392,7 +401,8 @@ router.post("/workflow/invoices/:id/payments/:paymentId/refunds", auth, requireC
       amount: Number(req.body && req.body.amount),
       reason: req.body && req.body.reason,
       notes: req.body && req.body.notes,
-      userId: req.user.id
+      userId: req.user.id,
+      idempotencyKey: resolveIdempotencyKey(req)
     });
 
     const updatedInvoice = await hydrateInvoice(req.user.company_id, String(invoiceId));

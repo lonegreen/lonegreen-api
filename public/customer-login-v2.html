@@ -408,8 +408,8 @@
         if (data.customer || data.profile) {
           localStorage.setItem("customer", JSON.stringify(data.customer || data.profile));
         }
-        setStatus("Signed in. Opening your portal...", "success");
-        window.location.href = "/customer-profile.html";
+        setStatus("Signed in. Opening your dashboard...", "success");
+        window.location.href = "/customer-dashboard.html";
       } catch (err) {
         setStatus(err.message || "Invalid or expired code.", "error");
       } finally {
@@ -440,14 +440,19 @@
 
         if (data.token) localStorage.setItem("customerToken", data.token);
         if (data.customer || data.profile) localStorage.setItem("customer", JSON.stringify(data.customer || data.profile));
-        setStatus("Login successful. Opening your portal...", "success");
-        window.location.href = "/customer-profile.html";
+        setStatus("Login successful. Opening your dashboard...", "success");
+        window.location.href = "/customer-dashboard.html";
       } catch (err) {
         setStatus(err.message || "Unable to log in.", "error");
       } finally {
         submitBtn.disabled = false;
       }
     });
+
+    const query = new URLSearchParams(window.location.search);
+    if (query.get("signup") === "success") {
+      setStatus("Account created successfully. Sign in to open your dashboard.", "success");
+    }
   </script>
 </body>
 </html>

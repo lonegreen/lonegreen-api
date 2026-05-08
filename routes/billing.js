@@ -226,6 +226,17 @@ function billingRouteError(res, err, label) {
   sendSafeServerError(res, err, label);
 }
 
+async function assertNoOpenSubscriptionForCheckout(companyId) {
+  const subscription = await getCompanySubscription(companyId);
+  const status = subscription ? normalizeBillingStatus(subscription.status || subscription.billing_status) : null;
+  if (["active", "trialing", "past_due"].includes(status)) {
+    const err = new Error("Company already has an active billing subscription. Use the billing portal or change plan flow instead.");
+    err.code = "CHECKOUT_ALREADY_SUBSCRIBED";
+    err.statusCode = 409;
+    throw err;
+  }
+}
+
 async function currentBillingPayload(companyId) {
   const summary = await getBillingSummary(companyId);
   if (!summary) return null;
@@ -276,7 +287,7 @@ async function currentBillingPayload(companyId) {
   };
 }
 
-router.get("/billing/me", auth, async (req, res) => {
+router.get("/billing/me", billingOwnerAdminOnly, async (req, res) => {
   try {
     if (!req.user.company_id) {
       return res.status(400).json({ error: "Company billing is not available for this account" });
@@ -313,6 +324,8 @@ router.post("/billing/subscribe", billingOwnerAdminOnly, async (req, res) => {
     if (!isStripeCheckoutConfigured()) {
       return billingProviderRequiredResponse(res);
     }
+
+    await assertNoOpenSubscriptionForCheckout(req.user.company_id);
 
     const session = await createCheckoutSessionForCompany({
       companyId: req.user.company_id,
@@ -542,6 +555,8 @@ async function handleStripeCheckoutSession(req, res) {
     if (!req.user.company_id) {
       return res.status(400).json({ error: "Company billing is not available for this account" });
     }
+
+    await assertNoOpenSubscriptionForCheckout(req.user.company_id);
 
     const session = await createCheckoutSessionForCompany({
       companyId: req.user.company_id,

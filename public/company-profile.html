@@ -4,6 +4,10 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Company Profile</title>
+  <meta name="description" content="View company services, coverage areas, trust badges, and customer reviews.">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Company Profile">
+  <meta property="og:description" content="Browse services, trust details, and customer reviews.">
   <link rel="stylesheet" href="/css/brand.css">
   <link rel="stylesheet" href="/app-shell.css">
   <style>
@@ -15,7 +19,7 @@
       color: var(--brand-black);
       padding: 20px;
     }
-    .page { width: min(1080px, 100%); margin: 0 auto; display: grid; gap: 16px; }
+    .page { width: min(1100px, 100%); margin: 0 auto; display: grid; gap: 16px; }
     .hero {
       background: #fff;
       border: 1px solid var(--brand-border);
@@ -32,7 +36,7 @@
       font-weight: 800;
     }
     .cover img { width: 100%; height: 240px; object-fit: cover; display: block; }
-    .hero-body { padding: 20px; display: grid; gap: 12px; }
+    .hero-body { padding: 20px; display: grid; gap: 14px; }
     .identity { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
     .logo {
       width: 72px; height: 72px; border-radius: 16px; border: 1px solid var(--brand-border);
@@ -42,6 +46,38 @@
     .logo img { width: 100%; height: 100%; object-fit: cover; display: block; }
     h1 { margin: 0 0 4px; color: var(--brand-primary); font-size: 30px; }
     .muted { margin: 0; color: #648076; line-height: 1.5; }
+    .hero-summary { margin: 0; color: #3a4f45; max-width: 72ch; line-height: 1.6; }
+    .hero-meta { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+    .hero-cta { display: flex; gap: 10px; flex-wrap: wrap; }
+    .btn {
+      border: none;
+      border-radius: 10px;
+      padding: 10px 14px;
+      font-size: 13px;
+      font-weight: 800;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: 0.18s ease;
+    }
+    .btn.primary {
+      background: linear-gradient(135deg, var(--brand-primary), var(--brand-primary-hover));
+      color: #fff;
+      box-shadow: 0 12px 24px rgba(31, 92, 58, 0.16);
+    }
+    .btn.secondary {
+      background: #fff;
+      color: var(--brand-primary);
+      border: 1px solid var(--brand-border);
+    }
+    .btn.ghost {
+      background: var(--brand-bg);
+      color: var(--brand-primary);
+      border: 1px solid var(--brand-border);
+    }
+    .btn:hover { transform: translateY(-1px); }
     .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
     .panel {
       background: #fff;
@@ -58,6 +94,67 @@
       border-radius: 999px; background: var(--brand-bg); color: var(--brand-primary);
       padding: 6px 10px; font-size: 12px; font-weight: 800;
     }
+    a.chip { text-decoration: none; }
+    .chip.badge-green { background: #e9f8ef; color: #166534; }
+    .chip.badge-blue { background: #eaf1ff; color: #1f4ea3; }
+    .chip.badge-warn { background: #fff8e8; color: #8a5a00; }
+    .chip.badge-slate { background: #f1f3f5; color: #364152; }
+    .cards {
+      display: grid;
+      gap: 10px;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    }
+    .service-card, .area-card, .review-card {
+      background: #f9fbfa;
+      border: 1px solid #e3ebe6;
+      border-radius: 12px;
+      padding: 12px;
+      display: grid;
+      gap: 6px;
+    }
+    .service-title, .area-title { margin: 0; font-size: 15px; color: #143225; }
+    .service-desc, .area-meta, .review-meta, .review-text { margin: 0; color: #4d6358; font-size: 13px; line-height: 1.5; }
+    .service-pills { display: flex; gap: 6px; flex-wrap: wrap; }
+    .stat-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .stat {
+      border-radius: 12px;
+      background: #f4f8f6;
+      border: 1px solid var(--brand-border);
+      padding: 10px 12px;
+      min-width: 120px;
+    }
+    .stat strong { display: block; font-size: 18px; color: var(--brand-primary); }
+    .trust-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+      gap: 10px;
+    }
+    .trust-card {
+      border: 1px solid #e3ebe6;
+      border-radius: 12px;
+      padding: 10px 12px;
+      background: #f9fbfa;
+    }
+    .trust-card h3 { margin: 0 0 4px; font-size: 14px; color: #1b3a2c; }
+    .trust-card p { margin: 0; color: #4d6358; font-size: 12px; }
+    .panel-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+    .panel-link { color: var(--brand-primary); font-size: 12px; font-weight: 800; text-decoration: none; }
+    .panel-link:hover { text-decoration: underline; }
+    .activity-card {
+      background: #f9fbfa;
+      border: 1px solid #e3ebe6;
+      border-radius: 12px;
+      padding: 12px;
+      display: grid;
+      gap: 5px;
+    }
+    .activity-title { margin: 0; font-size: 14px; color: #143225; }
+    .activity-meta { margin: 0; color: #4d6358; font-size: 12px; line-height: 1.5; }
     .gallery {
       display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 10px;
     }
@@ -75,14 +172,61 @@
       font-size: 14px;
     }
     .status.error { color: #b42318; font-weight: 700; }
+    .skeleton {
+      border-radius: 10px;
+      background: linear-gradient(90deg, #eef3f0, #f7faf8, #eef3f0);
+      background-size: 200% 100%;
+      animation: shimmer 1.4s infinite;
+      min-height: 18px;
+    }
+    @keyframes shimmer {
+      0% { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+    .empty-state {
+      border: 1px dashed #c7d9ce;
+      border-radius: 12px;
+      padding: 12px;
+      background: #fcfefd;
+      color: #4d6358;
+      font-size: 13px;
+    }
+    .cta-panel {
+      display: grid;
+      gap: 10px;
+      align-items: center;
+      background: linear-gradient(120deg, #143225, #1e5b39);
+      color: #fff;
+    }
+    .cta-panel h2 { color: #fff; }
+    .cta-panel p { margin: 0; color: #d8efe1; }
+    .cta-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+    .seo-links { display: flex; gap: 8px; flex-wrap: wrap; }
+    .seo-links a {
+      border: 1px solid rgba(255,255,255,0.35);
+      border-radius: 999px;
+      padding: 7px 10px;
+      font-size: 12px;
+      color: #fff;
+      text-decoration: none;
+      background: rgba(255,255,255,0.08);
+      font-weight: 800;
+    }
+    .cta-panel .btn.secondary, .cta-panel .btn.ghost {
+      border-color: rgba(255,255,255,0.35);
+      color: #fff;
+      background: rgba(255,255,255,0.08);
+    }
     @media (max-width: 860px) {
       body { padding: 14px; }
       .grid { grid-template-columns: 1fr; }
       .gallery { grid-template-columns: 1fr 1fr; }
+      .hero-cta .btn { flex: 1 1 auto; }
     }
     @media (max-width: 560px) {
       .gallery { grid-template-columns: 1fr; }
       h1 { font-size: 26px; }
+      .hero-cta, .cta-actions { display: grid; }
     }
   </style>
 </head>
@@ -95,9 +239,12 @@
           <div id="logo" class="logo">CO</div>
           <div>
             <h1 id="companyName">Loading...</h1>
-            <p id="description" class="muted"></p>
+            <p id="description" class="hero-summary"></p>
+            <div id="heroCoverage" class="hero-meta"></div>
+            <div id="trustBadges" class="chips" style="margin-top:8px;"></div>
           </div>
         </div>
+        <div id="heroCtas" class="hero-cta"></div>
         <div id="status" class="status" role="status" aria-live="polite"></div>
       </div>
     </section>
@@ -105,12 +252,12 @@
     <section class="grid">
       <article class="panel">
         <h2>Services</h2>
-        <div id="services" class="chips"></div>
+        <div id="services" class="cards"></div>
       </article>
 
       <article class="panel">
-        <h2>Service Areas</h2>
-        <div id="serviceAreas" class="chips"></div>
+        <h2>Coverage Areas</h2>
+        <div id="serviceAreas" class="cards"></div>
       </article>
 
       <article class="panel">
@@ -125,8 +272,37 @@
     </section>
 
     <section class="panel">
+      <h2>Reviews</h2>
+      <div id="reviewStats" class="stat-row"></div>
+      <div id="reviewsPreview" class="cards"></div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head">
+        <h2>Business Verification</h2>
+        <a class="panel-link" href="/trust.html">How trust badges work</a>
+      </div>
+      <div id="trustDetails" class="trust-grid"></div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head">
+        <h2>Recent Activity</h2>
+        <a class="panel-link" href="/trust.html">Trust & Safety details</a>
+      </div>
+      <div id="activityFeed" class="cards"></div>
+    </section>
+
+    <section class="panel">
       <h2>Gallery</h2>
       <div id="gallery" class="gallery"></div>
+    </section>
+
+    <section class="panel cta-panel">
+      <h2>Need help from this company?</h2>
+      <p>Send a request, ask questions, and save this company to compare options later.</p>
+      <div id="conversionCtas" class="cta-actions"></div>
+      <div id="seoAreaLinks" class="seo-links"></div>
     </section>
   </main>
 
@@ -191,8 +367,298 @@
       });
     }
 
+    function toDisplayPhone(value) {
+      return String(value || "").trim();
+    }
+
+    function createButtonLink(text, href, className) {
+      var a = document.createElement("a");
+      a.className = "btn " + (className || "secondary");
+      a.textContent = text;
+      a.setAttribute("href", href);
+      return a;
+    }
+
+    function setEmptyState(host, text) {
+      host.textContent = "";
+      var empty = document.createElement("div");
+      empty.className = "empty-state";
+      empty.textContent = text;
+      host.appendChild(empty);
+    }
+
+    function setLoadingState() {
+      document.getElementById("companyName").textContent = "Loading company...";
+      document.getElementById("description").innerHTML = "<span class='skeleton' style='display:block;height:16px;max-width:480px;'></span>";
+      var services = document.getElementById("services");
+      services.innerHTML = "<div class='skeleton' style='height:64px;'></div><div class='skeleton' style='height:64px;'></div>";
+      var areas = document.getElementById("serviceAreas");
+      areas.innerHTML = "<div class='skeleton' style='height:64px;'></div><div class='skeleton' style='height:64px;'></div>";
+      document.getElementById("reviewStats").innerHTML = "<div class='skeleton' style='height:58px;min-width:120px;'></div>";
+      document.getElementById("reviewsPreview").innerHTML = "<div class='skeleton' style='height:80px;'></div>";
+    }
+
+    function setSeo(data) {
+      var name = safeText(data.name, "Company");
+      var summary = safeText(data.public_description, "View services, trust details, and recent reviews.");
+      var description = summary.slice(0, 160);
+      document.title = name + " | Public Profile";
+      var metaDescription = document.querySelector('meta[name="description"]');
+      if (metaDescription) metaDescription.setAttribute("content", description);
+      var ogTitle = document.querySelector('meta[property="og:title"]');
+      if (ogTitle) ogTitle.setAttribute("content", name + " | Fairlinx");
+      var ogDescription = document.querySelector('meta[property="og:description"]');
+      if (ogDescription) ogDescription.setAttribute("content", description);
+      if (isSafeHttpUrl(data.cover_image_url) || isSafeHttpUrl(data.logo_url)) {
+        var ogImage = document.querySelector('meta[property="og:image"]');
+        if (!ogImage) {
+          ogImage = document.createElement("meta");
+          ogImage.setAttribute("property", "og:image");
+          document.head.appendChild(ogImage);
+        }
+        ogImage.setAttribute("content", String(data.cover_image_url || data.logo_url));
+      }
+    }
+
+    function renderServices(data) {
+      var host = document.getElementById("services");
+      host.textContent = "";
+      var services = Array.isArray(data.marketplace_services) ? data.marketplace_services : [];
+      if (!services.length) {
+        setEmptyState(host, "No public services listed yet.");
+        return;
+      }
+      services.forEach(function(service) {
+        var card = document.createElement("article");
+        card.className = "service-card";
+        var title = document.createElement("h3");
+        title.className = "service-title";
+        title.textContent = safeText(service.display_name, "Service");
+        var desc = document.createElement("p");
+        desc.className = "service-desc";
+        desc.textContent = safeText(service.category && service.category.description, "Service details will be shared during request.");
+        var pills = document.createElement("div");
+        pills.className = "service-pills";
+        var price = document.createElement("span");
+        price.className = "chip badge-slate";
+        price.textContent = "Pricing: Request quote";
+        var availability = document.createElement("span");
+        availability.className = "chip badge-green";
+        availability.textContent = "Available";
+        pills.appendChild(price);
+        pills.appendChild(availability);
+        card.appendChild(title);
+        card.appendChild(desc);
+        card.appendChild(pills);
+        host.appendChild(card);
+      });
+    }
+
+    function renderCoverage(data) {
+      var host = document.getElementById("serviceAreas");
+      host.textContent = "";
+      var areas = Array.isArray(data.marketplace_service_areas) ? data.marketplace_service_areas : [];
+      if (!areas.length) {
+        setEmptyState(host, "Coverage areas are not published yet.");
+        return;
+      }
+      areas.forEach(function(area) {
+        var card = document.createElement("article");
+        card.className = "area-card";
+        var title = document.createElement("h3");
+        title.className = "area-title";
+        title.textContent = [area.city, area.state, area.zip_code].filter(Boolean).join(", ").replace(/, ([A-Z]{2}),/, ", $1 ");
+        var radius = document.createElement("p");
+        radius.className = "area-meta";
+        radius.textContent = "Service radius: " + (Number(area.radius_miles || 0) > 0 ? (Number(area.radius_miles) + " miles") : "Not specified");
+        card.appendChild(title);
+        card.appendChild(radius);
+        host.appendChild(card);
+      });
+    }
+
+    function renderHeroCoverage(data) {
+      var host = document.getElementById("heroCoverage");
+      host.textContent = "";
+      var areas = Array.isArray(data.service_areas) ? data.service_areas.filter(Boolean) : [];
+      if (!areas.length) return;
+      areas.slice(0, 4).forEach(function(area) {
+        var chip = document.createElement("span");
+        chip.className = "chip badge-slate";
+        chip.textContent = area;
+        host.appendChild(chip);
+      });
+    }
+
+    function renderCtas(data) {
+      var phone = toDisplayPhone(data && data.contact && data.contact.phone);
+      var ctaHost = document.getElementById("heroCtas");
+      ctaHost.textContent = "";
+      ctaHost.appendChild(createButtonLink("Request Service", "/discover.html", "primary"));
+      ctaHost.appendChild(createButtonLink("Message Company", "/discover.html?company=" + encodeURIComponent(String(data.public_slug || "")), "secondary"));
+      if (phone) {
+        ctaHost.appendChild(createButtonLink("Call Company", "tel:" + phone.replace(/\s+/g, ""), "ghost"));
+      }
+
+      var conversionHost = document.getElementById("conversionCtas");
+      conversionHost.textContent = "";
+      conversionHost.appendChild(createButtonLink("Request Quote", "/discover.html", "primary"));
+      conversionHost.appendChild(createButtonLink("Contact Company", "/discover.html?company=" + encodeURIComponent(String(data.public_slug || "")), "secondary"));
+      conversionHost.appendChild(createButtonLink("Save Company", "/discover.html?save=" + encodeURIComponent(String(data.public_slug || "")), "ghost"));
+    }
+
+    function renderTrustDetails(data) {
+      var host = document.getElementById("trustDetails");
+      host.textContent = "";
+      var trust = data && data.trust ? data.trust : {};
+      var rows = [
+        { title: "Verified Badge", value: data.is_verified === true || trust.verification_status === "approved" ? "Verified" : "Not verified" },
+        { title: "Insured Badge", value: trust.insurance_expired === true ? "Expired" : (trust.insurance_status || "pending") },
+        { title: "Licensed Badge", value: trust.license_expired === true ? "Expired" : (trust.license_status || "pending") },
+        { title: "Verification Status", value: trust.verification_status || "pending" }
+      ];
+      rows.forEach(function(row) {
+        var card = document.createElement("article");
+        card.className = "trust-card";
+        var h3 = document.createElement("h3");
+        h3.textContent = row.title;
+        var p = document.createElement("p");
+        p.textContent = safeText(row.value, "pending");
+        card.appendChild(h3);
+        card.appendChild(p);
+        host.appendChild(card);
+      });
+    }
+
+    function toServiceSlug(value) {
+      return String(value || "")
+        .trim()
+        .toLowerCase()
+        .replace(/[^a-z0-9-]/g, "-")
+        .replace(/-+/g, "-")
+        .replace(/^-|-$/g, "");
+    }
+
+    function renderSeoAreaLinks(data) {
+      var host = document.getElementById("seoAreaLinks");
+      host.textContent = "";
+      var services = Array.isArray(data.services) ? data.services.filter(Boolean) : [];
+      var areas = Array.isArray(data.marketplace_service_areas) ? data.marketplace_service_areas : [];
+      if (!services.length || !areas.length) return;
+      areas.slice(0, 2).forEach(function(area) {
+        var city = safeText(area.city, "");
+        var state = safeText(area.state, "");
+        if (!city || !state) return;
+        var service = services[0];
+        var link = document.createElement("a");
+        link.setAttribute("href", "/service-area.html?" + new URLSearchParams({
+          service: toServiceSlug(service),
+          city: city,
+          state: state
+        }).toString());
+        link.textContent = service + " in " + city + ", " + state;
+        host.appendChild(link);
+      });
+    }
+
+    function formatActivityTime(value) {
+      if (!value) return "Recently";
+      var date = new Date(value);
+      if (Number.isNaN(date.getTime())) return "Recently";
+      return date.toLocaleDateString([], { month: "short", day: "numeric" });
+    }
+
+    async function loadActivity(companyId) {
+      var host = document.getElementById("activityFeed");
+      host.innerHTML = "<div class='skeleton' style='height:72px;'></div><div class='skeleton' style='height:72px;'></div>";
+      if (!companyId) {
+        setEmptyState(host, "Activity is not available.");
+        return;
+      }
+      try {
+        const res = await fetch(API_BASE + "/companies/public/" + encodeURIComponent(companyId) + "/activity");
+        const data = await res.json().catch(function(){ return {}; });
+        if (!res.ok) throw new Error(data.error || "Unable to load activity.");
+        const items = Array.isArray(data.items) ? data.items : [];
+        host.textContent = "";
+        if (!items.length) {
+          setEmptyState(host, "No recent public activity yet.");
+          return;
+        }
+        items.slice(0, 6).forEach(function(item) {
+          var card = document.createElement("article");
+          card.className = "activity-card";
+          var title = document.createElement("h3");
+          title.className = "activity-title";
+          title.textContent = safeText(item.title, "Activity update");
+          var detail = document.createElement("p");
+          detail.className = "activity-meta";
+          detail.textContent = safeText(item.detail, "Public update");
+          var when = document.createElement("p");
+          when.className = "activity-meta";
+          when.textContent = formatActivityTime(item.occurred_at);
+          card.appendChild(title);
+          card.appendChild(detail);
+          card.appendChild(when);
+          host.appendChild(card);
+        });
+      } catch (_) {
+        setEmptyState(host, "Unable to load activity right now.");
+      }
+    }
+
+    async function loadReviews(companyId) {
+      var reviewStats = document.getElementById("reviewStats");
+      var reviewList = document.getElementById("reviewsPreview");
+      reviewStats.textContent = "";
+      reviewList.textContent = "";
+      if (!companyId) {
+        setEmptyState(reviewList, "Reviews are not available.");
+        return;
+      }
+      try {
+        const [summaryRes, reviewsRes] = await Promise.all([
+          fetch(API_BASE + "/companies/" + encodeURIComponent(companyId) + "/reviews/summary"),
+          fetch(API_BASE + "/companies/" + encodeURIComponent(companyId) + "/reviews")
+        ]);
+        const summary = await summaryRes.json().catch(function(){ return {}; });
+        const reviews = await reviewsRes.json().catch(function(){ return []; });
+        var avg = Number(summary.average_rating || 0).toFixed(1);
+        var count = Number(summary.total_reviews || 0);
+
+        var avgStat = document.createElement("div");
+        avgStat.className = "stat";
+        avgStat.innerHTML = "<strong>" + escapeHTML(avg) + " / 5</strong><span>Average rating</span>";
+        var countStat = document.createElement("div");
+        countStat.className = "stat";
+        countStat.innerHTML = "<strong>" + escapeHTML(String(count)) + "</strong><span>Public reviews</span>";
+        reviewStats.appendChild(avgStat);
+        reviewStats.appendChild(countStat);
+
+        if (!Array.isArray(reviews) || !reviews.length) {
+          setEmptyState(reviewList, "No public reviews yet.");
+          return;
+        }
+        reviews.slice(0, 3).forEach(function(review) {
+          var card = document.createElement("article");
+          card.className = "review-card";
+          var meta = document.createElement("p");
+          meta.className = "review-meta";
+          meta.textContent = (Number(review.rating || 0).toFixed(1)) + " stars";
+          var text = document.createElement("p");
+          text.className = "review-text";
+          text.textContent = safeText(review.review_text, "Customer left a rating.");
+          card.appendChild(meta);
+          card.appendChild(text);
+          reviewList.appendChild(card);
+        });
+      } catch (_) {
+        setEmptyState(reviewList, "Unable to load reviews right now.");
+      }
+    }
+
     function renderCompany(data) {
-      document.title = (data.name || "Company") + " | Public Profile";
+      setSeo(data);
       document.getElementById("companyName").textContent = data.name || "Company";
       document.getElementById("description").textContent = data.public_description || "No public description available yet.";
 
@@ -226,8 +692,42 @@
         cover.textContent = data.name || "Company Profile";
       }
 
-      chipList("services", data.services, "No services listed yet.");
-      chipList("serviceAreas", data.service_areas, "No service areas listed yet.");
+      renderHeroCoverage(data);
+      renderServices(data);
+      const trustHost = document.getElementById("trustBadges");
+      trustHost.textContent = "";
+      const trust = data && data.trust ? data.trust : {};
+      const insuranceStatus = String(trust.insurance_status || "").toLowerCase();
+      const licenseStatus = String(trust.license_status || "").toLowerCase();
+      const insuranceVerified = insuranceStatus === "verified" || insuranceStatus === "approved";
+      const licenseVerified = licenseStatus === "verified" || licenseStatus === "approved";
+      function addBadge(text, className){
+        var el = document.createElement("span");
+        el.className = "chip " + className;
+        el.textContent = text;
+        trustHost.appendChild(el);
+      }
+      if (data.is_verified === true || trust.verification_status === "approved") {
+        addBadge("Verified Company", "badge-green");
+      } else if (trust.verification_status === "submitted") {
+        addBadge("Verification In Review", "badge-warn");
+      }
+      if (insuranceVerified && trust.insurance_expired !== true) {
+        addBadge("Insured", "badge-blue");
+      }
+      if (licenseVerified && trust.license_expired !== true) {
+        addBadge("Licensed", "badge-blue");
+      }
+      var trustLink = document.createElement("a");
+      trustLink.className = "chip badge-slate";
+      trustLink.setAttribute("href", "/trust.html");
+      trustLink.textContent = "About trust badges";
+      trustHost.appendChild(trustLink);
+      renderCoverage(data);
+      renderTrustDetails(data);
+      renderCtas(data);
+      renderSeoAreaLinks(data);
+      loadActivity(data.id);
 
       const hours = document.getElementById("hours");
       const hoursList = Array.isArray(data.business_hours) ? data.business_hours : [];
@@ -308,6 +808,7 @@
         gallery.appendChild(noGallery);
       }
 
+      loadReviews(data.id);
       setStatus("Public profile loaded.", "");
     }
 
@@ -317,6 +818,7 @@
         return;
       }
 
+      setLoadingState();
       setStatus("Loading public company profile...", "");
       try {
         const res = await fetch(API_BASE + "/companies/public/" + encodeURIComponent(slug));
@@ -325,6 +827,10 @@
         renderCompany(data);
       } catch (err) {
         setStatus(err.message || "Unable to load company profile.", "error");
+        setEmptyState(document.getElementById("services"), "Company profile is unavailable right now.");
+        setEmptyState(document.getElementById("serviceAreas"), "Coverage information is unavailable.");
+        setEmptyState(document.getElementById("reviewsPreview"), "Reviews could not be loaded.");
+        setEmptyState(document.getElementById("activityFeed"), "Activity feed is unavailable.");
       }
     }
 

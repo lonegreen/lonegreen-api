@@ -43,6 +43,13 @@
       color: #60786e;
       line-height: 1.5;
     }
+    .customer-nav { display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; }
+    .customer-nav a { border:1px solid var(--brand-border); background:#fff; color:var(--brand-primary); border-radius:999px; padding:8px 12px; font-size:13px; font-weight:800; text-decoration:none; }
+    .seo-links { display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; }
+    .seo-links a { border:1px solid var(--brand-border); background:#fff; color:var(--brand-primary); border-radius:999px; padding:7px 11px; font-size:12px; font-weight:800; text-decoration:none; }
+    .trust-link { margin-top: 10px; }
+    .trust-link a { color: var(--brand-primary); font-size: 12px; font-weight: 800; text-decoration: none; }
+    .trust-link a:hover { text-decoration: underline; }
     .hero-actions {
       display: flex;
       gap: 10px;
@@ -360,6 +367,20 @@
       <div>
         <h1>Marketplace Requests</h1>
         <p>Create service requests, compare company offers, and accept the best match.</p>
+        <div class="seo-links">
+          <a href="/service-area.html?service=lawn-care&city=Richmond&state=TX">Lawn Care in Richmond</a>
+          <a href="/service-area.html?service=landscaping&city=Sugar+Land&state=TX">Landscaping in Sugar Land</a>
+          <a href="/service-area.html?service=pressure-washing&city=Katy&state=TX">Pressure Washing in Katy</a>
+        </div>
+        <p class="trust-link"><a href="/trust.html">Read FairLinx Trust & Safety</a></p>
+        <nav class="customer-nav">
+          <a href="/customer-dashboard.html">Dashboard</a>
+          <a href="/marketplace.html">Marketplace</a>
+          <a href="/discover.html">Discover</a>
+          <a href="/messages.html">Messages</a>
+          <a href="/customer-profile.html">Profile</a>
+          <a href="#" id="customerLogoutLink">Logout</a>
+        </nav>
       </div>
       <div class="hero-actions">
         <a class="btn secondary" href="/customer-dashboard-v2.html">Dashboard</a>
@@ -372,11 +393,13 @@
     <section class="layout">
       <aside class="panel">
         <h2>Create Request</h2>
-        <p class="subhead">Required: category ID and title. Add location and details to improve matching.</p>
+        <p class="subhead">Required: category and title. Add location and details to improve matching.</p>
         <form id="requestForm" class="field-grid">
           <div class="field">
-            <label for="categoryId">Category ID *</label>
-            <input id="categoryId" name="category_id" type="number" min="1" required placeholder="e.g. 3">
+            <label for="categoryId">Category *</label>
+            <select id="categoryId" name="category_id" required>
+              <option value="">Select a category</option>
+            </select>
           </div>
           <div class="field">
             <label for="requestedDate">Requested Date</label>
@@ -449,6 +472,7 @@
             <button id="refreshOffersBtn" type="button" class="btn secondary">Refresh Offers</button>
           </div>
           <div id="offersStatus" class="status-line"></div>
+          <div id="offersNextStep" class="status-line"></div>
           <div id="offersList" class="cards"></div>
         </section>
       </section>
@@ -471,6 +495,7 @@
         creatingRequest: false,
         acceptingOfferId: null
       };
+      let categories = [];
 
       const els = {
         globalStatus: document.getElementById("globalStatus"),
@@ -488,9 +513,11 @@
         refreshOffersBtn: document.getElementById("refreshOffersBtn"),
         matchesStatus: document.getElementById("matchesStatus"),
         offersStatus: document.getElementById("offersStatus"),
+        offersNextStep: document.getElementById("offersNextStep"),
         matchesList: document.getElementById("matchesList"),
         offersList: document.getElementById("offersList")
       };
+      const customerLogoutLink = document.getElementById("customerLogoutLink");
 
       function getToken() {
         return localStorage.getItem("customerToken");
@@ -560,6 +587,24 @@
         const data = await res.json().catch(function() { return {}; });
         if (!res.ok) throw new Error(data.error || "Request failed");
         return data;
+      }
+
+      function renderCategoryOptions() {
+        const options = categories.map(function(item) {
+          return '<option value="' + esc(item.id) + '">' + esc(item.name || ("Category " + item.id)) + "</option>";
+        }).join("");
+        document.getElementById("categoryId").innerHTML = '<option value="">Select a category</option>' + options;
+      }
+
+      async function loadCategories() {
+        try {
+          const list = await request("/services/categories", { method: "GET" });
+          categories = Array.isArray(list) ? list : [];
+          renderCategoryOptions();
+        } catch (err) {
+          categories = [];
+          renderCategoryOptions();
+        }
       }
 
       function getRequestTitle(item) {
@@ -898,9 +943,11 @@
             body: JSON.stringify({})
           });
           setLine(els.offersStatus, "Offer accepted. Request is now matched.", "ok");
+          els.offersNextStep.innerHTML = 'Next step: track status on this request, open <a href="/customer-dashboard.html">Dashboard</a>, or message the company in <a href="/messages.html">Messages</a>.';
           await loadRequests(state.selectedRequestId);
         } catch (err) {
           setLine(els.offersStatus, err.message || "Unable to accept offer.", "error");
+          els.offersNextStep.textContent = "";
         } finally {
           state.acceptingOfferId = null;
           renderOffers();
@@ -935,6 +982,12 @@
           const offerId = Number(button.getAttribute("data-accept-offer-id"));
           if (offerId) handleAcceptOffer(offerId);
         });
+        customerLogoutLink.addEventListener("click", function(event) {
+          event.preventDefault();
+          localStorage.removeItem("customerToken");
+          localStorage.removeItem("customer");
+          window.location.href = "/customer-login-v2.html";
+        });
       }
 
       async function init() {
@@ -943,6 +996,7 @@
           return;
         }
         bindEvents();
+        await loadCategories();
         setButtonsState();
         renderRequests();
         renderRequestDetails();

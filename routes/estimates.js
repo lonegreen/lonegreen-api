@@ -449,15 +449,30 @@ router.post("/workflow/estimates/:id/convert-to-client", auth, requireCompanyBil
   }
 });
 router.post("/workflow/estimates/:id/convert-to-job", auth, requireCompanyBillingForMutations, requireMinimumRole("manager"), async (req, res) => {
+  const clientTx = await pool.connect();
   try {
     await ensureWorkflowSchema();
-    const estimate = await getEstimate(req.user.company_id, req.params.id);
+    await clientTx.query("BEGIN");
+    const estimateResult = await clientTx.query(
+      `
+      SELECT *
+      FROM estimates
+      WHERE id = $1
+        AND company_id = $2
+        AND record_type = 'estimate'
+      LIMIT 1
+      FOR UPDATE
+      `,
+      [req.params.id, req.user.company_id]
+    );
+    const estimate = estimateResult.rows[0] || null;
 
     if (!estimate) {
+      await clientTx.query("ROLLBACK");
       return res.status(404).json({ error: "Estimate not found" });
     }
 
-    const existingJob = await pool.query(
+    const existingJob = await clientTx.query(
       `SELECT *
        FROM jobs
        WHERE company_id = $1
@@ -471,16 +486,18 @@ router.post("/workflow/estimates/:id/convert-to-job", auth, requireCompanyBillin
       const existingClient = existingJob.rows[0].client_id
         ? await getClientById(req.user.company_id, existingJob.rows[0].client_id)
         : null;
-
+      await clientTx.query("COMMIT");
       return res.json({ client: existingClient, job: existingJob.rows[0] });
     }
 
     if (normalizeEstimateStatus(estimate.status) !== "approved") {
+      await clientTx.query("ROLLBACK");
       return res.status(400).json({ error: "Only approved estimates can be converted to jobs" });
     }
 
     let client = estimate.client_id ? await getClientById(req.user.company_id, estimate.client_id) : null;
     if (client && client.archived === true) {
+      await clientTx.query("ROLLBACK");
       return res.status(400).json({ error: "Client is archived or not found" });
     }
     if (!client) {
@@ -495,31 +512,57 @@ router.post("/workflow/estimates/:id/convert-to-job", auth, requireCompanyBillin
 
     const workerLookup = await resolveCompanyWorkerId(req.user.company_id, req.body.worker_id);
     if (!workerLookup.ok) {
+      await clientTx.query("ROLLBACK");
       return res.status(400).json({ error: "Worker not found in this company" });
     }
 
-    const job = await pool.query(`
-      INSERT INTO jobs
-      (client_id, service, type, date, start_time, end_time, status, worker_id, price, company_id, payment_status, internal_notes, status_reason, estimate_id)
-      VALUES ($1,$2,'one_time_job',$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)
-      RETURNING *
-    `, [
-      client.id,
-      req.body.service || estimate.service,
-      req.body.date || estimate.visit_date,
-      req.body.start_time || "08:00",
-      req.body.end_time || "09:00",
-      normalizeJobStatus(req.body.status || "scheduled"),
-      workerLookup.workerId,
-      req.body.price || estimate.quoted_price || 0,
-      req.user.company_id,
-      normalizePaymentStatus(req.body.payment_status, "one_time_job"),
-      req.body.internal_notes || estimate.notes || "",
-      req.body.status_reason || "",
-      estimate.id
-    ]);
+    let createdJob = null;
+    try {
+      const job = await clientTx.query(`
+        INSERT INTO jobs
+        (client_id, service, type, date, start_time, end_time, status, worker_id, price, company_id, payment_status, internal_notes, status_reason, estimate_id)
+        VALUES ($1,$2,'one_time_job',$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)
+        RETURNING *
+      `, [
+        client.id,
+        req.body.service || estimate.service,
+        req.body.date || estimate.visit_date,
+        req.body.start_time || "08:00",
+        req.body.end_time || "09:00",
+        normalizeJobStatus(req.body.status || "scheduled"),
+        workerLookup.workerId,
+        req.body.price || estimate.quoted_price || 0,
+        req.user.company_id,
+        normalizePaymentStatus(req.body.payment_status, "one_time_job"),
+        req.body.internal_notes || estimate.notes || "",
+        req.body.status_reason || "",
+        estimate.id
+      ]);
+      createdJob = job.rows[0];
+    } catch (insertErr) {
+      if (insertErr && insertErr.code === "23505") {
+        const existingOnConflict = await clientTx.query(
+          `
+          SELECT *
+          FROM jobs
+          WHERE company_id = $1
+            AND estimate_id = $2
+          ORDER BY id DESC
+          LIMIT 1
+          `,
+          [req.user.company_id, estimate.id]
+        );
+        if (existingOnConflict.rows.length) {
+          createdJob = existingOnConflict.rows[0];
+        } else {
+          throw insertErr;
+        }
+      } else {
+        throw insertErr;
+      }
+    }
 
-    await pool.query(`
+    await clientTx.query(`
       UPDATE estimates
       SET client_id = $1,
           converted_client_id = $1,
@@ -527,7 +570,7 @@ router.post("/workflow/estimates/:id/convert-to-job", auth, requireCompanyBillin
           status = 'converted',
           converted_at = CURRENT_TIMESTAMP
       WHERE id = $3 AND company_id = $4 AND record_type = 'estimate'
-    `, [client.id, job.rows[0].id, estimate.id, req.user.company_id]);
+    `, [client.id, createdJob.id, estimate.id, req.user.company_id]);
 
     await logActivity({
       companyId: req.user.company_id,
@@ -537,16 +580,22 @@ router.post("/workflow/estimates/:id/convert-to-job", auth, requireCompanyBillin
       entityId: estimate.id,
       details: {
         source_estimate_id: estimate.id,
-        job_id: job.rows[0].id,
+        job_id: createdJob.id,
         client_id: client.id,
-        service: job.rows[0].service
+        service: createdJob.service
       }
     });
 
-    res.json({ client, job: job.rows[0] });
+    await clientTx.query("COMMIT");
+    res.json({ client, job: createdJob });
   } catch (err) {
+    try {
+      await clientTx.query("ROLLBACK");
+    } catch (_) {}
     console.log("ESTIMATE TO JOB ERROR:", err);
     sendSafeServerError(res, err, "routes/estimates");
+  } finally {
+    clientTx.release();
   }
 });
 
@@ -556,18 +605,18 @@ router.post("/workflow/estimates/:id/convert-to-job", auth, requireCompanyBillin
 router.get("/estimates", auth, requireCompanyBillingForMutations, requireMinimumRole("manager"), async (req, res) => {
   try {
     warnDeprecatedRoute("/estimates", "/workflow/estimates");
-    await ensureEstimateSchema();
+    await ensureWorkflowSchema();
     const company_id = req.user.company_id;
 
     const result = await pool.query(`
       SELECT
         estimates.*,
-        clients.name AS client_name,
-        clients.phone AS client_phone,
-        clients.address AS client_address
+        clients.name AS client_name
       FROM estimates
       LEFT JOIN clients ON estimates.client_id = clients.id AND clients.company_id = estimates.company_id
       WHERE estimates.company_id = $1
+        AND estimates.record_type = 'estimate'
+        AND COALESCE(estimates.archived, FALSE) = FALSE
       ORDER BY estimates.id DESC
     `, [company_id]);
 

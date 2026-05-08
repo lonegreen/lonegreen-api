@@ -15,6 +15,13 @@
     .hero { display:flex; justify-content:space-between; align-items:flex-end; gap:12px; flex-wrap:wrap; }
     .hero h1 { margin:0 0 6px; color:var(--brand-primary); font-size:32px; letter-spacing:-.02em; }
     .hero p { margin:0; color:#60786e; line-height:1.5; }
+    .customer-nav { display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; }
+    .customer-nav a { border:1px solid var(--brand-border); background:#fff; color:var(--brand-primary); border-radius:999px; padding:8px 12px; font-size:13px; font-weight:800; text-decoration:none; }
+    .seo-links { display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; }
+    .seo-links a { border:1px solid var(--brand-border); background:#fff; color:var(--brand-primary); border-radius:999px; padding:7px 11px; font-size:12px; font-weight:800; text-decoration:none; }
+    .trust-link { margin-top: 10px; }
+    .trust-link a { color: var(--brand-primary); font-size: 12px; font-weight: 800; text-decoration: none; }
+    .trust-link a:hover { text-decoration: underline; }
     .hero-actions { display:flex; gap:10px; flex-wrap:wrap; }
     .btn { border:none; border-radius:12px; padding:10px 14px; font:inherit; font-weight:800; cursor:pointer; transition:transform .15s ease, box-shadow .15s ease, opacity .15s ease; }
     .btn:hover:not(:disabled){ transform:translateY(-1px); }
@@ -63,6 +70,20 @@
       <div>
         <h1>Discover Companies</h1>
         <p>Find verified providers by service, city, and coverage area.</p>
+        <div class="seo-links">
+          <a href="/service-area.html?service=lawn-care&city=Richmond&state=TX">View Lawn Care in Richmond</a>
+          <a href="/service-area.html?service=landscaping&city=Sugar+Land&state=TX">Browse Landscaping in Sugar Land</a>
+          <a href="/service-area.html?service=pressure-washing&city=Katy&state=TX">Pressure Washing near Katy</a>
+        </div>
+        <p class="trust-link"><a href="/trust.html">Learn how FairLinx trust badges work</a></p>
+        <nav class="customer-nav">
+          <a href="/customer-dashboard.html">Dashboard</a>
+          <a href="/marketplace.html">Marketplace</a>
+          <a href="/discover.html">Discover</a>
+          <a href="/messages.html">Messages</a>
+          <a href="/customer-profile.html">Profile</a>
+          <a href="#" id="customerLogoutLink">Logout</a>
+        </nav>
       </div>
       <div class="hero-actions">
         <button id="refreshBtn" type="button" class="btn secondary">Refresh</button>
@@ -110,6 +131,7 @@
         resultsCount: document.getElementById("resultsCount"),
         cards: document.getElementById("cards")
       };
+      const customerLogoutLink = document.getElementById("customerLogoutLink");
       function esc(v){ return String(v==null?"":v).replace(/[&<>"']/g,function(c){return({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"})[c];});}
       function txt(v,f){ return (v===null||v===undefined||v==="")?(f||""):String(v); }
       function isSafeHttpUrl(value){
@@ -201,6 +223,12 @@
         state.favorites=parseSet(FAVORITES_KEY);
         state.follows=parseSet(FOLLOWS_KEY);
         bind();
+        customerLogoutLink.addEventListener("click", function(event){
+          event.preventDefault();
+          localStorage.removeItem("customerToken");
+          localStorage.removeItem("customer");
+          window.location.href = "/customer-login-v2.html";
+        });
         render();
         loadCompanies();
       }

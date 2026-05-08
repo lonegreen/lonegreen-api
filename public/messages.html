@@ -38,6 +38,8 @@
       gap: 12px;
       margin-bottom: 12px;
     }
+    .customer-nav { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:12px; }
+    .customer-nav a { border:1px solid var(--line); background:#fff; color:var(--brand); border-radius:999px; padding:8px 12px; font-size:13px; font-weight:700; text-decoration:none; }
     .title {
       font-size: 1.35rem;
       font-weight: 700;
@@ -245,6 +247,14 @@
 </head>
 <body>
   <div class="page">
+    <nav class="customer-nav">
+      <a href="/customer-dashboard.html">Dashboard</a>
+      <a href="/marketplace.html">Marketplace</a>
+      <a href="/discover.html">Discover</a>
+      <a href="/messages.html">Messages</a>
+      <a href="/customer-profile.html">Profile</a>
+      <a href="#" id="customerLogoutLink">Logout</a>
+    </nav>
     <div class="topbar">
       <h1 class="title">Messages</h1>
       <div class="pill" id="sessionPill">Loading session...</div>
@@ -307,6 +317,7 @@
       const messageInput = document.getElementById("messageInput");
       const sendBtn = document.getElementById("sendBtn");
       const composerStatus = document.getElementById("composerStatus");
+      const customerLogoutLink = document.getElementById("customerLogoutLink");
 
       const state = {
         token: "",
@@ -683,6 +694,12 @@
       reloadMessagesBtn.addEventListener("click", function () { loadMessages(true); });
       newConversationBtn.addEventListener("click", startConversation);
       composerForm.addEventListener("submit", sendMessage);
+      customerLogoutLink.addEventListener("click", function(event){
+        event.preventDefault();
+        localStorage.removeItem("customerToken");
+        localStorage.removeItem("customer");
+        window.location.href = "/customer-login-v2.html";
+      });
 
       if (initSession()) {
         updateThreadHeader();

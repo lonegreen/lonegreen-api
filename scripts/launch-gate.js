@@ -276,6 +276,16 @@ const sourceExpectations = [
       "invoice_paid_status_balance_mismatch",
       "invoice_open_status_balance_mismatch"
     ]
+  },
+  {
+    name: "marketplace company UI endpoints exist and are company-scoped",
+    file: "routes/marketplace.js",
+    patterns: [
+      "router.get(\"/marketplace/opportunities\", companyAuth, requireMinimumRole(\"manager\")",
+      "router.get(\"/marketplace/offers/me\", companyAuth, requireMinimumRole(\"manager\")",
+      "WHERE mo.company_id = $1",
+      "WHERE c.id = $1"
+    ]
   }
 ];
 
@@ -399,11 +409,28 @@ function checkDbGate() {
   }
 }
 
+function checkAdditionalIntegrityScripts() {
+  const stableChecks = [
+    { name: "navigation integrity", script: "check:navigation" },
+    { name: "marketplace UI contract", script: "check:marketplace-contract" }
+  ];
+
+  for (const check of stableChecks) {
+    const result = run(/^win/.test(process.platform) ? "npm.cmd" : "npm", ["run", check.script]);
+    if (result.status === 0) {
+      pass(check.name);
+    } else {
+      fail(`${check.name} failed\n${result.stdout}\n${result.stderr}`);
+    }
+  }
+}
+
 console.log("FairLinx launch gate");
 checkSyntax();
 checkSourceExpectations();
 checkPackageScripts();
 checkDbGate();
+checkAdditionalIntegrityScripts();
 
 if (failures > 0) {
   console.error(`Launch gate failed: ${failures} failure(s), ${skips} skipped.`);

@@ -253,11 +253,36 @@ function buildCustomerToken(account) {
       role: "customer",
       company_id: account.company_id || null,
       client_id: account.client_id || null,
-      email: account.email
+      email: account.email,
+      customer_status: String(account.status || "active").toLowerCase(),
+      customer_deactivated_at: account.deactivated_at || null
     },
     SECRET,
     { expiresIn: "14d" }
   );
+}
+
+function resolveCustomerAccountStatus(account) {
+  const status = String(account && account.status || "").trim().toLowerCase();
+  const deactivatedAt = account && account.deactivated_at ? account.deactivated_at : null;
+  if (deactivatedAt || status === "deactivated") {
+    return "deactivated";
+  }
+  if (status === "suspended") {
+    return "suspended";
+  }
+  return "active";
+}
+
+function customerAccessErrorStatus(account) {
+  const status = resolveCustomerAccountStatus(account);
+  if (status === "deactivated") {
+    return "Customer account is deactivated";
+  }
+  if (status === "suspended") {
+    return "Customer account is suspended";
+  }
+  return null;
 }
 
 /* SIGNUP */
@@ -1076,6 +1101,10 @@ router.post("/customer-login", authAttemptLimiter, async (req, res) => {
         ca.phone,
         ca.is_verified,
         ca.created_at,
+        ca.status,
+        ca.suspended_at,
+        ca.suspended_reason,
+        ca.deactivated_at,
         c.company_id
       FROM customer_accounts ca
       LEFT JOIN clients c ON c.id = ca.client_id
@@ -1088,6 +1117,10 @@ router.post("/customer-login", authAttemptLimiter, async (req, res) => {
 
     if (!account) {
       return res.status(401).json({ error: "Invalid login" });
+    }
+    const blockedMessage = customerAccessErrorStatus(account);
+    if (blockedMessage) {
+      return res.status(403).json({ error: blockedMessage });
     }
 
     const isMatch = await bcrypt.compare(password, String(account.password_hash || ""));
@@ -1232,6 +1265,10 @@ router.post("/customer-otp/verify", customerOtpVerifyLimiter, async (req, res) =
         ca.phone,
         ca.is_verified,
         ca.created_at,
+        ca.status,
+        ca.suspended_at,
+        ca.suspended_reason,
+        ca.deactivated_at,
         ca.customer_otp_hash,
         ca.customer_otp_expires_at,
         ca.customer_otp_attempts,
@@ -1247,6 +1284,10 @@ router.post("/customer-otp/verify", customerOtpVerifyLimiter, async (req, res) =
 
     if (!account || !account.customer_otp_hash || !account.customer_otp_expires_at) {
       return res.status(401).json({ error: "Invalid or expired code" });
+    }
+    const blockedMessage = customerAccessErrorStatus(account);
+    if (blockedMessage) {
+      return res.status(403).json({ error: blockedMessage });
     }
     if (isExpiredIso(account.customer_otp_expires_at)) {
       /* Clear the stale code so a new one must be requested. */

@@ -28,6 +28,7 @@ try {
 const STRIPE_REPLAY_DEFAULT_LIMIT = 25;
 const STRIPE_REPLAY_MAX_LIMIT = 100;
 const STRIPE_REPLAY_MAX_ATTEMPTS = Number(process.env.STRIPE_REPLAY_MAX_ATTEMPTS || 5);
+const STRIPE_EVENT_LEASE_MS = Math.max(1000, Number(process.env.STRIPE_EVENT_LEASE_MS || 120000));
 
 function stripeCustomerId(obj) {
   if (!obj) return null;
@@ -295,38 +296,119 @@ async function resolveCompanyId(metadataCompanyId, clientReferenceId, stripeCust
 }
 
 async function tryClaimEvent(eventId, eventType) {
-  let result;
+  const leaseStartedAt = new Date().toISOString();
+  const leaseMarker = `[lease_started_at:${leaseStartedAt}]`;
 
+  const parseLeaseStartedAt = (errorCode, errorMessage) => {
+    if (String(errorCode || "") !== "IN_PROGRESS") return null;
+    const match = String(errorMessage || "").match(/\[lease_started_at:([^\]]+)\]/);
+    if (!match) return null;
+    const d = new Date(match[1]);
+    return Number.isNaN(d.getTime()) ? null : d;
+  };
+
+  const isLeaseExpired = (startedAt) => {
+    if (!startedAt) return false;
+    return Date.now() - startedAt.getTime() >= STRIPE_EVENT_LEASE_MS;
+  };
+
+  const client = await pool.connect();
   try {
-    result = await pool.query(
+    await client.query("BEGIN");
+    const existing = await client.query(
       `
-      INSERT INTO stripe_events (stripe_event_id, event_type, processed_at, error_code, error_message, retryable)
-      VALUES ($1, $2, NULL, NULL, NULL, FALSE)
-      ON CONFLICT (stripe_event_id) DO UPDATE
-      SET event_type = EXCLUDED.event_type,
-          error_code = NULL,
-          error_message = NULL,
-          retryable = FALSE
-      WHERE stripe_events.processed_at IS NULL
-        AND stripe_events.retryable = TRUE
-      RETURNING stripe_event_id
+      SELECT stripe_event_id, processed_at, retryable, error_code, error_message, created_at
+      FROM stripe_events
+      WHERE stripe_event_id = $1
+      FOR UPDATE
       `,
-      [eventId, eventType]
+      [eventId]
     );
-  } catch (err) {
-    if (!err || err.code !== "42703") throw err;
-    result = await pool.query(
-      `
-      INSERT INTO stripe_events (stripe_event_id, event_type, processed_at)
-      VALUES ($1, $2, NULL)
-      ON CONFLICT (stripe_event_id) DO NOTHING
-      RETURNING stripe_event_id
-      `,
-      [eventId, eventType]
-    );
-  }
 
-  return Boolean(result.rows.length);
+    if (!existing.rows.length) {
+      try {
+        await client.query(
+          `
+          INSERT INTO stripe_events (stripe_event_id, event_type, processed_at, error_code, error_message, retryable)
+          VALUES ($1, $2, NULL, 'IN_PROGRESS', $3, FALSE)
+          `,
+          [eventId, eventType, leaseMarker]
+        );
+      } catch (err) {
+        if (!err || err.code !== "42703") throw err;
+        await client.query(
+          `
+          INSERT INTO stripe_events (stripe_event_id, event_type, processed_at)
+          VALUES ($1, $2, NULL)
+          `,
+          [eventId, eventType]
+        );
+      }
+      await client.query("COMMIT");
+      return true;
+    }
+
+    const row = existing.rows[0];
+    if (row.processed_at) {
+      await client.query("COMMIT");
+      return false;
+    }
+
+    const inProgressLeaseStartedAt = parseLeaseStartedAt(row.error_code, row.error_message);
+    const inProgress = String(row.error_code || "") === "IN_PROGRESS" && row.retryable !== true;
+    const inProgressExpired = inProgress && isLeaseExpired(inProgressLeaseStartedAt);
+
+    const createdAt = row.created_at ? new Date(row.created_at) : null;
+    const legacyStaleClaim = (
+      row.retryable !== true
+      && !inProgress
+      && createdAt
+      && !Number.isNaN(createdAt.getTime())
+      && isLeaseExpired(createdAt)
+    );
+
+    const canClaim = row.retryable === true || inProgressExpired || legacyStaleClaim;
+    if (!canClaim) {
+      await client.query("COMMIT");
+      return false;
+    }
+
+    try {
+      await client.query(
+        `
+        UPDATE stripe_events
+        SET event_type = $2,
+            processed_at = NULL,
+            error_code = 'IN_PROGRESS',
+            error_message = $3,
+            retryable = FALSE
+        WHERE stripe_event_id = $1
+        `,
+        [eventId, eventType, leaseMarker]
+      );
+    } catch (err) {
+      if (!err || err.code !== "42703") throw err;
+      await client.query(
+        `
+        UPDATE stripe_events
+        SET event_type = $2,
+            processed_at = NULL
+        WHERE stripe_event_id = $1
+        `,
+        [eventId, eventType]
+      );
+    }
+
+    await client.query("COMMIT");
+    return true;
+  } catch (err) {
+    try {
+      await client.query("ROLLBACK");
+    } catch (_) {}
+    throw err;
+  } finally {
+    client.release();
+  }
 }
 
 async function markEventProcessed(event, audit = {}) {

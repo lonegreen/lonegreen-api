@@ -4,6 +4,7 @@ const { getQueueStatus } = require("./jobQueue");
 const { syncAlerts } = require("./notificationService");
 const { processSubscriptions } = require("./subscriptionEngine");
 const { evaluatePastDueSuspensions } = require("./billingService");
+const { syncExpiredTrustStatuses } = require("./trustExpiryService");
 const { BILLING_LIFECYCLE_AUTOMATION } = require("../config/env");
 const logger = require("./logger");
 
@@ -154,6 +155,13 @@ async function runDailyAlertsSync() {
   }
 }
 
+async function runDailyTrustExpirySync() {
+  const summary = await syncExpiredTrustStatuses();
+  logger.info("SCHEDULER_TRUST_EXPIRY_SYNC_RESULT", {
+    updated_count: Number(summary && summary.updated_count) || 0
+  });
+}
+
 function runQueueHeartbeat() {
   if (String(process.env.LOG_QUEUE_HEARTBEAT || "").toLowerCase() === "true") {
     logger.info("QUEUE STATUS HEARTBEAT", getQueueStatus());
@@ -168,6 +176,7 @@ function startScheduler() {
   registerTask("subscription_processing", "0 2 * * *", runSubscriptionProcessing);
   registerTask("billing_lifecycle", "*/30 * * * *", runBillingLifecycleAutomation);
   registerTask("daily_alerts_sync", "0 7 * * *", runDailyAlertsSync);
+  registerTask("daily_trust_expiry_sync", "15 6 * * *", runDailyTrustExpirySync);
   registerTask("queue_status_heartbeat", "0 * * * *", runQueueHeartbeat);
 
   const backupCron = String(process.env.DATABASE_BACKUP_CRON || "").trim();

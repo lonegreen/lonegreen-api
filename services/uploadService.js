@@ -60,16 +60,18 @@ function isExternalUploadStorageEnabled() {
  *   R2_ACCOUNT_ID
  *   R2_ACCESS_KEY_ID
  *   R2_SECRET_ACCESS_KEY
- *   R2_BUCKET
+ *   R2_BUCKET_NAME (preferred) or R2_BUCKET (legacy)
  *   R2_PUBLIC_BASE_URL   (e.g. https://media.example.com  OR https://pub-<hash>.r2.dev)
  * ============================================================ */
 
 function readR2Config() {
+  const bucketName = String(process.env.R2_BUCKET_NAME || "").trim();
+  const legacyBucket = String(process.env.R2_BUCKET || "").trim();
   return {
     accountId: String(process.env.R2_ACCOUNT_ID || "").trim(),
     accessKeyId: String(process.env.R2_ACCESS_KEY_ID || "").trim(),
     secretAccessKey: String(process.env.R2_SECRET_ACCESS_KEY || "").trim(),
-    bucket: String(process.env.R2_BUCKET || "").trim(),
+    bucket: bucketName || legacyBucket,
     publicBaseUrl: String(process.env.R2_PUBLIC_BASE_URL || "").trim().replace(/\/+$/, "")
   };
 }
@@ -80,13 +82,21 @@ function r2MissingEnvKeys() {
   if (!cfg.accountId) missing.push("R2_ACCOUNT_ID");
   if (!cfg.accessKeyId) missing.push("R2_ACCESS_KEY_ID");
   if (!cfg.secretAccessKey) missing.push("R2_SECRET_ACCESS_KEY");
-  if (!cfg.bucket) missing.push("R2_BUCKET");
+  if (!cfg.bucket) missing.push("R2_BUCKET_NAME");
   if (!cfg.publicBaseUrl) missing.push("R2_PUBLIC_BASE_URL");
   return missing;
 }
 
 function isR2Configured() {
   return r2MissingEnvKeys().length === 0;
+}
+
+function getEffectiveUploadStorageDriver() {
+  const driver = getUploadStorageDriver();
+  if (driver === "r2" && !isR2Configured()) {
+    return "local";
+  }
+  return driver;
 }
 
 function assertR2EnvReady() {
@@ -268,7 +278,7 @@ function safeFilename(file) {
 }
 
 function fileFilter(req, file, callback) {
-  const driver = getUploadStorageDriver();
+  const driver = getEffectiveUploadStorageDriver();
   if (driver === "s3") {
     // Still scaffold-only: refuse early to avoid writing temp files we cannot publish.
     return callback(externalDriverNotReadyError());
@@ -325,6 +335,7 @@ function getUploadReadiness() {
   ].filter(Boolean);
 
   const driver = getUploadStorageDriver();
+  const effectiveDriver = getEffectiveUploadStorageDriver();
   const externalEnabled = driver !== "local";
   const r2Configured = driver === "r2" ? isR2Configured() : null;
   const r2Missing = driver === "r2" ? r2MissingEnvKeys() : [];
@@ -343,11 +354,13 @@ function getUploadReadiness() {
   return {
     status,
     storage: driver,
+    effective_storage: effectiveDriver,
     external_storage_enabled: externalEnabled,
     external_storage_scaffold_only: driver === "s3",
     r2_configured: r2Configured,
     r2_missing_env: r2Missing,
     r2_public_base_url: driver === "r2" ? readR2Config().publicBaseUrl || null : null,
+    r2_fallback_to_local: driver === "r2" && effectiveDriver === "local",
     upload_dir: UPLOAD_DIR,
     max_file_size_mb: Math.round(MAX_FILE_SIZE / 1024 / 1024),
     allowed_extensions: Array.from(ALLOWED_EXTENSIONS),
@@ -495,7 +508,7 @@ async function publishUploadedFile(reqFile) {
   if (!reqFile || !reqFile.path || !reqFile.filename) {
     throw new Error("publishUploadedFile requires a multer disk-storage file");
   }
-  const driver = getUploadStorageDriver();
+  const driver = getEffectiveUploadStorageDriver();
 
   if (driver === "local") {
     return localPublicUploadUrl(reqFile.filename);
@@ -535,7 +548,7 @@ async function publishUploadedFile(reqFile) {
 }
 
 async function saveUploadedFile(file, options = {}) {
-  const driver = getUploadStorageDriver();
+  const driver = getEffectiveUploadStorageDriver();
   if (driver === "s3") {
     throw externalDriverNotReadyError();
   }
@@ -603,7 +616,7 @@ async function deleteStoredFile(urlOrKey) {
  * and returns the URL.
  */
 function publicUploadUrl(filename) {
-  const driver = getUploadStorageDriver();
+  const driver = getEffectiveUploadStorageDriver();
   const key = path.basename(String(filename || ""));
   if (!key) {
     return "";
@@ -629,6 +642,7 @@ module.exports = {
   ensureUploadDir,
   getUploadStorageDriver,
   isExternalUploadStorageEnabled,
+  getEffectiveUploadStorageDriver,
   externalDriverNotReadyError,
   saveUploadedFile,
   deleteStoredFile,

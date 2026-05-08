@@ -47,10 +47,12 @@ const favoritesRoutes = require("./routes/favorites");
 const followsRoutes = require("./routes/follows");
 const messagesRoutes = require("./routes/messages");
 const marketplaceRoutes = require("./routes/marketplace");
+const servicesRoutes = require("./routes/services");
 const supportRoutes = require("./routes/support");
 const { handleStripeWebhookRequest } = require("./routes/stripeWebhook");
 const { isStripeCheckoutConfigured } = require("./services/stripeService");
 const launchRoutes = require("./routes/launch");
+const trustRoutes = require("./routes/trust");
 
 const { setupDatabase, assertProductionSchemaReady } = require("./db/setup");
 const pool = require("./db/pool");
@@ -308,8 +310,10 @@ app.use("/", favoritesRoutes);
 app.use("/", followsRoutes);
 app.use("/", messagesRoutes);
 app.use("/", marketplaceRoutes);
+app.use("/", servicesRoutes);
 app.use("/", supportRoutes);
 app.use("/", launchRoutes);
+app.use("/", trustRoutes);
 
 /* Setup DB route */
 app.get("/setup-db", maintenanceOnly, maintenanceLimiter, async (req, res) => {

@@ -742,6 +742,15 @@ router.put("/workflow/invoices/:id", auth, requireCompanyBillingForMutations, re
     const row = current.rows[0];
 
 
+    const requestedManualStatus = Object.prototype.hasOwnProperty.call(req.body || {}, "status")
+      ? normalizeInvoiceStatus(req.body.status)
+      : null;
+    if (requestedManualStatus === "paid") {
+      return res.status(400).json({
+        error: "Invoices cannot be manually marked paid. Record a payment instead."
+      });
+    }
+
     const status = normalizeInvoiceStatus(req.body.status || row.status);
 
 

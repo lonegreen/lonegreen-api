@@ -193,6 +193,114 @@ async function canCompanyMatchRequest(companyId, requestRow) {
   return result.rows.length > 0;
 }
 
+router.get("/marketplace/opportunities", companyAuth, requireMinimumRole("manager"), async (req, res) => {
+  try {
+    const companyId = Number(req.user && req.user.company_id);
+    if (!companyId) {
+      return res.status(403).json({ error: "Forbidden" });
+    }
+
+    const { limit, offset } = parsePagination(req.query);
+    const result = await pool.query(
+      `
+      SELECT
+        mr.id,
+        mr.category_id,
+        sc.name AS category_name,
+        mr.title,
+        mr.description,
+        mr.requested_date,
+        mr.requested_time,
+        mr.address,
+        mr.city,
+        mr.state,
+        mr.zip_code,
+        mr.status,
+        mr.created_at
+      FROM marketplace_requests mr
+      LEFT JOIN service_categories sc
+        ON sc.id = mr.category_id
+      WHERE mr.status = 'open'
+        AND EXISTS (
+          SELECT 1
+          FROM companies c
+          JOIN company_services cs
+            ON cs.company_id = c.id
+           AND cs.active = TRUE
+           AND cs.category_id = mr.category_id
+          JOIN company_service_areas csa
+            ON csa.company_id = c.id
+           AND csa.active = TRUE
+          WHERE c.id = $1
+            AND c.is_public = TRUE
+            AND c.platform_suspended_at IS NULL
+            AND (
+              c.billing_status IS NULL
+              OR c.billing_status IN ('trialing', 'active')
+            )
+            AND (
+              (mr.zip_code <> '' AND csa.zip_code = mr.zip_code)
+              OR (mr.city <> '' AND LOWER(csa.city) = LOWER(mr.city))
+              OR (mr.state <> '' AND UPPER(csa.state) = UPPER(mr.state))
+            )
+        )
+      ORDER BY mr.created_at DESC, mr.id DESC
+      LIMIT $2 OFFSET $3
+      `,
+      [companyId, limit, offset]
+    );
+
+    return res.json(result.rows);
+  } catch (err) {
+    return sendSafeServerError(res, err, "MARKETPLACE OPPORTUNITIES LIST ERROR");
+  }
+});
+
+router.get("/marketplace/offers/me", companyAuth, requireMinimumRole("manager"), async (req, res) => {
+  try {
+    const companyId = Number(req.user && req.user.company_id);
+    if (!companyId) {
+      return res.status(403).json({ error: "Forbidden" });
+    }
+
+    const { limit, offset } = parsePagination(req.query);
+    const result = await pool.query(
+      `
+      SELECT
+        mo.id,
+        mo.request_id,
+        mo.company_id,
+        mo.price,
+        mo.message,
+        mo.estimated_start_date,
+        mo.status,
+        mo.created_at,
+        mr.title AS request_title,
+        mr.description AS request_description,
+        mr.category_id,
+        mr.requested_date,
+        mr.requested_time,
+        mr.city,
+        mr.state,
+        mr.zip_code,
+        mr.address,
+        mr.status AS request_status
+      FROM marketplace_offers mo
+      JOIN marketplace_requests mr
+        ON mr.id = mo.request_id
+      WHERE mo.company_id = $1
+      ORDER BY mo.created_at DESC, mo.id DESC
+      LIMIT $2 OFFSET $3
+      `,
+      [companyId, limit, offset]
+    );
+
+    return res.json(result.rows);
+  } catch (err) {
+    return sendSafeServerError(res, err, "MARKETPLACE COMPANY OFFERS LIST ERROR");
+  }
+});
+
 router.post("/marketplace/requests", customerAuth, marketplaceCustomerRequestCreateLimiter, validateMarketplaceContent, async (req, res) => {
   try {
     const categoryId = Number(req.body?.category_id);
@@ -971,7 +1079,7 @@ router.post("/marketplace/requests/:id/convert", companyAuth, requireCompanyBill
         `
         INSERT INTO customer_account_clients (customer_account_id, client_id, company_id)
         VALUES ($1, $2, $3)
-        ON CONFLICT (customer_account_id, client_id) DO NOTHING
+        ON CONFLICT DO NOTHING
         `,
         [source.customer_account_id, companyClient.id, companyId]
       );

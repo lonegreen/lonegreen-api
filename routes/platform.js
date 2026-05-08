@@ -45,6 +45,26 @@ function warningSummary(warnings) {
   };
 }
 
+function cleanCustomerStatus(value, fallback = "active") {
+  const normalized = String(value || "").trim().toLowerCase();
+  if (normalized === "active" || normalized === "suspended" || normalized === "deactivated") {
+    return normalized;
+  }
+  return fallback;
+}
+
+function parseCustomerPagination(query) {
+  const parsedLimit = Number(query && query.limit);
+  const parsedOffset = Number(query && query.offset);
+  const limit = Number.isInteger(parsedLimit) && parsedLimit > 0
+    ? Math.min(parsedLimit, 100)
+    : 50;
+  const offset = Number.isInteger(parsedOffset) && parsedOffset >= 0
+    ? parsedOffset
+    : 0;
+  return { limit, offset };
+}
+
 function buildUsageFromCompanyRow(row) {
   const status = normalizeBillingStatus(row && row.billing_status);
   return {
@@ -734,6 +754,239 @@ router.post("/platform/companies/:id/unsuspend", platformOnly, async (req, res) 
       return res.status(404).json({ error: err.message });
     }
     sendSafeServerError(res, err, "PLATFORM COMPANY UNSUSPEND ERROR");
+  }
+});
+
+router.get("/platform/customers", platformOnly, async (req, res) => {
+  try {
+    const { limit, offset } = parseCustomerPagination(req.query);
+    const q = String((req.query && req.query.q) || "").trim();
+    const requestedStatus = String((req.query && req.query.status) || "").trim().toLowerCase();
+    const statusFilter = requestedStatus && requestedStatus !== "all"
+      ? cleanCustomerStatus(requestedStatus, "")
+      : "";
+
+    const params = [];
+    const conds = [];
+
+    if (q) {
+      params.push(`%${q}%`);
+      const idx = params.length;
+      conds.push(
+        `(ca.email ILIKE $${idx} OR ca.first_name ILIKE $${idx} OR ca.last_name ILIKE $${idx} OR ca.phone ILIKE $${idx} OR CAST(ca.id AS TEXT) ILIKE $${idx})`
+      );
+    }
+
+    if (statusFilter) {
+      params.push(statusFilter);
+      conds.push(`LOWER(ca.status) = $${params.length}`);
+    }
+
+    const whereSql = conds.length ? `WHERE ${conds.join(" AND ")}` : "";
+    params.push(limit, offset);
+
+    const result = await pool.query(
+      `
+      SELECT
+        ca.id,
+        ca.client_id,
+        ca.email,
+        ca.first_name,
+        ca.last_name,
+        ca.phone,
+        ca.is_verified,
+        ca.created_at,
+        ca.updated_at,
+        ca.status,
+        ca.suspended_at,
+        ca.suspended_reason,
+        ca.deactivated_at,
+        c.company_id,
+        c.name AS client_name
+      FROM customer_accounts ca
+      LEFT JOIN clients c ON c.id = ca.client_id
+      ${whereSql}
+      ORDER BY ca.created_at DESC, ca.id DESC
+      LIMIT $${params.length - 1} OFFSET $${params.length}
+      `,
+      params
+    );
+
+    res.json(result.rows.map((row) => ({
+      ...row,
+      status: cleanCustomerStatus(row.status, "active")
+    })));
+  } catch (err) {
+    sendSafeServerError(res, err, "PLATFORM CUSTOMERS LIST ERROR");
+  }
+});
+
+router.get("/platform/customers/:id", platformOnly, async (req, res) => {
+  try {
+    const customerId = Number(req.params.id);
+    if (!Number.isInteger(customerId) || customerId <= 0) {
+      return res.status(400).json({ error: "Invalid customer id" });
+    }
+
+    const customer = await one(
+      `
+      SELECT
+        ca.id,
+        ca.client_id,
+        ca.email,
+        ca.first_name,
+        ca.last_name,
+        ca.phone,
+        ca.address,
+        ca.is_verified,
+        ca.created_at,
+        ca.updated_at,
+        ca.status,
+        ca.suspended_at,
+        ca.suspended_reason,
+        ca.deactivated_at,
+        c.company_id,
+        c.name AS client_name,
+        c.email AS client_email,
+        c.phone AS client_phone
+      FROM customer_accounts ca
+      LEFT JOIN clients c ON c.id = ca.client_id
+      WHERE ca.id = $1
+      LIMIT 1
+      `,
+      [customerId]
+    );
+
+    if (!customer.id) {
+      return res.status(404).json({ error: "Customer not found" });
+    }
+
+    const [marketplaceRequests, reviews, reports] = await Promise.all([
+      one(
+        `
+        SELECT COUNT(*)::int AS count
+        FROM marketplace_requests
+        WHERE customer_client_id = $1
+        `,
+        [customer.client_id || 0]
+      ),
+      one(
+        `
+        SELECT COUNT(*)::int AS count
+        FROM company_reviews
+        WHERE client_id = $1
+        `,
+        [customer.client_id || 0]
+      ),
+      one(
+        `
+        SELECT COUNT(*)::int AS count
+        FROM company_reports
+        WHERE customer_id = $1
+        `,
+        [customerId]
+      )
+    ]);
+
+    return res.json({
+      customer: {
+        ...customer,
+        status: cleanCustomerStatus(customer.status, "active")
+      },
+      summary: {
+        marketplace_requests_count: num(marketplaceRequests.count),
+        reviews_count: num(reviews.count),
+        reports_count: num(reports.count)
+      }
+    });
+  } catch (err) {
+    return sendSafeServerError(res, err, "PLATFORM CUSTOMER DETAIL ERROR");
+  }
+});
+
+router.patch("/platform/customers/:id/suspend", platformOnly, async (req, res) => {
+  try {
+    const customerId = Number(req.params.id);
+    if (!Number.isInteger(customerId) || customerId <= 0) {
+      return res.status(400).json({ error: "Invalid customer id" });
+    }
+    const reason = String((req.body && req.body.reason) || "").trim();
+    const result = await pool.query(
+      `
+      UPDATE customer_accounts
+      SET
+        status = 'suspended',
+        suspended_at = CURRENT_TIMESTAMP,
+        suspended_reason = $2,
+        updated_at = CURRENT_TIMESTAMP
+      WHERE id = $1
+      RETURNING id, client_id, email, first_name, last_name, phone, status, suspended_at, suspended_reason, deactivated_at, created_at, updated_at
+      `,
+      [customerId, reason || null]
+    );
+    if (!result.rows.length) {
+      return res.status(404).json({ error: "Customer not found" });
+    }
+    return res.json(result.rows[0]);
+  } catch (err) {
+    return sendSafeServerError(res, err, "PLATFORM CUSTOMER SUSPEND ERROR");
+  }
+});
+
+router.patch("/platform/customers/:id/unsuspend", platformOnly, async (req, res) => {
+  try {
+    const customerId = Number(req.params.id);
+    if (!Number.isInteger(customerId) || customerId <= 0) {
+      return res.status(400).json({ error: "Invalid customer id" });
+    }
+    const result = await pool.query(
+      `
+      UPDATE customer_accounts
+      SET
+        status = CASE WHEN deactivated_at IS NULL THEN 'active' ELSE 'deactivated' END,
+        suspended_at = NULL,
+        suspended_reason = NULL,
+        updated_at = CURRENT_TIMESTAMP
+      WHERE id = $1
+      RETURNING id, client_id, email, first_name, last_name, phone, status, suspended_at, suspended_reason, deactivated_at, created_at, updated_at
+      `,
+      [customerId]
+    );
+    if (!result.rows.length) {
+      return res.status(404).json({ error: "Customer not found" });
+    }
+    return res.json(result.rows[0]);
+  } catch (err) {
+    return sendSafeServerError(res, err, "PLATFORM CUSTOMER UNSUSPEND ERROR");
+  }
+});
+
+router.patch("/platform/customers/:id/deactivate", platformOnly, async (req, res) => {
+  try {
+    const customerId = Number(req.params.id);
+    if (!Number.isInteger(customerId) || customerId <= 0) {
+      return res.status(400).json({ error: "Invalid customer id" });
+    }
+    const result = await pool.query(
+      `
+      UPDATE customer_accounts
+      SET
+        status = 'deactivated',
+        deactivated_at = COALESCE(deactivated_at, CURRENT_TIMESTAMP),
+        suspended_at = COALESCE(suspended_at, CURRENT_TIMESTAMP),
+        suspended_reason = COALESCE(NULLIF(TRIM(suspended_reason), ''), 'Account deactivated by platform'),
+        updated_at = CURRENT_TIMESTAMP
+      WHERE id = $1
+      RETURNING id, client_id, email, first_name, last_name, phone, status, suspended_at, suspended_reason, deactivated_at, created_at, updated_at
+      `,
+      [customerId]
+    );
+    if (!result.rows.length) {
+      return res.status(404).json({ error: "Customer not found" });
+    }
+    return res.json(result.rows[0]);
+  } catch (err) {
+    return sendSafeServerError(res, err, "PLATFORM CUSTOMER DEACTIVATE ERROR");
   }
 });
 

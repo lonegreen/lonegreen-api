@@ -302,7 +302,7 @@
 
       const form = new FormData();
       form.append("file", file);
-      const res = await fetch(API_BASE + "/uploads", {
+      const res = await fetch(API_BASE + "/uploads/company/logo", {
         method: "POST",
         headers: authHeaders(),
         body: form

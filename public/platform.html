@@ -551,6 +551,9 @@
     <div class="top-actions">
       <button class="btn" type="button" data-top-action="refresh">Refresh</button>
       <button class="btn secondary" type="button" data-top-action="nav-billing">Billing & Subscriptions</button>
+      <button class="btn secondary" type="button" data-top-action="nav-customers">Customers</button>
+      <button class="btn secondary" type="button" data-top-action="nav-verifications">Trust Moderation</button>
+      <button class="btn secondary" type="button" data-top-action="nav-support">Support</button>
       <button class="btn secondary" type="button" data-top-action="control">Back to Control Panel</button>
     </div>
   </header>
@@ -753,6 +756,121 @@
           </div>
         </div>
       </section>
+
+      <section id="verificationsSection" class="section">
+        <div class="panel">
+          <div class="section-head">
+            <h2>Trust KPI Cards</h2>
+            <button class="btn secondary" type="button" id="syncTrustExpiredBtn">Sync expired trust statuses</button>
+          </div>
+          <div id="trustKpiGrid" class="mini-grid">
+            <div class="state">Loading trust KPIs...</div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="section-head">
+            <h2>Trust Moderation Queue</h2>
+            <span class="count-pill" id="verificationCount">0 pending</span>
+          </div>
+          <div id="verificationsList" class="list">
+            <div class="state">Loading verification queue...</div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="section-head">
+            <h2>Reports Queue</h2>
+            <span class="count-pill" id="reportsCount">0 reports</span>
+          </div>
+          <div id="reportsList" class="list">
+            <div class="state">Loading reports...</div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="section-head">
+            <h2>Report Details</h2>
+            <span class="count-pill" id="reportDetailPill">None selected</span>
+          </div>
+          <div id="reportDetails" class="state">
+            Select a report from the queue.
+          </div>
+        </div>
+      </section>
+
+      <section id="customersSection" class="section">
+        <div class="panel">
+          <div class="section-head">
+            <h2>Platform Customers</h2>
+            <span class="count-pill" id="customersCount">0 customers</span>
+          </div>
+          <div class="toolbar">
+            <label>Search
+              <input id="customersSearchInput" placeholder="Email, name, phone, or id">
+            </label>
+            <label>Status
+              <select id="customersStatusFilter">
+                <option value="all">All statuses</option>
+                <option value="active">Active</option>
+                <option value="suspended">Suspended</option>
+                <option value="deactivated">Deactivated</option>
+              </select>
+            </label>
+            <label>Page Size
+              <select id="customersLimit">
+                <option value="25">25</option>
+                <option value="50" selected>50</option>
+                <option value="100">100</option>
+              </select>
+            </label>
+            <label>Offset
+              <input id="customersOffset" type="number" min="0" step="1" value="0">
+            </label>
+          </div>
+        </div>
+        <div class="panel">
+          <div id="customersList" class="list">
+            <div class="state">Loading platform customers...</div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="section-head">
+            <h2>Customer Detail</h2>
+            <span class="count-pill" id="customerDetailPill">None selected</span>
+          </div>
+          <div id="customerDetail" class="state">Select a customer record.</div>
+        </div>
+      </section>
+
+      <section id="supportSection" class="section">
+        <div class="panel">
+          <div class="section-head">
+            <h2>Support Tickets</h2>
+            <span class="count-pill" id="supportCount">0 tickets</span>
+          </div>
+          <div class="toolbar">
+            <label>Status
+              <select id="supportStatusFilter">
+                <option value="">All statuses</option>
+                <option value="open">Open</option>
+                <option value="in_progress">In Progress</option>
+                <option value="waiting_customer">Waiting Customer</option>
+                <option value="resolved">Resolved</option>
+                <option value="closed">Closed</option>
+                <option value="pending">Pending (Legacy)</option>
+              </select>
+            </label>
+          </div>
+          <div id="supportList" class="list">
+            <div class="state">Loading support tickets...</div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="section-head">
+            <h2>Support Detail</h2>
+            <span class="count-pill" id="supportDetailPill">None selected</span>
+          </div>
+          <div id="supportDetail" class="state">Select a support ticket.</div>
+        </div>
+      </section>
     </main>
 
     <aside id="drawer" class="drawer">
@@ -788,10 +906,13 @@ const SECTION_META = {
   overview: ["Platform Command Center", "Manage companies, plans, usage, payments, and platform health."],
   companies: ["Companies", "Search, filter, inspect, and manage company billing state."],
   billing: ["Plans & Billing", "Review internal plans, subscription state, and company usage."],
+  customers: ["Platform Customers", "Search and moderate customer account status."],
   users: ["Platform Users", "Review platform access and role boundaries."],
   health: ["System Health", "Check API, queue, scheduler, database, and upload readiness."],
   activity: ["Activity Logs", "Review platform-wide logs when the endpoint is available."],
-  settings: ["Platform Settings", "Future safe settings for platform-level operations."]
+  settings: ["Platform Settings", "Future safe settings for platform-level operations."],
+  verifications: ["Trust Moderation", "Review and moderate company trust submissions."],
+  support: ["Support Dashboard", "Review and moderate all support tickets."]
 };
 
 let currentSection = "overview";
@@ -809,6 +930,14 @@ let platformSettings = null;
 let booted = false;
 let billingOverviewData = null;
 let billingAnalyticsData = null;
+let verificationRows = [];
+let reportRows = [];
+let selectedReport = null;
+let trustKpis = null;
+let supportRows = [];
+let selectedSupport = null;
+let platformCustomers = [];
+let selectedCustomer = null;
 
 function token(){ return localStorage.getItem("token"); }
 function user(){
@@ -931,6 +1060,9 @@ function showSection(section){
   if(currentSection === "activity") renderActivity();
   if(currentSection === "users") renderPlatformUsers();
   if(currentSection === "settings") renderSettings();
+  if(currentSection === "verifications") renderVerifications();
+  if(currentSection === "customers") renderCustomers();
+  if(currentSection === "support") renderSupport();
 }
 
 function goControl(){
@@ -1343,6 +1475,411 @@ function renderSettings(){
     (notes.length ? '<div class="state">' + notes.map(esc).join("<br>") + '</div>' : '');
 }
 
+function renderVerifications(){
+  const host = document.getElementById("verificationsList");
+  const count = document.getElementById("verificationCount");
+  const rows = Array.isArray(verificationRows) ? verificationRows : [];
+  count.textContent = rows.length + (rows.length === 1 ? " pending" : " pending");
+  if(!rows.length){
+    host.innerHTML = '<div class="state">No trust submissions are pending review.</div>';
+    return;
+  }
+  host.innerHTML = rows.map(row =>
+    '<article class="panel" style="box-shadow:none;margin:0;padding:12px;">' +
+      '<div class="section-head" style="margin-bottom:10px;">' +
+        '<h3 style="margin:0;">' + esc(row.name || ("Company #" + row.id)) + '</h3>' +
+        '<span class="count-pill">Company #' + esc(row.id) + '</span>' +
+      '</div>' +
+      '<div class="mini-grid">' +
+        metric("Verification", titleCase(row.verification_status || "pending")) +
+        metric("Insurance", titleCase(row.insurance_status || "pending")) +
+        metric("License", titleCase(row.license_status || "pending")) +
+        metric("Submitted", date(row.verification_submitted_at)) +
+      '</div>' +
+      '<div class="list" style="margin-top:10px;">' +
+        listRow("Insurance Provider", text(row.insurance_provider)) +
+        listRow("Insurance Expiry", text(row.insurance_expiry_date)) +
+        listRow("Insurance Document", text(row.insurance_document_url)) +
+        listRow("License Number", text(row.license_number)) +
+        listRow("License State", text(row.license_state)) +
+        listRow("License Expiry", text(row.license_expiry_date)) +
+        listRow("License Document", text(row.license_document_url)) +
+        listRow("Notes", text(row.verification_notes)) +
+      '</div>' +
+      '<div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">' +
+        '<button class="btn" type="button" data-verification-action="approve" data-company-id="' + esc(String(row.id)) + '">Approve</button>' +
+        '<button class="btn secondary" type="button" data-verification-action="reject" data-company-id="' + esc(String(row.id)) + '">Reject</button>' +
+        '<button class="btn secondary" type="button" data-verification-action="notes" data-company-id="' + esc(String(row.id)) + '">Update Notes</button>' +
+        '<button class="btn secondary" type="button" data-verification-action="suspend" data-company-id="' + esc(String(row.id)) + '">Suspend Company</button>' +
+      '</div>' +
+    '</article>'
+  ).join("");
+}
+
+async function loadVerifications(){
+  try {
+    const [verificationData, reportsData] = await Promise.all([
+      apiFetch("/platform/verifications"),
+      apiFetch("/platform/reports")
+    ]);
+    verificationRows = verificationData;
+    reportRows = reportsData;
+    if(!Array.isArray(verificationRows)) verificationRows = [];
+    if(!Array.isArray(reportRows)) reportRows = [];
+    renderVerifications();
+    renderReports();
+  } catch (err) {
+    verificationRows = [];
+    reportRows = [];
+    document.getElementById("verificationsList").innerHTML = '<div class="state error">' + esc(err.message || "Unable to load verifications.") + '</div>';
+  }
+}
+
+async function moderateVerification(companyId, action){
+  const notes = window.prompt("Optional moderation notes:", "") || "";
+  try {
+    await apiFetch("/platform/verifications/" + encodeURIComponent(companyId) + "/" + encodeURIComponent(action), {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ verification_notes: notes.trim() || null })
+    });
+    let message = "Verification updated.";
+    if(action === "approve") message = "Verification approved.";
+    if(action === "reject") message = "Verification rejected.";
+    if(action === "notes") message = "Verification notes updated.";
+    if(action === "suspend") message = "Company suspended from trust moderation.";
+    showToast(message);
+    await loadVerifications();
+  } catch (err) {
+    reportUiError(err, "Unable to moderate verification.");
+  }
+}
+
+function renderReports(){
+  const host = document.getElementById("reportsList");
+  const count = document.getElementById("reportsCount");
+  const rows = Array.isArray(reportRows) ? reportRows : [];
+  count.textContent = rows.length + (rows.length === 1 ? " report" : " reports");
+  if(!rows.length){
+    host.innerHTML = '<div class="state">No reports in queue.</div>';
+    return;
+  }
+  host.innerHTML = rows.map(row =>
+    '<div class="list-row">' +
+      '<span><strong>Report #' + esc(row.id) + '</strong><div class="sub">' + esc((row.company_name || ("Company #" + row.company_id)) + " | " + titleCase(row.report_type || "general") + " | " + titleCase(row.status || "open")) + '</div></span>' +
+      '<strong><button class="btn secondary" type="button" data-report-view="' + esc(String(row.id)) + '">View</button></strong>' +
+    '</div>'
+  ).join("");
+}
+
+async function viewReport(reportId){
+  try {
+    selectedReport = await apiFetch("/platform/reports/" + encodeURIComponent(reportId));
+    renderReportDetails();
+  } catch (err) {
+    reportUiError(err, "Unable to load report details.");
+  }
+}
+
+function renderReportDetails(){
+  const pill = document.getElementById("reportDetailPill");
+  const host = document.getElementById("reportDetails");
+  if(!selectedReport){
+    pill.textContent = "None selected";
+    host.className = "state";
+    host.innerHTML = "Select a report from the queue.";
+    return;
+  }
+  pill.textContent = "Report #" + selectedReport.id;
+  host.className = "list";
+  host.innerHTML =
+    listRow("Company", (selectedReport.company_name || ("Company #" + selectedReport.company_id))) +
+    listRow("Type", titleCase(selectedReport.report_type || "general")) +
+    listRow("Status", titleCase(selectedReport.status || "open")) +
+    listRow("Created", date(selectedReport.created_at)) +
+    listRow("Customer ID", text(selectedReport.customer_id)) +
+    listRow("Reason", text(selectedReport.reason)) +
+    listRow("Reviewed", text(selectedReport.reviewed_at)) +
+    listRow("Reviewed By", text(selectedReport.reviewed_by_user_id)) +
+    listRow("Resolution Notes", text(selectedReport.resolution_notes)) +
+    '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;">' +
+      '<button class="btn" type="button" data-report-resolve="resolved">Resolve</button>' +
+      '<button class="btn secondary" type="button" data-report-resolve="dismissed">Dismiss</button>' +
+    '</div>';
+}
+
+async function resolveReport(status){
+  if(!selectedReport || !selectedReport.id) return;
+  const notes = window.prompt("Resolution notes:", selectedReport.resolution_notes || "") || "";
+  try {
+    selectedReport = await apiFetch("/platform/reports/" + encodeURIComponent(selectedReport.id) + "/resolve", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        status: status,
+        resolution_notes: notes.trim() || null
+      })
+    });
+    showToast("Report updated.");
+    await loadVerifications();
+    renderReportDetails();
+  } catch (err) {
+    reportUiError(err, "Unable to resolve report.");
+  }
+}
+
+function renderTrustKpis(){
+  const host = document.getElementById("trustKpiGrid");
+  const k = trustKpis;
+  if(!k || typeof k !== "object"){
+    host.innerHTML = '<div class="state">Trust KPI data unavailable.</div>';
+    return;
+  }
+  host.innerHTML = [
+    metric("Pending Verifications", num(k.pending_verifications)),
+    metric("Verified Companies", num(k.verified_companies)),
+    metric("Rejected Companies", num(k.rejected_companies)),
+    metric("Suspended Companies", num(k.suspended_companies)),
+    metric("Pending Reports", num(k.pending_reports)),
+    metric("Expiring Insurance", num(k.expiring_insurance)),
+    metric("Expired Insurance", num(k.expired_insurance)),
+    metric("Expiring Licenses", num(k.expiring_licenses)),
+    metric("Expired Licenses", num(k.expired_licenses))
+  ].join("");
+}
+
+async function loadTrustKpis(){
+  try {
+    trustKpis = await apiFetch("/platform/trust/kpis");
+    renderTrustKpis();
+  } catch (err) {
+    trustKpis = null;
+    renderTrustKpis();
+  }
+}
+
+async function syncExpiredTrustStatusesManual(){
+  try {
+    const result = await apiFetch("/platform/trust/sync-expired", { method: "POST" });
+    showToast("Trust expiry sync complete: " + num(result.updated_count) + " company record(s) updated.");
+    await Promise.all([loadTrustKpis(), loadVerifications()]);
+  } catch (err) {
+    reportUiError(err, "Unable to sync expired trust statuses.");
+  }
+}
+
+function customerStatusBadge(status){
+  const clean = String(status || "active").toLowerCase();
+  return badge(clean, clean === "deactivated" ? "danger" : clean === "suspended" ? "warning" : "active");
+}
+
+function renderCustomers(){
+  const host = document.getElementById("customersList");
+  const count = document.getElementById("customersCount");
+  const rows = Array.isArray(platformCustomers) ? platformCustomers : [];
+  count.textContent = rows.length + (rows.length === 1 ? " customer" : " customers");
+  if(!rows.length){
+    host.innerHTML = '<div class="state">No customers found.</div>';
+    return;
+  }
+  host.innerHTML = rows.map(row =>
+    '<div class="list-row">' +
+      '<span><strong>Customer #' + esc(row.id) + '</strong><div class="sub">' +
+      esc([row.email, [row.first_name, row.last_name].filter(Boolean).join(" "), row.phone].filter(Boolean).join(" | ")) +
+      '</div></span>' +
+      '<strong>' + customerStatusBadge(row.status || "active") + ' <button class="btn secondary" type="button" data-customer-view="' + esc(String(row.id)) + '">View</button></strong>' +
+    '</div>'
+  ).join("");
+}
+
+async function loadCustomers(){
+  const q = String(document.getElementById("customersSearchInput").value || "").trim();
+  const status = String(document.getElementById("customersStatusFilter").value || "all");
+  const limit = Math.max(1, Math.min(100, num(document.getElementById("customersLimit").value || 50)));
+  const offset = Math.max(0, num(document.getElementById("customersOffset").value || 0));
+  const params = new URLSearchParams();
+  params.set("limit", String(limit));
+  params.set("offset", String(offset));
+  if(q) params.set("q", q);
+  if(status && status !== "all") params.set("status", status);
+  platformCustomers = await apiFetch("/platform/customers?" + params.toString());
+  if(!Array.isArray(platformCustomers)) platformCustomers = [];
+  renderCustomers();
+}
+
+function renderCustomerDetail(){
+  const pill = document.getElementById("customerDetailPill");
+  const host = document.getElementById("customerDetail");
+  if(!selectedCustomer || !selectedCustomer.customer){
+    pill.textContent = "None selected";
+    host.className = "state";
+    host.innerHTML = "Select a customer record.";
+    return;
+  }
+  const row = selectedCustomer.customer;
+  const summary = selectedCustomer.summary || {};
+  pill.textContent = "Customer #" + row.id;
+  host.className = "list";
+  host.innerHTML =
+    listRow("Status", String(row.status || "active")) +
+    listRow("Email", text(row.email)) +
+    listRow("Name", text(([row.first_name, row.last_name].filter(Boolean).join(" ") || null))) +
+    listRow("Phone", text(row.phone)) +
+    listRow("Client ID", text(row.client_id)) +
+    listRow("Client Name", text(row.client_name)) +
+    listRow("Company ID", text(row.company_id)) +
+    listRow("Suspended At", text(row.suspended_at)) +
+    listRow("Suspended Reason", text(row.suspended_reason)) +
+    listRow("Deactivated At", text(row.deactivated_at)) +
+    listRow("Marketplace Requests", String(num(summary.marketplace_requests_count))) +
+    listRow("Reviews", String(num(summary.reviews_count))) +
+    listRow("Reports", String(num(summary.reports_count))) +
+    '<label>Moderation reason (for suspend)<input id="customerSuspendReason" type="text" placeholder="Optional reason"></label>' +
+    '<div style="display:flex;gap:8px;flex-wrap:wrap;">' +
+      '<button class="btn secondary" type="button" data-customer-action="suspend">Suspend</button>' +
+      '<button class="btn secondary" type="button" data-customer-action="unsuspend">Unsuspend</button>' +
+      '<button class="btn secondary" type="button" data-customer-action="deactivate">Deactivate</button>' +
+    '</div>';
+}
+
+async function viewCustomer(customerId){
+  selectedCustomer = await apiFetch("/platform/customers/" + encodeURIComponent(customerId));
+  renderCustomerDetail();
+}
+
+async function mutateCustomer(action){
+  if(!selectedCustomer || !selectedCustomer.customer || !selectedCustomer.customer.id) return;
+  const id = selectedCustomer.customer.id;
+  const path = "/platform/customers/" + encodeURIComponent(id) + "/" + encodeURIComponent(action);
+  const body = {};
+  if(action === "suspend"){
+    const reasonEl = document.getElementById("customerSuspendReason");
+    const reason = String(reasonEl && reasonEl.value || "").trim();
+    body.reason = reason || null;
+  }
+  await apiFetch(path, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body)
+  });
+  showToast("Customer status updated.");
+  await loadCustomers();
+  await viewCustomer(id);
+}
+
+function renderSupport(){
+  const host = document.getElementById("supportList");
+  const count = document.getElementById("supportCount");
+  const rows = Array.isArray(supportRows) ? supportRows : [];
+  count.textContent = rows.length + (rows.length === 1 ? " ticket" : " tickets");
+  if(!rows.length){
+    host.innerHTML = '<div class="state">No support tickets found.</div>';
+    return;
+  }
+  host.innerHTML = rows.map(row =>
+    '<div class="list-row">' +
+      '<span><strong>Ticket #' + esc(row.id) + '</strong><div class="sub">' + esc((row.company_name || ("Company #" + row.company_id)) + " | " + titleCase(row.status || "open") + " | " + (row.subject || "")) + '</div></span>' +
+      '<strong><button class="btn secondary" type="button" data-support-view="' + esc(String(row.id)) + '">View</button></strong>' +
+    '</div>'
+  ).join("");
+}
+
+async function loadSupportTickets(){
+  const status = document.getElementById("supportStatusFilter").value;
+  const q = status ? ("?status=" + encodeURIComponent(status)) : "";
+  supportRows = await apiFetch("/platform/support/tickets" + q);
+  if(!Array.isArray(supportRows)) supportRows = [];
+  renderSupport();
+}
+
+async function viewSupportTicket(ticketId){
+  selectedSupport = await apiFetch("/platform/support/tickets/" + encodeURIComponent(ticketId));
+  renderSupportDetail();
+}
+
+function renderSupportDetail(){
+  const pill = document.getElementById("supportDetailPill");
+  const host = document.getElementById("supportDetail");
+  if(!selectedSupport){
+    pill.textContent = "None selected";
+    host.className = "state";
+    host.innerHTML = "Select a support ticket.";
+    return;
+  }
+  const ticket = selectedSupport.ticket || {};
+  const messages = Array.isArray(selectedSupport.replies) && selectedSupport.replies.length
+    ? selectedSupport.replies
+    : (Array.isArray(selectedSupport.messages) ? selectedSupport.messages : []);
+  const attachments = Array.isArray(selectedSupport.attachments) ? selectedSupport.attachments : [];
+  pill.textContent = "Ticket #" + ticket.id;
+  host.className = "list";
+  host.innerHTML =
+    listRow("Company ID", text(ticket.company_id)) +
+    listRow("Subject", text(ticket.subject)) +
+    listRow("Status", titleCase(ticket.status || "open")) +
+    listRow("Priority", titleCase(ticket.priority || "normal")) +
+    listRow("Category", titleCase(ticket.category || "general")) +
+    listRow("Assigned To", text(ticket.assigned_to_user_id)) +
+    listRow("Created", text(ticket.created_at)) +
+    (attachments.length ? ('<div class="state">' + attachments.map(a => '<a href="' + esc(a.file_url || "#") + '" target="_blank" rel="noopener">' + esc(a.file_name || "attachment") + '</a>').join("<br>") + '</div>') : "") +
+    '<div class="state">' + (messages.length ? messages.map(m =>
+      '<div style="margin-bottom:10px;"><strong>' + esc(m.username || ("user#" + (m.user_id || m.sender_user_id || "-"))) + '</strong> · ' + esc(m.created_at || "") + '<br>' + esc(m.message || "") + (m.is_internal ? ' <em>(internal)</em>' : '') + '</div>'
+    ).join("") : "No messages.") + '</div>' +
+    '<div style="display:flex;gap:8px;flex-wrap:wrap;">' +
+      '<select id="supportDetailStatus"><option value="open">Open</option><option value="in_progress">In Progress</option><option value="waiting_customer">Waiting Customer</option><option value="resolved">Resolved</option><option value="closed">Closed</option><option value="pending">Pending</option></select>' +
+      '<button class="btn" type="button" id="supportSetStatusBtn">Update Status</button>' +
+    '</div>' +
+    '<label>Reply<textarea id="supportReplyText"></textarea></label>' +
+    '<button class="btn secondary" type="button" id="supportReplyBtn">Send Reply</button>' +
+    '<label>Internal Note<textarea id="supportInternalText"></textarea></label>' +
+    '<button class="btn secondary" type="button" id="supportInternalBtn">Add Internal Note</button>';
+  const statusSel = document.getElementById("supportDetailStatus");
+  if(statusSel) statusSel.value = String(ticket.status || "open");
+  document.getElementById("supportSetStatusBtn").addEventListener("click", async function(){
+    try {
+      await apiFetch("/platform/support/tickets/" + encodeURIComponent(ticket.id) + "/status", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: document.getElementById("supportDetailStatus").value })
+      });
+      showToast("Support ticket status updated.");
+      await Promise.all([loadSupportTickets(), viewSupportTicket(ticket.id)]);
+    } catch (err) {
+      reportUiError(err, "Unable to update support status.");
+    }
+  });
+  document.getElementById("supportReplyBtn").addEventListener("click", async function(){
+    try {
+      const message = String(document.getElementById("supportReplyText").value || "").trim();
+      if(!message) return;
+      await apiFetch("/support/tickets/" + encodeURIComponent(ticket.id) + "/reply", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message })
+      });
+      showToast("Support reply sent.");
+      await Promise.all([loadSupportTickets(), viewSupportTicket(ticket.id)]);
+    } catch (err) {
+      reportUiError(err, "Unable to send support reply.");
+    }
+  });
+  document.getElementById("supportInternalBtn").addEventListener("click", async function(){
+    try {
+      const message = String(document.getElementById("supportInternalText").value || "").trim();
+      if(!message) return;
+      await apiFetch("/platform/support/tickets/" + encodeURIComponent(ticket.id) + "/internal-note", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message })
+      });
+      showToast("Internal note added.");
+      await Promise.all([loadSupportTickets(), viewSupportTicket(ticket.id)]);
+    } catch (err) {
+      reportUiError(err, "Unable to add internal note.");
+    }
+  });
+}
+
 async function loadSettings(){
   document.getElementById("settingsPanel").className = "state";
   document.getElementById("settingsPanel").innerHTML = "Loading platform settings...";
@@ -1736,12 +2273,13 @@ async function loadCompany(id){
 }
 
 async function loadData(){
-  const [overview, analytics, companyRows, billingOv, billingAnalytics] = await Promise.all([
+  const [overview, analytics, companyRows, billingOv, billingAnalytics, customerRows] = await Promise.all([
     apiFetch("/platform/overview"),
     apiFetch("/platform/analytics"),
     apiFetch("/platform/companies"),
     apiFetch("/platform/billing/overview").catch(() => null),
-    apiFetch("/platform/billing/analytics").catch(() => null)
+    apiFetch("/platform/billing/analytics").catch(() => null),
+    apiFetch("/platform/customers?limit=50&offset=0").catch(() => [])
   ]);
 
   overviewData = overview;
@@ -1749,6 +2287,7 @@ async function loadData(){
   companies = Array.isArray(companyRows) ? companyRows : [];
   billingOverviewData = billingOv && typeof billingOv === "object" ? billingOv : null;
   billingAnalyticsData = billingAnalytics && typeof billingAnalytics === "object" ? billingAnalytics : null;
+  platformCustomers = Array.isArray(customerRows) ? customerRows : [];
   renderOverview();
   renderOverviewPreview();
   renderAnalytics();
@@ -1756,6 +2295,7 @@ async function loadData(){
   renderCompanies();
   renderBillingSummary();
   renderBillingTable();
+  renderCustomers();
 }
 
 async function loadCurrentSection(){
@@ -1780,6 +2320,17 @@ async function loadCurrentSection(){
     if(currentSection === "settings"){
       await loadSettings();
     }
+    if(currentSection === "verifications"){
+      await Promise.all([loadVerifications(), loadTrustKpis()]);
+    }
+    if(currentSection === "customers"){
+      await loadCustomers();
+      renderCustomerDetail();
+    }
+    if(currentSection === "support"){
+      await loadSupportTickets();
+      renderSupportDetail();
+    }
     if(selectedCompanyId && ["companies", "billing"].includes(currentSection)){
       await loadCompany(selectedCompanyId);
     }
@@ -1802,7 +2353,79 @@ function initPlatformEventBindings(){
     const action = top.getAttribute("data-top-action");
     if(action === "refresh") loadCurrentSection();
     else if(action === "nav-billing") navigateSection("billing");
+    else if(action === "nav-customers") navigateSection("customers");
+    else if(action === "nav-verifications") navigateSection("verifications");
+    else if(action === "nav-support") navigateSection("support");
     else if(action === "control") goControl();
+  });
+
+  document.getElementById("verificationsList").addEventListener("click", function(e){
+    const btn = e.target.closest("[data-verification-action]");
+    if(!btn) return;
+    const companyId = Number(btn.getAttribute("data-company-id"));
+    const action = btn.getAttribute("data-verification-action");
+    if(!companyId || !action) return;
+    moderateVerification(companyId, action);
+  });
+
+  document.getElementById("reportsList").addEventListener("click", function(e){
+    const btn = e.target.closest("[data-report-view]");
+    if(!btn) return;
+    const reportId = Number(btn.getAttribute("data-report-view"));
+    if(!reportId) return;
+    viewReport(reportId);
+  });
+
+  document.getElementById("reportDetails").addEventListener("click", function(e){
+    const btn = e.target.closest("[data-report-resolve]");
+    if(!btn) return;
+    const status = btn.getAttribute("data-report-resolve");
+    resolveReport(status);
+  });
+
+  document.getElementById("syncTrustExpiredBtn").addEventListener("click", function(){
+    syncExpiredTrustStatusesManual();
+  });
+
+  document.getElementById("supportStatusFilter").addEventListener("change", function(){
+    loadSupportTickets();
+  });
+
+  document.getElementById("customersSearchInput").addEventListener("input", function(){
+    loadCustomers();
+  });
+  document.getElementById("customersStatusFilter").addEventListener("change", function(){
+    loadCustomers();
+  });
+  document.getElementById("customersLimit").addEventListener("change", function(){
+    loadCustomers();
+  });
+  document.getElementById("customersOffset").addEventListener("change", function(){
+    loadCustomers();
+  });
+
+  document.getElementById("customersList").addEventListener("click", function(e){
+    const btn = e.target.closest("[data-customer-view]");
+    if(!btn) return;
+    const customerId = Number(btn.getAttribute("data-customer-view"));
+    if(!customerId) return;
+    viewCustomer(customerId);
+  });
+
+  document.getElementById("customerDetail").addEventListener("click", function(e){
+    const btn = e.target.closest("[data-customer-action]");
+    if(!btn) return;
+    const action = String(btn.getAttribute("data-customer-action") || "");
+    if(!action) return;
+    mutateCustomer(action).catch(err => reportUiError(err, "Unable to update customer status."));
+  });
+
+  document.getElementById("supportList").addEventListener("click", function(e){
+    const btn = e.target.closest("[data-support-view]");
+    if(!btn) return;
+    const ticketId = Number(btn.getAttribute("data-support-view"));
+    if(!ticketId) return;
+    viewSupportTicket(ticketId);
   });
 
   document.getElementById("searchInput").addEventListener("input", renderCompanies);

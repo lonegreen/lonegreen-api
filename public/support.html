@@ -124,7 +124,9 @@
           <select id="filterStatus">
             <option value="">All statuses</option>
             <option value="open">Open</option>
-            <option value="pending">Pending</option>
+            <option value="in_progress">In Progress</option>
+            <option value="waiting_customer">Waiting Customer</option>
+            <option value="pending">Pending (Legacy)</option>
             <option value="resolved">Resolved</option>
             <option value="closed">Closed</option>
           </select>
@@ -161,6 +163,9 @@
           </label>
           <label>Message
             <textarea id="newMessage" maxlength="5000" required placeholder="Describe what is happening, what you expected, and any steps to reproduce."></textarea>
+          </label>
+          <label>Attachment (optional)
+            <input id="newAttachmentFile" type="file" accept="image/*">
           </label>
           <button class="btn" id="createBtn" type="submit">Open ticket</button>
         </form>
@@ -241,6 +246,23 @@
     let currentTickets = [];
     let activeTicketId = null;
 
+    async function uploadSupportAttachment(file){
+      if(!file) return null;
+      const form = new FormData();
+      form.append("file", file);
+      const init = { method: "POST", headers: { Authorization: "Bearer " + (getToken() || "") }, body: form };
+      const res = await fetch(API + "/uploads/company/logo", init);
+      let data = null;
+      try { data = await res.json(); } catch { data = {}; }
+      if(!res.ok || !data || !data.url){
+        throw new Error((data && data.error) || "Attachment upload failed");
+      }
+      return {
+        file_url: String(data.url),
+        file_name: String(file.name || "attachment")
+      };
+    }
+
     function listEndpoint() {
       const status = $("filterStatus").value;
       const base = isPlatform ? "/platform/support/tickets" : "/support/tickets";
@@ -303,7 +325,7 @@
       if (isPlatform) {
         return (
           '<select id="statusSelect" style="width:auto;padding:8px 10px">' +
-          ["open", "pending", "resolved", "closed"].map(s =>
+          ["open", "in_progress", "waiting_customer", "resolved", "closed", "pending"].map(s =>
             '<option value="' + s + '"' + (ticket.status === s ? " selected" : "") + '>' + s + '</option>'
           ).join("") +
           '</select>' +
@@ -343,6 +365,8 @@
     function renderTicketDetail(data) {
       const t = data.ticket || {};
       const messages = data.messages || [];
+      const replies = data.replies || [];
+      const attachments = data.attachments || [];
       const detailEl = $("detailPanel");
       const subject = escapeHtml(t.subject || "(no subject)");
       const status = escapeHtml(t.status || "open");
@@ -360,7 +384,19 @@
         '</div>'
       );
 
-      const thread = messages.map(m => {
+      const thread = replies.length ? replies.map(m => {
+        const role = m.is_internal ? "internal_note" : "reply";
+        const cls = "msg" + (m.is_internal ? " platform" : "");
+        return (
+          '<div class="' + cls + '">' +
+          '<div class="msg-head">' +
+          '<strong>' + escapeHtml(m.username || ("user #" + (m.user_id || "—"))) + '</strong>' +
+          ' · ' + escapeHtml(role) + ' · ' + fmtDate(m.created_at) +
+          '</div>' +
+          '<div>' + escapeHtml(m.message || "") + '</div>' +
+          '</div>'
+        );
+      }).join("") : messages.map(m => {
         const role = String(m.sender_role || "");
         const cls = role === "platform_owner" ? "msg platform" : "msg";
         return (
@@ -374,6 +410,14 @@
         );
       }).join("");
 
+      const attachmentHtml = attachments.length
+        ? '<div class="toolbar">' + attachments.map(a =>
+          '<a class="btn subtle" href="' + escapeHtml(a.file_url || "#") + '" target="_blank" rel="noopener">' +
+            'Attachment: ' + escapeHtml(a.file_name || "file") +
+          '</a>'
+        ).join("") + '</div>'
+        : "";
+
       const replyDisabled = t.status === "closed" ? "disabled" : "";
       const replyHint = t.status === "closed"
         ? '<div class="empty" style="text-align:left">Ticket is closed. Reopen it before replying.</div>'
@@ -385,10 +429,12 @@
         statusActions(t) +
         assignControls(t) +
         '</div>' +
+        attachmentHtml +
         '<div class="thread" id="thread">' + (thread || '<div class="empty">No messages yet.</div>') + '</div>' +
         '<hr style="margin:14px 0;border:0;border-top:1px solid #e1ece5">' +
         replyHint +
         '<label>Reply<textarea id="replyText" maxlength="5000" ' + replyDisabled + '></textarea></label>' +
+        '<label>Attachment (optional)<input id="replyAttachmentFile" type="file" accept="image/*" ' + replyDisabled + '></label>' +
         '<button class="btn" id="replyBtn" type="button" ' + replyDisabled + '>Send reply</button>'
       );
 
@@ -411,9 +457,12 @@
       if (!text) { setStatus("Reply message is required.", "error"); return; }
       setStatus("Sending reply...", "");
       try {
-        await api("/support/tickets/" + encodeURIComponent(id) + "/messages", {
+        const fileInput = $("replyAttachmentFile");
+        const file = fileInput && fileInput.files && fileInput.files[0] ? fileInput.files[0] : null;
+        const attachment = file ? await uploadSupportAttachment(file) : null;
+        await api("/support/tickets/" + encodeURIComponent(id) + "/reply", {
           method: "POST",
-          body: JSON.stringify({ message: text })
+          body: JSON.stringify({ message: text, attachments: attachment ? [attachment] : [] })
         });
         setStatus("Reply sent.", "success");
         await Promise.all([loadTickets(), openTicket(id)]);
@@ -441,7 +490,7 @@
       setStatus("Updating status...", "");
       try {
         await api("/platform/support/tickets/" + encodeURIComponent(id) + "/status", {
-          method: "PATCH",
+          method: "PUT",
           body: JSON.stringify({ status })
         });
         setStatus("Status updated.", "success");
@@ -481,14 +530,21 @@
       btn.disabled = true;
       setStatus("Opening ticket...", "");
       try {
+        const createFile = $("newAttachmentFile");
+        const file = createFile && createFile.files && createFile.files[0] ? createFile.files[0] : null;
+        const attachment = file ? await uploadSupportAttachment(file) : null;
         const created = await api("/support/tickets", {
           method: "POST",
-          body: JSON.stringify({ subject, message, category, priority })
+          body: JSON.stringify({
+            subject, message, category, priority,
+            attachments: attachment ? [attachment] : []
+          })
         });
         $("newSubject").value = "";
         $("newMessage").value = "";
         $("newCategory").value = "general";
         $("newPriority").value = "normal";
+        $("newAttachmentFile").value = "";
         setStatus("Ticket opened.", "success");
         await loadTickets();
         if (created && created.id) await openTicket(created.id);

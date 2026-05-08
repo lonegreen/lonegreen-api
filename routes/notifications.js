@@ -140,6 +140,12 @@ router.get("/company", auth, requireCompanyBillingForMutations, requireMinimumRo
         zelle_name,
         zelle_contact,
         invoice_prefix,
+        verification_status,
+        verification_submitted_at,
+        verification_reviewed_at,
+        verification_notes,
+        insurance_status,
+        license_status,
         created_at
       FROM companies
       WHERE id = $1
@@ -199,7 +205,13 @@ router.put("/company", auth, requireCompanyBillingForMutations, requireMinimumRo
         payment_instructions,
         zelle_name,
         zelle_contact,
-        invoice_prefix
+        invoice_prefix,
+        verification_status,
+        verification_submitted_at,
+        verification_reviewed_at,
+        verification_notes,
+        insurance_status,
+        license_status
       FROM companies
       WHERE id = $1
       LIMIT 1
@@ -251,6 +263,12 @@ router.put("/company", auth, requireCompanyBillingForMutations, requireMinimumRo
         zelle_name,
         zelle_contact,
         invoice_prefix,
+        verification_status,
+        verification_submitted_at,
+        verification_reviewed_at,
+        verification_notes,
+        insurance_status,
+        license_status,
         created_at
     `, [
       name || existing.name || "",

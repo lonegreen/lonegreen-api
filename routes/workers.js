@@ -295,14 +295,9 @@ router.delete("/ops/workers/:id/permanent", auth, requireCompanyBillingForMutati
 });
 
 
-router.get("/ops/workers", auth, async (req, res) => {
+router.get("/ops/workers", auth, requireCompanyBillingForMutations, requireMinimumRole("manager"), async (req, res) => {
   try {
     await ensureOperationsSchema();
-    const workerId = workerIdForUser(req.user);
-
-    if (!isManagerOrAbove(req.user) && !workerId) {
-      return forbidden(res);
-    }
 
     try {
       await syncAlerts(req.user.company_id);
@@ -327,9 +322,8 @@ router.get("/ops/workers", auth, async (req, res) => {
         GROUP BY worker_id
       ) job_stats ON job_stats.worker_id = workers.id
       WHERE workers.company_id = $1
-        AND ($2::int IS NULL OR workers.id = $2)
       ORDER BY COALESCE(workers.active, TRUE) DESC, workers.name ASC, workers.id ASC
-    `, [req.user.company_id, isManagerOrAbove(req.user) ? null : workerId]);
+    `, [req.user.company_id]);
 
     res.json(Array.isArray(result.rows) ? result.rows : []);
   } catch (err) {
@@ -342,28 +336,34 @@ router.get("/operations/workers", auth, requireCompanyBillingForMutations, requi
   try {
     warnDeprecatedRoute("/operations/workers", "/ops/workers");
     await ensureOperationsSchema();
+
+    try {
+      await syncAlerts(req.user.company_id);
+    } catch (alertErr) {
+      console.log("OPS WORKERS ALERT SYNC ERROR:", alertErr);
+    }
+
     const result = await pool.query(`
       SELECT
         workers.*,
-        (
-          SELECT COUNT(*)
-          FROM jobs
-          WHERE jobs.company_id = workers.company_id
-            AND jobs.worker_id = workers.id
-        ) AS jobs_assigned,
-        (
-          SELECT COUNT(*)
-          FROM jobs
-          WHERE jobs.company_id = workers.company_id
-            AND jobs.worker_id = workers.id
-            AND jobs.status = 'completed'
-        ) AS jobs_completed
+        COALESCE(job_stats.jobs_assigned, 0) AS jobs_assigned,
+        COALESCE(job_stats.jobs_completed, 0) AS jobs_completed
       FROM workers
+      LEFT JOIN (
+        SELECT
+          worker_id,
+          COUNT(*) AS jobs_assigned,
+          COUNT(*) FILTER (WHERE status = 'completed') AS jobs_completed
+        FROM jobs
+        WHERE company_id = $1
+          AND worker_id IS NOT NULL
+        GROUP BY worker_id
+      ) job_stats ON job_stats.worker_id = workers.id
       WHERE workers.company_id = $1
-      ORDER BY workers.name ASC, workers.id ASC
+      ORDER BY COALESCE(workers.active, TRUE) DESC, workers.name ASC, workers.id ASC
     `, [req.user.company_id]);
 
-    res.json(result.rows);
+    res.json(Array.isArray(result.rows) ? result.rows : []);
   } catch (err) {
     console.log("OPS GET WORKERS ERROR:", err);
     sendSafeServerError(res, err, "routes/workers");
@@ -474,33 +474,35 @@ router.get("/ops/unassigned-jobs", auth, requireCompanyBillingForMutations, requ
 
 router.get("/worker-jobs/:workerId", auth, requireWorkerRouteAccess, async (req, res) => {
   try {
-    const workerId = req.params.workerId;
-    const company_id = req.user.company_id;
+    await ensureOperationsSchema();
+    await syncAlerts(req.user.company_id);
 
     // Validate worker exists in same company
     const workerCheck = await pool.query(
       "SELECT id FROM workers WHERE id=$1 AND company_id=$2 LIMIT 1",
-      [workerId, company_id]
+      [req.params.workerId, req.user.company_id]
     );
     if (workerCheck.rows.length === 0) {
       return res.status(403).json({ error: "Forbidden" });
     }
 
     const result = await pool.query(`
-      SELECT 
+      SELECT
         jobs.*,
         clients.name AS client_name,
         clients.phone AS client_phone,
-        clients.address AS client_address
+        clients.address AS client_address,
+        workers.name AS worker_name
       FROM jobs
-      LEFT JOIN clients ON jobs.client_id = clients.id AND clients.company_id = jobs.company_id
-      WHERE jobs.worker_id = $1
+      LEFT JOIN clients ON clients.id = jobs.client_id AND clients.company_id = jobs.company_id
+      LEFT JOIN workers ON workers.id = jobs.worker_id AND workers.company_id = jobs.company_id
+      WHERE jobs.company_id = $1
         AND jobs.date = CURRENT_DATE
-        AND jobs.company_id = $2
-      ORDER BY jobs.start_time ASC
-    `, [workerId, company_id]);
+        AND jobs.worker_id = $2
+      ORDER BY jobs.start_time ASC, jobs.id ASC
+    `, [req.user.company_id, req.params.workerId]);
 
-    res.json(result.rows);
+    res.json(result.rows.map(job => ({ ...job, status: normalizeJobStatus(job.status) })));
   } catch (err) {
     console.log("WORKER JOBS ERROR:", err);
     sendSafeServerError(res, err, "routes/workers");

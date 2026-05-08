@@ -195,42 +195,48 @@ router.post("/jobs", auth, requireCompanyBillingForMutations, enforceJobPlanLimi
 router.get("/jobs", auth, requireCompanyBillingForMutations, requireMinimumRole("manager"), async (req, res) => {
   try {
     warnDeprecatedRoute("/jobs", "/workflow/jobs");
+    await ensureWorkflowSchema();
     const company_id = req.user.company_id;
     const { limit, offset } = parsePagination(req.query);
 
     const result = await pool.query(
       `
-      SELECT 
-        jobs.id,
-        jobs.client_id,
-        jobs.service,
-        jobs.type,
-        jobs.date,
-        jobs.start_time,
-        jobs.end_time,
-        jobs.status,
-        jobs.status_reason,
-        jobs.internal_notes,
-        jobs.worker_id,
-        jobs.price,
-        jobs.payment_status,
-        jobs.company_id,
-        jobs.source_subscription_id,
+      SELECT
+        jobs.*,
         clients.name AS client_name,
         clients.phone AS client_phone,
         clients.address AS client_address,
-        workers.name AS worker_name
+        clients.zip AS client_zip,
+        workers.name AS worker_name,
+        estimates.status AS estimate_status,
+        estimates.record_type AS estimate_record_type,
+        invoices.id AS invoice_id,
+        invoices.status AS invoice_status,
+        invoices.invoice_number
       FROM jobs
       LEFT JOIN clients ON jobs.client_id = clients.id AND clients.company_id = jobs.company_id
       LEFT JOIN workers ON jobs.worker_id = workers.id AND workers.company_id = jobs.company_id
+      LEFT JOIN estimates ON jobs.estimate_id = estimates.id AND estimates.company_id = jobs.company_id
+      LEFT JOIN LATERAL (
+        SELECT id, status, invoice_number
+        FROM invoices
+        WHERE invoices.job_id = jobs.id AND invoices.company_id = jobs.company_id
+        ORDER BY invoices.id DESC
+        LIMIT 1
+      ) invoices ON true
       WHERE jobs.company_id = $1
-      ORDER BY jobs.date ASC, jobs.start_time ASC, jobs.id DESC
+      ORDER BY jobs.date DESC, jobs.id DESC
       LIMIT $2 OFFSET $3
     `,
       [company_id, limit, offset]
     );
 
-    res.json(result.rows);
+    res.json(
+      result.rows.map((job) => ({
+        ...job,
+        status: normalizeJobStatus(job.status)
+      }))
+    );
   } catch (err) {
     console.log("JOBS ERROR:", err);
     sendSafeServerError(res, err, "routes/jobs");

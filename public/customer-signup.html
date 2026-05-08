@@ -293,8 +293,11 @@
         const data = await res.json().catch(() => ({}));
         if (!res.ok) throw new Error(data.error || data.message || "Unable to create your account yet.");
 
-        setStatus("Account created successfully. You can now log in.", "success");
+        setStatus("Account created successfully. Redirecting to login...", "success");
         form.reset();
+        setTimeout(function() {
+          window.location.href = "/customer-login-v2.html?signup=success";
+        }, 700);
       } catch (err) {
         setStatus(err.message || "Unable to create your account yet.", "error");
       } finally {

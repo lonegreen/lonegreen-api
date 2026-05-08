@@ -59,6 +59,8 @@
       color: #648076;
       line-height: 1.45;
     }
+    .customer-nav { display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; }
+    .customer-nav a { border:1px solid var(--brand-border); background:white; color:var(--brand-primary); border-radius:999px; padding:8px 12px; font-size:13px; font-weight:800; text-decoration:none; }
     .profile-card {
       background: white;
       border: 1px solid var(--brand-border);
@@ -196,6 +198,14 @@
         </div>
         <h1>Your Profile</h1>
         <p>Keep your contact details current for service updates, billing, and customer portal access.</p>
+        <nav class="customer-nav">
+          <a href="/customer-dashboard.html">Dashboard</a>
+          <a href="/marketplace.html">Marketplace</a>
+          <a href="/discover.html">Discover</a>
+          <a href="/messages.html">Messages</a>
+          <a href="/customer-profile.html">Profile</a>
+          <a href="#" id="customerLogoutLink">Logout</a>
+        </nav>
       </div>
       <button id="logoutTopBtn" class="btn secondary" type="button">Log Out</button>
     </section>
@@ -237,6 +247,7 @@
     const saveBtn = document.getElementById("saveBtn");
     const logoutBtn = document.getElementById("logoutBtn");
     const logoutTopBtn = document.getElementById("logoutTopBtn");
+    const customerLogoutLink = document.getElementById("customerLogoutLink");
 
     function customerToken() {
       return localStorage.getItem("customerToken");
@@ -336,6 +347,10 @@
     form.addEventListener("input", updateHeader);
     logoutBtn.addEventListener("click", logout);
     logoutTopBtn.addEventListener("click", logout);
+    customerLogoutLink.addEventListener("click", function(event) {
+      event.preventDefault();
+      logout();
+    });
 
     form.addEventListener("submit", async event => {
       event.preventDefault();

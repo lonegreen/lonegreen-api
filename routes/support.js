@@ -34,7 +34,14 @@ const router = express.Router();
  *    (per Phase 1 scope).
  * ============================================================ */
 
-const ALLOWED_STATUSES = new Set(["open", "pending", "resolved", "closed"]);
+const ALLOWED_STATUSES = new Set([
+  "open",
+  "in_progress",
+  "waiting_customer",
+  "resolved",
+  "closed",
+  "pending" // legacy compatibility
+]);
 const COMPANY_SETTABLE_STATUSES = new Set(["open", "closed"]);
 const ALLOWED_PRIORITIES = new Set(["low", "normal", "high", "urgent"]);
 const ALLOWED_CATEGORIES = new Set([
@@ -85,6 +92,17 @@ function parseTicketId(value) {
   return Number.isInteger(id) && id > 0 ? id : null;
 }
 
+function sanitizeAttachmentList(value) {
+  if (!Array.isArray(value)) return [];
+  return value
+    .map((item) => ({
+      file_url: sanitizeTextField(item && item.file_url, 2000),
+      file_name: sanitizeTextField(item && item.file_name, 255)
+    }))
+    .filter((item) => item.file_url && item.file_name)
+    .slice(0, 10);
+}
+
 function isPlatformOwnerUser(user) {
   return normalizeRole(user && user.role) === "platform_owner";
 }
@@ -125,6 +143,47 @@ async function loadTicketMessages(ticketId) {
   return result.rows;
 }
 
+async function loadTicketReplies(ticketId, { includeInternal = false } = {}) {
+  const result = await pool.query(
+    `
+    SELECT
+      r.id,
+      r.ticket_id,
+      r.user_id,
+      u.username,
+      r.message,
+      r.is_internal,
+      r.created_at
+    FROM support_replies r
+    LEFT JOIN users u ON u.id = r.user_id
+    WHERE r.ticket_id = $1
+      AND ($2::boolean = TRUE OR r.is_internal = FALSE)
+    ORDER BY r.created_at ASC, r.id ASC
+    `,
+    [ticketId, includeInternal]
+  );
+  return result.rows;
+}
+
+async function loadTicketAttachments(ticketId) {
+  const result = await pool.query(
+    `
+    SELECT
+      id,
+      ticket_id,
+      uploaded_by_user_id,
+      file_url,
+      file_name,
+      created_at
+    FROM support_attachments
+    WHERE ticket_id = $1
+    ORDER BY created_at ASC, id ASC
+    `,
+    [ticketId]
+  );
+  return result.rows;
+}
+
 async function appendMessage(client, { ticketId, senderUserId, senderRole, message }) {
   const inserted = await client.query(
     `
@@ -140,6 +199,142 @@ async function appendMessage(client, { ticketId, senderUserId, senderRole, messa
     [ticketId]
   );
   return inserted.rows[0];
+}
+
+async function handleTicketReply(req, res) {
+  const client = await pool.connect();
+  try {
+    const ticketId = parseTicketId(req.params.id);
+    if (!ticketId) return res.status(400).json({ error: "Invalid ticket id" });
+
+    const message = sanitizeTextField(req.body && req.body.message, MESSAGE_MAX);
+    if (!message) return res.status(400).json({ error: "Message is required" });
+    const attachments = sanitizeAttachmentList(req.body && req.body.attachments);
+
+    const platformView = isPlatformOwnerUser(req.user);
+    const company_id = platformView ? null : req.user.company_id;
+    if (!platformView && !company_id) {
+      return res.status(403).json({ error: "Forbidden" });
+    }
+
+    const senderRole = normalizeRole(req.user && req.user.role);
+    if (!senderRole || !ALLOWED_SENDER_ROLES.has(senderRole)) {
+      return res.status(403).json({ error: "Forbidden" });
+    }
+
+    if (!platformView && !auth.hasMinimumRole(req.user, "manager")) {
+      return res.status(403).json({ error: "Forbidden" });
+    }
+
+    await client.query("BEGIN");
+
+    const ticket = await (async () => {
+      const params = [ticketId];
+      let where = "id = $1";
+      if (company_id != null) {
+        params.push(company_id);
+        where += " AND company_id = $2";
+      }
+      const r = await client.query(
+        `SELECT id, company_id, status FROM support_tickets WHERE ${where} FOR UPDATE`,
+        params
+      );
+      return r.rows[0] || null;
+    })();
+
+    if (!ticket) {
+      await client.query("ROLLBACK");
+      return res.status(404).json({ error: "Ticket not found" });
+    }
+
+    if (ticket.status === "closed") {
+      await client.query("ROLLBACK");
+      return res.status(409).json({ error: "Ticket is closed; reopen it before replying" });
+    }
+
+    const inserted = await appendMessage(client, {
+      ticketId,
+      senderUserId: req.user.id,
+      senderRole,
+      message
+    });
+
+    const replyInsert = await client.query(
+      `
+      INSERT INTO support_replies (ticket_id, user_id, message, is_internal)
+      VALUES ($1, $2, $3, FALSE)
+      RETURNING id, ticket_id, user_id, message, is_internal, created_at
+      `,
+      [ticketId, req.user.id, message]
+    );
+
+    for (const attachment of attachments) {
+      await client.query(
+        `
+        INSERT INTO support_attachments
+          (ticket_id, uploaded_by_user_id, file_url, file_name)
+        VALUES ($1, $2, $3, $4)
+        `,
+        [ticketId, req.user.id, attachment.file_url, attachment.file_name]
+      );
+    }
+
+    if (platformView && (ticket.status === "open" || ticket.status === "in_progress")) {
+      await client.query(
+        `UPDATE support_tickets SET status = 'waiting_customer', updated_at = CURRENT_TIMESTAMP WHERE id = $1`,
+        [ticketId]
+      );
+    } else if (!platformView && (ticket.status === "pending" || ticket.status === "waiting_customer")) {
+      await client.query(
+        `UPDATE support_tickets SET status = 'in_progress', updated_at = CURRENT_TIMESTAMP WHERE id = $1`,
+        [ticketId]
+      );
+    }
+
+    await client.query("COMMIT");
+    return res.status(201).json({
+      message: inserted,
+      reply: replyInsert.rows[0],
+      attachments_added: attachments.length
+    });
+  } catch (err) {
+    try { await client.query("ROLLBACK"); } catch (_) { /* ignore */ }
+    console.log("REPLY SUPPORT TICKET ERROR:", err);
+    return sendSafeServerError(res, err, "routes/support");
+  } finally {
+    client.release();
+  }
+}
+
+async function handlePlatformStatusUpdate(req, res) {
+  try {
+    const ticketId = parseTicketId(req.params.id);
+    if (!ticketId) return res.status(400).json({ error: "Invalid ticket id" });
+
+    const requested = sanitizeTextField(req.body && req.body.status, 16).toLowerCase();
+    if (!ALLOWED_STATUSES.has(requested)) {
+      return res.status(400).json({ error: "Invalid status" });
+    }
+
+    const updated = await pool.query(
+      `
+      UPDATE support_tickets
+      SET status = $1, updated_at = CURRENT_TIMESTAMP
+      WHERE id = $2
+      RETURNING id, company_id, created_by_user_id, assigned_to_user_id,
+                subject, category, priority, status, created_at, updated_at
+      `,
+      [requested, ticketId]
+    );
+
+    if (!updated.rows.length) {
+      return res.status(404).json({ error: "Ticket not found" });
+    }
+    return res.json(updated.rows[0]);
+  } catch (err) {
+    console.log("PLATFORM UPDATE SUPPORT TICKET STATUS ERROR:", err);
+    return sendSafeServerError(res, err, "routes/support");
+  }
 }
 
 /* ============================================================
@@ -214,6 +409,7 @@ router.post(
       const initialMessage = sanitizeTextField(req.body && req.body.message, MESSAGE_MAX);
       const rawCategory = sanitizeTextField(req.body && req.body.category, 32).toLowerCase();
       const rawPriority = sanitizeTextField(req.body && req.body.priority, 16).toLowerCase();
+      const attachments = sanitizeAttachmentList(req.body && req.body.attachments);
       const category = ALLOWED_CATEGORIES.has(rawCategory) ? rawCategory : "general";
       const priority = ALLOWED_PRIORITIES.has(rawPriority) ? rawPriority : "normal";
 
@@ -249,6 +445,23 @@ router.post(
         senderRole,
         message: initialMessage
       });
+      await client.query(
+        `
+        INSERT INTO support_replies (ticket_id, user_id, message, is_internal)
+        VALUES ($1, $2, $3, FALSE)
+        `,
+        [ticket.id, req.user.id, initialMessage]
+      );
+      for (const attachment of attachments) {
+        await client.query(
+          `
+          INSERT INTO support_attachments
+            (ticket_id, uploaded_by_user_id, file_url, file_name)
+          VALUES ($1, $2, $3, $4)
+          `,
+          [ticket.id, req.user.id, attachment.file_url, attachment.file_name]
+        );
+      }
 
       await client.query("COMMIT");
       return res.status(201).json(ticket);
@@ -271,6 +484,9 @@ router.get(
       if (!ticketId) return res.status(400).json({ error: "Invalid ticket id" });
 
       const platformView = isPlatformOwnerUser(req.user);
+      if (!platformView && !auth.hasMinimumRole(req.user, "manager")) {
+        return res.status(403).json({ error: "Forbidden" });
+      }
       const company_id = platformView ? null : req.user.company_id;
 
       if (!platformView && !company_id) {
@@ -280,8 +496,12 @@ router.get(
       const ticket = await loadTicketRow(ticketId, { companyId: company_id });
       if (!ticket) return res.status(404).json({ error: "Ticket not found" });
 
-      const messages = await loadTicketMessages(ticketId);
-      return res.json({ ticket, messages });
+      const [messages, replies, attachments] = await Promise.all([
+        loadTicketMessages(ticketId),
+        loadTicketReplies(ticketId, { includeInternal: platformView }),
+        loadTicketAttachments(ticketId)
+      ]);
+      return res.json({ ticket, messages, replies, attachments });
     } catch (err) {
       console.log("GET SUPPORT TICKET ERROR:", err);
       sendSafeServerError(res, err, "routes/support");
@@ -293,92 +513,14 @@ router.post(
   "/support/tickets/:id/messages",
   auth,
   supportMutationLimiter,
-  async (req, res) => {
-    const client = await pool.connect();
-    try {
-      const ticketId = parseTicketId(req.params.id);
-      if (!ticketId) return res.status(400).json({ error: "Invalid ticket id" });
+  handleTicketReply
+);
 
-      const message = sanitizeTextField(req.body && req.body.message, MESSAGE_MAX);
-      if (!message) return res.status(400).json({ error: "Message is required" });
-
-      const platformView = isPlatformOwnerUser(req.user);
-      const company_id = platformView ? null : req.user.company_id;
-      if (!platformView && !company_id) {
-        return res.status(403).json({ error: "Forbidden" });
-      }
-
-      const senderRole = normalizeRole(req.user && req.user.role);
-      if (!senderRole || !ALLOWED_SENDER_ROLES.has(senderRole)) {
-        return res.status(403).json({ error: "Forbidden" });
-      }
-
-      // Company users (manager+) may post on their own company tickets.
-      if (!platformView) {
-        if (!auth.hasMinimumRole(req.user, "manager")) {
-          return res.status(403).json({ error: "Forbidden" });
-        }
-      }
-
-      await client.query("BEGIN");
-
-      const ticket = await (async () => {
-        const params = [ticketId];
-        let where = "id = $1";
-        if (company_id != null) {
-          params.push(company_id);
-          where += " AND company_id = $2";
-        }
-        const r = await client.query(
-          `SELECT id, company_id, status FROM support_tickets WHERE ${where} FOR UPDATE`,
-          params
-        );
-        return r.rows[0] || null;
-      })();
-
-      if (!ticket) {
-        await client.query("ROLLBACK");
-        return res.status(404).json({ error: "Ticket not found" });
-      }
-
-      if (ticket.status === "closed") {
-        await client.query("ROLLBACK");
-        return res.status(409).json({ error: "Ticket is closed; reopen it before replying" });
-      }
-
-      const inserted = await appendMessage(client, {
-        ticketId,
-        senderUserId: req.user.id,
-        senderRole,
-        message
-      });
-
-      // When a platform_owner replies and the ticket is still 'open', mark it
-      // 'pending' (awaiting customer). Company replies on a 'pending' ticket
-      // flip it back to 'open' (awaiting platform). This keeps the status
-      // useful without adding new transitions to the constraint set.
-      if (platformView && ticket.status === "open") {
-        await client.query(
-          `UPDATE support_tickets SET status = 'pending', updated_at = CURRENT_TIMESTAMP WHERE id = $1`,
-          [ticketId]
-        );
-      } else if (!platformView && ticket.status === "pending") {
-        await client.query(
-          `UPDATE support_tickets SET status = 'open', updated_at = CURRENT_TIMESTAMP WHERE id = $1`,
-          [ticketId]
-        );
-      }
-
-      await client.query("COMMIT");
-      return res.status(201).json(inserted);
-    } catch (err) {
-      try { await client.query("ROLLBACK"); } catch (_) { /* ignore */ }
-      console.log("REPLY SUPPORT TICKET ERROR:", err);
-      sendSafeServerError(res, err, "routes/support");
-    } finally {
-      client.release();
-    }
-  }
+router.post(
+  "/support/tickets/:id/reply",
+  auth,
+  supportMutationLimiter,
+  handleTicketReply
 );
 
 router.patch(
@@ -488,6 +630,29 @@ router.get(
   }
 );
 
+router.get(
+  "/platform/support/tickets/:id",
+  auth,
+  requirePlatformOwner,
+  async (req, res) => {
+    try {
+      const ticketId = parseTicketId(req.params.id);
+      if (!ticketId) return res.status(400).json({ error: "Invalid ticket id" });
+      const ticket = await loadTicketRow(ticketId);
+      if (!ticket) return res.status(404).json({ error: "Ticket not found" });
+      const [messages, replies, attachments] = await Promise.all([
+        loadTicketMessages(ticketId),
+        loadTicketReplies(ticketId, { includeInternal: true }),
+        loadTicketAttachments(ticketId)
+      ]);
+      return res.json({ ticket, messages, replies, attachments });
+    } catch (err) {
+      console.log("PLATFORM GET SUPPORT TICKET ERROR:", err);
+      sendSafeServerError(res, err, "routes/support");
+    }
+  }
+);
+
 router.patch(
   "/platform/support/tickets/:id/assign",
   auth,
@@ -546,34 +711,61 @@ router.patch(
   auth,
   requirePlatformOwner,
   supportMutationLimiter,
+  handlePlatformStatusUpdate
+);
+
+router.put(
+  "/platform/support/tickets/:id/status",
+  auth,
+  requirePlatformOwner,
+  supportMutationLimiter,
+  handlePlatformStatusUpdate
+);
+
+router.post(
+  "/platform/support/tickets/:id/internal-note",
+  auth,
+  requirePlatformOwner,
+  supportMutationLimiter,
   async (req, res) => {
+    const client = await pool.connect();
     try {
       const ticketId = parseTicketId(req.params.id);
       if (!ticketId) return res.status(400).json({ error: "Invalid ticket id" });
+      const message = sanitizeTextField(req.body && req.body.message, MESSAGE_MAX);
+      if (!message) return res.status(400).json({ error: "Message is required" });
 
-      const requested = sanitizeTextField(req.body && req.body.status, 16).toLowerCase();
-      if (!ALLOWED_STATUSES.has(requested)) {
-        return res.status(400).json({ error: "Invalid status" });
-      }
-
-      const updated = await pool.query(
-        `
-        UPDATE support_tickets
-        SET status = $1, updated_at = CURRENT_TIMESTAMP
-        WHERE id = $2
-        RETURNING id, company_id, created_by_user_id, assigned_to_user_id,
-                  subject, category, priority, status, created_at, updated_at
-        `,
-        [requested, ticketId]
+      await client.query("BEGIN");
+      const ticket = await client.query(
+        `SELECT id FROM support_tickets WHERE id = $1 FOR UPDATE`,
+        [ticketId]
       );
-
-      if (!updated.rows.length) {
+      if (!ticket.rows.length) {
+        await client.query("ROLLBACK");
         return res.status(404).json({ error: "Ticket not found" });
       }
-      return res.json(updated.rows[0]);
+
+      const inserted = await client.query(
+        `
+        INSERT INTO support_replies (ticket_id, user_id, message, is_internal)
+        VALUES ($1, $2, $3, TRUE)
+        RETURNING id, ticket_id, user_id, message, is_internal, created_at
+        `,
+        [ticketId, req.user.id, message]
+      );
+      await client.query(
+        `UPDATE support_tickets SET updated_at = CURRENT_TIMESTAMP WHERE id = $1`,
+        [ticketId]
+      );
+
+      await client.query("COMMIT");
+      return res.status(201).json(inserted.rows[0]);
     } catch (err) {
-      console.log("PLATFORM UPDATE SUPPORT TICKET STATUS ERROR:", err);
+      try { await client.query("ROLLBACK"); } catch (_) { /* ignore */ }
+      console.log("PLATFORM INTERNAL NOTE ERROR:", err);
       sendSafeServerError(res, err, "routes/support");
+    } finally {
+      client.release();
     }
   }
 );
