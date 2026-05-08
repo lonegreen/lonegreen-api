@@ -23,6 +23,12 @@
     "health.html"
   ];
 
+  const PLATFORM_OWNER_PAGES = [
+    "platform.html",
+    "support.html",
+    "health.html"
+  ];
+
   const VALID_ROLES = [
     "platform_owner",
     "owner",
@@ -81,7 +87,11 @@
       return false;
     }
 
-    if (role === "platform_owner" || role === "owner") {
+    if (role === "platform_owner") {
+      return PLATFORM_OWNER_PAGES.includes(page);
+    }
+
+    if (role === "owner") {
       return true;
     }
 

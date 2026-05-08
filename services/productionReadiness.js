@@ -318,10 +318,12 @@ async function getHealthReadiness() {
     ? environment.status === "ready"
     : environment.status !== "critical_missing";
   const uploadsReady = uploads.status !== "error";
+  const launchReady = !environment.production || launchBlockers.length === 0;
   const ok = database.status === "ok"
     && migrations.status === "current"
     && environmentReady
-    && uploadsReady;
+    && uploadsReady
+    && launchReady;
 
   return {
     ok,
@@ -343,6 +345,7 @@ async function getHealthReadiness() {
     },
     launch_docs: launchDocs,
     launch_blockers: {
+      status: launchBlockers.length ? "not_ready" : "ready",
       count: launchBlockers.length,
       items: launchBlockers
     },

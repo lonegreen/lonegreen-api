@@ -172,6 +172,86 @@ async function repairDuplicateSubscriptionVisits(client, summary) {
   }
 }
 
+async function findNullCompanySubscriptionVisitDuplicates(client) {
+  const result = await client.query(`
+    SELECT
+      jobs.*,
+      (
+        SELECT ARRAY_AGG(DISTINCT sibling.company_id)
+        FROM jobs sibling
+        WHERE sibling.id <> jobs.id
+          AND sibling.source_subscription_id = jobs.source_subscription_id
+          AND sibling.type = jobs.type
+          AND sibling.date = jobs.date
+          AND sibling.company_id IS NOT NULL
+      ) AS sibling_company_ids,
+      (SELECT COUNT(*)::int FROM invoices WHERE invoices.job_id = jobs.id) AS invoice_count,
+      (
+        SELECT COUNT(*)::int
+        FROM payments
+        JOIN invoices ON invoices.id = payments.invoice_id
+          AND invoices.company_id = payments.company_id
+        WHERE invoices.job_id = jobs.id
+      ) AS payment_count,
+      (SELECT COUNT(*)::int FROM job_photos WHERE job_photos.job_id = jobs.id) AS photo_count
+    FROM jobs
+    WHERE jobs.company_id IS NULL
+      AND jobs.source_subscription_id IS NOT NULL
+      AND jobs.type = 'subscription_visit'
+    ORDER BY jobs.id
+  `);
+
+  const safeDeletes = [];
+  const manual = [];
+
+  for (const row of result.rows) {
+    const siblingCompanyIds = distinctNonNull(row.sibling_company_ids || []);
+    const hasChildRows =
+      Number(row.invoice_count || 0) > 0 ||
+      Number(row.payment_count || 0) > 0 ||
+      Number(row.photo_count || 0) > 0;
+
+    if (siblingCompanyIds.length === 1 && !hasChildRows) {
+      safeDeletes.push({
+        id: row.id,
+        source_subscription_id: row.source_subscription_id,
+        date: row.date,
+        canonical_company_id: siblingCompanyIds[0]
+      });
+    } else if (siblingCompanyIds.length > 0 || hasChildRows) {
+      manual.push({
+        id: row.id,
+        source_subscription_id: row.source_subscription_id,
+        date: row.date,
+        sibling_company_ids: siblingCompanyIds,
+        reason: hasChildRows
+          ? "Null-company duplicate has linked rows"
+          : "Null-company duplicate has conflicting company siblings"
+      });
+    }
+  }
+
+  return { rows: result.rows, safeDeletes, manual };
+}
+
+async function repairNullCompanySubscriptionVisitDuplicates(client, summary) {
+  const analysis = await findNullCompanySubscriptionVisitDuplicates(client);
+  summary.nullCompanySubscriptionVisitDuplicates = analysis;
+
+  logSection("Null-company subscription visit duplicates");
+  console.log(`Rows found: ${analysis.rows.length}`);
+  console.log(`Safe duplicate jobs to delete: ${analysis.safeDeletes.length}`);
+  console.log(`Manual review: ${analysis.manual.length}`);
+
+  if (!apply) return;
+
+  const ids = analysis.safeDeletes.map((row) => row.id);
+  await backupRowsById(client, "null_company_subscription_visit_duplicates", "jobs", ids);
+  if (ids.length) {
+    await client.query("DELETE FROM jobs WHERE id = ANY($1::int[])", [ids]);
+  }
+}
+
 async function findJobsWithNullCompany(client) {
   const result = await client.query(`
     SELECT
@@ -189,7 +269,16 @@ async function findJobsWithNullCompany(client) {
         FROM invoices
         WHERE invoices.job_id = jobs.id
           AND invoices.company_id IS NOT NULL
-      ) AS invoice_company_ids
+      ) AS invoice_company_ids,
+      (
+        SELECT ARRAY_AGG(DISTINCT sibling.company_id)
+        FROM jobs sibling
+        WHERE sibling.id <> jobs.id
+          AND sibling.source_subscription_id = jobs.source_subscription_id
+          AND sibling.type = jobs.type
+          AND sibling.date = jobs.date
+          AND sibling.company_id IS NOT NULL
+      ) AS sibling_subscription_visit_company_ids
     FROM jobs
     LEFT JOIN clients ON clients.id = jobs.client_id
     LEFT JOIN workers ON workers.id = jobs.worker_id
@@ -208,7 +297,8 @@ async function findJobsWithNullCompany(client) {
       row.worker_company_id,
       row.subscription_company_id,
       row.estimate_company_id,
-      ...((row.invoice_company_ids || []).map(Number))
+      ...((row.invoice_company_ids || []).map(Number)),
+      ...((row.sibling_subscription_visit_company_ids || []).map(Number))
     ]);
 
     if (inferred.length === 1) {
@@ -401,8 +491,9 @@ async function run() {
       await ensureBackupTable(client);
     }
 
-    await repairDuplicateSubscriptionVisits(client, summary);
+    await repairNullCompanySubscriptionVisitDuplicates(client, summary);
     await repairJobsWithNullCompany(client, summary);
+    await repairDuplicateSubscriptionVisits(client, summary);
     await repairJobWorkerMismatches(client, summary);
     await repairSubscriptionWorkerMismatches(client, summary);
     await repairWorkerZipGroupMismatches(client, summary);
@@ -419,6 +510,7 @@ async function run() {
     console.log(`Backups table used: ${apply ? "integrity_repair_backups" : "not created in dry-run"}`);
     console.log(`Migration 026 duplicate preflight ready: ${migrationReady ? "yes" : "no"}`);
     console.log("Manual review counts:", JSON.stringify({
+      null_company_subscription_visit_duplicates: summary.nullCompanySubscriptionVisitDuplicates.manual.length,
       duplicate_subscription_visit_groups: summary.duplicateSubscriptionVisits.manual.length,
       jobs_null_company_id: summary.jobsWithNullCompany.manual.length,
       worker_zip_groups: summary.workerZipGroupMismatches.manual.length

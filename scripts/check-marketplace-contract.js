@@ -106,6 +106,29 @@ function main() {
     }
   }
 
+  const convertDef = routeDefs.find((r) =>
+    r.path === "/marketplace/requests/:id/convert" && r.method === "POST"
+  );
+  if (!convertDef) {
+    failures.push("Missing required marketplace conversion endpoint: POST /marketplace/requests/:id/convert");
+  } else {
+    const convertBlock = extractBlock(routeSource, convertDef.idx);
+    const jobInsertIdx = convertBlock.indexOf("const jobInsert = await client.query");
+    const updateEstimateIdx = convertBlock.indexOf("UPDATE estimates", jobInsertIdx);
+    const jobInsertBlock = jobInsertIdx >= 0
+      ? convertBlock.slice(jobInsertIdx, updateEstimateIdx >= 0 ? updateEstimateIdx : undefined)
+      : "";
+    if (!jobInsertBlock.includes("INSERT INTO jobs")) {
+      failures.push("Marketplace conversion endpoint is missing the job insert regression block.");
+    }
+    if (!/\$6,\s*\$7,\s*'unpaid',\s*\$8/.test(jobInsertBlock)) {
+      failures.push("Marketplace conversion job insert must bind price at $6 and company_id at $7.");
+    }
+    if (!/offerPrice,\s*companyId,\s*`Marketplace job from request/.test(jobInsertBlock)) {
+      failures.push("Marketplace conversion job insert parameters must pass companyId immediately after offerPrice.");
+    }
+  }
+
   if (failures.length) {
     console.error("Marketplace UI contract FAILED:");
     for (const f of failures) {

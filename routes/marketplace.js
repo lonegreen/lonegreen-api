@@ -1244,6 +1244,7 @@ router.post("/marketplace/requests/:id/convert", companyAuth, requireCompanyBill
         startTime,
         endTime,
         offerPrice,
+        companyId,
         `Marketplace job from request #${requestId}.`,
         estimate.id,
         requestId,

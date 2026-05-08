@@ -371,7 +371,7 @@ function getUploadReadiness() {
   const s3Missing = driver === "s3" ? s3MissingEnvKeys() : [];
 
   let status = "ok";
-  if (driver === "local" && nodeEnv === "production" && ephemeralSignals.length) {
+  if (driver === "local" && nodeEnv === "production") {
     status = "warning";
   }
   if (driver === "r2" && !r2Configured) {
@@ -431,6 +431,9 @@ function getStorageActivationStatus() {
   const activation_blockers = [];
   if (configured !== "local" && !validation.ready) {
     activation_blockers.push(`Missing env for ${configured}: ${validation.missing_env.join(", ")}`);
+  }
+  if (configured === "local" && String(process.env.NODE_ENV || "").toLowerCase() === "production") {
+    activation_blockers.push("Local upload storage is not durable for production launch. Configure external object storage.");
   }
   if (configured === "s3") {
     activation_blockers.push("S3 upload adapter remains scaffold-only in this phase.");

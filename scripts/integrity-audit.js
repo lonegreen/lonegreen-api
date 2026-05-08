@@ -74,11 +74,16 @@ const checks = [
   },
   {
     id: "clients_missing_company",
-    title: "Clients with NULL company_id",
+    title: "Company clients with NULL company_id",
     sql: `
       SELECT id, name
-      FROM clients
-      WHERE company_id IS NULL
+      FROM clients c
+      WHERE c.company_id IS NULL
+        AND NOT EXISTS (
+          SELECT 1
+          FROM customer_accounts ca
+          WHERE ca.client_id = c.id
+        )
       ORDER BY id
       LIMIT 100
     `

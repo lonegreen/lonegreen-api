@@ -173,9 +173,6 @@
           <label class="fx-field">Message
             <textarea id="newMessage" class="fx-textarea" maxlength="5000" required placeholder="Describe what is happening, what you expected, and any steps to reproduce."></textarea>
           </label>
-          <label class="fx-field">Attachment (optional)
-            <input id="newAttachmentFile" class="fx-input" type="file" accept="image/*,.pdf,application/pdf">
-          </label>
           <button class="btn fx-btn fx-btn--primary" id="createBtn" type="submit">Open ticket</button>
         </form>
         <div id="status" class="fx-alert" role="status" aria-live="polite"></div>
@@ -257,36 +254,7 @@
 
     async function uploadSupportAttachment(file){
       if(!file) return null;
-      const maxBytes = 10 * 1024 * 1024;
-      const allowedMime = new Set([
-        "image/png",
-        "image/jpeg",
-        "image/jpg",
-        "image/gif",
-        "image/webp",
-        "application/pdf"
-      ]);
-      const extOk = /\.(png|jpe?g|gif|webp|pdf)$/i.test(String(file.name || ""));
-      if (!allowedMime.has(String(file.type || "").toLowerCase()) && !extOk) {
-        throw new Error("Attachment must be an image or PDF.");
-      }
-      if (Number(file.size || 0) > maxBytes) {
-        throw new Error("Attachment must be 10MB or smaller.");
-      }
-      const form = new FormData();
-      form.append("file", file);
-      const init = { method: "POST", headers: { Authorization: "Bearer " + (getToken() || "") }, body: form };
-      const res = await fetch(API + "/uploads/company/logo", init);
-      let data = null;
-      try { data = await res.json(); } catch { data = {}; }
-      if(!res.ok || !data || !data.url){
-        throw new Error((data && data.error) || "Attachment upload failed");
-      }
-      return {
-        file_url: String(data.url),
-        file_name: String(file.name || "attachment"),
-        file_size: Number(file.size || 0)
-      };
+      throw new Error("Support attachments are temporarily unavailable.");
     }
 
     function listEndpoint() {
@@ -479,7 +447,6 @@
         '<hr style="margin:14px 0;border:0;border-top:1px solid #e1ece5">' +
         replyHint +
         '<label>Reply<textarea id="replyText" maxlength="5000" ' + replyDisabled + '></textarea></label>' +
-        '<label>Attachment (optional)<input id="replyAttachmentFile" type="file" accept="image/*,.pdf,application/pdf" ' + replyDisabled + '></label>' +
         '<button class="btn" id="replyBtn" type="button" ' + replyDisabled + '>Send reply</button>' +
         disputeBlock +
         internalNoteBlock
@@ -508,12 +475,9 @@
       if (!text) { setStatus("Reply message is required.", "error"); return; }
       setStatus("Sending reply...", "");
       try {
-        const fileInput = $("replyAttachmentFile");
-        const file = fileInput && fileInput.files && fileInput.files[0] ? fileInput.files[0] : null;
-        const attachment = file ? await uploadSupportAttachment(file) : null;
         await api("/support/tickets/" + encodeURIComponent(id) + "/reply", {
           method: "POST",
-          body: JSON.stringify({ message: text, attachments: attachment ? [attachment] : [] })
+          body: JSON.stringify({ message: text, attachments: [] })
         });
         setStatus("Reply sent.", "success");
         await Promise.all([loadTickets(), openTicket(id)]);
@@ -616,21 +580,17 @@
       btn.disabled = true;
       setStatus("Opening ticket...", "");
       try {
-        const createFile = $("newAttachmentFile");
-        const file = createFile && createFile.files && createFile.files[0] ? createFile.files[0] : null;
-        const attachment = file ? await uploadSupportAttachment(file) : null;
         const created = await api("/support/tickets", {
           method: "POST",
           body: JSON.stringify({
             subject, message, category, priority,
-            attachments: attachment ? [attachment] : []
+            attachments: []
           })
         });
         $("newSubject").value = "";
         $("newMessage").value = "";
         $("newCategory").value = "general";
         $("newPriority").value = "medium";
-        $("newAttachmentFile").value = "";
         setStatus("Ticket opened.", "success");
         await loadTickets();
         if (created && created.id) await openTicket(created.id);

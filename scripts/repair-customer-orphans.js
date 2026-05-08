@@ -115,7 +115,8 @@ async function inferCompanyId(client, customerAccountId, clientId) {
   return {
     companyId: null,
     candidates: Array.from(candidates).sort((a, b) => a - b),
-    bySource
+    bySource,
+    standaloneCustomerClient: candidates.size === 0
   };
 }
 
@@ -124,6 +125,7 @@ async function main() {
   const client = await pool.connect();
   const repaired = [];
   const unresolved = [];
+  const whitelisted = [];
 
   try {
     await client.query("BEGIN");
@@ -133,6 +135,16 @@ async function main() {
       const customerAccountId = Number(orphan.customer_account_id);
       const clientId = Number(orphan.client_id);
       const inferred = await inferCompanyId(client, customerAccountId, clientId);
+
+      if (inferred.standaloneCustomerClient) {
+        whitelisted.push({
+          customer_account_id: customerAccountId,
+          client_id: clientId,
+          reason: "standalone_customer_account_client",
+          inferred_company_sources: inferred.bySource
+        });
+        continue;
+      }
 
       if (!inferred.companyId) {
         unresolved.push({
@@ -183,6 +195,7 @@ async function main() {
     console.log(JSON.stringify({
       mode: apply ? "apply" : "dry-run",
       repaired_rows: repaired,
+      whitelisted_rows: whitelisted,
       unresolved_rows: unresolved
     }, null, 2));
   } catch (err) {
