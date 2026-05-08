@@ -6,6 +6,11 @@ const { classifyTokenBoundary, normalizeRole } = require("../middleware/auth");
 const { validateMessageContent } = require("../middleware/abuseGuards");
 const { sendSafeServerError } = require("../services/safeServerError");
 const { sendOperationalEmailSafe } = require("../services/emailService");
+const {
+  resolveCustomerAccountId,
+  loadPortalScopes,
+  tokenClientBelongsToScopes
+} = require("../services/customerPortalScope");
 
 const router = express.Router();
 
@@ -36,29 +41,45 @@ async function resolveCustomerActor(decoded) {
     return null;
   }
 
-  const clientResult = tokenCompanyId
-    ? await pool.query(
-      "SELECT id, company_id FROM clients WHERE id = $1 AND company_id = $2 LIMIT 1",
-      [clientId, tokenCompanyId]
-    )
-    : await pool.query(
-      "SELECT id, company_id FROM clients WHERE id = $1 LIMIT 1",
-      [clientId]
-    );
-  if (!clientResult.rows.length) {
+  const accountId = await resolveCustomerAccountId(decoded);
+  let scopes = accountId ? await loadPortalScopes(accountId) : [];
+
+  if (!scopes.length) {
+    const clientResult = tokenCompanyId
+      ? await pool.query(
+        "SELECT id, company_id FROM clients WHERE id = $1 AND company_id = $2 LIMIT 1",
+        [clientId, tokenCompanyId]
+      )
+      : await pool.query(
+        "SELECT id, company_id FROM clients WHERE id = $1 LIMIT 1",
+        [clientId]
+      );
+    if (!clientResult.rows.length) {
+      return null;
+    }
+    const client = clientResult.rows[0];
+    const clientCompanyId = Number(client.company_id);
+    if (tokenCompanyId && tokenCompanyId !== clientCompanyId) {
+      return null;
+    }
+    scopes = [{
+      company_id: clientCompanyId,
+      client_id: Number(client.id)
+    }];
+  } else if (!tokenClientBelongsToScopes(scopes, clientId)) {
     return null;
   }
 
-  const client = clientResult.rows[0];
-  const clientCompanyId = Number(client.company_id);
-  if (tokenCompanyId && tokenCompanyId !== clientCompanyId) {
-    return null;
-  }
+  const primary = scopes.find(s => Number(s.client_id) === clientId) || scopes[0];
 
   return {
     actor_type: "customer",
-    client_id: Number(client.id),
-    company_id: clientCompanyId
+    client_id: Number(primary.client_id),
+    token_client_id: clientId,
+    company_id: Number(primary.company_id),
+    account_id: accountId,
+    scopes,
+    user_id: undefined
   };
 }
 
@@ -121,16 +142,26 @@ async function participantAuth(req, res, next) {
 
 async function getConversationIfParticipant(conversationId, participant) {
   if (participant.actor_type === "customer") {
+    const scopes = participant.scopes && participant.scopes.length
+      ? participant.scopes
+      : [{ company_id: participant.company_id, client_id: participant.client_id }];
+    const parts = [];
+    const params = [conversationId];
+    let p = 2;
+    for (const s of scopes) {
+      parts.push(`(company_id = $${p} AND client_id = $${p + 1})`);
+      params.push(s.company_id, s.client_id);
+      p += 2;
+    }
     const result = await pool.query(
       `
       SELECT id, company_id, client_id, created_at
       FROM conversations
       WHERE id = $1
-        AND company_id = $2
-        AND client_id = $3
+        AND (${parts.join(" OR ")})
       LIMIT 1
       `,
-      [conversationId, participant.company_id, participant.client_id]
+      params
     );
     return result.rows[0] || null;
   }
@@ -148,8 +179,8 @@ async function getConversationIfParticipant(conversationId, participant) {
   return result.rows[0] || null;
 }
 
-function withModerationFlag(payload, req) {
-  if (!req || !req.locals || req.locals.moderationFlagged !== true) {
+function withModerationFlag(payload, res) {
+  if (!res || !res.locals || res.locals.moderationFlagged !== true) {
     return payload;
   }
   if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
@@ -161,9 +192,23 @@ function withModerationFlag(payload, req) {
 router.post("/conversations", participantAuth, async (req, res) => {
   try {
     if (req.participant.actor_type === "customer") {
-      const requestedCompanyId = req.body && req.body.company_id ? Number(req.body.company_id) : null;
-      if (requestedCompanyId && requestedCompanyId !== req.participant.company_id) {
+      const scopes = req.participant.scopes && req.participant.scopes.length
+        ? req.participant.scopes
+        : [{ company_id: req.participant.company_id, client_id: req.participant.client_id }];
+      if (!scopes.length) {
         return res.status(403).json({ error: "Forbidden" });
+      }
+
+      const requestedCompanyId = req.body && req.body.company_id ? Number(req.body.company_id) : null;
+      let pair;
+      if (requestedCompanyId && Number.isInteger(requestedCompanyId) && requestedCompanyId > 0) {
+        pair = scopes.find(s => Number(s.company_id) === requestedCompanyId);
+        if (!pair) {
+          return res.status(403).json({ error: "Forbidden" });
+        }
+      } else {
+        const tokenClientId = Number(req.participant.token_client_id || req.participant.client_id);
+        pair = scopes.find(s => Number(s.client_id) === tokenClientId) || scopes[0];
       }
 
       const conversation = await pool.query(
@@ -174,7 +219,7 @@ router.post("/conversations", participantAuth, async (req, res) => {
         DO UPDATE SET company_id = EXCLUDED.company_id
         RETURNING id, company_id, client_id, created_at
         `,
-        [req.participant.company_id, req.participant.client_id]
+        [pair.company_id, pair.client_id]
       );
       return res.status(201).json(conversation.rows[0]);
     }
@@ -215,15 +260,28 @@ router.get("/conversations", participantAuth, async (req, res) => {
   try {
     let result;
     if (req.participant.actor_type === "customer") {
+      const scopes = req.participant.scopes && req.participant.scopes.length
+        ? req.participant.scopes
+        : [{ company_id: req.participant.company_id, client_id: req.participant.client_id }];
+      if (!scopes.length) {
+        return res.json([]);
+      }
+      const parts = [];
+      const params = [];
+      let p = 1;
+      for (const s of scopes) {
+        parts.push(`(company_id = $${p} AND client_id = $${p + 1})`);
+        params.push(s.company_id, s.client_id);
+        p += 2;
+      }
       result = await pool.query(
         `
         SELECT id, company_id, client_id, created_at
         FROM conversations
-        WHERE company_id = $1
-          AND client_id = $2
+        WHERE (${parts.join(" OR ")})
         ORDER BY created_at DESC, id DESC
         `,
-        [req.participant.company_id, req.participant.client_id]
+        params
       );
     } else {
       result = await pool.query(
@@ -289,7 +347,7 @@ router.post("/conversations/:id/messages", participantAuth, validateMessageConte
 
     const senderType = req.participant.actor_type;
     const senderId = senderType === "customer"
-      ? req.participant.client_id
+      ? conversation.client_id
       : req.participant.user_id;
 
     const inserted = await pool.query(
@@ -345,7 +403,7 @@ router.post("/conversations/:id/messages", participantAuth, validateMessageConte
       }
     }
 
-    return res.status(201).json(withModerationFlag(insertedMessage, req));
+    return res.status(201).json(withModerationFlag(insertedMessage, res));
   } catch (err) {
     return sendSafeServerError(res, err, "CONVERSATION MESSAGE CREATE ERROR");
   }

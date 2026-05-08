@@ -44,6 +44,10 @@ function internalPlanFromStripePriceId(priceId) {
   if (STRIPE_PRICE_BASIC_YEARLY && id === STRIPE_PRICE_BASIC_YEARLY.trim()) return "starter";
   if (STRIPE_PRICE_PRO_YEARLY && id === STRIPE_PRICE_PRO_YEARLY.trim()) return "pro";
   if (STRIPE_PRICE_BUSINESS_YEARLY && id === STRIPE_PRICE_BUSINESS_YEARLY.trim()) return "enterprise";
+  logger.warn("stripeWebhook.unknownPriceId", {
+    priceId: id,
+    helper: "internalPlanFromStripePriceId"
+  });
   return null;
 }
 
@@ -64,6 +68,10 @@ function checkoutPlanKeyFromStripePriceId(priceId) {
   if (STRIPE_PRICE_BASIC_YEARLY && id === STRIPE_PRICE_BASIC_YEARLY.trim()) return "basic";
   if (STRIPE_PRICE_PRO_YEARLY && id === STRIPE_PRICE_PRO_YEARLY.trim()) return "pro";
   if (STRIPE_PRICE_BUSINESS_YEARLY && id === STRIPE_PRICE_BUSINESS_YEARLY.trim()) return "business";
+  logger.warn("stripeWebhook.unknownPriceId", {
+    priceId: id,
+    helper: "checkoutPlanKeyFromStripePriceId"
+  });
   return null;
 }
 

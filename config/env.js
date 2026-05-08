@@ -148,6 +148,69 @@ if (NODE_ENV === "production") {
   }
 }
 
+// Stripe price-id integrity check.
+// - Always reject duplicate price IDs across plan tiers / billing cycles.
+//   Duplicates cause silent plan misclassification in both checkout
+//   (services/stripeService.js#priceIdForCheckoutPlan) and webhook handling
+//   (services/stripeWebhookService.js#internalPlanFromStripePriceId).
+// - In production, additionally require monthly basic / pro / business to be present
+//   when STRIPE_SECRET_KEY is configured.
+function validateStripePriceIdsConfig() {
+  const monthly = [
+    ["STRIPE_PRICE_BASIC", STRIPE_PRICE_BASIC],
+    ["STRIPE_PRICE_PRO", STRIPE_PRICE_PRO],
+    ["STRIPE_PRICE_BUSINESS", STRIPE_PRICE_BUSINESS]
+  ];
+  const yearly = [
+    ["STRIPE_PRICE_BASIC_YEARLY", STRIPE_PRICE_BASIC_YEARLY],
+    ["STRIPE_PRICE_PRO_YEARLY", STRIPE_PRICE_PRO_YEARLY],
+    ["STRIPE_PRICE_BUSINESS_YEARLY", STRIPE_PRICE_BUSINESS_YEARLY]
+  ];
+  const all = monthly.concat(yearly);
+
+  if (NODE_ENV === "production" && STRIPE_SECRET_KEY) {
+    const missingMonthly = monthly.filter(([, value]) => !value);
+    if (missingMonthly.length > 0) {
+      const names = missingMonthly.map(([name]) => name).join(", ");
+      throw new Error(
+        "Stripe price IDs missing in production: " + names + ". " +
+        "Each plan tier (basic, pro, business) must map to a distinct Stripe price."
+      );
+    }
+  }
+
+  const seen = new Map();
+  for (const [name, value] of all) {
+    if (!value) continue;
+    const key = String(value).trim();
+    if (!seen.has(key)) {
+      seen.set(key, [name]);
+    } else {
+      seen.get(key).push(name);
+    }
+  }
+
+  const collisions = [];
+  for (const [, names] of seen.entries()) {
+    if (names.length > 1) {
+      collisions.push(names);
+    }
+  }
+
+  if (collisions.length > 0) {
+    const summary = collisions
+      .map((names) => names.join(" === "))
+      .join("; ");
+    throw new Error(
+      "Stripe price IDs must be unique per plan tier and billing cycle. " +
+      "Duplicate detected: " + summary + ". " +
+      "Create distinct Stripe Price objects in the Stripe Dashboard and update .env."
+    );
+  }
+}
+
+validateStripePriceIdsConfig();
+
 /**
  * Legacy setInterval subscription poll. Off in production unless explicitly true.
  * Non-production defaults to true for faster local feedback (set SUBSCRIPTION_INTERVAL_ENGINE=false to disable).
@@ -204,6 +267,26 @@ function getProductionEnvReadiness() {
 
   if (STRIPE_SECRET_KEY && isPlaceholderSecret(STRIPE_SECRET_KEY)) {
     warnings.push("STRIPE_SECRET_KEY appears to be a placeholder value");
+  }
+
+  const pricePairs = [
+    ["STRIPE_PRICE_BASIC", STRIPE_PRICE_BASIC],
+    ["STRIPE_PRICE_PRO", STRIPE_PRICE_PRO],
+    ["STRIPE_PRICE_BUSINESS", STRIPE_PRICE_BUSINESS],
+    ["STRIPE_PRICE_BASIC_YEARLY", STRIPE_PRICE_BASIC_YEARLY],
+    ["STRIPE_PRICE_PRO_YEARLY", STRIPE_PRICE_PRO_YEARLY],
+    ["STRIPE_PRICE_BUSINESS_YEARLY", STRIPE_PRICE_BUSINESS_YEARLY]
+  ];
+  const seenPrices = new Map();
+  for (const [name, value] of pricePairs) {
+    if (!value) continue;
+    const key = String(value).trim();
+    if (!seenPrices.has(key)) {
+      seenPrices.set(key, [name]);
+    } else {
+      seenPrices.get(key).push(name);
+      warnings.push("Stripe price IDs duplicated: " + seenPrices.get(key).join(" === "));
+    }
   }
 
   return {

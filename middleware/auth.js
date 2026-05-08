@@ -92,9 +92,14 @@ function parseCustomerPrincipal(decoded) {
     throw error;
   }
 
+  const customerAccountId =
+    toPositiveInteger(decoded && decoded.customer_account_id)
+    || toPositiveInteger(decoded && decoded.id);
+
   return {
     ...decoded,
     client_id: clientId,
+    customer_account_id: customerAccountId || undefined,
     role: "customer",
     portal: String((decoded && decoded.portal) || "").trim().toLowerCase() === "customer"
       ? "customer"

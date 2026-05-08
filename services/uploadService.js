@@ -5,9 +5,19 @@ const multer = require("multer");
 const logger = require("./logger");
 
 const UPLOAD_DIR = path.join(__dirname, "..", "public", "uploads");
+const LOCAL_PUBLIC_URL_PREFIX = "/uploads/";
 const MAX_FILE_SIZE = 8 * 1024 * 1024;
 const EXTERNAL_DRIVER_NOT_READY_MESSAGE =
   "External upload storage driver is configured but not implemented/enabled yet.";
+const R2_PUBLIC_CACHE_CONTROL = "public, max-age=2592000, immutable";
+
+function externalDriverNotReadyError() {
+  const err = new Error(EXTERNAL_DRIVER_NOT_READY_MESSAGE);
+  err.code = "UPLOAD_DRIVER_NOT_READY";
+  err.statusCode = 503;
+  return err;
+}
+
 const ALLOWED_EXTENSION_MIME = {
   ".jpg": new Set(["image/jpeg"]),
   ".jpeg": new Set(["image/jpeg"]),
@@ -39,6 +49,169 @@ function isExternalUploadStorageEnabled() {
   return getUploadStorageDriver() !== "local";
 }
 
+/* ============================================================
+ * R2 (Cloudflare) — S3-compatible object storage driver
+ *
+ * Activates only when UPLOAD_STORAGE_DRIVER=r2.
+ * Reads config from env each access (so .env-only mode picks up changes
+ * without rebuilding module state). Client is lazily constructed once.
+ *
+ * Required env when driver=r2:
+ *   R2_ACCOUNT_ID
+ *   R2_ACCESS_KEY_ID
+ *   R2_SECRET_ACCESS_KEY
+ *   R2_BUCKET
+ *   R2_PUBLIC_BASE_URL   (e.g. https://media.example.com  OR https://pub-<hash>.r2.dev)
+ * ============================================================ */
+
+function readR2Config() {
+  return {
+    accountId: String(process.env.R2_ACCOUNT_ID || "").trim(),
+    accessKeyId: String(process.env.R2_ACCESS_KEY_ID || "").trim(),
+    secretAccessKey: String(process.env.R2_SECRET_ACCESS_KEY || "").trim(),
+    bucket: String(process.env.R2_BUCKET || "").trim(),
+    publicBaseUrl: String(process.env.R2_PUBLIC_BASE_URL || "").trim().replace(/\/+$/, "")
+  };
+}
+
+function r2MissingEnvKeys() {
+  const cfg = readR2Config();
+  const missing = [];
+  if (!cfg.accountId) missing.push("R2_ACCOUNT_ID");
+  if (!cfg.accessKeyId) missing.push("R2_ACCESS_KEY_ID");
+  if (!cfg.secretAccessKey) missing.push("R2_SECRET_ACCESS_KEY");
+  if (!cfg.bucket) missing.push("R2_BUCKET");
+  if (!cfg.publicBaseUrl) missing.push("R2_PUBLIC_BASE_URL");
+  return missing;
+}
+
+function isR2Configured() {
+  return r2MissingEnvKeys().length === 0;
+}
+
+function assertR2EnvReady() {
+  const missing = r2MissingEnvKeys();
+  if (missing.length > 0) {
+    const err = new Error(
+      "Cloudflare R2 storage driver requested but missing required env: " +
+      missing.join(", ")
+    );
+    err.code = "UPLOAD_DRIVER_NOT_READY";
+    err.statusCode = 503;
+    throw err;
+  }
+}
+
+let cachedR2Client = null;
+function getR2Client() {
+  if (cachedR2Client) {
+    return cachedR2Client;
+  }
+  assertR2EnvReady();
+  // Lazy require so projects that never enable R2 don't pay the SDK load cost
+  // and so tests with driver=local don't need the SDK to be installed.
+  // eslint-disable-next-line global-require
+  const { S3Client } = require("@aws-sdk/client-s3");
+  const cfg = readR2Config();
+  cachedR2Client = new S3Client({
+    region: "auto",
+    endpoint: `https://${cfg.accountId}.r2.cloudflarestorage.com`,
+    credentials: {
+      accessKeyId: cfg.accessKeyId,
+      secretAccessKey: cfg.secretAccessKey
+    },
+    forcePathStyle: false
+  });
+  return cachedR2Client;
+}
+
+function r2PublicUrlFromKey(key) {
+  const cfg = readR2Config();
+  const cleanKey = String(key || "").replace(/^\/+/, "");
+  return `${cfg.publicBaseUrl}/${cleanKey}`;
+}
+
+function r2KeyFromPublicUrl(url) {
+  const cfg = readR2Config();
+  const raw = String(url || "").trim();
+  if (!cfg.publicBaseUrl || !raw.startsWith(`${cfg.publicBaseUrl}/`)) {
+    return null;
+  }
+  const key = raw.slice(cfg.publicBaseUrl.length + 1);
+  if (!key || key.includes("..")) {
+    return null;
+  }
+  return key;
+}
+
+async function r2PutObject(key, bodyBuffer, contentType) {
+  const client = getR2Client();
+  // eslint-disable-next-line global-require
+  const { PutObjectCommand } = require("@aws-sdk/client-s3");
+  const cfg = readR2Config();
+  await client.send(new PutObjectCommand({
+    Bucket: cfg.bucket,
+    Key: String(key).replace(/^\/+/, ""),
+    Body: bodyBuffer,
+    ContentType: contentType || "application/octet-stream",
+    CacheControl: R2_PUBLIC_CACHE_CONTROL
+  }));
+}
+
+async function r2DeleteObject(key) {
+  const client = getR2Client();
+  // eslint-disable-next-line global-require
+  const { DeleteObjectCommand } = require("@aws-sdk/client-s3");
+  const cfg = readR2Config();
+  try {
+    await client.send(new DeleteObjectCommand({
+      Bucket: cfg.bucket,
+      Key: String(key).replace(/^\/+/, "")
+    }));
+    return true;
+  } catch (err) {
+    // Best-effort: do not fail the user mutation if the object is already gone
+    // or if the provider is briefly unavailable.
+    logger.warn("UPLOAD_R2_DELETE_NOTE", {
+      key,
+      error: err && err.message
+    });
+    return false;
+  }
+}
+
+/**
+ * Cloud drivers other than R2 are scaffold-only. Prevent silent prod boot with
+ * an unfinished driver. R2 is allowed in production once env vars are present.
+ * Throws synchronously at module load (called from maybeWarnEphemeralLocalUploads).
+ */
+function assertCloudDriverNotActiveInProduction() {
+  const driver = getUploadStorageDriver();
+  const isProduction = String(process.env.NODE_ENV || "").toLowerCase() === "production";
+  if (!isProduction || driver === "local") {
+    return;
+  }
+  if (driver === "r2") {
+    // R2 is implemented; require env to be complete in production.
+    const missing = r2MissingEnvKeys();
+    if (missing.length > 0) {
+      const err = new Error(
+        "UPLOAD_STORAGE_DRIVER='r2' is set but missing env: " + missing.join(", ")
+      );
+      err.code = "UPLOAD_DRIVER_NOT_READY";
+      throw err;
+    }
+    return;
+  }
+  // s3 (and any other future scaffold)
+  const err = new Error(
+    "UPLOAD_STORAGE_DRIVER='" + driver + "' is scaffold-only. " +
+    "Implement and verify the driver before enabling it in production."
+  );
+  err.code = "UPLOAD_DRIVER_NOT_READY";
+  throw err;
+}
+
 function maybeWarnEphemeralLocalUploads() {
   if (hasLoggedEphemeralStorageWarning) {
     return;
@@ -67,6 +240,7 @@ function maybeWarnEphemeralLocalUploads() {
   }
 
   hasLoggedEphemeralStorageWarning = true;
+  assertCloudDriverNotActiveInProduction();
 }
 
 function ensureUploadDir() {
@@ -94,8 +268,10 @@ function safeFilename(file) {
 }
 
 function fileFilter(req, file, callback) {
-  if (isExternalUploadStorageEnabled()) {
-    return callback(new Error(EXTERNAL_DRIVER_NOT_READY_MESSAGE));
+  const driver = getUploadStorageDriver();
+  if (driver === "s3") {
+    // Still scaffold-only: refuse early to avoid writing temp files we cannot publish.
+    return callback(externalDriverNotReadyError());
   }
 
   const ext = safeExtension(file.originalname);
@@ -112,9 +288,11 @@ function fileFilter(req, file, callback) {
   return callback(null, true);
 }
 
-if (!isExternalUploadStorageEnabled()) {
-  ensureUploadDir();
-}
+// Multer always writes to local temp first (UPLOAD_DIR). For driver=r2 we then
+// transfer the temp file to R2 via publishUploadedFile() and delete the local
+// copy. This keeps magic-byte verification (assertUploadContentMatchesMime),
+// safe-name checks, and request flow identical across drivers.
+ensureUploadDir();
 maybeWarnEphemeralLocalUploads();
 
 const storage = multer.diskStorage({
@@ -148,12 +326,28 @@ function getUploadReadiness() {
 
   const driver = getUploadStorageDriver();
   const externalEnabled = driver !== "local";
+  const r2Configured = driver === "r2" ? isR2Configured() : null;
+  const r2Missing = driver === "r2" ? r2MissingEnvKeys() : [];
+
+  let status = "ok";
+  if (driver === "local" && nodeEnv === "production" && ephemeralSignals.length) {
+    status = "warning";
+  }
+  if (driver === "r2" && !r2Configured) {
+    status = "error";
+  }
+  if (driver === "s3") {
+    status = "error"; // scaffold-only
+  }
 
   return {
-    status: driver === "local" && nodeEnv === "production" && ephemeralSignals.length ? "warning" : "ok",
+    status,
     storage: driver,
     external_storage_enabled: externalEnabled,
-    external_storage_scaffold_only: externalEnabled,
+    external_storage_scaffold_only: driver === "s3",
+    r2_configured: r2Configured,
+    r2_missing_env: r2Missing,
+    r2_public_base_url: driver === "r2" ? readR2Config().publicBaseUrl || null : null,
     upload_dir: UPLOAD_DIR,
     max_file_size_mb: Math.round(MAX_FILE_SIZE / 1024 / 1024),
     allowed_extensions: Array.from(ALLOWED_EXTENSIONS),
@@ -166,9 +360,19 @@ function localPublicUploadUrl(filename) {
 }
 
 function localPathFromPublicUrl(imageUrl) {
-  const filename = path.basename(String(imageUrl || ""));
+  const raw = String(imageUrl || "").trim();
+  if (!raw) {
+    return null;
+  }
 
-  if (!filename) {
+  // Only operate on URLs we actually own (relative /uploads/<file> path).
+  // Reject absolute/external URLs to avoid acting on attacker-supplied paths.
+  if (!raw.startsWith(LOCAL_PUBLIC_URL_PREFIX)) {
+    return null;
+  }
+
+  const filename = path.basename(raw);
+  if (!filename || filename === "." || filename === "..") {
     return null;
   }
 
@@ -249,21 +453,110 @@ async function deleteLocalUpload(imageUrl) {
   }
 }
 
-function getPublicUploadUrl(keyOrPath) {
-  if (isExternalUploadStorageEnabled()) {
-    throw new Error(EXTERNAL_DRIVER_NOT_READY_MESSAGE);
+/**
+ * Always-safe deletion of the local temp file produced by multer for the given
+ * incoming request file, regardless of which storage driver is active.
+ * Use this for pre-publish error paths (validation failures, auth failures,
+ * etc.) — at that point the file has only been written to local temp.
+ */
+async function cleanupLocalTemp(reqFile) {
+  if (!reqFile || !reqFile.path) {
+    return false;
   }
-  return localPublicUploadUrl(keyOrPath);
+  try {
+    await assertUploadPathWithinDir(reqFile.path);
+  } catch {
+    return false;
+  }
+  try {
+    await fs.promises.unlink(reqFile.path);
+    return true;
+  } catch (err) {
+    if (err && err.code !== "ENOENT") {
+      logger.warn("UPLOAD_LOCAL_TEMP_CLEANUP_NOTE", { error: err.message });
+    }
+    return false;
+  }
+}
+
+/**
+ * Publish a multer-uploaded local temp file to its final storage destination
+ * and return the public URL to persist in the database.
+ *
+ *  - driver=local: leaves file at public/uploads/<filename>; returns /uploads/<filename>
+ *  - driver=r2:    streams the buffer to R2, deletes the local temp on success,
+ *                  and returns `${R2_PUBLIC_BASE_URL}/<key>`.
+ *
+ * Route handlers should call this exactly once after `verifyUploadContent` and
+ * before persisting the URL. If a later step (e.g., DB insert) fails, callers
+ * should pass the returned URL to `deleteStoredFile` to remove the orphan.
+ */
+async function publishUploadedFile(reqFile) {
+  if (!reqFile || !reqFile.path || !reqFile.filename) {
+    throw new Error("publishUploadedFile requires a multer disk-storage file");
+  }
+  const driver = getUploadStorageDriver();
+
+  if (driver === "local") {
+    return localPublicUploadUrl(reqFile.filename);
+  }
+
+  if (driver === "r2") {
+    assertR2EnvReady();
+    await assertUploadPathWithinDir(reqFile.path);
+    const buffer = await fs.promises.readFile(reqFile.path);
+    const key = path.basename(reqFile.filename);
+    try {
+      await r2PutObject(key, buffer, reqFile.mimetype);
+    } catch (err) {
+      // Leave local temp in place so the route's catch can call cleanupLocalTemp.
+      logger.error("UPLOAD_R2_PUT_FAILED", {
+        key,
+        error: err && err.message
+      });
+      const wrapped = new Error("Cloud storage upload failed");
+      wrapped.code = "UPLOAD_R2_PUT_FAILED";
+      wrapped.statusCode = 502;
+      throw wrapped;
+    }
+    // Successful upload to R2: remove the local temp copy.
+    try {
+      await fs.promises.unlink(reqFile.path);
+    } catch (err) {
+      if (err && err.code !== "ENOENT") {
+        logger.warn("UPLOAD_R2_LOCAL_TEMP_UNLINK_NOTE", { error: err.message });
+      }
+    }
+    return r2PublicUrlFromKey(key);
+  }
+
+  // s3 and any future scaffold-only driver
+  throw externalDriverNotReadyError();
 }
 
 async function saveUploadedFile(file, options = {}) {
-  if (isExternalUploadStorageEnabled()) {
-    throw new Error(EXTERNAL_DRIVER_NOT_READY_MESSAGE);
+  const driver = getUploadStorageDriver();
+  if (driver === "s3") {
+    throw externalDriverNotReadyError();
   }
   const fallbackName = options.filename || options.key || "";
   const key = path.basename((file && file.filename) || fallbackName);
   if (!key) {
     throw new Error("Missing uploaded file key");
+  }
+  if (driver === "r2") {
+    if (!file || !file.path) {
+      throw new Error("saveUploadedFile requires a multer disk-storage file when driver=r2");
+    }
+    const buffer = await fs.promises.readFile(file.path);
+    await r2PutObject(key, buffer, file.mimetype);
+    try { await fs.promises.unlink(file.path); } catch { /* ignore */ }
+    return {
+      driver: "r2",
+      key,
+      url: r2PublicUrlFromKey(key),
+      path: null
+    };
   }
   return {
     driver: "local",
@@ -273,15 +566,58 @@ async function saveUploadedFile(file, options = {}) {
   };
 }
 
+/**
+ * Delete a previously-published file by its public URL. Dispatches to the
+ * correct backend based on URL prefix; safely no-ops on URLs we don't own.
+ */
 async function deleteStoredFile(urlOrKey) {
-  if (isExternalUploadStorageEnabled()) {
-    throw new Error(EXTERNAL_DRIVER_NOT_READY_MESSAGE);
+  const raw = String(urlOrKey || "").trim();
+  if (!raw) {
+    return false;
   }
-  return deleteLocalUpload(urlOrKey);
+
+  // Local relative path: /uploads/<filename>
+  if (raw.startsWith(LOCAL_PUBLIC_URL_PREFIX)) {
+    return deleteLocalUpload(raw);
+  }
+
+  // R2 public URL: starts with R2_PUBLIC_BASE_URL
+  if (getUploadStorageDriver() === "r2" || isR2Configured()) {
+    const key = r2KeyFromPublicUrl(raw);
+    if (key) {
+      return r2DeleteObject(key);
+    }
+  }
+
+  // Unknown / external URL: do not act.
+  return false;
 }
 
+/**
+ * Returns the canonical public URL for a stored object, given a multer-style
+ * filename. For local driver that's `/uploads/<filename>`; for R2 it's the
+ * R2 public base URL plus the same key.
+ *
+ * Note: callers that have a multer `req.file` and want to PUBLISH should call
+ * `publishUploadedFile(req.file)` instead — it both transfers (when needed)
+ * and returns the URL.
+ */
 function publicUploadUrl(filename) {
-  return getPublicUploadUrl(filename);
+  const driver = getUploadStorageDriver();
+  const key = path.basename(String(filename || ""));
+  if (!key) {
+    return "";
+  }
+  if (driver === "local") {
+    return localPublicUploadUrl(key);
+  }
+  if (driver === "r2") {
+    if (!isR2Configured()) {
+      throw externalDriverNotReadyError();
+    }
+    return r2PublicUrlFromKey(key);
+  }
+  throw externalDriverNotReadyError();
 }
 
 module.exports = {
@@ -293,12 +629,17 @@ module.exports = {
   ensureUploadDir,
   getUploadStorageDriver,
   isExternalUploadStorageEnabled,
+  externalDriverNotReadyError,
   saveUploadedFile,
   deleteStoredFile,
-  getPublicUploadUrl,
+  publishUploadedFile,
+  cleanupLocalTemp,
+  getPublicUploadUrl: publicUploadUrl,
   getUploadReadiness,
   publicUploadUrl,
   deleteLocalUpload,
   assertUploadContentMatchesMime,
-  assertUploadPathWithinDir
+  assertUploadPathWithinDir,
+  isR2Configured,
+  r2MissingEnvKeys
 };

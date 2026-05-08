@@ -11,6 +11,11 @@ const {
 } = require("../middleware/rateLimits");
 const { validateMarketplaceContent } = require("../middleware/abuseGuards");
 const { sendSafeServerError } = require("../services/safeServerError");
+const {
+  resolveCustomerAccountId,
+  loadPortalScopes,
+  tokenClientBelongsToScopes
+} = require("../services/customerPortalScope");
 
 const router = express.Router();
 
@@ -79,8 +84,8 @@ function plusOneHour(timeText) {
   return `${String(next).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
 }
 
-function withModerationFlag(payload, req) {
-  if (!req || !req.locals || req.locals.moderationFlagged !== true) {
+function withModerationFlag(payload, res) {
+  if (!res || !res.locals || res.locals.moderationFlagged !== true) {
     return payload;
   }
   if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
@@ -102,7 +107,26 @@ async function getCustomerAccountId(clientId) {
   return accountResult.rows[0] ? accountResult.rows[0].id : null;
 }
 
-async function getOwnedRequest(requestId, clientId) {
+async function getOwnedRequest(requestId, customerPayload) {
+  const clientId = customerPayload && customerPayload.client_id;
+  const accountId = await resolveCustomerAccountId(customerPayload);
+  if (accountId) {
+    const result = await pool.query(
+      `
+      SELECT *
+      FROM marketplace_requests
+      WHERE id = $1
+        AND (
+          client_id = $2
+          OR customer_account_id = $3
+        )
+      LIMIT 1
+      `,
+      [requestId, clientId, accountId]
+    );
+    return result.rows[0] || null;
+  }
+
   const result = await pool.query(
     `
     SELECT *
@@ -233,25 +257,131 @@ router.post("/marketplace/requests", customerAuth, marketplaceCustomerRequestCre
       ]
     );
 
-    return res.status(201).json(withModerationFlag(created.rows[0], req));
+    return res.status(201).json(withModerationFlag(created.rows[0], res));
   } catch (err) {
     return sendSafeServerError(res, err, "MARKETPLACE REQUEST CREATE ERROR");
+  }
+});
+
+router.post("/marketplace/requests/:id/cancel", customerAuth, async (req, res) => {
+  const dbClient = await pool.connect();
+  try {
+    const requestId = Number(req.params.id);
+    if (!Number.isInteger(requestId) || requestId <= 0) {
+      return res.status(400).json({ error: "Invalid request id" });
+    }
+
+    await dbClient.query("BEGIN");
+
+    const owned = await getOwnedRequest(requestId, req.customer);
+    if (!owned) {
+      await dbClient.query("ROLLBACK");
+      return res.status(404).json({ error: "Request not found" });
+    }
+
+    const lockResult = await dbClient.query(
+      `
+      SELECT id, status
+      FROM marketplace_requests
+      WHERE id = $1
+      LIMIT 1
+      FOR UPDATE
+      `,
+      [requestId]
+    );
+    const current = lockResult.rows[0];
+    if (!current) {
+      await dbClient.query("ROLLBACK");
+      return res.status(404).json({ error: "Request not found" });
+    }
+
+    const status = String(current.status || "").toLowerCase();
+    if (status === "cancelled") {
+      await dbClient.query("COMMIT");
+      return res.json({
+        request_id: requestId,
+        status: "cancelled",
+        already_cancelled: true
+      });
+    }
+    if (status !== "open") {
+      await dbClient.query("ROLLBACK");
+      return res.status(409).json({
+        error: "Only open requests can be cancelled"
+      });
+    }
+
+    await dbClient.query(
+      `
+      UPDATE marketplace_offers
+      SET status = 'rejected'
+      WHERE request_id = $1
+        AND status = 'pending'
+      `,
+      [requestId]
+    );
+
+    const cancelled = await dbClient.query(
+      `
+      UPDATE marketplace_requests
+      SET status = 'cancelled'
+      WHERE id = $1
+        AND status = 'open'
+      RETURNING id, status
+      `,
+      [requestId]
+    );
+
+    await dbClient.query("COMMIT");
+
+    if (!cancelled.rows.length) {
+      return res.status(409).json({
+        error: "Request was modified by another action"
+      });
+    }
+
+    return res.json({
+      request_id: requestId,
+      status: "cancelled",
+      already_cancelled: false
+    });
+  } catch (err) {
+    try { await dbClient.query("ROLLBACK"); } catch (_) {}
+    return sendSafeServerError(res, err, "MARKETPLACE REQUEST CANCEL ERROR");
+  } finally {
+    dbClient.release();
   }
 });
 
 router.get("/marketplace/requests/me", customerAuth, async (req, res) => {
   try {
     const { limit, offset } = parsePagination(req.query);
-    const result = await pool.query(
-      `
-      SELECT *
-      FROM marketplace_requests
-      WHERE client_id = $1
-      ORDER BY created_at DESC, id DESC
-      LIMIT $2 OFFSET $3
-      `,
-      [req.customer.client_id, limit, offset]
-    );
+    const accountId = await resolveCustomerAccountId(req.customer);
+    let result;
+    if (accountId) {
+      result = await pool.query(
+        `
+        SELECT *
+        FROM marketplace_requests
+        WHERE customer_account_id = $1
+           OR (customer_account_id IS NULL AND client_id = $2)
+        ORDER BY created_at DESC, id DESC
+        LIMIT $3 OFFSET $4
+        `,
+        [accountId, req.customer.client_id, limit, offset]
+      );
+    } else {
+      result = await pool.query(
+        `
+        SELECT *
+        FROM marketplace_requests
+        WHERE client_id = $1
+        ORDER BY created_at DESC, id DESC
+        LIMIT $2 OFFSET $3
+        `,
+        [req.customer.client_id, limit, offset]
+      );
+    }
     return res.json(result.rows);
   } catch (err) {
     return sendSafeServerError(res, err, "MARKETPLACE REQUEST LIST ERROR");
@@ -266,6 +396,7 @@ router.get("/marketplace/requests/:id/matches", customerAuth, async (req, res) =
       return res.status(400).json({ error: "Invalid request id" });
     }
 
+    const accountId = await resolveCustomerAccountId(req.customer);
     const requestResult = await pool.query(
       `
       SELECT
@@ -277,10 +408,13 @@ router.get("/marketplace/requests/:id/matches", customerAuth, async (req, res) =
         state
       FROM marketplace_requests
       WHERE id = $1
-        AND client_id = $2
+        AND (
+          client_id = $2
+          OR ($3::INT IS NOT NULL AND customer_account_id = $3)
+        )
       LIMIT 1
       `,
-      [requestId, req.customer.client_id]
+      [requestId, req.customer.client_id, accountId]
     );
 
     if (!requestResult.rows.length) {
@@ -507,7 +641,7 @@ router.post("/marketplace/requests/:id/offers", companyAuth, requireCompanyBilli
       [requestId, companyId, price, message, estimatedStartDate]
     );
 
-    return res.status(201).json(withModerationFlag(created.rows[0], req));
+    return res.status(201).json(withModerationFlag(created.rows[0], res));
   } catch (err) {
     return sendSafeServerError(res, err, "MARKETPLACE OFFER CREATE ERROR");
   }
@@ -519,6 +653,14 @@ router.post("/marketplace/offers/:id/accept", customerAuth, marketplaceOfferAcce
     const offerId = Number(req.params.id);
     if (!offerId) {
       return res.status(400).json({ error: "Invalid offer id" });
+    }
+
+    const accountId = await resolveCustomerAccountId(req.customer);
+    if (accountId) {
+      const scopes = await loadPortalScopes(accountId);
+      if (scopes.length && !tokenClientBelongsToScopes(scopes, req.customer.client_id)) {
+        return res.status(403).json({ error: "Forbidden" });
+      }
     }
 
     await client.query("BEGIN");
@@ -538,11 +680,14 @@ router.post("/marketplace/offers/:id/accept", customerAuth, marketplaceOfferAcce
       JOIN marketplace_requests mr
         ON mr.id = mo.request_id
       WHERE mo.id = $1
-        AND mr.client_id = $2
+        AND (
+          mr.client_id = $2
+          OR ($3::INT IS NOT NULL AND mr.customer_account_id = $3)
+        )
       LIMIT 1
       FOR UPDATE
       `,
-      [offerId, req.customer.client_id]
+      [offerId, req.customer.client_id, accountId]
     );
 
     if (!offerResult.rows.length) {
@@ -558,11 +703,14 @@ router.post("/marketplace/offers/:id/accept", customerAuth, marketplaceOfferAcce
       SELECT id, status
       FROM marketplace_requests
       WHERE id = $1
-        AND client_id = $2
+        AND (
+          client_id = $2
+          OR ($3::INT IS NOT NULL AND customer_account_id = $3)
+        )
       LIMIT 1
       FOR UPDATE
       `,
-      [requestId, req.customer.client_id]
+      [requestId, req.customer.client_id, accountId]
     );
 
     if (!requestLockResult.rows.length) {
@@ -818,6 +966,17 @@ router.post("/marketplace/requests/:id/convert", companyAuth, requireCompanyBill
       companyClient = createdClient.rows[0];
     }
 
+    if (source.customer_account_id && companyClient && companyClient.id) {
+      await client.query(
+        `
+        INSERT INTO customer_account_clients (customer_account_id, client_id, company_id)
+        VALUES ($1, $2, $3)
+        ON CONFLICT (customer_account_id, client_id) DO NOTHING
+        `,
+        [source.customer_account_id, companyClient.id, companyId]
+      );
+    }
+
     const leadInsert = await client.query(
       `
       INSERT INTO estimates (
@@ -1010,7 +1169,7 @@ router.get("/marketplace/requests/:id/offers", customerAuth, async (req, res) =>
       return res.status(400).json({ error: "Invalid request id" });
     }
 
-    const ownedRequest = await getOwnedRequest(requestId, req.customer.client_id);
+    const ownedRequest = await getOwnedRequest(requestId, req.customer);
     if (!ownedRequest) {
       return res.status(404).json({ error: "Request not found" });
     }
@@ -1052,7 +1211,7 @@ router.get("/marketplace/requests/:id", customerAuth, async (req, res) => {
       return res.status(400).json({ error: "Invalid request id" });
     }
 
-    const requestRow = await getOwnedRequest(requestId, req.customer.client_id);
+    const requestRow = await getOwnedRequest(requestId, req.customer);
     if (!requestRow) {
       return res.status(404).json({ error: "Request not found" });
     }

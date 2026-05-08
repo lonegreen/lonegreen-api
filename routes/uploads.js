@@ -6,8 +6,9 @@ const requireCompanyBillingForMutations = require("../middleware/requireCompanyB
 const { requireMinimumRole, isManagerOrAbove, isWorker, workerIdForUser } = auth;
 const {
   upload,
-  publicUploadUrl,
-  deleteLocalUpload,
+  publishUploadedFile,
+  cleanupLocalTemp,
+  deleteStoredFile,
   assertUploadContentMatchesMime
 } = require("../services/uploadService");
 const { ensureJobPhotoSchema, logActivity } = require("../services/routeHelpers");
@@ -29,6 +30,23 @@ const COMPANY_LOGO_MAX_SIZE = 2 * 1024 * 1024;
 
 function forbidden(res) {
   return res.status(403).json({ error: "Forbidden" });
+}
+
+async function safeCleanupTemp(reqFile) {
+  try {
+    await cleanupLocalTemp(reqFile);
+  } catch {
+    /* best effort */
+  }
+}
+
+async function safeDeleteStored(url) {
+  if (!url) return;
+  try {
+    await deleteStoredFile(url);
+  } catch {
+    /* best effort — orphan cleanup must never crash the response */
+  }
 }
 
 async function getAccessibleJob(req, res, jobId) {
@@ -82,29 +100,19 @@ async function verifyUploadContent(req, res, next) {
     await assertUploadContentMatchesMime(req.file.path, req.file.mimetype);
     return next();
   } catch (err) {
-    try {
-      await deleteLocalUpload(publicUploadUrl(req.file.filename));
-    } catch {
-      /* ignore */
-    }
+    await safeCleanupTemp(req.file);
     return res.status(400).json({ error: err.message || "File content validation failed" });
   }
 }
 
-function isSafeLocalUploadUrl(value) {
-  const url = String(value || "").trim();
-  return /^\/uploads\/[a-zA-Z0-9._-]+$/.test(url);
-}
-
 router.post("/uploads/job/:jobId/photo", auth, requireCompanyBillingForMutations, uploadLimiter, handleUpload, verifyUploadContent, async (req, res) => {
+  let publishedUrl = null;
   try {
     await ensureJobPhotoSchema();
 
     const photoType = String(req.body.photo_type || "").toLowerCase();
     if (!PHOTO_TYPES.has(photoType)) {
-      if (req.file) {
-        await deleteLocalUpload(publicUploadUrl(req.file.filename));
-      }
+      await safeCleanupTemp(req.file);
       return res.status(400).json({ error: "photo_type must be before or after" });
     }
 
@@ -113,24 +121,23 @@ router.post("/uploads/job/:jobId/photo", auth, requireCompanyBillingForMutations
     }
     const photoMime = String(req.file.mimetype || "").toLowerCase();
     if (!JOB_PHOTO_ALLOWED_MIME.has(photoMime)) {
-      await deleteLocalUpload(publicUploadUrl(req.file.filename));
+      await safeCleanupTemp(req.file);
       return res.status(400).json({ error: "Only JPG, PNG, and WEBP job photos are allowed" });
     }
 
     const job = await getAccessibleJob(req, res, req.params.jobId);
     if (!job) {
-      if (req.file) {
-        await deleteLocalUpload(publicUploadUrl(req.file.filename));
-      }
+      await safeCleanupTemp(req.file);
       return;
     }
 
-    const imageUrl = publicUploadUrl(req.file.filename);
+    publishedUrl = await publishUploadedFile(req.file);
+
     const result = await pool.query(
       `INSERT INTO job_photos (job_id, photo_type, image_url, company_id)
        VALUES ($1,$2,$3,$4)
        RETURNING *`,
-      [job.id, photoType, imageUrl, req.user.company_id]
+      [job.id, photoType, publishedUrl, req.user.company_id]
     );
 
     await logActivity({
@@ -142,14 +149,16 @@ router.post("/uploads/job/:jobId/photo", auth, requireCompanyBillingForMutations
       details: {
         job_id: Number(job.id),
         photo_type: photoType,
-        image_url: imageUrl
+        image_url: publishedUrl
       }
     });
 
     res.json(result.rows[0]);
   } catch (err) {
-    if (req.file) {
-      await deleteLocalUpload(publicUploadUrl(req.file.filename));
+    if (publishedUrl) {
+      await safeDeleteStored(publishedUrl);
+    } else {
+      await safeCleanupTemp(req.file);
     }
 
     console.log("UPLOAD JOB PHOTO ERROR:", err);
@@ -205,7 +214,7 @@ router.delete("/uploads/job/photos/:photoId", auth, requireCompanyBillingForMuta
       [req.params.photoId, req.user.company_id]
     );
 
-    await deleteLocalUpload(photo.image_url);
+    await safeDeleteStored(photo.image_url);
 
     await logActivity({
       companyId: req.user.company_id,
@@ -228,12 +237,11 @@ router.delete("/uploads/job/photos/:photoId", auth, requireCompanyBillingForMuta
 });
 
 router.post("/uploads/company/logo", auth, requireCompanyBillingForMutations, requireMinimumRole("manager"), uploadLimiter, handleUpload, verifyUploadContent, async (req, res) => {
+  let publishedUrl = null;
   try {
     const companyId = req.user && req.user.company_id;
     if (!companyId) {
-      if (req.file) {
-        await deleteLocalUpload(publicUploadUrl(req.file.filename));
-      }
+      await safeCleanupTemp(req.file);
       return res.status(403).json({ error: "Forbidden" });
     }
 
@@ -243,12 +251,12 @@ router.post("/uploads/company/logo", auth, requireCompanyBillingForMutations, re
 
     const mimeType = String(req.file.mimetype || "").toLowerCase();
     if (!COMPANY_LOGO_ALLOWED_MIME.has(mimeType)) {
-      await deleteLocalUpload(publicUploadUrl(req.file.filename));
+      await safeCleanupTemp(req.file);
       return res.status(400).json({ error: "Only JPG, PNG, and WEBP logo images are allowed" });
     }
 
     if (Number(req.file.size || 0) > COMPANY_LOGO_MAX_SIZE) {
-      await deleteLocalUpload(publicUploadUrl(req.file.filename));
+      await safeCleanupTemp(req.file);
       return res.status(400).json({ error: "Logo file too large. Max size is 2MB." });
     }
 
@@ -263,12 +271,12 @@ router.post("/uploads/company/logo", auth, requireCompanyBillingForMutations, re
     );
 
     if (!currentCompany.rows.length) {
-      await deleteLocalUpload(publicUploadUrl(req.file.filename));
+      await safeCleanupTemp(req.file);
       return res.status(404).json({ error: "Company not found" });
     }
 
     const previousLogoUrl = String(currentCompany.rows[0].invoice_logo_url || "");
-    const nextLogoUrl = publicUploadUrl(req.file.filename);
+    publishedUrl = await publishUploadedFile(req.file);
 
     await pool.query(
       `
@@ -276,11 +284,11 @@ router.post("/uploads/company/logo", auth, requireCompanyBillingForMutations, re
       SET invoice_logo_url = $2
       WHERE id = $1
       `,
-      [companyId, nextLogoUrl]
+      [companyId, publishedUrl]
     );
 
-    if (previousLogoUrl && previousLogoUrl !== nextLogoUrl && isSafeLocalUploadUrl(previousLogoUrl)) {
-      await deleteLocalUpload(previousLogoUrl);
+    if (previousLogoUrl && previousLogoUrl !== publishedUrl) {
+      await safeDeleteStored(previousLogoUrl);
     }
 
     await logActivity({
@@ -290,14 +298,16 @@ router.post("/uploads/company/logo", auth, requireCompanyBillingForMutations, re
       entityType: "company",
       entityId: Number(companyId),
       details: {
-        invoice_logo_url: nextLogoUrl
+        invoice_logo_url: publishedUrl
       }
     });
 
-    return res.json({ url: nextLogoUrl });
+    return res.json({ url: publishedUrl });
   } catch (err) {
-    if (req.file) {
-      await deleteLocalUpload(publicUploadUrl(req.file.filename));
+    if (publishedUrl) {
+      await safeDeleteStored(publishedUrl);
+    } else {
+      await safeCleanupTemp(req.file);
     }
     sendSafeServerError(res, err, "UPLOAD COMPANY LOGO ERROR");
   }

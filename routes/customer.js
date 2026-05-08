@@ -13,6 +13,11 @@ const { verifyCustomerBearerToken } = require("../middleware/auth");
 const { generateInvoicePdf, generateEstimatePdf } = require("../services/pdfService");
 const logger = require("../services/logger");
 const { sendSafeServerError } = require("../services/safeServerError");
+const {
+  resolveCustomerAccountId,
+  loadPortalScopes,
+  scopePairsInclude
+} = require("../services/customerPortalScope");
 
 const router = express.Router();
 
@@ -98,6 +103,49 @@ async function getClient(customer) {
   return result.rows[0] || null;
 }
 
+async function getPortalContext(customer) {
+  const accountId = await resolveCustomerAccountId(customer);
+  let scopes = accountId ? await loadPortalScopes(accountId) : [];
+  if (!scopes.length && customer.client_id) {
+    const client = await pool.query(
+      "SELECT id, company_id FROM clients WHERE id = $1 LIMIT 1",
+      [customer.client_id]
+    );
+    const row = client.rows[0];
+    if (row && row.company_id) {
+      scopes = [{
+        company_id: Number(row.company_id),
+        client_id: Number(row.id)
+      }];
+    }
+  }
+  return { accountId, scopes };
+}
+
+function portalScopeAllows(customer, clientRow, scopes) {
+  if (!clientRow) {
+    return false;
+  }
+  if (scopes.length) {
+    return scopePairsInclude(scopes, clientRow.company_id, clientRow.id);
+  }
+  return ensureCustomerCompanyIsolation(customer, clientRow);
+}
+
+async function hydrateInvoiceForScopes(scopes, invoiceId) {
+  const cleanId = Number(invoiceId);
+  if (!Number.isInteger(cleanId) || cleanId <= 0) {
+    return null;
+  }
+  for (const s of scopes) {
+    const inv = await hydrateInvoice(s.company_id, cleanId);
+    if (inv && Number(inv.client_id) === Number(s.client_id)) {
+      return inv;
+    }
+  }
+  return null;
+}
+
 function ensureCustomerCompanyIsolation(customer, client) {
   if (!client) return false;
   if (!customer.company_id) return true;
@@ -126,23 +174,29 @@ async function getCustomerAccountByClient(clientId) {
   return result.rows[0] || null;
 }
 
-async function getCustomerRequests(customer) {
+async function getCustomerRequests(scopes) {
   await ensureWorkflowSchema();
-  const companyId = customer.company_id || null;
-  if (!companyId) {
+  if (!scopes.length) {
     return [];
+  }
+  const parts = [];
+  const params = [];
+  let p = 1;
+  for (const s of scopes) {
+    parts.push(`(company_id = $${p} AND client_id = $${p + 1})`);
+    params.push(s.company_id, s.client_id);
+    p += 2;
   }
   const result = await pool.query(
     `
     SELECT id, service, status, visit_date, notes, created_at
     FROM estimates
-    WHERE company_id = $1
-      AND client_id = $2
+    WHERE (${parts.join(" OR ")})
       AND record_type = 'lead'
       AND COALESCE(archived, FALSE) = FALSE
     ORDER BY created_at DESC, id DESC
     `,
-    [companyId, customer.client_id]
+    params
   );
   return result.rows;
 }
@@ -152,34 +206,59 @@ async function getCompany(companyId) {
   return result.rows[0] || null;
 }
 
-async function getEstimates(customer) {
+async function getEstimates(scopes) {
   await ensureWorkflowSchema();
+  if (!scopes.length) {
+    return [];
+  }
+  const parts = [];
+  const params = [];
+  let p = 1;
+  for (const s of scopes) {
+    parts.push(`(company_id = $${p} AND (client_id = $${p + 1} OR converted_client_id = $${p + 1}))`);
+    params.push(s.company_id, s.client_id);
+    p += 2;
+  }
   const result = await pool.query(
     "SELECT id, client_id, customer_name, phone, address, zip, service, status, quoted_price, visit_date, notes, created_at, company_id " +
-    "FROM estimates WHERE company_id=$1 AND record_type = 'estimate' AND COALESCE(archived, FALSE) = FALSE AND (client_id=$2 OR converted_client_id=$2) ORDER BY id DESC",
-    [customer.company_id, customer.client_id]
+      "FROM estimates WHERE record_type = 'estimate' AND COALESCE(archived, FALSE) = FALSE AND (" +
+      parts.join(" OR ") +
+      ") ORDER BY id DESC",
+    params
   );
   return result.rows.map(item => ({ ...item, status: portalEstimateStatus(item.status) }));
 }
 
-async function getCustomerEstimate(customer, id) {
+async function getCustomerEstimate(scopes, id) {
   await ensureWorkflowSchema();
+  const estimateId = Number(id);
+  if (!Number.isInteger(estimateId) || estimateId <= 0 || !scopes.length) {
+    return null;
+  }
+  const parts = [];
+  const params = [estimateId];
+  let p = 2;
+  for (const s of scopes) {
+    parts.push(`(company_id = $${p} AND (client_id = $${p + 1} OR converted_client_id = $${p + 1}))`);
+    params.push(s.company_id, s.client_id);
+    p += 2;
+  }
   const result = await pool.query(
     `SELECT *
      FROM estimates
      WHERE id = $1
-       AND company_id = $2
        AND record_type = 'estimate'
-       AND (client_id = $3 OR converted_client_id = $3)
+       AND (${parts.join(" OR ")})
      LIMIT 1`,
-    [id, customer.company_id, customer.client_id]
+    params
   );
   return result.rows[0] || null;
 }
 
 async function updateCustomerEstimateStatus(req, res, status) {
   try {
-    const estimate = await getCustomerEstimate(req.customer, req.params.id);
+    const { scopes } = await getPortalContext(req.customer);
+    const estimate = await getCustomerEstimate(scopes, req.params.id);
     if (!estimate) return res.status(404).json({ error: "Estimate not found" });
 
     if (
@@ -198,17 +277,17 @@ async function updateCustomerEstimateStatus(req, res, status) {
          AND record_type = 'estimate'
          AND (client_id = $4 OR converted_client_id = $4)
        RETURNING *`,
-      [status, req.params.id, req.customer.company_id, req.customer.client_id]
+      [status, req.params.id, estimate.company_id, estimate.client_id]
     );
 
     await logActivity({
-      companyId: req.customer.company_id,
+      companyId: estimate.company_id,
       userId: null,
       action: status === "approved" ? "customer_estimate_approved" : "customer_estimate_rejected",
       entityType: "estimate",
       entityId: result.rows[0].id,
       details: {
-        client_id: req.customer.client_id,
+        client_id: estimate.client_id,
         before_status: estimate.status,
         after_status: status
       }
@@ -221,36 +300,75 @@ async function updateCustomerEstimateStatus(req, res, status) {
   }
 }
 
-async function getJobs(customer) {
+async function getJobs(scopes) {
+  if (!scopes.length) {
+    return [];
+  }
+  const parts = [];
+  const params = [];
+  let p = 1;
+  for (const s of scopes) {
+    parts.push(`(jobs.company_id = $${p} AND jobs.client_id = $${p + 1})`);
+    params.push(s.company_id, s.client_id);
+    p += 2;
+  }
   const result = await pool.query(
     "SELECT jobs.id, jobs.client_id, jobs.service, jobs.type, jobs.date, jobs.start_time, jobs.end_time, jobs.status, jobs.price, jobs.payment_status, jobs.internal_notes, workers.name AS worker_name " +
-    "FROM jobs LEFT JOIN workers ON workers.id = jobs.worker_id AND workers.company_id = jobs.company_id WHERE jobs.company_id=$1 AND jobs.client_id=$2 ORDER BY jobs.date DESC, jobs.start_time DESC, jobs.id DESC",
-    [customer.company_id, customer.client_id]
+      "FROM jobs LEFT JOIN workers ON workers.id = jobs.worker_id AND workers.company_id = jobs.company_id WHERE (" +
+      parts.join(" OR ") +
+      ") ORDER BY jobs.date DESC, jobs.start_time DESC, jobs.id DESC",
+    params
   );
   return result.rows.map(item => ({ ...item, status: normalizeJobStatus(item.status) }));
 }
 
-async function getSubscriptions(customer) {
+async function getSubscriptions(scopes) {
   await ensureSubscriptionBillingSchema();
+  if (!scopes.length) {
+    return [];
+  }
+  const parts = [];
+  const params = [];
+  let p = 1;
+  for (const s of scopes) {
+    parts.push(`(subscriptions.company_id = $${p} AND subscriptions.client_id = $${p + 1})`);
+    params.push(s.company_id, s.client_id);
+    p += 2;
+  }
   const result = await pool.query(
-    "SELECT subscriptions.*, workers.name AS worker_name FROM subscriptions LEFT JOIN workers ON workers.id = subscriptions.worker_id AND workers.company_id = subscriptions.company_id WHERE subscriptions.company_id=$1 AND subscriptions.client_id=$2 ORDER BY subscriptions.id DESC",
-    [customer.company_id, customer.client_id]
+    "SELECT subscriptions.*, workers.name AS worker_name FROM subscriptions LEFT JOIN workers ON workers.id = subscriptions.worker_id AND workers.company_id = subscriptions.company_id WHERE (" +
+      parts.join(" OR ") +
+      ") ORDER BY subscriptions.id DESC",
+    params
   );
   return result.rows;
 }
 
-async function getInvoices(customer) {
-  const result = await pool.query("SELECT id FROM invoices WHERE company_id=$1 AND client_id=$2 ORDER BY id DESC", [customer.company_id, customer.client_id]);
+async function getInvoices(scopes) {
+  if (!scopes.length) {
+    return [];
+  }
   const invoices = [];
-  for (const row of result.rows) {
-    const invoice = await hydrateInvoice(customer.company_id, row.id);
-    if (invoice && String(invoice.client_id) === String(customer.client_id)) {
-      const parsed = attachCustomerInvoicePresentation({
-        ...invoice,
-        line_items: safeJsonParse(invoice.line_items, invoice.line_items || [])
-      });
-      if (parsed) {
-        invoices.push(parsed);
+  const seen = new Set();
+  for (const s of scopes) {
+    const result = await pool.query(
+      "SELECT id FROM invoices WHERE company_id=$1 AND client_id=$2 ORDER BY id DESC",
+      [s.company_id, s.client_id]
+    );
+    for (const row of result.rows) {
+      if (seen.has(row.id)) {
+        continue;
+      }
+      seen.add(row.id);
+      const invoice = await hydrateInvoice(s.company_id, row.id);
+      if (invoice && String(invoice.client_id) === String(s.client_id)) {
+        const parsed = attachCustomerInvoicePresentation({
+          ...invoice,
+          line_items: safeJsonParse(invoice.line_items, invoice.line_items || [])
+        });
+        if (parsed) {
+          invoices.push(parsed);
+        }
       }
     }
   }
@@ -268,16 +386,42 @@ router.post("/customer/login", async (req, res) => {
 
 router.get("/customer/me", customerAuth, async (req, res) => {
   try {
+    const { scopes } = await getPortalContext(req.customer);
     const client = await getClient(req.customer);
     if (!client) {
       return res.status(404).json({ error: "Customer not found" });
     }
 
-    if (!ensureCustomerCompanyIsolation(req.customer, client)) {
+    if (!portalScopeAllows(req.customer, client, scopes)) {
       return res.status(403).json({ error: "Forbidden" });
     }
 
-    const account = await getCustomerAccountByClient(client.id);
+    const accountId = await resolveCustomerAccountId(req.customer);
+    let account = null;
+    if (accountId) {
+      const accountResult = await pool.query(
+        `
+        SELECT
+          id,
+          client_id,
+          email,
+          first_name,
+          last_name,
+          phone,
+          is_verified,
+          created_at,
+          updated_at
+        FROM customer_accounts
+        WHERE id = $1
+        LIMIT 1
+        `,
+        [accountId]
+      );
+      account = accountResult.rows[0] || null;
+    }
+    if (!account) {
+      account = await getCustomerAccountByClient(client.id);
+    }
     const companyId = req.customer.company_id || client.company_id || null;
 
     return res.json({
@@ -308,16 +452,28 @@ router.get("/customer/me", customerAuth, async (req, res) => {
 
 router.put("/customer/profile", customerAuth, async (req, res) => {
   try {
+    const { scopes } = await getPortalContext(req.customer);
     const client = await getClient(req.customer);
     if (!client) {
       return res.status(404).json({ error: "Customer not found" });
     }
 
-    if (!ensureCustomerCompanyIsolation(req.customer, client)) {
+    if (!portalScopeAllows(req.customer, client, scopes)) {
       return res.status(403).json({ error: "Forbidden" });
     }
 
-    const account = await getCustomerAccountByClient(client.id);
+    const accountId = await resolveCustomerAccountId(req.customer);
+    let account = null;
+    if (accountId) {
+      const accountResult = await pool.query(
+        "SELECT id, client_id, email, first_name, last_name, phone, is_verified, created_at, updated_at FROM customer_accounts WHERE id = $1 LIMIT 1",
+        [accountId]
+      );
+      account = accountResult.rows[0] || null;
+    }
+    if (!account) {
+      account = await getCustomerAccountByClient(client.id);
+    }
     if (!account) {
       return res.status(404).json({ error: "Customer account not found" });
     }
@@ -346,6 +502,9 @@ router.put("/customer/profile", customerAuth, async (req, res) => {
       return res.status(409).json({ error: "Email is already in use" });
     }
 
+    // P1 isolation fix: customer profile edits update customer_accounts ONLY.
+    // Companies own the canonical clients.* CRM record; portal must never overwrite
+    // name/phone/email/address on the company's client row.
     const updatedAccountResult = await pool.query(
       `
       UPDATE customer_accounts
@@ -354,49 +513,28 @@ router.put("/customer/profile", customerAuth, async (req, res) => {
         last_name = $3,
         phone = $4,
         email = $5,
+        address = $6,
         updated_at = CURRENT_TIMESTAMP
       WHERE id = $1
-      RETURNING id, client_id, email, first_name, last_name, phone, is_verified, created_at, updated_at
+      RETURNING id, client_id, email, first_name, last_name, phone, address, is_verified, created_at, updated_at
       `,
-      [account.id, firstName, lastName, phone, email]
+      [account.id, firstName, lastName, phone, email, address || null]
     );
 
-    const updatedClientResult = await pool.query(
-      `
-      UPDATE clients
-      SET
-        name = $2,
-        phone = $3,
-        email = $4,
-        address = $5
-      WHERE id = $1
-        AND company_id = $6
-      RETURNING id, company_id, name, phone, email, address, zip
-      `,
-      [client.id, [firstName, lastName].filter(Boolean).join(" "), phone, email, address || client.address || "", client.company_id]
-    );
-
-    if (!updatedClientResult.rows.length) {
-      return res.status(403).json({ error: "Forbidden" });
-    }
-
-    const updatedClient = updatedClientResult.rows[0];
-    if (!ensureCustomerCompanyIsolation(req.customer, updatedClient)) {
-      return res.status(403).json({ error: "Forbidden" });
-    }
+    const updatedAccount = updatedAccountResult.rows[0];
 
     return res.json({
       profile: {
-        ...updatedAccountResult.rows[0],
+        ...updatedAccount,
         role: "customer",
-        company_id: updatedClient.company_id || null,
+        company_id: client.company_id || null,
         customer: {
-          id: updatedClient.id,
-          name: updatedClient.name || "",
-          phone: updatedClient.phone || "",
-          email: updatedClient.email || null,
-          address: updatedClient.address || "",
-          zip: updatedClient.zip || ""
+          id: client.id,
+          name: client.name || "",
+          phone: client.phone || "",
+          email: client.email || null,
+          address: client.address || "",
+          zip: client.zip || ""
         }
       }
     });
@@ -407,20 +545,17 @@ router.put("/customer/profile", customerAuth, async (req, res) => {
 
 router.get("/customer/requests", customerAuth, async (req, res) => {
   try {
+    const { scopes } = await getPortalContext(req.customer);
     const client = await getClient(req.customer);
     if (!client) {
       return res.status(404).json({ error: "Customer not found" });
     }
 
-    if (!ensureCustomerCompanyIsolation(req.customer, client)) {
+    if (!portalScopeAllows(req.customer, client, scopes)) {
       return res.status(403).json({ error: "Forbidden" });
     }
 
-    const scopedCustomer = {
-      ...req.customer,
-      company_id: req.customer.company_id || client.company_id || null
-    };
-    const requests = await getCustomerRequests(scopedCustomer);
+    const requests = await getCustomerRequests(scopes);
     return res.json(requests);
   } catch (err) {
     sendSafeServerError(res, err, "CUSTOMER REQUESTS ERROR");
@@ -429,22 +564,21 @@ router.get("/customer/requests", customerAuth, async (req, res) => {
 
 router.get("/customer/dashboard", customerAuth, async (req, res) => {
   try {
+    const { scopes } = await getPortalContext(req.customer);
     const client = await getClient(req.customer);
     if (!client) return res.status(404).json({ error: "Customer not found" });
-    if (!ensureCustomerCompanyIsolation(req.customer, client)) {
+    if (!portalScopeAllows(req.customer, client, scopes)) {
       return res.status(403).json({ error: "Forbidden" });
     }
 
-    const scopedCustomer = {
-      ...req.customer,
-      company_id: req.customer.company_id || client.company_id
-    };
+    const primaryScope = scopes.find(s => Number(s.client_id) === Number(req.customer.client_id))
+      || scopes[0];
     const [company, estimates, invoices, jobs, subscriptions] = await Promise.all([
-      getCompany(scopedCustomer.company_id),
-      getEstimates(scopedCustomer),
-      getInvoices(scopedCustomer),
-      getJobs(scopedCustomer),
-      getSubscriptions(scopedCustomer)
+      primaryScope ? getCompany(primaryScope.company_id) : Promise.resolve(null),
+      getEstimates(scopes),
+      getInvoices(scopes),
+      getJobs(scopes),
+      getSubscriptions(scopes)
     ]);
     const today = new Date().toISOString().split("T")[0];
     res.json({
@@ -465,7 +599,12 @@ router.get("/customer/dashboard", customerAuth, async (req, res) => {
 });
 
 router.get("/customer/estimates", customerAuth, async (req, res) => {
-  try { res.json(await getEstimates(req.customer)); } catch (err) { res.status(500).json({ error: err.message }); }
+  try {
+    const { scopes } = await getPortalContext(req.customer);
+    res.json(await getEstimates(scopes));
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 router.put("/customer/estimates/:id/status", customerAuth, async (req, res) => {
@@ -536,13 +675,19 @@ router.post("/customer/service-requests", customerAuth, async (req, res) => {
 });
 
 router.get("/customer/invoices", customerAuth, async (req, res) => {
-  try { res.json(await getInvoices(req.customer)); } catch (err) { res.status(500).json({ error: err.message }); }
+  try {
+    const { scopes } = await getPortalContext(req.customer);
+    res.json(await getInvoices(scopes));
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 router.get("/customer/invoices/:id", customerAuth, async (req, res) => {
   try {
-    const invoice = await hydrateInvoice(req.customer.company_id, req.params.id);
-    if (!invoice || String(invoice.client_id) !== String(req.customer.client_id)) {
+    const { scopes } = await getPortalContext(req.customer);
+    const invoice = await hydrateInvoiceForScopes(scopes, req.params.id);
+    if (!invoice) {
       return res.status(404).json({ error: "Invoice not found" });
     }
     const payload = attachCustomerInvoicePresentation({
@@ -555,20 +700,21 @@ router.get("/customer/invoices/:id", customerAuth, async (req, res) => {
 
 router.get("/customer/invoices/:id/pdf", customerAuth, async (req, res) => {
   try {
-    const invoice = await hydrateInvoice(req.customer.company_id, req.params.id);
-    if (!invoice || String(invoice.client_id) !== String(req.customer.client_id)) return res.status(404).json({ error: "Invoice not found" });
+    const { scopes } = await getPortalContext(req.customer);
+    const invoice = await hydrateInvoiceForScopes(scopes, req.params.id);
+    if (!invoice) return res.status(404).json({ error: "Invoice not found" });
 
     const pdf = await generateInvoicePdf(invoice);
     const filename = buildInvoicePdfFilename(invoice);
 
     await logActivity({
-      companyId: req.customer.company_id,
+      companyId: invoice.company_id,
       userId: null,
       action: "customer_invoice_pdf_downloaded",
       entityType: "invoice",
       entityId: invoice.id,
       details: {
-        client_id: req.customer.client_id,
+        client_id: invoice.client_id,
         invoice_number: invoice.invoice_number || null
       }
     });
@@ -584,21 +730,22 @@ router.get("/customer/invoices/:id/pdf", customerAuth, async (req, res) => {
 
 router.get("/customer/estimates/:id/pdf", customerAuth, async (req, res) => {
   try {
-    const estimate = await getCustomerEstimate(req.customer, req.params.id);
+    const { scopes } = await getPortalContext(req.customer);
+    const estimate = await getCustomerEstimate(scopes, req.params.id);
     if (!estimate) return res.status(404).json({ error: "Estimate not found" });
 
-    const company = await getCompany(req.customer.company_id);
+    const company = await getCompany(estimate.company_id);
     const pdf = await generateEstimatePdf(estimate, company || {});
     const safeId = String(estimate.id).replace(/[^a-zA-Z0-9_-]/g, "-");
 
     await logActivity({
-      companyId: req.customer.company_id,
+      companyId: estimate.company_id,
       userId: null,
       action: "customer_estimate_pdf_downloaded",
       entityType: "estimate",
       entityId: estimate.id,
       details: {
-        client_id: req.customer.client_id,
+        client_id: estimate.client_id,
         status: estimate.status
       }
     });
@@ -613,11 +760,21 @@ router.get("/customer/estimates/:id/pdf", customerAuth, async (req, res) => {
 });
 
 router.get("/customer/jobs", customerAuth, async (req, res) => {
-  try { res.json(await getJobs(req.customer)); } catch (err) { res.status(500).json({ error: err.message }); }
+  try {
+    const { scopes } = await getPortalContext(req.customer);
+    res.json(await getJobs(scopes));
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 router.get("/customer/subscriptions", customerAuth, async (req, res) => {
-  try { res.json(await getSubscriptions(req.customer)); } catch (err) { res.status(500).json({ error: err.message }); }
+  try {
+    const { scopes } = await getPortalContext(req.customer);
+    res.json(await getSubscriptions(scopes));
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 module.exports = router;

@@ -4,6 +4,11 @@ const { verifyCustomerBearerToken } = require("../middleware/auth");
 const { validateReviewContent } = require("../middleware/abuseGuards");
 const { sendSafeServerError } = require("../services/safeServerError");
 const { sendOperationalEmailSafe } = require("../services/emailService");
+const {
+  resolveCustomerAccountId,
+  loadPortalScopes,
+  scopePairsInclude
+} = require("../services/customerPortalScope");
 
 const router = express.Router();
 
@@ -27,28 +32,14 @@ function cleanReviewText(value) {
   return text ? text : null;
 }
 
-function withModerationFlag(payload, req) {
-  if (!req || !req.locals || req.locals.moderationFlagged !== true) {
+function withModerationFlag(payload, res) {
+  if (!res || !res.locals || res.locals.moderationFlagged !== true) {
     return payload;
   }
   if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
     return payload;
   }
   return { ...payload, moderation_flagged: true };
-}
-
-async function resolveCustomerCompanyId(customer) {
-  if (customer.company_id) {
-    return Number(customer.company_id);
-  }
-  const result = await pool.query(
-    "SELECT company_id FROM clients WHERE id = $1 LIMIT 1",
-    [customer.client_id]
-  );
-  if (!result.rows.length) {
-    return null;
-  }
-  return Number(result.rows[0].company_id);
 }
 
 router.post("/reviews", customerAuth, validateReviewContent, async (req, res) => {
@@ -64,28 +55,37 @@ router.post("/reviews", customerAuth, validateReviewContent, async (req, res) =>
       return res.status(400).json({ error: "rating must be an integer between 1 and 5" });
     }
 
-    const companyId = await resolveCustomerCompanyId(req.customer);
-    if (!companyId) {
+    const accountId = await resolveCustomerAccountId(req.customer);
+    const scopes = accountId ? await loadPortalScopes(accountId) : [];
+    if (!scopes.length) {
+      return res.status(403).json({ error: "Forbidden" });
+    }
+
+    const jobResult = await pool.query(
+      `
+      SELECT id, company_id, client_id, status
+      FROM jobs
+      WHERE id = $1
+      LIMIT 1
+      `,
+      [jobId]
+    );
+    const job = jobResult.rows[0];
+    if (!job || String(job.status || "").toLowerCase() !== "completed") {
+      return res.status(403).json({ error: "You can only review your own completed jobs" });
+    }
+
+    if (!scopePairsInclude(scopes, job.company_id, job.client_id)) {
       return res.status(403).json({ error: "Forbidden" });
     }
 
     const inserted = await pool.query(
       `
       INSERT INTO company_reviews (company_id, client_id, job_id, rating, review_text)
-      SELECT
-        j.company_id,
-        j.client_id,
-        j.id,
-        $4,
-        $5
-      FROM jobs j
-      WHERE j.id = $1
-        AND j.company_id = $2
-        AND j.client_id = $3
-        AND LOWER(COALESCE(j.status, '')) = 'completed'
+      VALUES ($1, $2, $3, $4, $5)
       RETURNING id, company_id, client_id, job_id, rating, review_text, is_public, created_at
       `,
-      [jobId, companyId, req.customer.client_id, rating, reviewText]
+      [job.company_id, job.client_id, job.id, rating, reviewText]
     );
     if (!inserted.rows.length) {
       return res.status(403).json({ error: "You can only review your own completed jobs" });
@@ -94,7 +94,7 @@ router.post("/reviews", customerAuth, validateReviewContent, async (req, res) =>
     const review = inserted.rows[0];
     const companyResult = await pool.query(
       "SELECT id, name, email FROM companies WHERE id = $1 LIMIT 1",
-      [companyId]
+      [job.company_id]
     );
     const company = companyResult.rows[0] || null;
     const companyEmail = company ? String(company.email || "").trim() : "";
@@ -113,7 +113,7 @@ router.post("/reviews", customerAuth, validateReviewContent, async (req, res) =>
       }, { kind: "new_review" });
     }
 
-    return res.status(201).json(withModerationFlag(review, req));
+    return res.status(201).json(withModerationFlag(review, res));
   } catch (err) {
     if (err && err.code === "23505") {
       return res.status(409).json({ error: "A review already exists for this job" });

@@ -2,6 +2,11 @@ const express = require("express");
 const pool = require("../db/pool");
 const { verifyCustomerBearerToken } = require("../middleware/auth");
 const { sendSafeServerError } = require("../services/safeServerError");
+const {
+  resolveCustomerAccountId,
+  loadPortalScopes,
+  tokenClientBelongsToScopes
+} = require("../services/customerPortalScope");
 
 const router = express.Router();
 
@@ -15,28 +20,28 @@ function customerAuth(req, res, next) {
 }
 
 async function getScopedCustomer(req) {
-  const tokenCompanyId = req.customer.company_id ? Number(req.customer.company_id) : null;
-  const clientResult = tokenCompanyId
-    ? await pool.query(
-      "SELECT id, company_id FROM clients WHERE id = $1 AND company_id = $2 LIMIT 1",
-      [req.customer.client_id, tokenCompanyId]
-    )
-    : await pool.query(
+  const accountId = await resolveCustomerAccountId(req.customer);
+  let scopes = accountId ? await loadPortalScopes(accountId) : [];
+  if (!scopes.length && req.customer.client_id) {
+    const clientResult = await pool.query(
       "SELECT id, company_id FROM clients WHERE id = $1 LIMIT 1",
       [req.customer.client_id]
     );
-  if (!clientResult.rows.length) {
+    const row = clientResult.rows[0];
+    if (row && row.company_id) {
+      scopes = [{
+        company_id: Number(row.company_id),
+        client_id: Number(row.id)
+      }];
+    }
+  }
+  if (!scopes.length) {
     return null;
   }
-  const client = clientResult.rows[0];
-  const clientCompanyId = Number(client.company_id);
-  if (tokenCompanyId && tokenCompanyId !== clientCompanyId) {
+  if (!tokenClientBelongsToScopes(scopes, req.customer.client_id)) {
     return null;
   }
-  return {
-    client_id: Number(client.id),
-    company_id: clientCompanyId
-  };
+  return { scopes };
 }
 
 router.post("/favorites", customerAuth, async (req, res) => {
@@ -49,6 +54,13 @@ router.post("/favorites", customerAuth, async (req, res) => {
     const scopedCustomer = await getScopedCustomer(req);
     if (!scopedCustomer) {
       return res.status(403).json({ error: "Forbidden" });
+    }
+
+    const pair = scopedCustomer.scopes.find(s => Number(s.company_id) === companyId);
+    if (!pair) {
+      return res.status(403).json({
+        error: "Open a service relationship with this company before adding favorites."
+      });
     }
 
     const companyResult = await pool.query(
@@ -74,7 +86,7 @@ router.post("/favorites", customerAuth, async (req, res) => {
       DO NOTHING
       RETURNING id, client_id, company_id, created_at
       `,
-      [scopedCustomer.client_id, companyId]
+      [pair.client_id, companyId]
     );
 
     if (inserted.rows.length) {
@@ -88,7 +100,7 @@ router.post("/favorites", customerAuth, async (req, res) => {
       WHERE client_id = $1 AND company_id = $2
       LIMIT 1
       `,
-      [scopedCustomer.client_id, companyId]
+      [pair.client_id, companyId]
     );
     return res.json(existing.rows[0] || null);
   } catch (err) {
@@ -108,13 +120,18 @@ router.delete("/favorites/:companyId", customerAuth, async (req, res) => {
       return res.status(403).json({ error: "Forbidden" });
     }
 
+    const pair = scopedCustomer.scopes.find(s => Number(s.company_id) === companyId);
+    if (!pair) {
+      return res.status(404).json({ error: "Not found" });
+    }
+
     const result = await pool.query(
       `
       DELETE FROM customer_favorites
       WHERE client_id = $1
         AND company_id = $2
       `,
-      [scopedCustomer.client_id, companyId]
+      [pair.client_id, companyId]
     );
 
     if (!result.rowCount) {
@@ -134,14 +151,15 @@ router.get("/favorites", customerAuth, async (req, res) => {
       return res.status(403).json({ error: "Forbidden" });
     }
 
+    const clientIds = scopedCustomer.scopes.map(s => s.client_id);
     const result = await pool.query(
       `
       SELECT id, client_id, company_id, created_at
       FROM customer_favorites
-      WHERE client_id = $1
+      WHERE client_id = ANY($1::int[])
       ORDER BY created_at DESC, id DESC
       `,
-      [scopedCustomer.client_id]
+      [clientIds]
     );
 
     return res.json(result.rows);

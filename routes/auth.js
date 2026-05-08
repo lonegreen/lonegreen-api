@@ -208,6 +208,7 @@ function buildCustomerToken(account) {
   return jwt.sign(
     {
       id: account.id,
+      customer_account_id: account.id,
       role: "customer",
       company_id: account.company_id || null,
       client_id: account.client_id || null,
@@ -1059,6 +1060,7 @@ router.post("/customer-login", authAttemptLimiter, async (req, res) => {
       token,
       customer: {
         id: account.id,
+        customer_account_id: account.id,
         email: account.email,
         first_name: account.first_name,
         last_name: account.last_name,
