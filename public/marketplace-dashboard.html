@@ -4,6 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>FairLinx | Marketplace Dashboard</title>
+  <link rel="stylesheet" href="/css/brand.css">
+
   <link rel="stylesheet" href="/app-shell.css">
   <link rel="stylesheet" href="/ui-cleanup.css">
   <style>
@@ -11,9 +13,9 @@
     body {
       margin: 0;
       font-family: Inter, Arial, sans-serif;
-      color: #173327;
+      color: var(--brand-black);
       background:
-        radial-gradient(circle at top left, rgba(31, 92, 58, 0.08), transparent 28%),
+        radial-gradient(circle at top left, rgba(255,90,0,0.08), transparent 28%),
         linear-gradient(180deg, #edf5f0 0%, #f6f8f7 210px, #f4f6f8 100%);
       padding: 22px;
     }
@@ -32,7 +34,7 @@
     }
     .hero h1 {
       margin: 0 0 6px;
-      color: #1f5c3a;
+      color: var(--brand-primary);
       font-size: 32px;
       letter-spacing: -0.02em;
     }
@@ -57,18 +59,18 @@
     }
     .btn:hover:not(:disabled) { transform: translateY(-1px); }
     .btn.primary {
-      background: linear-gradient(135deg, #1f5c3a, #2d8b55);
+      background: linear-gradient(135deg, var(--brand-primary), var(--brand-primary-hover));
       color: #fff;
-      box-shadow: 0 10px 22px rgba(31, 92, 58, 0.16);
+      box-shadow: 0 10px 22px rgba(230,74,0,0.14);
       text-decoration: none;
       display: inline-flex;
       align-items: center;
       justify-content: center;
     }
     .btn.secondary {
-      background: #edf6f0;
-      color: #1f5c3a;
-      border: 1px solid #d0dfd5;
+      background: var(--brand-bg);
+      color: var(--brand-primary);
+      border: 1px solid var(--brand-border);
       text-decoration: none;
       display: inline-flex;
       align-items: center;
@@ -95,7 +97,7 @@
     }
     .kpi-card {
       background: rgba(255, 255, 255, 0.96);
-      border: 1px solid #dbe7df;
+      border: 1px solid var(--brand-border);
       border-radius: 16px;
       box-shadow: 0 18px 38px rgba(16, 24, 40, 0.06);
       padding: 14px;
@@ -111,7 +113,7 @@
     }
     .kpi-value {
       margin: 0;
-      color: #173327;
+      color: var(--brand-black);
       font-size: 34px;
       line-height: 1.05;
       font-weight: 900;
@@ -125,7 +127,7 @@
     }
     .panel {
       background: rgba(255, 255, 255, 0.96);
-      border: 1px solid #dbe7df;
+      border: 1px solid var(--brand-border);
       border-radius: 16px;
       box-shadow: 0 18px 38px rgba(16, 24, 40, 0.06);
       padding: 16px;
@@ -134,7 +136,7 @@
     }
     .panel h2 {
       margin: 0;
-      color: #1f5c3a;
+      color: var(--brand-primary);
       font-size: 21px;
     }
     .subhead {
@@ -158,7 +160,7 @@
       gap: 5px;
     }
     .quick-link strong {
-      color: #173327;
+      color: var(--brand-black);
       font-size: 14px;
     }
     .quick-link span {
@@ -167,7 +169,7 @@
       line-height: 1.45;
     }
     .quick-link:hover {
-      border-color: #1f5c3a;
+      border-color: var(--brand-primary);
       background: #f2fbf5;
     }
     .activity-list {
@@ -191,7 +193,7 @@
     }
     .activity-title {
       margin: 0;
-      color: #173327;
+      color: var(--brand-black);
       font-size: 14px;
       font-weight: 800;
       overflow-wrap: anywhere;
@@ -209,8 +211,8 @@
       font-weight: 900;
       text-transform: uppercase;
       letter-spacing: 0.03em;
-      background: #eef7f2;
-      color: #1f5c3a;
+      background: var(--brand-bg);
+      color: var(--brand-primary);
       white-space: nowrap;
     }
     .badge.open, .badge.pending { background: #fff7ed; color: #c2410c; }
@@ -224,7 +226,7 @@
     .marketplace-kpi {
       border: 1px solid #dce9e2;
       border-radius: 12px;
-      background: #f8fbf9;
+      background: var(--brand-bg);
       padding: 10px;
       display: grid;
       gap: 4px;
@@ -237,7 +239,7 @@
       font-weight: 800;
     }
     .marketplace-kpi strong {
-      color: #173327;
+      color: var(--brand-black);
       font-size: 24px;
       font-weight: 900;
       font-variant-numeric: tabular-nums;
@@ -245,7 +247,7 @@
     .empty {
       border: 1px dashed #d5e3db;
       border-radius: 12px;
-      background: #f8fbf9;
+      background: var(--brand-bg);
       padding: 14px;
       color: #657d73;
       font-size: 13px;
@@ -255,7 +257,7 @@
     .empty strong {
       display: block;
       margin-bottom: 5px;
-      color: #173327;
+      color: var(--brand-black);
     }
     @media (max-width: 1080px) {
       .kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -393,6 +395,27 @@
         });
       }
 
+      function escapeHTML(value) {
+        return esc(value);
+      }
+
+      function safeText(value, fallback) {
+        if (value === null || value === undefined || value === "") return fallback || "";
+        return String(value);
+      }
+
+      function isSafeHttpUrl(value) {
+        var text = String(value || "").trim();
+        if (!text) return false;
+        if (text.startsWith("/")) return true;
+        try {
+          var parsed = new URL(text, window.location.origin);
+          return parsed.protocol === "http:" || parsed.protocol === "https:";
+        } catch (_) {
+          return false;
+        }
+      }
+
       function toArray(payload) {
         if (Array.isArray(payload)) return payload;
         if (!payload || typeof payload !== "object") return [];
@@ -521,23 +544,42 @@
           return tb - ta;
         }).slice(0, 10);
 
+        els.activityList.textContent = "";
         if (!activity.length) {
-          els.activityList.innerHTML = '<div class="empty"><strong>No activity yet</strong>Marketplace activity appears here after requests or offers are created.</div>';
+          var empty = document.createElement("div");
+          empty.className = "empty";
+          var strong = document.createElement("strong");
+          strong.textContent = "No activity yet";
+          empty.appendChild(strong);
+          empty.appendChild(document.createTextNode("Marketplace activity appears here after requests or offers are created."));
+          els.activityList.appendChild(empty);
           return;
         }
 
-        els.activityList.innerHTML = activity.map(function(item) {
-          return (
-            '<article class="activity-item">' +
-              '<div class="activity-top">' +
-                '<p class="activity-title">' + esc(item.title) + "</p>" +
-                '<span class="' + badgeClass(item.status) + '">' + esc(prettyStatus(item.status)) + "</span>" +
-              "</div>" +
-              '<p class="activity-meta">' + esc(item.meta) + "</p>" +
-              '<p class="activity-meta">' + esc(fmtDate(item.date)) + "</p>" +
-            "</article>"
-          );
-        }).join("");
+        activity.forEach(function(item) {
+          var article = document.createElement("article");
+          article.className = "activity-item";
+          var top = document.createElement("div");
+          top.className = "activity-top";
+          var title = document.createElement("p");
+          title.className = "activity-title";
+          title.textContent = safeText(item.title, "");
+          var badge = document.createElement("span");
+          badge.className = badgeClass(item.status);
+          badge.textContent = safeText(prettyStatus(item.status), "");
+          top.appendChild(title);
+          top.appendChild(badge);
+          article.appendChild(top);
+          var meta = document.createElement("p");
+          meta.className = "activity-meta";
+          meta.textContent = safeText(item.meta, "");
+          var when = document.createElement("p");
+          when.className = "activity-meta";
+          when.textContent = safeText(fmtDate(item.date), "");
+          article.appendChild(meta);
+          article.appendChild(when);
+          els.activityList.appendChild(article);
+        });
       }
 
       async function loadDashboard() {

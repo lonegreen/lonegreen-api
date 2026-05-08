@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>FairLinx Customer Login</title>
+  <link rel="stylesheet" href="/css/brand.css">
   <link rel="stylesheet" href="/app-shell.css">
   <style>
     * { box-sizing: border-box; font-family: Inter, Arial, sans-serif; }
@@ -12,7 +13,7 @@
       min-height: 100vh;
       background:
         radial-gradient(circle at top left, rgba(46, 125, 50, 0.32), transparent 35%),
-        linear-gradient(135deg, #071b12, #0f2e1c 48%, #123f28);
+        linear-gradient(135deg, #071b12, var(--brand-dark) 48%, #123f28);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -60,7 +61,7 @@
       height: 46px;
       border-radius: 15px;
       background: linear-gradient(135deg, #38b66b, #d7f7df);
-      color: #0f2e1c;
+      color: var(--brand-dark);
       display: grid;
       place-items: center;
       font-size: 22px;
@@ -138,7 +139,7 @@
       outline: none;
       font-size: 15px;
       transition: 0.18s ease;
-      color: #173327;
+      color: var(--brand-black);
     }
     input:focus {
       border-color: #2c8b55;
@@ -164,7 +165,7 @@
       padding: 14px 18px;
       border: none;
       border-radius: 14px;
-      background: linear-gradient(135deg, #1f5c3a, #2d8b55);
+      background: linear-gradient(135deg, var(--brand-primary), var(--brand-primary-hover));
       color: white;
       font-size: 15px;
       font-weight: 800;

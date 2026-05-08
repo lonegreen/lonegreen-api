@@ -4,6 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Company Service Areas</title>
+  <link rel="stylesheet" href="/css/brand.css">
+
   <link rel="stylesheet" href="/app-shell.css">
   <style>
     * { box-sizing: border-box; font-family: Inter, Arial, sans-serif; }
@@ -11,7 +13,7 @@
       margin: 0;
       min-height: 100vh;
       background: linear-gradient(180deg, #edf5f0 0%, #f7f9f8 180px, #f4f6f8 100%);
-      color: #173327;
+      color: var(--brand-black);
       padding: 20px;
     }
     .page {
@@ -29,7 +31,7 @@
     }
     h1 {
       margin: 0 0 6px;
-      color: #1f5c3a;
+      color: var(--brand-primary);
       font-size: 32px;
     }
     .muted {
@@ -52,14 +54,14 @@
       transition: 0.18s ease;
     }
     .btn.primary {
-      background: linear-gradient(135deg, #1f5c3a, #2d8b55);
+      background: linear-gradient(135deg, var(--brand-primary), var(--brand-primary-hover));
       color: #fff;
       box-shadow: 0 12px 28px rgba(31,92,58,0.20);
     }
     .btn.secondary {
-      background: #eef2f0;
-      color: #1f5c3a;
-      border: 1px solid #dbe7df;
+      background: var(--brand-bg);
+      color: var(--brand-primary);
+      border: 1px solid var(--brand-border);
     }
     .btn.danger {
       background: #b42318;
@@ -82,7 +84,7 @@
     .status.success { color: #027a48; font-weight: 700; }
     .panel {
       background: #fff;
-      border: 1px solid #dbe7df;
+      border: 1px solid var(--brand-border);
       border-radius: 16px;
       box-shadow: 0 14px 30px rgba(16,24,40,0.06);
       padding: 16px;
@@ -91,12 +93,12 @@
     }
     .panel h2 {
       margin: 0;
-      color: #1f5c3a;
+      color: var(--brand-primary);
       font-size: 20px;
     }
     .table-wrap {
       overflow-x: auto;
-      border: 1px solid #dbe7df;
+      border: 1px solid var(--brand-border);
       border-radius: 12px;
       background: #fff;
     }
@@ -122,11 +124,11 @@
     tr:last-child td { border-bottom: none; }
     input {
       width: 100%;
-      border: 1px solid #cfe0d5;
+      border: 1px solid var(--brand-border);
       border-radius: 10px;
       padding: 9px 10px;
       font-size: 14px;
-      color: #173327;
+      color: var(--brand-black);
       outline: none;
       background: #fff;
     }
@@ -135,7 +137,7 @@
       box-shadow: 0 0 0 4px rgba(44,139,85,0.12);
     }
     .empty {
-      border: 1px dashed #cfe0d5;
+      border: 1px dashed var(--brand-border);
       border-radius: 12px;
       background: #f8fcf9;
       padding: 18px;

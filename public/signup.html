@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>FairLinx Signup</title>
+  <link rel="stylesheet" href="/css/brand.css">
   <link rel="stylesheet" href="/app-shell.css">
   <style>
     * {
@@ -15,8 +16,8 @@
       margin: 0;
       min-height: 100vh;
       background:
-        radial-gradient(circle at top left, rgba(46, 125, 50, 0.35), transparent 35%),
-        linear-gradient(135deg, #071b12, #0f2e1c 45%, #123f28);
+        radial-gradient(circle at top left, rgba(255, 138, 51, 0.22), transparent 34%),
+        linear-gradient(135deg, #111111, #2B2B2B 52%, #3a3a3a);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -50,7 +51,7 @@
       width: 290px;
       height: 290px;
       border-radius: 999px;
-      background: rgba(80, 200, 120, 0.18);
+      background: rgba(255, 138, 51, 0.22);
       right: -100px;
       bottom: -95px;
     }
@@ -68,12 +69,12 @@
       width: 46px;
       height: 46px;
       border-radius: 15px;
-      background: linear-gradient(135deg, #38b66b, #d7f7df);
-      color: #0f2e1c;
+      background: linear-gradient(135deg, var(--brand-primary), var(--brand-primary-light));
+      color: var(--brand-dark);
       display: grid;
       place-items: center;
       font-size: 24px;
-      box-shadow: 0 10px 30px rgba(56,182,107,0.35);
+      box-shadow: 0 10px 30px rgba(230,74,0,0.30);
     }
 
     .brand-panel h1 {
@@ -137,7 +138,7 @@
       align-items: center;
       gap: 10px;
       font-weight: 800;
-      color: #143c27;
+      color: var(--brand-black);
       margin-bottom: 24px;
     }
 
@@ -191,14 +192,14 @@
       outline: none;
       font-size: 15px;
       transition: 0.18s ease;
-      color: #173327;
+      color: var(--brand-black);
       resize: vertical;
     }
 
     input:focus,
     textarea:focus {
-      border-color: #2c8b55;
-      box-shadow: 0 0 0 4px rgba(44,139,85,0.12);
+      border-color: var(--brand-primary);
+      box-shadow: 0 0 0 4px rgba(255,90,0,0.14);
     }
 
     .legal-check {
@@ -216,12 +217,12 @@
       height: 16px;
       margin-top: 3px;
       padding: 0;
-      accent-color: #1f6f42;
+      accent-color: var(--brand-primary);
       border-radius: 4px;
     }
 
     .link {
-      color: #1f6f42;
+      color: var(--brand-primary);
       font-weight: 700;
       text-decoration: none;
     }
@@ -243,19 +244,19 @@
       padding: 14px 18px;
       border: none;
       border-radius: 14px;
-      background: linear-gradient(135deg, #1f5c3a, #2d8b55);
+      background: linear-gradient(135deg, var(--brand-primary), var(--brand-primary-hover));
       color: white;
       font-size: 15px;
       font-weight: 800;
       cursor: pointer;
       transition: 0.18s ease;
-      box-shadow: 0 12px 28px rgba(31,92,58,0.22);
+      box-shadow: 0 12px 28px rgba(230,74,0,0.20);
       min-width: 180px;
     }
 
     .btn:hover {
       transform: translateY(-1px);
-      box-shadow: 0 16px 34px rgba(31,92,58,0.28);
+      box-shadow: 0 16px 34px rgba(230,74,0,0.24);
     }
 
     .status {
@@ -280,7 +281,7 @@
     }
 
     .legal-links a {
-      color: #1f6f42;
+      color: var(--brand-primary);
       font-weight: 800;
       text-decoration: none;
     }

@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <title>Invoices</title>
+  <link rel="stylesheet" href="/css/brand.css">
   <link rel="stylesheet" href="/app-shell.css">
   <style>
     * { box-sizing: border-box; }
@@ -11,9 +12,9 @@
       margin: 0;
       font-family: Arial, sans-serif;
       background:
-        radial-gradient(circle at top left, rgba(31, 92, 58, 0.08), transparent 26%),
+        radial-gradient(circle at top left, rgba(255,90,0,0.08), transparent 26%),
         linear-gradient(180deg, #edf5f0 0%, #f7f9f8 190px, #f4f6f8 100%);
-      color: #163328;
+      color: var(--brand-black);
       padding: 22px;
     }
 
@@ -34,7 +35,7 @@
 
     .hero h1 {
       margin: 0 0 6px;
-      color: #1f5c3a;
+      color: var(--brand-primary);
       font-size: 32px;
       letter-spacing: -0.03em;
     }
@@ -47,7 +48,7 @@
 
     .panel {
       background: rgba(255,255,255,0.96);
-      border: 1px solid #dbe7df;
+      border: 1px solid var(--brand-border);
       border-radius: 20px;
       box-shadow: 0 18px 42px rgba(16,24,40,0.06);
     }
@@ -65,7 +66,7 @@
     }
 
     .filter-chip {
-      border: 1px solid #dbe7df;
+      border: 1px solid var(--brand-border);
       background: white;
       color: #365a4c;
       border-radius: 999px;
@@ -76,15 +77,15 @@
     }
 
     .filter-chip:hover {
-      border-color: #1f5c3a;
+      border-color: var(--brand-primary);
       transform: translateY(-1px);
     }
 
     .filter-chip.active {
-      background: #1f5c3a;
+      background: var(--brand-primary);
       color: white;
-      border-color: #1f5c3a;
-      box-shadow: 0 10px 20px rgba(31,92,58,0.18);
+      border-color: var(--brand-primary);
+      box-shadow: 0 10px 20px rgba(230,74,0,0.16);
     }
 
     .summary {
@@ -109,7 +110,7 @@
     .value {
       font-size: 30px;
       font-weight: 800;
-      color: #1f5c3a;
+      color: var(--brand-primary);
       letter-spacing: -0.03em;
       word-break: break-word;
     }
@@ -122,7 +123,7 @@
 
     .invoice-card {
       padding: 18px;
-      border: 1px solid #dbe7df;
+      border: 1px solid var(--brand-border);
       border-radius: 18px;
       background: rgba(255,255,255,0.97);
       box-shadow: 0 14px 30px rgba(16,24,40,0.06);
@@ -140,7 +141,7 @@
 
     .card-title {
       margin: 0 0 6px;
-      color: #173327;
+      color: var(--brand-black);
       font-size: 22px;
       font-weight: 800;
       letter-spacing: -0.02em;
@@ -170,7 +171,7 @@
     .status-unpaid { background: #fff7ed; color: #c2410c; }
     .status-paid { background: #ecfdf3; color: #027a48; }
     .status-overdue { background: #fef2f2; color: #b42318; }
-    .status-draft { background: #eef2f0; color: #4b5563; }
+    .status-draft { background: var(--brand-bg); color: #4b5563; }
     .status-cancelled { background: #fef2f2; color: #b42318; }
     .status-partially_paid { background: #fff7df; color: #9a5b05; }
 
@@ -198,7 +199,7 @@
     .money-box strong {
       display: block;
       margin-top: 5px;
-      color: #173327;
+      color: var(--brand-black);
       font-size: 18px;
       word-break: break-word;
     }
@@ -233,7 +234,7 @@
 
     .modal-box h3 {
       margin: 0 0 16px;
-      color: #1f5c3a;
+      color: var(--brand-primary);
       font-size: 22px;
       letter-spacing: -0.02em;
     }
@@ -268,9 +269,9 @@
       width: 100%;
       padding: 11px 13px;
       border-radius: 12px;
-      border: 1px solid #cfe0d5;
+      border: 1px solid var(--brand-border);
       background: white;
-      color: #163328;
+      color: var(--brand-black);
       font: inherit;
       outline: none;
       transition: border .15s ease, box-shadow .15s ease;
@@ -279,8 +280,8 @@
     input:focus,
     select:focus,
     textarea:focus {
-      border-color: #1f5c3a;
-      box-shadow: 0 0 0 4px rgba(31,92,58,0.10);
+      border-color: var(--brand-primary);
+      box-shadow: 0 0 0 4px rgba(255,90,0,0.10);
     }
 
     textarea {
@@ -328,15 +329,15 @@
       box-shadow: none;
     }
 
-    .primary { background: #1f5c3a; color: white; }
-    .gray { background: #eef2f0; color: #1f5c3a; border: 1px solid #dbe7df; }
+    .primary { background: var(--brand-primary); color: white; }
+    .gray { background: var(--brand-bg); color: var(--brand-primary); border: 1px solid var(--brand-border); }
     .red { background: #dc2626; color: white; }
 
     .empty {
       padding: 24px;
-      border: 1px dashed #dbe7df;
+      border: 1px dashed var(--brand-border);
       border-radius: 18px;
-      background: #f8fbf9;
+      background: var(--brand-bg);
       color: #688076;
       grid-column: 1 / -1;
       line-height: 1.5;
@@ -344,7 +345,7 @@
 
     .empty strong {
       display: block;
-      color: #173327;
+      color: var(--brand-black);
       font-size: 18px;
       margin-bottom: 6px;
     }

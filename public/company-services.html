@@ -4,6 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Company Services</title>
+  <link rel="stylesheet" href="/css/brand.css">
+
   <link rel="stylesheet" href="/app-shell.css">
   <style>
     * { box-sizing: border-box; font-family: Inter, Arial, sans-serif; }
@@ -11,7 +13,7 @@
       margin: 0;
       min-height: 100vh;
       background: linear-gradient(180deg, #edf5f0 0%, #f7f9f8 180px, #f4f6f8 100%);
-      color: #173327;
+      color: var(--brand-black);
       padding: 20px;
     }
     .page {
@@ -29,7 +31,7 @@
     }
     h1 {
       margin: 0 0 6px;
-      color: #1f5c3a;
+      color: var(--brand-primary);
       font-size: 32px;
     }
     .muted {
@@ -52,14 +54,14 @@
       transition: 0.18s ease;
     }
     .btn.primary {
-      background: linear-gradient(135deg, #1f5c3a, #2d8b55);
+      background: linear-gradient(135deg, var(--brand-primary), var(--brand-primary-hover));
       color: #fff;
       box-shadow: 0 12px 28px rgba(31,92,58,0.2);
     }
     .btn.secondary {
-      background: #eef2f0;
-      color: #1f5c3a;
-      border: 1px solid #dbe7df;
+      background: var(--brand-bg);
+      color: var(--brand-primary);
+      border: 1px solid var(--brand-border);
     }
     .btn:disabled { opacity: 0.65; cursor: not-allowed; }
     .btn:hover:not(:disabled) { transform: translateY(-1px); }
@@ -77,7 +79,7 @@
     }
     .card {
       background: #fff;
-      border: 1px solid #dbe7df;
+      border: 1px solid var(--brand-border);
       border-radius: 16px;
       box-shadow: 0 14px 30px rgba(16,24,40,0.06);
       padding: 16px;
@@ -93,7 +95,7 @@
     .name {
       margin: 0;
       font-size: 20px;
-      color: #1f5c3a;
+      color: var(--brand-primary);
       line-height: 1.2;
     }
     .desc {
@@ -108,7 +110,7 @@
       gap: 8px;
       font-size: 13px;
       font-weight: 800;
-      color: #173327;
+      color: var(--brand-black);
       user-select: none;
     }
     .toggle input {
@@ -129,11 +131,11 @@
     }
     input[type="text"] {
       width: 100%;
-      border: 1px solid #cfe0d5;
+      border: 1px solid var(--brand-border);
       border-radius: 11px;
       padding: 10px 12px;
       font-size: 14px;
-      color: #173327;
+      color: var(--brand-black);
       outline: none;
       background: #fff;
       transition: 0.18s ease;
@@ -146,7 +148,7 @@
       opacity: 0.7;
     }
     .empty {
-      border: 1px dashed #cfe0d5;
+      border: 1px dashed var(--brand-border);
       background: #f8fcf9;
       border-radius: 14px;
       padding: 18px;

@@ -50,6 +50,23 @@ const {
 } = require("../services/routeHelpers");
 
 const router = express.Router();
+const DEPRECATED_ENDPOINT_ERROR = { error: "Deprecated endpoint. Use canonical API route." };
+
+function lockDeprecatedLegacyMutations(req, res, next) {
+  const method = req.method;
+  const path = req.path;
+  const isLockedLegacyMutation = (
+    (method === "POST" && path === "/zip-groups") ||
+    (method === "DELETE" && /^\/zip-groups\/[^/]+$/.test(path)) ||
+    (method === "POST" && path === "/zip-codes") ||
+    (method === "DELETE" && /^\/zip-codes\/[^/]+$/.test(path))
+  );
+  if (isLockedLegacyMutation) {
+    return res.status(410).json(DEPRECATED_ENDPOINT_ERROR);
+  }
+  return next();
+}
+router.use(lockDeprecatedLegacyMutations);
 
 /* ================= ZIP GROUPS ================= */
 
@@ -311,7 +328,11 @@ router.delete("/ops/zip-groups/:id", auth, requireCompanyBillingForMutations, re
 
     await pool.query("DELETE FROM zip_codes WHERE group_id=$1 AND company_id=$2", [id, companyId]);
     await pool.query("DELETE FROM worker_zip_groups WHERE group_id=$1 AND company_id=$2", [id, companyId]);
-    await pool.query("DELETE FROM zip_groups WHERE id=$1 AND company_id=$2", [id, companyId]);
+    const deleted = await pool.query("DELETE FROM zip_groups WHERE id=$1 AND company_id=$2", [id, companyId]);
+
+    if (!deleted.rowCount) {
+      return res.status(404).json({ error: "Not found" });
+    }
 
     res.json({ success: true });
   } catch (err) {
@@ -351,10 +372,14 @@ router.post("/ops/zip-codes", auth, requireCompanyBillingForMutations, requireMi
 
 router.delete("/ops/zip-codes/:id", auth, requireCompanyBillingForMutations, requireMinimumRole("admin"), async (req, res) => {
   try {
-    await pool.query(
+    const deleted = await pool.query(
       "DELETE FROM zip_codes WHERE id=$1 AND company_id=$2",
       [req.params.id, req.user.company_id]
     );
+
+    if (!deleted.rowCount) {
+      return res.status(404).json({ error: "Not found" });
+    }
 
     res.json({ success: true });
   } catch (err) {

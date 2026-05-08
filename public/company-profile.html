@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Company Profile</title>
+  <link rel="stylesheet" href="/css/brand.css">
   <link rel="stylesheet" href="/app-shell.css">
   <style>
     * { box-sizing: border-box; font-family: Inter, Arial, sans-serif; }
@@ -11,20 +12,20 @@
       margin: 0;
       min-height: 100vh;
       background: linear-gradient(180deg, #edf5f0 0%, #f7f9f8 190px, #f4f6f8 100%);
-      color: #173327;
+      color: var(--brand-black);
       padding: 20px;
     }
     .page { width: min(1080px, 100%); margin: 0 auto; display: grid; gap: 16px; }
     .hero {
       background: #fff;
-      border: 1px solid #dbe7df;
+      border: 1px solid var(--brand-border);
       border-radius: 18px;
       box-shadow: 0 18px 42px rgba(16,24,40,0.06);
       overflow: hidden;
     }
     .cover {
       min-height: 180px;
-      background: linear-gradient(135deg, #1f5c3a, #2d8b55);
+      background: linear-gradient(135deg, var(--brand-primary), var(--brand-primary-hover));
       display: grid;
       place-items: center;
       color: #fff;
@@ -34,38 +35,38 @@
     .hero-body { padding: 20px; display: grid; gap: 12px; }
     .identity { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
     .logo {
-      width: 72px; height: 72px; border-radius: 16px; border: 1px solid #dbe7df;
+      width: 72px; height: 72px; border-radius: 16px; border: 1px solid var(--brand-border);
       display: grid; place-items: center; background: #f8fcf9; font-weight: 900;
-      color: #1f5c3a; overflow: hidden;
+      color: var(--brand-primary); overflow: hidden;
     }
     .logo img { width: 100%; height: 100%; object-fit: cover; display: block; }
-    h1 { margin: 0 0 4px; color: #1f5c3a; font-size: 30px; }
+    h1 { margin: 0 0 4px; color: var(--brand-primary); font-size: 30px; }
     .muted { margin: 0; color: #648076; line-height: 1.5; }
     .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
     .panel {
       background: #fff;
-      border: 1px solid #dbe7df;
+      border: 1px solid var(--brand-border);
       border-radius: 16px;
       box-shadow: 0 12px 28px rgba(16,24,40,0.05);
       padding: 16px;
       display: grid;
       gap: 10px;
     }
-    .panel h2 { margin: 0; color: #1f5c3a; font-size: 20px; }
+    .panel h2 { margin: 0; color: var(--brand-primary); font-size: 20px; }
     .chips { display: flex; flex-wrap: wrap; gap: 8px; }
     .chip {
-      border-radius: 999px; background: #eef4f0; color: #1f5c3a;
+      border-radius: 999px; background: var(--brand-bg); color: var(--brand-primary);
       padding: 6px 10px; font-size: 12px; font-weight: 800;
     }
     .gallery {
       display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 10px;
     }
     .gallery img {
-      width: 100%; height: 120px; object-fit: cover; border-radius: 10px; border: 1px solid #dbe7df;
+      width: 100%; height: 120px; object-fit: cover; border-radius: 10px; border: 1px solid var(--brand-border);
       background: #f8fcf9;
     }
-    .kv { margin: 0; color: #173327; }
-    .kv strong { color: #1f5c3a; }
+    .kv { margin: 0; color: var(--brand-black); }
+    .kv strong { color: var(--brand-primary); }
     a.link { color: #1f6f42; font-weight: 700; text-decoration: none; word-break: break-all; }
     a.link:hover { text-decoration: underline; }
     .status {
@@ -140,12 +141,54 @@
       el.className = "status" + (type ? " " + type : "");
     }
 
+    function escapeHTML(value) {
+      return String(value == null ? "" : value).replace(/[&<>"']/g, function(ch) {
+        return ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[ch];
+      });
+    }
+
+    function safeText(value, fallback) {
+      if (value === null || value === undefined || value === "") return fallback || "";
+      return String(value);
+    }
+
+    function isSafeHttpUrl(value) {
+      var text = String(value || "").trim();
+      if (!text) return false;
+      if (text.startsWith("/")) return true;
+      try {
+        var parsed = new URL(text, window.location.origin);
+        return parsed.protocol === "http:" || parsed.protocol === "https:";
+      } catch (_) {
+        return false;
+      }
+    }
+
+    function buildImage(url, altText) {
+      if (!isSafeHttpUrl(url)) return null;
+      var img = document.createElement("img");
+      img.setAttribute("src", String(url));
+      img.setAttribute("alt", safeText(altText, ""));
+      return img;
+    }
+
     function chipList(hostId, items, emptyText) {
       const host = document.getElementById(hostId);
       const list = Array.isArray(items) ? items.filter(Boolean) : [];
-      host.innerHTML = list.length
-        ? list.map((item) => '<span class="chip">' + String(item) + "</span>").join("")
-        : '<p class="muted">' + emptyText + "</p>";
+      host.textContent = "";
+      if (!list.length) {
+        var empty = document.createElement("p");
+        empty.className = "muted";
+        empty.textContent = safeText(emptyText, "");
+        host.appendChild(empty);
+        return;
+      }
+      list.forEach(function(item) {
+        var chip = document.createElement("span");
+        chip.className = "chip";
+        chip.textContent = safeText(item, "");
+        host.appendChild(chip);
+      });
     }
 
     function renderCompany(data) {
@@ -154,17 +197,32 @@
       document.getElementById("description").textContent = data.public_description || "No public description available yet.";
 
       const logo = document.getElementById("logo");
+      logo.textContent = "";
       if (data.logo_url) {
-        logo.innerHTML = '<img src="' + data.logo_url + '" alt="">';
+        var logoImg = buildImage(data.logo_url, data.name || "Company logo");
+        if (logoImg) {
+          logo.appendChild(logoImg);
+        }
       } else {
+        const initials = String(data.name || "CO").split(/\s+/).map((p) => p[0]).join("").slice(0, 2).toUpperCase() || "CO";
+        logo.textContent = initials;
+      }
+      if (!logo.textContent && !logo.querySelector("img")) {
         const initials = String(data.name || "CO").split(/\s+/).map((p) => p[0]).join("").slice(0, 2).toUpperCase() || "CO";
         logo.textContent = initials;
       }
 
       const cover = document.getElementById("cover");
+      cover.textContent = "";
       if (data.cover_image_url) {
-        cover.innerHTML = '<img src="' + data.cover_image_url + '" alt="">';
+        var coverImg = buildImage(data.cover_image_url, (data.name || "Company") + " cover image");
+        if (coverImg) {
+          cover.appendChild(coverImg);
+        }
       } else {
+        cover.textContent = data.name || "Company Profile";
+      }
+      if (!cover.textContent && !cover.querySelector("img")) {
         cover.textContent = data.name || "Company Profile";
       }
 
@@ -173,26 +231,82 @@
 
       const hours = document.getElementById("hours");
       const hoursList = Array.isArray(data.business_hours) ? data.business_hours : [];
-      hours.innerHTML = hoursList.length
-        ? hoursList.map((line) => '<p class="kv">' + line + "</p>").join("")
-        : '<p class="muted">Business hours are not listed yet.</p>';
+      hours.textContent = "";
+      if (hoursList.length) {
+        hoursList.forEach(function(line) {
+          var row = document.createElement("p");
+          row.className = "kv";
+          row.textContent = safeText(line, "");
+          hours.appendChild(row);
+        });
+      } else {
+        var noHours = document.createElement("p");
+        noHours.className = "muted";
+        noHours.textContent = "Business hours are not listed yet.";
+        hours.appendChild(noHours);
+      }
 
       const contact = data.contact || {};
-      const links = [];
-      if (data.website_url) links.push('<p class="kv"><strong>Website:</strong> <a class="link" href="' + data.website_url + '" target="_blank" rel="noopener noreferrer">' + data.website_url + "</a></p>");
-      if (data.facebook_url) links.push('<p class="kv"><strong>Facebook:</strong> <a class="link" href="' + data.facebook_url + '" target="_blank" rel="noopener noreferrer">' + data.facebook_url + "</a></p>");
-      if (data.instagram_url) links.push('<p class="kv"><strong>Instagram:</strong> <a class="link" href="' + data.instagram_url + '" target="_blank" rel="noopener noreferrer">' + data.instagram_url + "</a></p>");
-      document.getElementById("contact").innerHTML =
-        '<p class="kv"><strong>Phone:</strong> ' + (contact.phone || "Not listed") + "</p>" +
-        '<p class="kv"><strong>Email:</strong> ' + (contact.email || "Not listed") + "</p>" +
-        '<p class="kv"><strong>Address:</strong> ' + (contact.address || "Not listed") + "</p>" +
-        (links.length ? links.join("") : '<p class="muted">Social and website links are not listed yet.</p>');
+      var contactEl = document.getElementById("contact");
+      contactEl.textContent = "";
+      function appendKv(label, value) {
+        var row = document.createElement("p");
+        row.className = "kv";
+        var strong = document.createElement("strong");
+        strong.textContent = label + ":";
+        row.appendChild(strong);
+        row.appendChild(document.createTextNode(" " + safeText(value, "Not listed")));
+        contactEl.appendChild(row);
+      }
+      function appendLink(label, value) {
+        if (!isSafeHttpUrl(value)) return false;
+        var row = document.createElement("p");
+        row.className = "kv";
+        var strong = document.createElement("strong");
+        strong.textContent = label + ":";
+        var link = document.createElement("a");
+        link.className = "link";
+        link.setAttribute("href", String(value));
+        link.setAttribute("target", "_blank");
+        link.setAttribute("rel", "noopener noreferrer");
+        link.textContent = safeText(value, "");
+        row.appendChild(strong);
+        row.appendChild(document.createTextNode(" "));
+        row.appendChild(link);
+        contactEl.appendChild(row);
+        return true;
+      }
+      appendKv("Phone", contact.phone);
+      appendKv("Email", contact.email);
+      appendKv("Address", contact.address);
+      var hasLinks = false;
+      hasLinks = appendLink("Website", data.website_url) || hasLinks;
+      hasLinks = appendLink("Facebook", data.facebook_url) || hasLinks;
+      hasLinks = appendLink("Instagram", data.instagram_url) || hasLinks;
+      if (!hasLinks) {
+        var noLinks = document.createElement("p");
+        noLinks.className = "muted";
+        noLinks.textContent = "Social and website links are not listed yet.";
+        contactEl.appendChild(noLinks);
+      }
 
       const gallery = document.getElementById("gallery");
       const images = Array.isArray(data.gallery_urls) ? data.gallery_urls.filter(Boolean) : [];
-      gallery.innerHTML = images.length
-        ? images.map((url) => '<img src="' + url + '" alt="">').join("")
-        : '<p class="muted">No gallery images have been published yet.</p>';
+      gallery.textContent = "";
+      if (images.length) {
+        images.forEach(function(url) {
+          var image = buildImage(url, safeText(data.name, "Company") + " gallery image");
+          if (image) {
+            gallery.appendChild(image);
+          }
+        });
+      }
+      if (!gallery.children.length) {
+        var noGallery = document.createElement("p");
+        noGallery.className = "muted";
+        noGallery.textContent = "No gallery images have been published yet.";
+        gallery.appendChild(noGallery);
+      }
 
       setStatus("Public profile loaded.", "");
     }

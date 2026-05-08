@@ -59,6 +59,37 @@ const {
 } = require("../services/financialIntegrityService");
 
 const router = express.Router();
+const DEPRECATED_ENDPOINT_ERROR = { error: "Deprecated endpoint. Use canonical API route." };
+
+function parsePagination(query) {
+  const parsedLimit = Number(query && query.limit);
+  const parsedOffset = Number(query && query.offset);
+  const limit = Number.isInteger(parsedLimit) && parsedLimit > 0
+    ? Math.min(parsedLimit, 100)
+    : 50;
+  const offset = Number.isInteger(parsedOffset) && parsedOffset >= 0
+    ? parsedOffset
+    : 0;
+  return { limit, offset };
+}
+
+function lockDeprecatedLegacyMutations(req, res, next) {
+  const method = req.method;
+  const path = req.path;
+  const isLockedLegacyMutation = (
+    (method === "POST" && path === "/subscriptions") ||
+    (method === "POST" && /^\/subscriptions\/[^/]+\/send-reminder-email$/.test(path)) ||
+    (method === "PUT" && /^\/subscriptions\/[^/]+$/.test(path)) ||
+    (method === "PUT" && /^\/subscriptions\/[^/]+\/status$/.test(path)) ||
+    (method === "PUT" && /^\/subscriptions\/[^/]+\/mark-paid$/.test(path)) ||
+    (method === "DELETE" && /^\/subscriptions\/[^/]+$/.test(path))
+  );
+  if (isLockedLegacyMutation) {
+    return res.status(410).json(DEPRECATED_ENDPOINT_ERROR);
+  }
+  return next();
+}
+router.use(lockDeprecatedLegacyMutations);
 
 function hasBodyField(req, field) {
   return Object.prototype.hasOwnProperty.call(req.body || {}, field);
@@ -179,6 +210,7 @@ router.get("/subscriptions", auth, requireCompanyBillingForMutations, requireMin
     warnDeprecatedRoute("/subscriptions", "/ops/subscriptions");
     await ensureSubscriptionBillingSchema();
     const company_id = req.user.company_id;
+    const { limit, offset } = parsePagination(req.query);
 
     const result = await pool.query(`
       SELECT 
@@ -207,7 +239,8 @@ router.get("/subscriptions", auth, requireCompanyBillingForMutations, requireMin
       LEFT JOIN workers ON subscriptions.worker_id = workers.id AND workers.company_id = subscriptions.company_id
       WHERE subscriptions.company_id = $1
       ORDER BY subscriptions.id DESC
-    `, [company_id]);
+      LIMIT $2 OFFSET $3
+    `, [company_id, limit, offset]);
 
     res.json(result.rows);
   } catch (err) {
@@ -250,7 +283,7 @@ router.get("/subscriptions/:id", auth, requireCompanyBillingForMutations, requir
   }
 });
 
-router.post("/subscriptions/:id/send-reminder-email", auth, requireCompanyBillingForMutations, requireMinimumRole("admin"), async (req, res) => {
+async function sendSubscriptionReminderEmailMutation(req, res) {
   try {
     await ensureSubscriptionBillingSchema();
     const company_id = req.user.company_id;
@@ -316,7 +349,10 @@ router.post("/subscriptions/:id/send-reminder-email", auth, requireCompanyBillin
     console.log("SUBSCRIPTION REMINDER EMAIL ERROR:", err);
     sendSafeServerError(res, err, "routes/subscriptions");
   }
-});
+}
+
+router.post("/subscriptions/:id/send-reminder-email", auth, requireCompanyBillingForMutations, requireMinimumRole("admin"), sendSubscriptionReminderEmailMutation);
+router.post("/ops/subscriptions/:id/send-reminder-email", auth, requireCompanyBillingForMutations, requireMinimumRole("admin"), sendSubscriptionReminderEmailMutation);
 
 router.put("/subscriptions/:id", auth, requireCompanyBillingForMutations, requireMinimumRole("admin"), async (req, res) => {
   const client = await pool.connect();
@@ -839,10 +875,13 @@ router.delete("/ops/subscriptions/:id/permanent", auth, requireCompanyBillingFor
 
     const row = linked.rows[0] || {};
     if (row.has_jobs || row.has_invoices || row.has_billings) {
-      await pool.query(
+      const cancelled = await pool.query(
         "UPDATE subscriptions SET status='cancelled' WHERE id=$1 AND company_id=$2",
         [id, company_id]
       );
+      if (!cancelled.rowCount) {
+        return res.status(404).json({ error: "Not found" });
+      }
 
       await logActivity({
         companyId: company_id,
@@ -864,10 +903,14 @@ router.delete("/ops/subscriptions/:id/permanent", auth, requireCompanyBillingFor
       });
     }
 
-    await pool.query(
+    const deleted = await pool.query(
       "DELETE FROM subscriptions WHERE id=$1 AND company_id=$2",
       [id, company_id]
     );
+
+    if (!deleted.rowCount) {
+      return res.status(404).json({ error: "Not found" });
+    }
 
     await logActivity({
       companyId: company_id,
@@ -893,6 +936,7 @@ router.delete("/ops/subscriptions/:id/permanent", auth, requireCompanyBillingFor
 router.get("/ops/subscriptions", auth, requireCompanyBillingForMutations, requireMinimumRole("manager"), async (req, res) => {
   try {
     await ensureOperationsSchema();
+    const { limit, offset } = parsePagination(req.query);
     const result = await pool.query(`
       SELECT
         subscriptions.*,
@@ -939,7 +983,8 @@ router.get("/ops/subscriptions", auth, requireCompanyBillingForMutations, requir
       LEFT JOIN workers ON workers.id = subscriptions.worker_id AND workers.company_id = subscriptions.company_id
       WHERE subscriptions.company_id = $1
       ORDER BY subscriptions.next_date ASC NULLS LAST, subscriptions.id DESC
-    `, [req.user.company_id]);
+      LIMIT $2 OFFSET $3
+    `, [req.user.company_id, limit, offset]);
 
     res.json(result.rows);
   } catch (err) {

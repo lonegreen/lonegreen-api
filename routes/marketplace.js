@@ -3,9 +3,28 @@ const pool = require("../db/pool");
 const companyAuth = require("../middleware/auth");
 const requireCompanyBillingForMutations = require("../middleware/requireCompanyBillingForMutations");
 const { requireMinimumRole, verifyCustomerBearerToken } = require("../middleware/auth");
+const {
+  marketplaceCustomerRequestCreateLimiter,
+  marketplaceOfferAcceptLimiter,
+  marketplaceCompanyOfferCreateLimiter,
+  marketplaceCompanyConvertLimiter
+} = require("../middleware/rateLimits");
+const { validateMarketplaceContent } = require("../middleware/abuseGuards");
 const { sendSafeServerError } = require("../services/safeServerError");
 
 const router = express.Router();
+
+function parsePagination(query) {
+  const parsedLimit = Number(query && query.limit);
+  const parsedOffset = Number(query && query.offset);
+  const limit = Number.isInteger(parsedLimit) && parsedLimit > 0
+    ? Math.min(parsedLimit, 100)
+    : 50;
+  const offset = Number.isInteger(parsedOffset) && parsedOffset >= 0
+    ? parsedOffset
+    : 0;
+  return { limit, offset };
+}
 
 function customerAuth(req, res, next) {
   try {
@@ -58,6 +77,16 @@ function plusOneHour(timeText) {
   const m = Number(match[2]);
   const next = (h + 1) % 24;
   return `${String(next).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+}
+
+function withModerationFlag(payload, req) {
+  if (!req || !req.locals || req.locals.moderationFlagged !== true) {
+    return payload;
+  }
+  if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
+    return payload;
+  }
+  return { ...payload, moderation_flagged: true };
 }
 
 async function getCustomerAccountId(clientId) {
@@ -140,7 +169,7 @@ async function canCompanyMatchRequest(companyId, requestRow) {
   return result.rows.length > 0;
 }
 
-router.post("/marketplace/requests", customerAuth, async (req, res) => {
+router.post("/marketplace/requests", customerAuth, marketplaceCustomerRequestCreateLimiter, validateMarketplaceContent, async (req, res) => {
   try {
     const categoryId = Number(req.body?.category_id);
     const title = cleanText(req.body?.title);
@@ -204,7 +233,7 @@ router.post("/marketplace/requests", customerAuth, async (req, res) => {
       ]
     );
 
-    return res.status(201).json(created.rows[0]);
+    return res.status(201).json(withModerationFlag(created.rows[0], req));
   } catch (err) {
     return sendSafeServerError(res, err, "MARKETPLACE REQUEST CREATE ERROR");
   }
@@ -212,14 +241,16 @@ router.post("/marketplace/requests", customerAuth, async (req, res) => {
 
 router.get("/marketplace/requests/me", customerAuth, async (req, res) => {
   try {
+    const { limit, offset } = parsePagination(req.query);
     const result = await pool.query(
       `
       SELECT *
       FROM marketplace_requests
       WHERE client_id = $1
       ORDER BY created_at DESC, id DESC
+      LIMIT $2 OFFSET $3
       `,
-      [req.customer.client_id]
+      [req.customer.client_id, limit, offset]
     );
     return res.json(result.rows);
   } catch (err) {
@@ -230,6 +261,7 @@ router.get("/marketplace/requests/me", customerAuth, async (req, res) => {
 router.get("/marketplace/requests/:id/matches", customerAuth, async (req, res) => {
   try {
     const requestId = Number(req.params.id);
+    const { limit, offset } = parsePagination(req.query);
     if (!requestId) {
       return res.status(400).json({ error: "Invalid request id" });
     }
@@ -408,8 +440,9 @@ router.get("/marketplace/requests/:id/matches", customerAuth, async (req, res) =
         fav.favorites_count,
         fol.follows_count
       ORDER BY ranking_score DESC, c.id ASC
+      LIMIT $5 OFFSET $6
       `,
-      [request.category_id, requestZip, requestCity, requestState]
+      [request.category_id, requestZip, requestCity, requestState, limit, offset]
     );
 
     return res.json({
@@ -421,7 +454,7 @@ router.get("/marketplace/requests/:id/matches", customerAuth, async (req, res) =
   }
 });
 
-router.post("/marketplace/requests/:id/offers", companyAuth, requireCompanyBillingForMutations, requireMinimumRole("manager"), async (req, res) => {
+router.post("/marketplace/requests/:id/offers", companyAuth, requireCompanyBillingForMutations, requireMinimumRole("manager"), marketplaceCompanyOfferCreateLimiter, validateMarketplaceContent, async (req, res) => {
   try {
     const requestId = Number(req.params.id);
     const companyId = Number(req.user && req.user.company_id);
@@ -474,13 +507,13 @@ router.post("/marketplace/requests/:id/offers", companyAuth, requireCompanyBilli
       [requestId, companyId, price, message, estimatedStartDate]
     );
 
-    return res.status(201).json(created.rows[0]);
+    return res.status(201).json(withModerationFlag(created.rows[0], req));
   } catch (err) {
     return sendSafeServerError(res, err, "MARKETPLACE OFFER CREATE ERROR");
   }
 });
 
-router.post("/marketplace/offers/:id/accept", customerAuth, async (req, res) => {
+router.post("/marketplace/offers/:id/accept", customerAuth, marketplaceOfferAcceptLimiter, async (req, res) => {
   const client = await pool.connect();
   try {
     const offerId = Number(req.params.id);
@@ -598,7 +631,7 @@ router.post("/marketplace/offers/:id/accept", customerAuth, async (req, res) => 
   }
 });
 
-router.post("/marketplace/requests/:id/convert", companyAuth, requireCompanyBillingForMutations, requireMinimumRole("manager"), async (req, res) => {
+router.post("/marketplace/requests/:id/convert", companyAuth, requireCompanyBillingForMutations, requireMinimumRole("manager"), marketplaceCompanyConvertLimiter, async (req, res) => {
   const client = await pool.connect();
   try {
     const requestId = Number(req.params.id);
@@ -645,16 +678,74 @@ router.post("/marketplace/requests/:id/convert", companyAuth, requireCompanyBill
 
     const source = conversionSource.rows[0];
     if (source.converted_at) {
-      await client.query("ROLLBACK");
-      return res.status(409).json({
-        error: "Request already converted",
-        conversion: {
-          converted_at: source.converted_at,
-          converted_lead_id: source.converted_lead_id || null,
-          converted_estimate_id: source.converted_estimate_id || null,
+      // Idempotency path: request already converted in a previous successful transaction.
+      // Return existing references instead of attempting to create duplicate workflow rows.
+      const [leadResult, estimateResult, clientResult, jobResult] = await Promise.all([
+        source.converted_lead_id
+          ? client.query(
+              `
+              SELECT *
+              FROM estimates
+              WHERE id = $1
+                AND company_id = $2
+              LIMIT 1
+              `,
+              [source.converted_lead_id, companyId]
+            )
+          : Promise.resolve({ rows: [] }),
+        source.converted_estimate_id
+          ? client.query(
+              `
+              SELECT *
+              FROM estimates
+              WHERE id = $1
+                AND company_id = $2
+              LIMIT 1
+              `,
+              [source.converted_estimate_id, companyId]
+            )
+          : Promise.resolve({ rows: [] }),
+        source.converted_client_id
+          ? client.query(
+              `
+              SELECT *
+              FROM clients
+              WHERE id = $1
+                AND company_id = $2
+              LIMIT 1
+              `,
+              [source.converted_client_id, companyId]
+            )
+          : Promise.resolve({ rows: [] }),
+        source.converted_job_id
+          ? client.query(
+              `
+              SELECT *
+              FROM jobs
+              WHERE id = $1
+                AND company_id = $2
+              LIMIT 1
+              `,
+              [source.converted_job_id, companyId]
+            )
+          : Promise.resolve({ rows: [] })
+      ]);
+
+      await client.query("COMMIT");
+      return res.json({
+        request_id: requestId,
+        converted: true,
+        converted_already: true,
+        reused_client: true,
+        accepted_offer_id: source.accepted_offer_id,
+        lead: leadResult.rows[0] || null,
+        estimate: estimateResult.rows[0] || {
+          id: source.converted_estimate_id || null,
           converted_client_id: source.converted_client_id || null,
           converted_job_id: source.converted_job_id || null
-        }
+        },
+        client: clientResult.rows[0] || null,
+        job: jobResult.rows[0] || null
       });
     }
 
@@ -914,6 +1005,7 @@ router.post("/marketplace/requests/:id/convert", companyAuth, requireCompanyBill
 router.get("/marketplace/requests/:id/offers", customerAuth, async (req, res) => {
   try {
     const requestId = Number(req.params.id);
+    const { limit, offset } = parsePagination(req.query);
     if (!requestId) {
       return res.status(400).json({ error: "Invalid request id" });
     }
@@ -942,8 +1034,9 @@ router.get("/marketplace/requests/:id/offers", customerAuth, async (req, res) =>
         ON c.id = mo.company_id
       WHERE mo.request_id = $1
       ORDER BY mo.created_at DESC, mo.id DESC
+      LIMIT $2 OFFSET $3
       `,
-      [requestId]
+      [requestId, limit, offset]
     );
 
     return res.json(result.rows);

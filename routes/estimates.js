@@ -54,6 +54,25 @@ const {
 const { sendSafeServerError } = require("../services/safeServerError");
 
 const router = express.Router();
+const DEPRECATED_ENDPOINT_ERROR = { error: "Deprecated endpoint. Use canonical API route." };
+
+function lockDeprecatedLegacyMutations(req, res, next) {
+  const method = req.method;
+  const path = req.path;
+  const isLockedLegacyMutation = (
+    (method === "POST" && path === "/estimates") ||
+    (method === "PUT" && /^\/estimates\/[^/]+$/.test(path)) ||
+    (method === "PUT" && /^\/estimates\/[^/]+\/status$/.test(path)) ||
+    (method === "DELETE" && /^\/estimates\/[^/]+$/.test(path)) ||
+    (method === "POST" && /^\/estimates\/[^/]+\/convert-to-job$/.test(path)) ||
+    (method === "POST" && /^\/estimates\/[^/]+\/convert-to-subscription$/.test(path))
+  );
+  if (isLockedLegacyMutation) {
+    return res.status(410).json(DEPRECATED_ENDPOINT_ERROR);
+  }
+  return next();
+}
+router.use(lockDeprecatedLegacyMutations);
 
 async function resolveCompanyWorkerId(companyId, workerId) {
   if (workerId === undefined || workerId === null || String(workerId).trim() === "") {
@@ -838,10 +857,13 @@ router.delete("/estimates/:id", auth, requireCompanyBillingForMutations, require
     }
 
     const current = existing.rows[0];
-    await pool.query(
+    const archived = await pool.query(
       "UPDATE estimates SET archived=TRUE WHERE id=$1 AND company_id=$2",
       [id, company_id]
     );
+    if (!archived.rowCount) {
+      return res.status(404).json({ error: "Not found" });
+    }
 
     res.json({ success: true, message: "Archived." });
   } catch (err) {

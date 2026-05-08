@@ -487,6 +487,10 @@ router.post("/customer/service-requests", customerAuth, async (req, res) => {
     await ensureWorkflowSchema();
     const client = await getClient(req.customer);
     if (!client) return res.status(404).json({ error: "Customer not found" });
+    if (!client.company_id) return res.status(403).json({ error: "Forbidden" });
+    if (req.customer.company_id && String(req.customer.company_id) !== String(client.company_id)) {
+      return res.status(403).json({ error: "Forbidden" });
+    }
 
     const service = String(req.body.service || "").trim();
     if (!service) return res.status(400).json({ error: "Service is required" });
@@ -506,19 +510,19 @@ router.post("/customer/service-requests", customerAuth, async (req, res) => {
         service,
         req.body.notes || "",
         visitDate,
-        req.customer.company_id,
-        req.customer.client_id
+        client.company_id,
+        client.id
       ]
     );
 
     await logActivity({
-      companyId: req.customer.company_id,
+      companyId: client.company_id,
       userId: null,
       action: "customer_service_request_created",
       entityType: "lead",
       entityId: result.rows[0].id,
       details: {
-        client_id: req.customer.client_id,
+        client_id: client.id,
         service,
         visit_date: visitDate
       }

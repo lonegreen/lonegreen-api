@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Platform Command Center</title>
+  <link rel="stylesheet" href="/css/brand.css">
   <link rel="stylesheet" href="/app-shell.css">
   <style>
     * { box-sizing: border-box; }
@@ -11,14 +12,14 @@
     :root {
       --bg: #f4f7f5;
       --panel: #ffffff;
-      --text: #173327;
+      --text: var(--brand-black);
       --muted: #64786f;
       --border: #dce9e1;
-      --soft: #eef7f2;
-      --green: #1f5c3a;
+      --soft: var(--brand-bg);
+      --green: var(--brand-primary);
       --green-2: #2f6f4c;
-      --blue: #2459c8;
-      --purple: #5b2fb2;
+      --blue: var(--brand-primary);
+      --purple: var(--brand-primary-light);
       --warn: #9a5b05;
       --danger: #b42318;
       --shadow: 0 18px 42px rgba(16, 24, 40, 0.07);
@@ -164,7 +165,7 @@
       padding: 15px;
       border: 1px solid var(--border);
       border-radius: 15px;
-      background: #f8fbf9;
+      background: var(--brand-bg);
       min-width: 0;
     }
 
@@ -224,7 +225,7 @@
 
     input, select {
       width: 100%;
-      border: 1px solid #cfe0d5;
+      border: 1px solid var(--brand-border);
       border-radius: 12px;
       min-height: 42px;
       padding: 10px 12px;
@@ -255,7 +256,7 @@
     }
 
     th {
-      background: #f8fbf9;
+      background: var(--brand-bg);
       color: var(--muted);
       font-size: 11px;
       text-transform: uppercase;
@@ -266,7 +267,7 @@
 
     tbody tr:hover,
     tbody tr.selected {
-      background: #eef7f2;
+      background: var(--brand-bg);
     }
 
     .company-name {
@@ -316,7 +317,7 @@
     }
 
     .company-card.selected {
-      background: #eef7f2;
+      background: var(--brand-bg);
       border-color: #c4dfce;
     }
 
@@ -337,7 +338,7 @@
       padding: 10px;
       border: 1px solid var(--border);
       border-radius: 12px;
-      background: #f8fbf9;
+      background: var(--brand-bg);
       min-width: 0;
     }
 
@@ -458,7 +459,7 @@
       padding: 16px;
       border-radius: 14px;
       border: 1px dashed var(--border);
-      background: #f8fbf9;
+      background: var(--brand-bg);
       color: var(--muted);
       line-height: 1.5;
     }

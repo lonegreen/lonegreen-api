@@ -41,7 +41,7 @@ const {
   checkoutPlanFromInternalPlan
 } = require("../services/stripeService");
 
-const { syncSubscriptionToCompany } = require("../services/stripeWebhookService");
+const { syncSubscriptionToCompany, replayRetryableStripeEvents } = require("../services/stripeWebhookService");
 
 const { getPlatformBillingAnalytics } = require("../services/platformBillingAnalyticsService");
 const { logPlatformCompanyAudit } = require("../services/platformControlService");
@@ -1164,6 +1164,19 @@ router.post("/platform/billing/evaluate-suspensions", platformOnly, async (req, 
     });
   } catch (err) {
     sendSafeServerError(res, err, "PLATFORM BILLING SUSPENSION EVALUATION ERROR");
+  }
+});
+
+router.post("/platform/billing/stripe/replay-retryable-events", platformOnly, async (req, res) => {
+  try {
+    const requestedLimit = req.body && req.body.limit;
+    const summary = await replayRetryableStripeEvents({ limit: requestedLimit });
+    return res.json({
+      replayed: true,
+      summary
+    });
+  } catch (err) {
+    return sendSafeServerError(res, err, "PLATFORM BILLING STRIPE REPLAY ERROR");
   }
 });
 

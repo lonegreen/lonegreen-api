@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Discover Companies</title>
+  <link rel="stylesheet" href="/css/brand.css">
   <link rel="stylesheet" href="/app-shell.css">
   <style>
     * { box-sizing: border-box; font-family: Inter, Arial, sans-serif; }
@@ -11,7 +12,7 @@
       margin: 0;
       min-height: 100vh;
       background: linear-gradient(180deg, #edf5f0 0%, #f7f9f8 180px, #f4f6f8 100%);
-      color: #173327;
+      color: var(--brand-black);
       padding: 20px;
     }
     .page {
@@ -29,7 +30,7 @@
     }
     h1 {
       margin: 0 0 6px;
-      color: #1f5c3a;
+      color: var(--brand-primary);
       font-size: 32px;
     }
     .muted {
@@ -42,11 +43,11 @@
     }
     .search {
       width: 100%;
-      border: 1px solid #cfe0d5;
+      border: 1px solid var(--brand-border);
       border-radius: 12px;
       padding: 12px 14px;
       font-size: 14px;
-      color: #173327;
+      color: var(--brand-black);
       outline: none;
       background: #fff;
       transition: 0.18s ease;
@@ -71,7 +72,7 @@
     }
     .card {
       background: #fff;
-      border: 1px solid #dbe7df;
+      border: 1px solid var(--brand-border);
       border-radius: 16px;
       box-shadow: 0 14px 30px rgba(16,24,40,0.06);
       padding: 16px;
@@ -87,11 +88,11 @@
       width: 52px;
       height: 52px;
       border-radius: 12px;
-      border: 1px solid #dbe7df;
+      border: 1px solid var(--brand-border);
       background: #f8fcf9;
       display: grid;
       place-items: center;
-      color: #1f5c3a;
+      color: var(--brand-primary);
       font-weight: 900;
       overflow: hidden;
       flex: 0 0 auto;
@@ -104,7 +105,7 @@
     }
     .name {
       margin: 0;
-      color: #1f5c3a;
+      color: var(--brand-primary);
       font-size: 20px;
       line-height: 1.2;
     }
@@ -132,8 +133,8 @@
       padding: 5px 10px;
       font-size: 12px;
       font-weight: 800;
-      background: #eef4f0;
-      color: #1f5c3a;
+      background: var(--brand-bg);
+      color: var(--brand-primary);
     }
     .btn {
       border: none;
@@ -142,7 +143,7 @@
       font-size: 14px;
       font-weight: 800;
       cursor: pointer;
-      background: linear-gradient(135deg, #1f5c3a, #2d8b55);
+      background: linear-gradient(135deg, var(--brand-primary), var(--brand-primary-hover));
       color: #fff;
       text-decoration: none;
       display: inline-flex;
@@ -151,7 +152,7 @@
       width: fit-content;
     }
     .empty {
-      border: 1px dashed #cfe0d5;
+      border: 1px dashed var(--brand-border);
       border-radius: 14px;
       background: #f8fcf9;
       padding: 18px;
@@ -161,7 +162,7 @@
     }
     .empty strong {
       display: block;
-      color: #173327;
+      color: var(--brand-black);
       margin-bottom: 6px;
     }
     @media (max-width: 1020px) {

@@ -108,7 +108,7 @@ router.delete("/favorites/:companyId", customerAuth, async (req, res) => {
       return res.status(403).json({ error: "Forbidden" });
     }
 
-    await pool.query(
+    const result = await pool.query(
       `
       DELETE FROM customer_favorites
       WHERE client_id = $1
@@ -116,6 +116,10 @@ router.delete("/favorites/:companyId", customerAuth, async (req, res) => {
       `,
       [scopedCustomer.client_id, companyId]
     );
+
+    if (!result.rowCount) {
+      return res.status(404).json({ error: "Not found" });
+    }
 
     return res.json({ success: true });
   } catch (err) {

@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Company Public Profile Settings</title>
+  <link rel="stylesheet" href="/css/brand.css">
   <link rel="stylesheet" href="/app-shell.css">
   <style>
     * { box-sizing: border-box; font-family: Inter, Arial, sans-serif; }
@@ -11,7 +12,7 @@
       margin: 0;
       min-height: 100vh;
       background: linear-gradient(180deg, #edf5f0 0%, #f7f9f8 190px, #f4f6f8 100%);
-      color: #173327;
+      color: var(--brand-black);
       padding: 20px;
     }
     .page { width: min(1040px, 100%); margin: 0 auto; display: grid; gap: 14px; }
@@ -24,7 +25,7 @@
     }
     h1 {
       margin: 0 0 6px;
-      color: #1f5c3a;
+      color: var(--brand-primary);
       font-size: 30px;
     }
     .muted { margin: 0; color: #648076; line-height: 1.45; }
@@ -47,20 +48,20 @@
       justify-content: center;
     }
     .btn.primary {
-      background: linear-gradient(135deg, #1f5c3a, #2d8b55);
+      background: linear-gradient(135deg, var(--brand-primary), var(--brand-primary-hover));
       color: #fff;
       box-shadow: 0 12px 28px rgba(31,92,58,0.20);
     }
     .btn.secondary {
-      background: #eef2f0;
-      color: #1f5c3a;
-      border: 1px solid #dbe7df;
+      background: var(--brand-bg);
+      color: var(--brand-primary);
+      border: 1px solid var(--brand-border);
     }
     .btn:disabled { opacity: 0.65; cursor: not-allowed; }
     .btn:hover:not(:disabled) { transform: translateY(-1px); }
     .panel {
       background: #fff;
-      border: 1px solid #dbe7df;
+      border: 1px solid var(--brand-border);
       border-radius: 16px;
       box-shadow: 0 14px 30px rgba(16,24,40,0.06);
       padding: 16px;
@@ -69,7 +70,7 @@
     }
     .panel h2 {
       margin: 0;
-      color: #1f5c3a;
+      color: var(--brand-primary);
       font-size: 20px;
     }
     .grid {
@@ -91,7 +92,7 @@
       background: #fff;
       padding: 12px;
       font-size: 14px;
-      color: #173327;
+      color: var(--brand-black);
       outline: none;
       transition: 0.18s ease;
     }
@@ -123,7 +124,7 @@
       align-items: center;
       gap: 8px;
       font-size: 14px;
-      color: #173327;
+      color: var(--brand-black);
       font-weight: 700;
     }
     .toggle input { width: 18px; height: 18px; margin: 0; }

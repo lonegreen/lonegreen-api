@@ -5,7 +5,7 @@ const { requirePlatformOwner } = auth;
 const { NODE_ENV, ALLOW_MAINTENANCE_ROUTES, ALLOWED_ORIGINS } = require("../config/env");
 const { getQueueStatus } = require("../services/jobQueue");
 const { getSchedulerStatus } = require("../services/schedulerService");
-const { getUsageForCompany, getBillingWarnings } = require("../services/billingService");
+const { normalizeBillingStatus } = require("../services/billingService");
 const { suspendCompanyByPlatform, unsuspendCompanyByPlatform } = require("../services/platformControlService");
 const { createNotification, ensureNotificationsSchema } = require("../services/notificationService");
 const activityLogService = require("../services/activityLogService");
@@ -14,6 +14,18 @@ const { sendSafeServerError } = require("../services/safeServerError");
 
 const router = express.Router();
 const platformOnly = [auth, requirePlatformOwner];
+
+function parsePagination(query) {
+  const parsedLimit = Number(query && query.limit);
+  const parsedOffset = Number(query && query.offset);
+  const limit = Number.isInteger(parsedLimit) && parsedLimit > 0
+    ? Math.min(parsedLimit, 100)
+    : 50;
+  const offset = Number.isInteger(parsedOffset) && parsedOffset >= 0
+    ? parsedOffset
+    : 0;
+  return { limit, offset };
+}
 
 function num(value) {
   return Number(value || 0);
@@ -30,6 +42,146 @@ function warningSummary(warnings) {
     warnings_count: list.length,
     has_billing_warning: list.length > 0,
     warning_types: list.map((warning) => warning.type).filter(Boolean)
+  };
+}
+
+function buildUsageFromCompanyRow(row) {
+  const status = normalizeBillingStatus(row && row.billing_status);
+  return {
+    users_count: num(row && row.users_count),
+    clients_count: num(row && row.usage_clients_count),
+    jobs_this_month: num(row && row.jobs_this_month),
+    users: num(row && row.users_count),
+    clients: num(row && row.usage_clients_count),
+    max_users: row && row.max_users != null ? num(row.max_users) : null,
+    max_clients: row && row.max_clients != null ? num(row.max_clients) : null,
+    max_jobs_per_month: row && row.max_jobs_per_month != null ? num(row.max_jobs_per_month) : null,
+    plan: row && row.plan ? String(row.plan) : "starter",
+    status,
+    billing_status: status,
+    trial_ends_at: row && row.trial_ends_at ? row.trial_ends_at : null
+  };
+}
+
+function buildWarningsFromUsageRow(usage, row) {
+  const now = new Date();
+  const status = normalizeBillingStatus(usage && usage.billing_status);
+  const trialEndsAt = usage && usage.trial_ends_at ? new Date(usage.trial_ends_at) : null;
+  const graceUntil = row && row.billing_grace_until ? new Date(row.billing_grace_until) : null;
+  const validTrialEndsAt = trialEndsAt && !Number.isNaN(trialEndsAt.getTime()) ? trialEndsAt : null;
+  const validGraceUntil = graceUntil && !Number.isNaN(graceUntil.getTime()) ? graceUntil : null;
+  const isTrialExpired = (status === "trial" || status === "trialing")
+    && validTrialEndsAt
+    && validTrialEndsAt < now;
+  const isPastDue = status === "past_due" || status === "unpaid";
+  const isIncomplete = status === "incomplete";
+  const isPaused = status === "paused";
+  const isCancelled = status === "cancelled" || status === "expired";
+  const isSuspended = status === "suspended";
+  const overUserLimit = usage.max_users != null && usage.users_count > usage.max_users;
+  const overClientLimit = usage.max_clients != null && usage.clients_count > usage.max_clients;
+  const overJobLimit = usage.max_jobs_per_month != null && usage.jobs_this_month > usage.max_jobs_per_month;
+  const warnings = [];
+
+  if (isTrialExpired) {
+    warnings.push({
+      type: "trial_expired",
+      severity: "warning",
+      message: "Trial has expired.",
+      current: usage.trial_ends_at,
+      limit: null
+    });
+  }
+  if (isPastDue) {
+    warnings.push({
+      type: status === "unpaid" ? "unpaid" : "past_due",
+      severity: "danger",
+      message: validGraceUntil
+        ? `Payment failed. Grace period ends ${validGraceUntil.toISOString().split("T")[0]}.`
+        : "Payment failed. Grace period is not set.",
+      current: status,
+      limit: validGraceUntil ? validGraceUntil.toISOString() : "active"
+    });
+  }
+  if (isIncomplete) {
+    warnings.push({
+      type: "incomplete",
+      severity: "danger",
+      message: "Subscription checkout or first payment is incomplete.",
+      current: status,
+      limit: "active"
+    });
+  }
+  if (isPaused) {
+    warnings.push({
+      type: "paused",
+      severity: "warning",
+      message: "Stripe payment collection is paused for this subscription.",
+      current: status,
+      limit: "active"
+    });
+  }
+  if (isCancelled) {
+    warnings.push({
+      type: "cancelled",
+      severity: "danger",
+      message: "Billing status is cancelled.",
+      current: status,
+      limit: "active"
+    });
+  }
+  if (isSuspended) {
+    warnings.push({
+      type: "suspended",
+      severity: "danger",
+      message: "Company platform billing is suspended.",
+      current: status,
+      limit: "active"
+    });
+  }
+  if (overUserLimit) {
+    warnings.push({
+      type: "over_users",
+      severity: "warning",
+      message: `Company is over the ${usage.plan} plan user limit.`,
+      current: usage.users_count,
+      limit: usage.max_users
+    });
+  }
+  if (overClientLimit) {
+    warnings.push({
+      type: "over_clients",
+      severity: "warning",
+      message: `Company is over the ${usage.plan} plan client limit.`,
+      current: usage.clients_count,
+      limit: usage.max_clients
+    });
+  }
+  if (overJobLimit) {
+    warnings.push({
+      type: "over_jobs",
+      severity: "warning",
+      message: `Company is over the ${usage.plan} plan monthly job limit.`,
+      current: usage.jobs_this_month,
+      limit: usage.max_jobs_per_month
+    });
+  }
+
+  return {
+    is_trial_expired: Boolean(isTrialExpired),
+    is_past_due: isPastDue,
+    is_unpaid: status === "unpaid",
+    is_incomplete: isIncomplete,
+    is_paused: isPaused,
+    is_cancelled: isCancelled,
+    is_suspended: isSuspended,
+    grace_days_remaining: validGraceUntil
+      ? Math.ceil((validGraceUntil.getTime() - Date.now()) / 86400000)
+      : null,
+    over_user_limit: overUserLimit,
+    over_client_limit: overClientLimit,
+    over_job_limit: overJobLimit,
+    warnings
   };
 }
 
@@ -79,6 +231,7 @@ router.get("/platform/overview", platformOnly, async (req, res) => {
 
 router.get("/platform/companies", platformOnly, async (req, res) => {
   try {
+    const { limit, offset } = parsePagination(req.query);
     const result = await pool.query(`
       SELECT
         companies.id,
@@ -97,9 +250,15 @@ router.get("/platform/companies", platformOnly, async (req, res) => {
         companies.platform_suspended_at,
         companies.platform_suspension_reason,
         companies.monthly_price,
+        companies.max_users,
+        companies.max_clients,
+        companies.max_jobs_per_month,
+        companies.trial_ends_at,
         COALESCE(users_counts.count, 0)::int AS users_count,
         COALESCE(clients_counts.count, 0)::int AS clients_count,
+        COALESCE(active_clients_counts.count, 0)::int AS usage_clients_count,
         COALESCE(jobs_counts.count, 0)::int AS jobs_count,
+        COALESCE(jobs_this_month_counts.count, 0)::int AS jobs_this_month,
         COALESCE(invoices_counts.count, 0)::int AS invoices_count,
         COALESCE(payments_counts.total, 0)::numeric AS payments_total,
         COALESCE(subscription_counts.count, 0)::int AS active_subscriptions_count
@@ -116,9 +275,21 @@ router.get("/platform/companies", platformOnly, async (req, res) => {
       ) clients_counts ON clients_counts.company_id = companies.id
       LEFT JOIN (
         SELECT company_id, COUNT(*)::int AS count
+        FROM clients
+        WHERE COALESCE(archived, FALSE) = FALSE
+        GROUP BY company_id
+      ) active_clients_counts ON active_clients_counts.company_id = companies.id
+      LEFT JOIN (
+        SELECT company_id, COUNT(*)::int AS count
         FROM jobs
         GROUP BY company_id
       ) jobs_counts ON jobs_counts.company_id = companies.id
+      LEFT JOIN (
+        SELECT company_id, COUNT(*)::int AS count
+        FROM jobs
+        WHERE date >= date_trunc('month', CURRENT_DATE)::date
+        GROUP BY company_id
+      ) jobs_this_month_counts ON jobs_this_month_counts.company_id = companies.id
       LEFT JOIN (
         SELECT company_id, COUNT(*)::int AS count
         FROM invoices
@@ -136,16 +307,26 @@ router.get("/platform/companies", platformOnly, async (req, res) => {
         GROUP BY company_id
       ) subscription_counts ON subscription_counts.company_id = companies.id
       ORDER BY companies.created_at DESC NULLS LAST, companies.id DESC
-    `);
+      LIMIT $1 OFFSET $2
+    `, [limit, offset]);
 
     const rows = [];
 
     for (const row of result.rows) {
-      const usage = await getUsageForCompany(row.id);
-      const warnings = await getBillingWarnings(row.id);
+      const usage = buildUsageFromCompanyRow(row);
+      const warnings = buildWarningsFromUsageRow(usage, row);
+      const {
+        usage_clients_count,
+        jobs_this_month,
+        trial_ends_at,
+        max_users,
+        max_clients,
+        max_jobs_per_month,
+        ...publicRow
+      } = row;
 
       rows.push({
-        ...row,
+        ...publicRow,
         users_count: num(row.users_count),
         clients_count: num(row.clients_count),
         jobs_count: num(row.jobs_count),
@@ -397,6 +578,7 @@ router.get("/platform/health", platformOnly, async (req, res) => {
 
 router.get("/platform/activity", platformOnly, async (req, res) => {
   try {
+    const { limit, offset } = parsePagination(req.query);
     const result = await pool.query(`
       SELECT
         activity_log.id,
@@ -413,8 +595,8 @@ router.get("/platform/activity", platformOnly, async (req, res) => {
       LEFT JOIN companies ON companies.id = activity_log.company_id
       LEFT JOIN users ON users.id = activity_log.user_id
       ORDER BY activity_log.created_at DESC, activity_log.id DESC
-      LIMIT 50
-    `);
+      LIMIT $1 OFFSET $2
+    `, [limit, offset]);
 
     res.json(result.rows);
   } catch (err) {
@@ -424,12 +606,14 @@ router.get("/platform/activity", platformOnly, async (req, res) => {
 
 router.get("/platform/users", platformOnly, async (req, res) => {
   try {
+    const { limit, offset } = parsePagination(req.query);
     const result = await pool.query(`
       SELECT id, username, role, active, company_id
       FROM users
       WHERE role = 'platform_owner'
       ORDER BY id ASC
-    `);
+      LIMIT $1 OFFSET $2
+    `, [limit, offset]);
 
     res.json(result.rows);
   } catch (err) {

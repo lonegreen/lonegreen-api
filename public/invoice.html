@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <title>Invoice</title>
+  <link rel="stylesheet" href="/css/brand.css">
   <link rel="stylesheet" href="/app-shell.css">
   <style>
     * { box-sizing: border-box; }
@@ -10,8 +11,8 @@
     body {
       margin: 0;
       font-family: Arial, sans-serif;
-      background: #eef4f0;
-      color: #163328;
+      background: var(--brand-bg);
+      color: var(--brand-black);
       padding: 14px;
     }
 
@@ -22,17 +23,17 @@
       border-radius: 8px;
       box-shadow: 0 18px 42px rgba(16,24,40,0.08);
       overflow: hidden;
-      border: 1px solid #dbe8df;
+      border: 1px solid var(--brand-border);
     }
 
     .header {
       padding: 12px 16px;
       background: #ffffff;
-      color: #173327;
+      color: var(--brand-black);
       display: grid;
       grid-template-columns: minmax(0, 1fr) 250px;
       gap: 10px;
-      border-bottom: 1px solid #dce8e1;
+      border-bottom: 1px solid var(--brand-border);
       align-items: start;
     }
 
@@ -40,7 +41,7 @@
       margin: 0 0 4px;
       font-size: 34px;
       letter-spacing: -0.03em;
-      color: #10291f;
+      color: var(--brand-black);
     }
 
     #invoiceNumber {
@@ -67,7 +68,7 @@
     .brand-name {
       font-size: 18px;
       font-weight: 900;
-      color: #10291f;
+      color: var(--brand-black);
       line-height: 1.15;
       margin-bottom: 4px;
       word-break: break-word;
@@ -89,7 +90,7 @@
       max-width: 84px;
       max-height: 58px;
       object-fit: contain;
-      border: 1px solid #dce8e1;
+      border: 1px solid var(--brand-border);
       border-radius: 8px;
       padding: 5px;
       background: white;
@@ -131,7 +132,7 @@
 
     .meta-row strong,
     .total-row strong {
-      color: #173327;
+      color: var(--brand-black);
       text-align: right;
     }
 
@@ -145,12 +146,12 @@
       font-weight: 800;
       text-transform: uppercase;
       letter-spacing: 0.04em;
-      background: #eef2f0;
+      background: var(--brand-bg);
       color: #4b6358;
     }
 
-    .status-draft { background: #eef2f0; color: #4b6358; }
-    .status-sent { background: #eff6ff; color: #175cd3; }
+    .status-draft { background: var(--brand-bg); color: #4b6358; }
+    .status-sent { background: #eff6ff; color: var(--brand-primary); }
     .status-unpaid { background: #fff7ed; color: #c2410c; }
     .status-partially_paid { background: #fff7df; color: #9a5b05; }
     .status-paid { background: #ecfdf3; color: #027a48; }
@@ -169,7 +170,7 @@
     }
 
     .box {
-      border: 1px solid #dce8e1;
+      border: 1px solid var(--brand-border);
       border-radius: 8px;
       padding: 7px 8px;
       background: #fbfdfc;
@@ -218,7 +219,7 @@
       font-size: 12px;
       text-transform: uppercase;
       letter-spacing: 0.05em;
-      background: #f8fbf9;
+      background: var(--brand-bg);
     }
 
     td.amount,
@@ -228,17 +229,17 @@
     }
 
     td {
-      color: #173327;
+      color: var(--brand-black);
       line-height: 1.35;
       font-size: 13px;
       word-break: break-word;
     }
 
     .payment-box {
-      border: 1px solid #dce8e1;
+      border: 1px solid var(--brand-border);
       border-radius: 8px;
       padding: 7px 8px;
-      background: #f8fbf9;
+      background: var(--brand-bg);
     }
 
     .totals-grid {
@@ -249,7 +250,7 @@
     }
 
     .money-card {
-      border: 1px solid #dce8e1;
+      border: 1px solid var(--brand-border);
       border-radius: 8px;
       padding: 5px 7px;
       background: white;
@@ -258,7 +259,7 @@
 
     .money-card strong {
       font-size: 14px;
-      color: #1f5c3a;
+      color: var(--brand-primary);
       word-break: break-word;
     }
 
@@ -292,8 +293,8 @@
       gap: 10px;
       padding: 12px 22px;
       flex-wrap: wrap;
-      background: #f8fbf9;
-      border-top: 1px solid #dce8e1;
+      background: var(--brand-bg);
+      border-top: 1px solid var(--brand-border);
     }
 
     .action-group {
@@ -325,19 +326,19 @@
     }
 
     .primary {
-      background: #1f5c3a;
+      background: var(--brand-primary);
       color: white;
     }
 
     .gray {
-      background: #eef2f0;
-      color: #1f5c3a;
-      border: 1px solid #dbe7df;
+      background: var(--brand-bg);
+      color: var(--brand-primary);
+      border: 1px solid var(--brand-border);
     }
 
     .blue {
-      background: #2563eb;
-      color: white;
+      background: var(--brand-primary);
+      color: var(--brand-white);
     }
 
     .red {
@@ -369,7 +370,7 @@
 
     .modal-box h3 {
       margin: 0 0 16px;
-      color: #1f5c3a;
+      color: var(--brand-primary);
       font-size: 22px;
       letter-spacing: -0.02em;
     }
@@ -404,9 +405,9 @@
       width: 100%;
       padding: 11px 13px;
       border-radius: 12px;
-      border: 1px solid #cfe0d5;
+      border: 1px solid var(--brand-border);
       background: white;
-      color: #163328;
+      color: var(--brand-black);
       font: inherit;
       outline: none;
       transition: border .15s ease, box-shadow .15s ease;
@@ -415,8 +416,8 @@
     input:focus,
     select:focus,
     textarea:focus {
-      border-color: #1f5c3a;
-      box-shadow: 0 0 0 4px rgba(31,92,58,0.10);
+      border-color: var(--brand-primary);
+      box-shadow: 0 0 0 4px rgba(255,90,0,0.16);
     }
 
     textarea {
@@ -460,7 +461,7 @@
     }
 
     .payment-row strong {
-      color: #173327;
+      color: var(--brand-black);
     }
 
     .payment-row span {
@@ -470,7 +471,7 @@
 
     .invoice-ref {
       font-weight: 700;
-      color: #173327;
+      color: var(--brand-black);
     }
 
     .footer-message {
@@ -500,7 +501,7 @@
 
     .empty-card strong {
       display: block;
-      color: #173327;
+      color: var(--brand-black);
       font-size: 18px;
       margin-bottom: 6px;
     }
@@ -1090,6 +1091,19 @@ function contactLines(lines, emptyText){
   return markup || `<span class="muted">${escapeHtml(emptyText || "-")}</span>`;
 }
 
+function isSafeHttpUrl(value){
+  const raw = String(value || "").trim();
+  if(!raw) return false;
+  if(raw.startsWith("/")) return true;
+  if(raw.startsWith("./") || raw.startsWith("../")) return true;
+  try {
+    const parsed = new URL(raw, window.location.origin);
+    return parsed.protocol === "http:" || parsed.protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
 function currentRole(){
   try {
     return String((JSON.parse(localStorage.getItem("user") || "{}").role) || "").toLowerCase();
@@ -1253,7 +1267,8 @@ async function load(){
     const companyEmail = branding.email || currentInvoice.branded_company_email || currentInvoice.company_email || "";
     const companyAddress = branding.address || currentInvoice.branded_company_address || currentInvoice.company_address || "";
     const companyWebsite = branding.website || currentInvoice.branded_company_website || "";
-    const logoUrl = branding.logo_url || currentInvoice.invoice_logo_url || "";
+    const rawLogoUrl = branding.logo_url || currentInvoice.invoice_logo_url || "";
+    const logoUrl = isSafeHttpUrl(rawLogoUrl) ? String(rawLogoUrl).trim() : "";
     const invoiceNumber = invoiceNumberText(currentInvoice, branding);
     const displayStatus = getDisplayStatus(currentInvoice);
     document.title = buildInvoicePageTitle(currentInvoice, invoiceNumber);

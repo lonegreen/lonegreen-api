@@ -1,6 +1,7 @@
 const express = require("express");
 const pool = require("../db/pool");
 const { verifyCustomerBearerToken } = require("../middleware/auth");
+const { validateReviewContent } = require("../middleware/abuseGuards");
 const { sendSafeServerError } = require("../services/safeServerError");
 const { sendOperationalEmailSafe } = require("../services/emailService");
 
@@ -26,6 +27,16 @@ function cleanReviewText(value) {
   return text ? text : null;
 }
 
+function withModerationFlag(payload, req) {
+  if (!req || !req.locals || req.locals.moderationFlagged !== true) {
+    return payload;
+  }
+  if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
+    return payload;
+  }
+  return { ...payload, moderation_flagged: true };
+}
+
 async function resolveCustomerCompanyId(customer) {
   if (customer.company_id) {
     return Number(customer.company_id);
@@ -40,7 +51,7 @@ async function resolveCustomerCompanyId(customer) {
   return Number(result.rows[0].company_id);
 }
 
-router.post("/reviews", customerAuth, async (req, res) => {
+router.post("/reviews", customerAuth, validateReviewContent, async (req, res) => {
   try {
     const jobId = Number(req.body && req.body.job_id);
     const rating = Number(req.body && req.body.rating);
@@ -102,7 +113,7 @@ router.post("/reviews", customerAuth, async (req, res) => {
       }, { kind: "new_review" });
     }
 
-    return res.status(201).json(review);
+    return res.status(201).json(withModerationFlag(review, req));
   } catch (err) {
     if (err && err.code === "23505") {
       return res.status(409).json({ error: "A review already exists for this job" });

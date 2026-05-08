@@ -3,6 +3,7 @@ const jwt = require("jsonwebtoken");
 const pool = require("../db/pool");
 const { SECRET } = require("../config/env");
 const { classifyTokenBoundary, normalizeRole } = require("../middleware/auth");
+const { validateMessageContent } = require("../middleware/abuseGuards");
 const { sendSafeServerError } = require("../services/safeServerError");
 const { sendOperationalEmailSafe } = require("../services/emailService");
 
@@ -147,6 +148,16 @@ async function getConversationIfParticipant(conversationId, participant) {
   return result.rows[0] || null;
 }
 
+function withModerationFlag(payload, req) {
+  if (!req || !req.locals || req.locals.moderationFlagged !== true) {
+    return payload;
+  }
+  if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
+    return payload;
+  }
+  return { ...payload, moderation_flagged: true };
+}
+
 router.post("/conversations", participantAuth, async (req, res) => {
   try {
     if (req.participant.actor_type === "customer") {
@@ -259,7 +270,7 @@ router.get("/conversations/:id/messages", participantAuth, async (req, res) => {
   }
 });
 
-router.post("/conversations/:id/messages", participantAuth, async (req, res) => {
+router.post("/conversations/:id/messages", participantAuth, validateMessageContent, async (req, res) => {
   try {
     const conversationId = Number(req.params.id);
     if (!Number.isInteger(conversationId) || conversationId <= 0) {
@@ -334,7 +345,7 @@ router.post("/conversations/:id/messages", participantAuth, async (req, res) => 
       }
     }
 
-    return res.status(201).json(insertedMessage);
+    return res.status(201).json(withModerationFlag(insertedMessage, req));
   } catch (err) {
     return sendSafeServerError(res, err, "CONVERSATION MESSAGE CREATE ERROR");
   }

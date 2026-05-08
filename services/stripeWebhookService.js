@@ -25,6 +25,10 @@ try {
   backgroundTasks = {};
 }
 
+const STRIPE_REPLAY_DEFAULT_LIMIT = 25;
+const STRIPE_REPLAY_MAX_LIMIT = 100;
+const STRIPE_REPLAY_MAX_ATTEMPTS = Number(process.env.STRIPE_REPLAY_MAX_ATTEMPTS || 5);
+
 function stripeCustomerId(obj) {
   if (!obj) return null;
   if (typeof obj === "string") return obj;
@@ -838,9 +842,180 @@ async function processStripeWebhookHttpRequest(req) {
   return { skipped: false };
 }
 
+function parseReplayAttemptCount(message) {
+  const text = String(message || "");
+  const match = text.match(/\[replay_attempt:(\d+)\]/i);
+  if (!match) return 0;
+  const value = Number(match[1]);
+  return Number.isFinite(value) && value > 0 ? value : 0;
+}
+
+function buildReplayFailureError(err, attempt) {
+  const message = err && err.message ? String(err.message) : "Webhook handler error";
+  const replayErr = new Error(`[replay_attempt:${attempt}] ${message}`);
+  replayErr.code = err && err.code ? err.code : "WEBHOOK_HANDLER_ERROR";
+  replayErr.safeDetails = err && err.safeDetails ? err.safeDetails : {};
+  return replayErr;
+}
+
+function normalizeReplayLimit(rawLimit) {
+  const parsed = Number(rawLimit);
+  if (!Number.isFinite(parsed) || parsed <= 0) return STRIPE_REPLAY_DEFAULT_LIMIT;
+  return Math.min(STRIPE_REPLAY_MAX_LIMIT, Math.floor(parsed));
+}
+
+async function listReplayCandidates(limit) {
+  const result = await pool.query(
+    `
+    SELECT se.stripe_event_id, se.event_type, se.error_message
+    FROM stripe_events se
+    LEFT JOIN stripe_processed_events spe
+      ON spe.stripe_event_id = se.stripe_event_id
+    WHERE se.retryable = TRUE
+      AND se.processed_at IS NULL
+      AND spe.stripe_event_id IS NULL
+    ORDER BY se.created_at ASC, se.stripe_event_id ASC
+    LIMIT $1
+    `,
+    [limit]
+  );
+  return result.rows;
+}
+
+async function claimReplayCandidate(eventId) {
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    const locked = await client.query(
+      `
+      SELECT stripe_event_id, event_type, error_message, retryable, processed_at
+      FROM stripe_events
+      WHERE stripe_event_id = $1
+      FOR UPDATE
+      `,
+      [eventId]
+    );
+    if (!locked.rows.length) {
+      await client.query("ROLLBACK");
+      return null;
+    }
+    const row = locked.rows[0];
+    if (!row.retryable || row.processed_at) {
+      await client.query("ROLLBACK");
+      return null;
+    }
+    await client.query(
+      `
+      UPDATE stripe_events
+      SET
+        retryable = FALSE,
+        error_code = 'REPLAY_IN_PROGRESS',
+        error_message = 'Internal replay in progress'
+      WHERE stripe_event_id = $1
+      `,
+      [eventId]
+    );
+    await client.query("COMMIT");
+    return row;
+  } catch (err) {
+    try {
+      await client.query("ROLLBACK");
+    } catch (_) {}
+    throw err;
+  } finally {
+    client.release();
+  }
+}
+
+async function replayRetryableStripeEvents(options = {}) {
+  const stripe = getStripe();
+  if (!stripe) {
+    throw Object.assign(new Error("Stripe API not configured"), { code: "STRIPE_NOT_CONFIGURED" });
+  }
+  const limit = normalizeReplayLimit(options.limit);
+  const maxAttempts = Number.isFinite(Number(options.maxAttempts))
+    ? Math.max(1, Math.floor(Number(options.maxAttempts)))
+    : Math.max(1, STRIPE_REPLAY_MAX_ATTEMPTS);
+
+  logger.info("STRIPE_WEBHOOK_REPLAY_STARTED", { limit, max_attempts: maxAttempts });
+
+  const candidates = await listReplayCandidates(limit);
+  const summary = {
+    scanned: candidates.length,
+    replayed_success: 0,
+    replayed_failed: 0,
+    skipped_processed: 0,
+    skipped_max_attempts: 0
+  };
+
+  for (const candidate of candidates) {
+    const eventId = candidate.stripe_event_id;
+    const knownAttempts = parseReplayAttemptCount(candidate.error_message);
+    if (knownAttempts >= maxAttempts) {
+      summary.skipped_max_attempts += 1;
+      logger.warn("STRIPE_WEBHOOK_REPLAY_SKIPPED_MAX_ATTEMPTS", {
+        event_id: eventId,
+        attempts: knownAttempts,
+        max_attempts: maxAttempts
+      });
+      continue;
+    }
+
+    const claimed = await claimReplayCandidate(eventId);
+    if (!claimed) {
+      summary.skipped_processed += 1;
+      continue;
+    }
+
+    try {
+      const alreadyProcessed = await pool.query(
+        `
+        SELECT 1
+        FROM stripe_processed_events
+        WHERE stripe_event_id = $1
+        LIMIT 1
+        `,
+        [eventId]
+      );
+      if (alreadyProcessed.rows.length) {
+        await markEventProcessed({ id: eventId, type: claimed.event_type }, {});
+        summary.skipped_processed += 1;
+        logger.info("STRIPE_WEBHOOK_REPLAY_SKIPPED_ALREADY_PROCESSED", {
+          event_id: eventId,
+          event_type: claimed.event_type
+        });
+        continue;
+      }
+
+      const event = await stripe.events.retrieve(eventId);
+      const audit = await dispatchStripeEvent(event);
+      await markEventProcessed(event, audit || {});
+      summary.replayed_success += 1;
+      logger.info("STRIPE_WEBHOOK_REPLAY_EVENT_SUCCESS", {
+        event_id: eventId,
+        event_type: event.type
+      });
+    } catch (err) {
+      summary.replayed_failed += 1;
+      const replayError = buildReplayFailureError(err, knownAttempts + 1);
+      await markEventFailed({ id: eventId, type: claimed.event_type }, replayError, replayError.safeDetails || {});
+      logger.error("STRIPE_WEBHOOK_REPLAY_EVENT_FAILED", {
+        event_id: eventId,
+        event_type: claimed.event_type,
+        code: replayError.code || "WEBHOOK_HANDLER_ERROR",
+        message: replayError.message
+      });
+    }
+  }
+
+  logger.info("STRIPE_WEBHOOK_REPLAY_FINISHED", summary);
+  return summary;
+}
+
 module.exports = {
   processStripeWebhookHttpRequest,
   resolveCompanyId,
   internalPlanFromStripePriceId,
-  syncSubscriptionToCompany
+  syncSubscriptionToCompany,
+  replayRetryableStripeEvents
 };

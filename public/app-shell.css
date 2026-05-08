@@ -1,22 +1,22 @@
 :root {
-  --app-bg: #f3f6f4;
-  --app-bg-soft: #f8faf9;
+  --app-bg: var(--brand-bg);
+  --app-bg-soft: var(--brand-bg);
   --app-surface: rgba(255, 255, 255, 0.96);
   --app-surface-strong: #ffffff;
   --app-surface-soft: #f7faf8;
-  --app-border: #dce6df;
-  --app-border-strong: #cfdcd4;
-  --app-text: #183328;
-  --app-text-strong: #10281f;
+  --app-border: var(--brand-border);
+  --app-border-strong: var(--brand-border);
+  --app-text: var(--brand-black);
+  --app-text-strong: var(--brand-black);
   --app-muted: #667d73;
   --app-muted-soft: #8aa093;
-  --app-green-900: #163527;
-  --app-green-800: #1d4733;
-  --app-green-700: #2d6b49;
-  --app-green-600: #3c7e5a;
-  --app-green-100: #ecf5ef;
+  --app-green-900: #111111;
+  --app-green-800: #2B2B2B;
+  --app-green-700: var(--brand-primary);
+  --app-green-600: var(--brand-primary-hover);
+  --app-green-100: #fff3e8;
   --app-blue-100: #ebf3ff;
-  --app-blue-700: #245fca;
+  --app-blue-700: var(--brand-primary);
   --app-orange-100: #fff3e7;
   --app-orange-700: #c46b10;
   --app-red-100: #fff1f2;
@@ -44,7 +44,7 @@ html {
 
 body {
   color: var(--app-text);
-  accent-color: var(--app-green-700);
+  accent-color: var(--brand-primary);
 }
 
 *,
@@ -73,7 +73,7 @@ label {
 }
 
 a {
-  color: var(--app-green-700);
+  color: var(--brand-primary);
 }
 
 input,
@@ -93,8 +93,8 @@ textarea {
 input:focus,
 select:focus,
 textarea:focus {
-  border-color: rgba(45, 107, 73, 0.55);
-  box-shadow: 0 0 0 4px rgba(45, 107, 73, 0.12);
+  border-color: rgba(255, 90, 0, 0.55);
+  box-shadow: 0 0 0 4px rgba(255, 90, 0, 0.14);
   background: #fff;
 }
 
@@ -177,10 +177,10 @@ button:active,
 .topbar button:not(.secondary):not(.user-trigger),
 .primary-action,
 .action-btn {
-  background: linear-gradient(180deg, var(--app-green-700), var(--app-green-600));
+  background: var(--gradient-brand);
   color: #fff;
   border: 1px solid transparent;
-  box-shadow: 0 12px 24px rgba(45, 107, 73, 0.18);
+  box-shadow: 0 12px 24px rgba(230, 74, 0, 0.16);
 }
 
 .btn.primary,
@@ -189,10 +189,10 @@ button:active,
 .open-btn,
 .action-btn,
 .primary-action {
-  background: linear-gradient(180deg, #2f744f, #2a6647) !important;
+  background: var(--gradient-brand) !important;
   color: #fff !important;
   border-color: transparent !important;
-  box-shadow: 0 14px 28px rgba(38, 92, 63, 0.18) !important;
+  box-shadow: 0 14px 28px rgba(230, 74, 0, 0.18) !important;
 }
 
 .btn.blue,
@@ -220,7 +220,7 @@ button:active,
 .filter-chip,
 .tab {
   background: var(--app-surface-strong) !important;
-  color: var(--app-green-800) !important;
+  color: var(--brand-dark) !important;
   border: 1px solid var(--app-border-strong) !important;
   box-shadow: none !important;
 }
@@ -432,7 +432,7 @@ button:active,
 .page-toast.info {
   background: #eef6ff;
   border-color: #c8daf8;
-  color: #1d4ed8;
+  color: var(--brand-primary-hover);
 }
 
 .page-loader {
@@ -459,7 +459,7 @@ button:active,
   background: white;
   border: 1px solid var(--app-border);
   box-shadow: var(--app-shadow);
-  color: var(--app-green-700);
+  color: var(--brand-primary);
   font-weight: 700;
 }
 
@@ -467,7 +467,7 @@ button:active,
   width: 18px;
   height: 18px;
   border: 3px solid #d7e6dd;
-  border-top-color: var(--app-green-700);
+  border-top-color: var(--brand-primary);
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }
@@ -481,7 +481,7 @@ button:active,
 
 .page-empty h3 {
   margin: 0 0 8px;
-  color: var(--app-green-700);
+  color: var(--brand-primary);
   font-size: 20px;
 }
 
@@ -503,12 +503,12 @@ button:active,
   padding: 16px 18px;
   border-radius: 18px;
   border: 1px solid #d7e6dd;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.96), rgba(236, 245, 239, 0.96));
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.96), rgba(255, 243, 232, 0.96));
   box-shadow: 0 12px 28px rgba(16, 24, 40, 0.05);
 }
 
 .page-hint strong {
-  color: var(--app-green-700);
+  color: var(--brand-primary);
 }
 
 .page-hint p {

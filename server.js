@@ -51,7 +51,7 @@ const { handleStripeWebhookRequest } = require("./routes/stripeWebhook");
 const { isStripeCheckoutConfigured } = require("./services/stripeService");
 const launchRoutes = require("./routes/launch");
 
-const { setupDatabase } = require("./db/setup");
+const { setupDatabase, assertProductionSchemaReady } = require("./db/setup");
 const pool = require("./db/pool");
 const { startSubscriptionEngine } = require("./services/subscriptionEngine");
 const { startQueue, stopQueue, getQueueStatus } = require("./services/jobQueue");
@@ -70,6 +70,11 @@ app.disable("x-powered-by");
 
 /* Middleware */
 app.use(helmet({
+  // CSP hardening is intentionally staged.
+  // Temporary: keep 'unsafe-inline' for scripts/styles until all public pages remove inline
+  // <script>/<style>, inline style attributes, and inline event handlers.
+  // TODO(csp-hardening): remove 'unsafe-inline' from script-src/style-src after migration checklist in
+  // docs/csp-hardening-plan.md is complete and verified in production-like smoke tests.
   contentSecurityPolicy: {
     useDefaults: true,
     directives: {
@@ -423,21 +428,22 @@ process.on("unhandledRejection", (err) => {
       logger.warn("Production readiness environment warnings", envReadiness);
     }
 
-    const shouldRunStartupMigrations = NODE_ENV !== "production" || RUN_STARTUP_MIGRATIONS;
-    if (shouldRunStartupMigrations) {
-      logger.info("STARTUP_MIGRATIONS_ENABLED", {
-        production: NODE_ENV === "production"
-      });
-      if (NODE_ENV === "production") {
-        console.warn("WARNING: RUN_STARTUP_MIGRATIONS=true in production. Use controlled deploy migrations whenever possible.");
+    if (NODE_ENV === "production") {
+      if (RUN_STARTUP_MIGRATIONS) {
+        logger.warn("STARTUP_MIGRATIONS_IGNORED_IN_PRODUCTION", {
+          requested: true
+        });
       }
+      await assertProductionSchemaReady();
+      logger.info("PRODUCTION_SCHEMA_READY");
+    } else {
+      logger.info("STARTUP_MIGRATIONS_ENABLED", {
+        production: false
+      });
       await setupDatabase({
         runMigrations: true
       });
       logger.info("STARTUP_MIGRATIONS_COMPLETE");
-    } else {
-      console.warn("WARNING: Startup migrations skipped in production.");
-      console.warn("Run migrations explicitly with: node db/setup.js");
     }
 
     await startQueue();

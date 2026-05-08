@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <title>Subscriptions</title>
+  <link rel="stylesheet" href="/css/brand.css">
   <link rel="stylesheet" href="/app-shell.css">
   <style>
     * { box-sizing: border-box; }
@@ -10,8 +11,8 @@
     body {
       font-family: Arial, sans-serif;
       margin: 0;
-      background: linear-gradient(180deg, #edf6f0 0%, #f7faf8 180px, #f4f6f8 100%);
-      color: #173327;
+      background: linear-gradient(180deg, var(--brand-bg) 0%, #f7faf8 180px, #f4f6f8 100%);
+      color: var(--brand-black);
     }
 
     .container {
@@ -22,7 +23,7 @@
 
     h1 {
       margin: 0 0 8px;
-      color: #1f5c3a;
+      color: var(--brand-primary);
       font-size: 32px;
       letter-spacing: -0.03em;
     }
@@ -40,7 +41,7 @@
       background: rgba(255,255,255,0.96);
       padding: 18px;
       border-radius: 16px;
-      border: 1px solid #dbe8df;
+      border: 1px solid var(--brand-border);
       box-shadow: 0 14px 32px rgba(16,24,40,0.06);
       margin-bottom: 15px;
     }
@@ -48,7 +49,7 @@
     .earn {
       font-size: 18px;
       font-weight: 800;
-      color: #1f5c3a;
+      color: var(--brand-primary);
       line-height: 1.5;
     }
 
@@ -75,12 +76,12 @@
     }
 
     .add {
-      background: #1f5c3a;
+      background: var(--brand-primary);
       color: white;
     }
 
     .edit {
-      background: #2563eb;
+      background: var(--brand-primary);
       color: white;
     }
 
@@ -90,7 +91,7 @@
     }
 
     .activate {
-      background: #1f5c3a;
+      background: var(--brand-primary);
       color: white;
     }
 
@@ -100,9 +101,9 @@
     }
 
     .soft {
-      background: #eef2f0;
-      color: #1f5c3a;
-      border: 1px solid #dbe8df;
+      background: var(--brand-bg);
+      color: var(--brand-primary);
+      border: 1px solid var(--brand-border);
     }
 
     .row {
@@ -115,14 +116,14 @@
 
     .subscription-title {
       font-size: 18px;
-      color: #143326;
+      color: var(--brand-black);
       line-height: 1.35;
       word-break: break-word;
     }
 
     .subscription-service {
       margin-top: 3px;
-      color: #35584b;
+      color: var(--brand-dark);
       line-height: 1.45;
       word-break: break-word;
     }
@@ -160,8 +161,8 @@
     .detail-box {
       padding: 12px;
       border-radius: 14px;
-      border: 1px solid #dbe8df;
-      background: #f8fbf9;
+      border: 1px solid var(--brand-border);
+      background: var(--brand-bg);
       min-width: 0;
       word-break: break-word;
     }
@@ -177,7 +178,7 @@
 
     .detail-value {
       font-size: 14px;
-      color: #173327;
+      color: var(--brand-black);
       font-weight: 700;
       line-height: 1.35;
     }
@@ -194,7 +195,7 @@
       padding: 6px 10px;
       border-radius: 999px;
       background: #ecf5ef;
-      color: #1f5c3a;
+      color: var(--brand-primary);
       font-size: 12px;
       font-weight: 800;
     }
@@ -208,7 +209,7 @@
 
     .empty strong {
       display: block;
-      color: #173327;
+      color: var(--brand-black);
       font-size: 18px;
       margin-bottom: 6px;
     }
@@ -237,7 +238,7 @@
 
     .modal-box h3 {
       margin: 0 0 16px;
-      color: #1f5c3a;
+      color: var(--brand-primary);
       font-size: 22px;
       letter-spacing: -0.02em;
     }
@@ -271,9 +272,9 @@
       width: 100%;
       padding: 11px 13px;
       border-radius: 12px;
-      border: 1px solid #cfe0d5;
+      border: 1px solid var(--brand-border);
       background: white;
-      color: #163328;
+      color: var(--brand-black);
       font: inherit;
       outline: none;
       transition: border .15s ease, box-shadow .15s ease;
@@ -281,8 +282,8 @@
 
     input:focus,
     select:focus {
-      border-color: #1f5c3a;
-      box-shadow: 0 0 0 4px rgba(31,92,58,0.10);
+      border-color: var(--brand-primary);
+      box-shadow: 0 0 0 4px rgba(255,90,0,0.14);
     }
 
     .modal-actions {

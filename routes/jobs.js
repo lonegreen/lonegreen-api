@@ -54,6 +54,38 @@ const { sendSafeServerError } = require("../services/safeServerError");
 
 const router = express.Router();
 const enforceJobPlanLimit = enforcePlanLimits("jobs");
+const DEPRECATED_ENDPOINT_ERROR = { error: "Deprecated endpoint. Use canonical API route." };
+
+function parsePagination(query) {
+  const parsedLimit = Number(query && query.limit);
+  const parsedOffset = Number(query && query.offset);
+  const limit = Number.isInteger(parsedLimit) && parsedLimit > 0
+    ? Math.min(parsedLimit, 100)
+    : 50;
+  const offset = Number.isInteger(parsedOffset) && parsedOffset >= 0
+    ? parsedOffset
+    : 0;
+  return { limit, offset };
+}
+
+function lockDeprecatedLegacyMutations(req, res, next) {
+  const method = req.method;
+  const path = req.path;
+  const isLockedLegacyMutation = (
+    (method === "POST" && path === "/jobs") ||
+    (method === "POST" && /^\/jobs\/[^/]+\/photos$/.test(path)) ||
+    (method === "PUT" && /^\/jobs\/update\/[^/]+$/.test(path)) ||
+    (method === "PUT" && /^\/jobs\/[^/]+$/.test(path)) ||
+    (method === "PUT" && /^\/jobs\/[^/]+\/status$/.test(path)) ||
+    (method === "DELETE" && /^\/jobs\/[^/]+$/.test(path))
+  );
+  if (isLockedLegacyMutation) {
+    return res.status(410).json(DEPRECATED_ENDPOINT_ERROR);
+  }
+  return next();
+}
+router.use(lockDeprecatedLegacyMutations);
+
 const JOB_STATUS_TRANSITIONS = {
   scheduled: new Set(["scheduled", "assigned", "cancelled"]),
   assigned: new Set(["assigned", "in_progress", "scheduled", "cancelled"]),
@@ -164,6 +196,7 @@ router.get("/jobs", auth, requireCompanyBillingForMutations, requireMinimumRole(
   try {
     warnDeprecatedRoute("/jobs", "/workflow/jobs");
     const company_id = req.user.company_id;
+    const { limit, offset } = parsePagination(req.query);
 
     const result = await pool.query(
       `
@@ -192,8 +225,9 @@ router.get("/jobs", auth, requireCompanyBillingForMutations, requireMinimumRole(
       LEFT JOIN workers ON jobs.worker_id = workers.id AND workers.company_id = jobs.company_id
       WHERE jobs.company_id = $1
       ORDER BY jobs.date ASC, jobs.start_time ASC, jobs.id DESC
+      LIMIT $2 OFFSET $3
     `,
-      [company_id]
+      [company_id, limit, offset]
     );
 
     res.json(result.rows);
@@ -714,6 +748,7 @@ router.delete("/jobs/:id", auth, requireCompanyBillingForMutations, requireMinim
 router.get("/workflow/jobs", auth, requireCompanyBillingForMutations, requireMinimumRole("manager"), async (req, res) => {
   try {
     await ensureWorkflowSchema();
+    const { limit, offset } = parsePagination(req.query);
     const result = await pool.query(
       `
       SELECT
@@ -741,8 +776,9 @@ router.get("/workflow/jobs", auth, requireCompanyBillingForMutations, requireMin
       ) invoices ON true
       WHERE jobs.company_id = $1
       ORDER BY jobs.date DESC, jobs.id DESC
+      LIMIT $2 OFFSET $3
     `,
-      [req.user.company_id]
+      [req.user.company_id, limit, offset]
     );
 
     res.json(
@@ -1125,6 +1161,10 @@ router.put("/workflow/jobs/:id/status", auth, requireCompanyBillingForMutations,
       ]
     );
 
+    if (updated.rows.length === 0) {
+      return res.status(404).json({ error: "Not found" });
+    }
+
     await logChange({
       companyId: req.user.company_id,
       userId: req.user.id,
@@ -1255,10 +1295,14 @@ router.delete("/workflow/jobs/:id", auth, requireCompanyBillingForMutations, req
       [jobId, req.user.company_id]
     );
 
-    await pool.query(
+    const deleted = await pool.query(
       `DELETE FROM jobs WHERE id = $1 AND company_id = $2`,
       [jobId, req.user.company_id]
     );
+
+    if (!deleted.rowCount) {
+      return res.status(404).json({ error: "Not found" });
+    }
 
     await logActivity({
       companyId: req.user.company_id,

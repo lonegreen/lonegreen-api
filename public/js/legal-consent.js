@@ -27,30 +27,30 @@
         gap: 12px;
         align-items: center;
         padding: 14px 16px;
-        border: 1px solid #d0dfd5;
+        border: 1px solid var(--brand-border);
         border-radius: 16px;
         background: #ffffff;
         color: #173327;
         box-shadow: 0 18px 42px rgba(16, 24, 40, 0.16);
         font-family: Arial, sans-serif;
       }
-      .legal-consent-banner strong { display:block; margin-bottom:4px; color:#1f5c3a; }
+      .legal-consent-banner strong { display:block; margin-bottom:4px; color:var(--brand-primary); }
       .legal-consent-banner span { color:#52675d; line-height:1.45; font-size:13px; }
-      .legal-consent-banner a { color:#1f5c3a; font-weight:800; }
+      .legal-consent-banner a { color:var(--brand-primary); font-weight:800; }
       .legal-consent-actions { display:flex; flex-wrap:wrap; gap:8px; justify-content:flex-end; }
       .legal-consent-actions button {
         border:0;
         border-radius:12px;
         padding:10px 12px;
-        background:#1f5c3a;
-        color:white;
+        background:var(--brand-primary);
+        color:var(--brand-white);
         font-weight:800;
         cursor:pointer;
       }
       .legal-consent-actions button.secondary {
-        background:#edf6f0;
-        color:#1f5c3a;
-        border:1px solid #d0dfd5;
+        background:var(--brand-bg);
+        color:var(--brand-primary);
+        border:1px solid var(--brand-border);
       }
       @media (max-width: 720px) {
         .legal-consent-banner { grid-template-columns:1fr; }
@@ -124,12 +124,18 @@
         </span>
       </div>
       <div class="legal-consent-actions">
-        <button class="secondary" type="button" onclick="window.open('/terms.html', '_blank', 'noopener')">Review</button>
+        <button id="legalConsentReviewBtn" class="secondary" type="button">Review</button>
         <button id="legalConsentAcceptBtn" type="button">Accept</button>
       </div>
     `;
 
     document.body.appendChild(banner);
+    const reviewButton = document.getElementById("legalConsentReviewBtn");
+    if (reviewButton) {
+      reviewButton.addEventListener("click", function () {
+        window.open("/terms.html", "_blank", "noopener");
+      });
+    }
     const acceptButton = document.getElementById("legalConsentAcceptBtn");
     if (acceptButton) {
       acceptButton.addEventListener("click", () => acceptConsent(acceptButton));

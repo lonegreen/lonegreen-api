@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Worker App</title>
+  <link rel="stylesheet" href="/css/brand.css">
   <link rel="stylesheet" href="/app-shell.css">
   <style>
     * { box-sizing: border-box; }
@@ -15,7 +16,7 @@
         radial-gradient(circle at top left, rgba(31, 92, 58, 0.08), transparent 28%),
         linear-gradient(180deg, #edf5f0 0%, #f7f9f8 180px, #f4f6f8 100%);
       margin: 0;
-      color: #173327;
+      color: var(--brand-black);
     }
 
     .page {
@@ -33,7 +34,7 @@
 
     .hero h1 {
       margin: 0;
-      color: #1f5c3a;
+      color: var(--brand-primary);
       font-size: 30px;
       letter-spacing: -0.03em;
     }
@@ -59,8 +60,8 @@
       padding: 10px 14px;
       border-radius: 999px;
       background: rgba(255,255,255,0.95);
-      border: 1px solid #dbe7df;
-      color: #1f5c3a;
+      border: 1px solid var(--brand-border);
+      color: var(--brand-primary);
       font-weight: 800;
       width: fit-content;
       box-shadow: 0 10px 22px rgba(16,24,40,0.05);
@@ -91,15 +92,15 @@
       box-shadow: none;
     }
 
-    .primary { background: #1f5c3a; color: white; }
-    .secondary { background: #eef2f0; color: #1f5c3a; border: 1px solid #dbe7df; }
-    .start-btn { background: #2563eb; color: white; }
+    .primary { background: var(--brand-primary); color: white; }
+    .secondary { background: var(--brand-bg); color: var(--brand-primary); border: 1px solid var(--brand-border); }
+    .start-btn { background: var(--brand-primary); color: white; }
     .done-btn { background: #16a34a; color: white; }
-    .save-btn { background: #eef2f0; color: #1f5c3a; border: 1px solid #cfe0d5; }
+    .save-btn { background: var(--brand-bg); color: var(--brand-primary); border: 1px solid var(--brand-border); }
 
     .panel {
       background: rgba(255,255,255,0.96);
-      border: 1px solid #dbe7df;
+      border: 1px solid var(--brand-border);
       border-radius: 20px;
       box-shadow: 0 18px 42px rgba(16,24,40,0.06);
       padding: 14px;
@@ -114,8 +115,8 @@
     .summary-box {
       padding: 12px;
       border-radius: 16px;
-      background: #f8fbf9;
-      border: 1px solid #dbe7df;
+      background: var(--brand-bg);
+      border: 1px solid var(--brand-border);
       min-width: 0;
     }
 
@@ -130,7 +131,7 @@
 
     .summary-value {
       font-size: 22px;
-      color: #173327;
+      color: var(--brand-black);
       font-weight: 900;
       letter-spacing: -0.03em;
     }
@@ -141,7 +142,7 @@
     }
 
     .job {
-      border: 1px solid #dbe7df;
+      border: 1px solid var(--brand-border);
       border-radius: 20px;
       padding: 16px;
       background: #fbfdfc;
@@ -164,7 +165,7 @@
 
     .job-title {
       margin: 0 0 6px;
-      color: #173327;
+      color: var(--brand-black);
       font-size: 23px;
       font-weight: 900;
       line-height: 1.15;
@@ -211,7 +212,7 @@
     }
 
     .scheduled { background: #6b7280; }
-    .assigned { background: #2563eb; }
+    .assigned { background: var(--brand-primary); }
     .in_progress { background: #f59e0b; }
     .completed { background: #16a34a; }
     .cancelled { background: #dc2626; }
@@ -232,8 +233,8 @@
       padding: 12px 14px;
       border-radius: 14px;
       background: white;
-      border: 1px solid #cfe0d5;
-      color: #1f5c3a;
+      border: 1px solid var(--brand-border);
+      color: var(--brand-primary);
       font-weight: 900;
       text-decoration: none;
       transition: transform .15s ease, box-shadow .15s ease, border .15s ease;
@@ -241,7 +242,7 @@
 
     .quick-link:hover {
       transform: translateY(-1px);
-      border-color: #1f5c3a;
+      border-color: var(--brand-primary);
       box-shadow: 0 10px 18px rgba(16,24,40,0.08);
     }
 
@@ -288,32 +289,32 @@
       min-height: 104px;
       padding: 12px;
       border-radius: 14px;
-      border: 1px solid #cfe0d5;
+      border: 1px solid var(--brand-border);
       font: inherit;
       resize: vertical;
-      color: #173327;
+      color: var(--brand-black);
       outline: none;
       transition: border .15s ease, box-shadow .15s ease;
       background: white;
     }
 
     .notes-box:focus {
-      border-color: #1f5c3a;
+      border-color: var(--brand-primary);
       box-shadow: 0 0 0 4px rgba(31,92,58,0.10);
     }
 
     .empty {
       padding: 18px;
-      border: 1px dashed #dbe7df;
+      border: 1px dashed var(--brand-border);
       border-radius: 16px;
-      background: #f8fbf9;
+      background: var(--brand-bg);
       color: #688076;
       line-height: 1.5;
     }
 
     .empty strong {
       display: block;
-      color: #173327;
+      color: var(--brand-black);
       font-size: 18px;
       margin-bottom: 6px;
     }
@@ -322,24 +323,24 @@
       width: 100%;
       padding: 14px 12px;
       border-radius: 12px;
-      border: 1px solid #cfe0d5;
+      border: 1px solid var(--brand-border);
       font: inherit;
       background: white;
       min-height: 48px;
-      color: #173327;
+      color: var(--brand-black);
       outline: none;
       transition: border .15s ease, box-shadow .15s ease;
     }
 
     select:focus {
-      border-color: #1f5c3a;
+      border-color: var(--brand-primary);
       box-shadow: 0 0 0 4px rgba(31,92,58,0.10);
     }
 
     .page-hint {
       padding: 14px;
       border-radius: 16px;
-      border: 1px solid #dbe7df;
+      border: 1px solid var(--brand-border);
       background: rgba(255,255,255,0.96);
       color: #587165;
       box-shadow: 0 10px 22px rgba(16,24,40,0.05);
@@ -348,7 +349,7 @@
 
     .page-hint strong {
       display: block;
-      color: #173327;
+      color: var(--brand-black);
       margin-bottom: 4px;
     }
 

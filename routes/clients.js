@@ -55,6 +55,37 @@ const { sendSafeServerError } = require("../services/safeServerError");
 
 const router = express.Router();
 const enforceClientPlanLimit = enforcePlanLimits("clients");
+const DEPRECATED_ENDPOINT_ERROR = { error: "Deprecated endpoint. Use canonical API route." };
+
+function parsePagination(query) {
+  const parsedLimit = Number(query && query.limit);
+  const parsedOffset = Number(query && query.offset);
+  const limit = Number.isInteger(parsedLimit) && parsedLimit > 0
+    ? Math.min(parsedLimit, 100)
+    : 50;
+  const offset = Number.isInteger(parsedOffset) && parsedOffset >= 0
+    ? parsedOffset
+    : 0;
+  return { limit, offset };
+}
+
+function lockDeprecatedLegacyMutations(req, res, next) {
+  const method = req.method;
+  const path = req.path;
+  const isLockedLegacyMutation = (
+    (method === "POST" && path === "/clients") ||
+    (method === "PUT" && /^\/clients\/[^/]+$/.test(path)) ||
+    (method === "PUT" && /^\/clients\/[^/]+\/archive$/.test(path)) ||
+    (method === "DELETE" && /^\/clients\/[^/]+$/.test(path)) ||
+    (method === "DELETE" && /^\/clients\/[^/]+\/permanent$/.test(path)) ||
+    (method === "DELETE" && /^\/clients\/[^/]+\/jobs\/[^/]+\/subscription-visit$/.test(path))
+  );
+  if (isLockedLegacyMutation) {
+    return res.status(410).json(DEPRECATED_ENDPOINT_ERROR);
+  }
+  return next();
+}
+router.use(lockDeprecatedLegacyMutations);
 
 /* ================= CLIENTS ================= */
 
@@ -62,6 +93,7 @@ router.get("/clients", auth, requireCompanyBillingForMutations, requireMinimumRo
   try {
     await ensureClientLifecycleSchema();
     const company_id = req.user.company_id;
+    const { limit, offset } = parsePagination(req.query);
 
     const result = await pool.query(`
       SELECT
@@ -126,7 +158,8 @@ router.get("/clients", auth, requireCompanyBillingForMutations, requireMinimumRo
       WHERE clients.company_id = $1
         AND COALESCE(clients.archived, FALSE) = FALSE
       ORDER BY clients.id DESC
-    `, [company_id]);
+      LIMIT $2 OFFSET $3
+    `, [company_id, limit, offset]);
 
     res.json(result.rows);
   } catch (err) {
@@ -135,7 +168,7 @@ router.get("/clients", auth, requireCompanyBillingForMutations, requireMinimumRo
   }
 });
 
-router.post("/clients", auth, requireCompanyBillingForMutations, enforceClientPlanLimit, requireMinimumRole("manager"), async (req, res) => {
+async function createClientMutation(req, res) {
   try {
     await ensureClientLifecycleSchema();
     const name = String(req.body?.name || "").trim();
@@ -171,9 +204,12 @@ router.post("/clients", auth, requireCompanyBillingForMutations, enforceClientPl
     console.log("ADD CLIENT ERROR:", err);
     res.status(500).json({ error: "Error" });
   }
-});
+}
 
-router.put("/clients/:id", auth, requireCompanyBillingForMutations, requireMinimumRole("manager"), async (req, res) => {
+router.post("/clients", auth, requireCompanyBillingForMutations, enforceClientPlanLimit, requireMinimumRole("manager"), createClientMutation);
+router.post("/workflow/clients", auth, requireCompanyBillingForMutations, enforceClientPlanLimit, requireMinimumRole("manager"), createClientMutation);
+
+async function updateClientMutation(req, res) {
   try {
     await ensureClientLifecycleSchema();
     const id = req.params.id;
@@ -231,9 +267,12 @@ router.put("/clients/:id", auth, requireCompanyBillingForMutations, requireMinim
     console.log("UPDATE CLIENT ERROR:", err);
     res.status(500).json({ error: "update failed" });
   }
-});
+}
 
-router.put("/clients/:id/archive", auth, requireCompanyBillingForMutations, requireMinimumRole("manager"), async (req, res) => {
+router.put("/clients/:id", auth, requireCompanyBillingForMutations, requireMinimumRole("manager"), updateClientMutation);
+router.put("/workflow/clients/:id", auth, requireCompanyBillingForMutations, requireMinimumRole("manager"), updateClientMutation);
+
+async function archiveClientMutation(req, res) {
   try {
     await ensureClientLifecycleSchema();
     const company_id = req.user.company_id;
@@ -273,7 +312,10 @@ router.put("/clients/:id/archive", auth, requireCompanyBillingForMutations, requ
     console.log("ARCHIVE CLIENT ERROR:", err);
     sendSafeServerError(res, err, "routes/clients");
   }
-});
+}
+
+router.put("/clients/:id/archive", auth, requireCompanyBillingForMutations, requireMinimumRole("manager"), archiveClientMutation);
+router.put("/workflow/clients/:id/archive", auth, requireCompanyBillingForMutations, requireMinimumRole("manager"), archiveClientMutation);
 
 router.delete("/clients/:id", auth, requireCompanyBillingForMutations, requireMinimumRole("manager"), async (req, res) => {
   try {
@@ -305,7 +347,7 @@ router.delete("/clients/:id", auth, requireCompanyBillingForMutations, requireMi
   }
 });
 
-router.delete("/clients/:id/permanent", auth, requireCompanyBillingForMutations, requireMinimumRole("owner"), async (req, res) => {
+async function permanentDeleteClientMutation(req, res) {
   try {
     await ensureClientLifecycleSchema();
     await ensureWorkflowSchema();
@@ -338,10 +380,13 @@ router.delete("/clients/:id/permanent", auth, requireCompanyBillingForMutations,
 
     const row = linked.rows[0] || {};
     if (row.has_jobs || row.has_invoices || row.has_subscriptions || row.has_estimates) {
-      await pool.query(
+      const archived = await pool.query(
         "UPDATE clients SET archived=TRUE WHERE id=$1 AND company_id=$2",
         [id, company_id]
       );
+      if (!archived.rowCount) {
+        return res.status(404).json({ error: "Not found" });
+      }
 
       await logActivity({
         companyId: company_id,
@@ -362,10 +407,14 @@ router.delete("/clients/:id/permanent", auth, requireCompanyBillingForMutations,
       });
     }
 
-    await pool.query(
+    const deleted = await pool.query(
       "DELETE FROM clients WHERE id=$1 AND company_id=$2",
       [id, company_id]
     );
+
+    if (!deleted.rowCount) {
+      return res.status(404).json({ error: "Not found" });
+    }
 
     await logActivity({
       companyId: company_id,
@@ -384,10 +433,13 @@ router.delete("/clients/:id/permanent", auth, requireCompanyBillingForMutations,
     console.log("PERMANENT DELETE CLIENT ERROR:", err);
     sendSafeServerError(res, err, "routes/clients");
   }
-});
+}
+
+router.delete("/clients/:id/permanent", auth, requireCompanyBillingForMutations, requireMinimumRole("owner"), permanentDeleteClientMutation);
+router.delete("/workflow/clients/:id/permanent", auth, requireCompanyBillingForMutations, requireMinimumRole("owner"), permanentDeleteClientMutation);
 
 // Delete subscription-generated job from client profile
-router.delete("/clients/:clientId/jobs/:jobId/subscription-visit", auth, requireCompanyBillingForMutations, requireMinimumRole("manager"), async (req, res) => {
+async function cancelSubscriptionVisitMutation(req, res) {
   try {
     const jobId = req.params.jobId;
     const clientId = req.params.clientId;
@@ -406,13 +458,17 @@ router.delete("/clients/:clientId/jobs/:jobId/subscription-visit", auth, require
       return res.status(404).json({ error: "Subscription visit not found" });
     }
 
-    await pool.query(
+    const cancelled = await pool.query(
       `UPDATE jobs
        SET status = 'cancelled',
            status_reason = COALESCE(NULLIF(status_reason, ''), 'Subscription visit cancelled from client profile.')
        WHERE id = $1 AND company_id = $2`,
       [jobId, company_id]
     );
+
+    if (!cancelled.rowCount) {
+      return res.status(404).json({ error: "Not found" });
+    }
 
     await logActivity({
       companyId: company_id,
@@ -428,7 +484,10 @@ router.delete("/clients/:clientId/jobs/:jobId/subscription-visit", auth, require
     console.log("DELETE SUBSCRIPTION VISIT ERROR:", err);
     sendSafeServerError(res, err, "routes/clients");
   }
-});
+}
+
+router.delete("/clients/:clientId/jobs/:jobId/subscription-visit", auth, requireCompanyBillingForMutations, requireMinimumRole("manager"), cancelSubscriptionVisitMutation);
+router.delete("/workflow/clients/:clientId/jobs/:jobId/subscription-visit", auth, requireCompanyBillingForMutations, requireMinimumRole("manager"), cancelSubscriptionVisitMutation);
 
 
 /* ================= CLIENT DETAILS ================= */
@@ -437,6 +496,7 @@ router.get("/clients/:id/jobs", auth, requireCompanyBillingForMutations, require
   try {
     const company_id = req.user.company_id;
     const clientId = req.params.id;
+    const { limit, offset } = parsePagination(req.query);
 
     const result = await pool.query(`
       SELECT
@@ -446,7 +506,8 @@ router.get("/clients/:id/jobs", auth, requireCompanyBillingForMutations, require
       LEFT JOIN workers ON jobs.worker_id = workers.id AND workers.company_id = jobs.company_id
       WHERE jobs.client_id = $1 AND jobs.company_id = $2
       ORDER BY jobs.date DESC, jobs.id DESC
-    `, [clientId, company_id]);
+      LIMIT $3 OFFSET $4
+    `, [clientId, company_id, limit, offset]);
 
     res.json(result.rows);
   } catch (err) {
@@ -460,6 +521,7 @@ router.get("/clients/:id/subscriptions", auth, requireCompanyBillingForMutations
     await ensureSubscriptionBillingSchema();
     const company_id = req.user.company_id;
     const clientId = req.params.id;
+    const { limit, offset } = parsePagination(req.query);
 
     const result = await pool.query(`
       SELECT
@@ -469,7 +531,8 @@ router.get("/clients/:id/subscriptions", auth, requireCompanyBillingForMutations
       LEFT JOIN workers ON subscriptions.worker_id = workers.id AND workers.company_id = subscriptions.company_id
       WHERE subscriptions.client_id = $1 AND subscriptions.company_id = $2
       ORDER BY subscriptions.id DESC
-    `, [clientId, company_id]);
+      LIMIT $3 OFFSET $4
+    `, [clientId, company_id, limit, offset]);
 
     res.json(result.rows);
   } catch (err) {

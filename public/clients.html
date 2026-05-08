@@ -3,6 +3,7 @@
 <head>
   <title>Clients</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="/css/brand.css">
   <link rel="stylesheet" href="/app-shell.css">
 
   <style>
@@ -11,14 +12,14 @@
     :root {
       --bg: #f5f8f6;
       --panel: #ffffff;
-      --text: #163328;
+      --text: var(--brand-black);
       --muted: #587165;
-      --border: #dbe8df;
-      --green: #1f5c3a;
+      --border: var(--brand-border);
+      --green: var(--brand-primary);
       --green-dark: #17462c;
       --green-soft: #eaf5ee;
       --blue-soft: #eef4ff;
-      --blue: #1d4ed8;
+      --blue: var(--brand-primary-hover);
       --red-soft: #fff1f2;
       --red: #b42318;
       --shadow: 0 16px 40px rgba(16, 24, 40, 0.07);
@@ -131,7 +132,7 @@
     input, select {
       width: 100%;
       padding: 11px 13px;
-      border: 1px solid #cfe0d5;
+      border: 1px solid var(--brand-border);
       border-radius: 12px;
       background: white;
       color: var(--text);
@@ -181,7 +182,7 @@
     .edit-btn {
       background: var(--green-soft);
       color: var(--green);
-      border: 1px solid #cfe0d5;
+      border: 1px solid var(--brand-border);
     }
 
     .delete {
@@ -203,7 +204,7 @@
       width: 100%;
       padding: 13px 14px;
       border-radius: 14px;
-      border: 1px solid #cfe0d5;
+      border: 1px solid var(--brand-border);
       background: white;
     }
 
@@ -350,7 +351,7 @@
       color: var(--muted);
       border: 1px dashed var(--border);
       border-radius: var(--radius);
-      background: #f8fbf9;
+      background: var(--brand-bg);
       line-height: 1.5;
     }
 
@@ -1230,7 +1231,7 @@ async function addClient(){
 
   SafeUI.setLoading(true, "Saving client...");
   try {
-    await safeFetch(API + "/clients",{
+    await safeFetch(API + "/workflow/clients",{
       method:"POST",
       headers:{
         "Content-Type":"application/json"
@@ -1256,7 +1257,7 @@ async function archiveClient(id){
 
   SafeUI.setLoading(true, "Archiving client...");
   try {
-    await safeFetch(API + "/clients/" + id + "/archive",{
+    await safeFetch(API + "/workflow/clients/" + id + "/archive",{
       method:"PUT"
     });
 
@@ -1274,7 +1275,7 @@ async function confirmDeleteClient(button){
 
   await SafeUI.withButton(button, async () => {
     try {
-      const data = await safeFetch(API + "/clients/" + deletingClientId + "/permanent",{
+      const data = await safeFetch(API + "/workflow/clients/" + deletingClientId + "/permanent",{
         method:"DELETE"
       });
 
@@ -1308,7 +1309,7 @@ async function saveClientEdit(button){
 
   await SafeUI.withButton(button, async () => {
     try {
-      await safeFetch(API + "/clients/" + editingClientId,{
+      await safeFetch(API + "/workflow/clients/" + editingClientId,{
         method:"PUT",
         headers:{
           "Content-Type":"application/json"

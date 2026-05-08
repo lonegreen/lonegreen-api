@@ -52,6 +52,21 @@ const { sendSafeServerError } = require("../services/safeServerError");
 
 const router = express.Router();
 const enforceWorkerPlanLimit = enforcePlanLimits("workers");
+const DEPRECATED_ENDPOINT_ERROR = { error: "Deprecated endpoint. Use canonical API route." };
+
+function lockDeprecatedLegacyMutations(req, res, next) {
+  const method = req.method;
+  const path = req.path;
+  const isLockedLegacyMutation = (
+    (method === "POST" && path === "/workers") ||
+    (method === "DELETE" && /^\/workers\/[^/]+$/.test(path))
+  );
+  if (isLockedLegacyMutation) {
+    return res.status(410).json(DEPRECATED_ENDPOINT_ERROR);
+  }
+  return next();
+}
+router.use(lockDeprecatedLegacyMutations);
 
 function forbidden(res) {
   return res.status(403).json({ error: "Forbidden" });

@@ -5,20 +5,21 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>FairLinx | Landscaping Business Management Software</title>
   <meta name="description" content="FairLinx helps landscaping and outdoor service businesses manage leads, clients, estimates, jobs, invoices, subscriptions, workers, and analytics." />
+  <link rel="stylesheet" href="/css/brand.css">
 
   <style>
     :root {
-      --green-950: #071b12;
-      --green-900: #0f2e1c;
-      --green-800: #143c27;
-      --green-700: #1f5c3a;
-      --green-600: #2d8b55;
-      --green-500: #38b66b;
-      --green-100: #e9f8ee;
-      --green-50: #f5fbf7;
-      --text: #102016;
-      --muted: #647067;
-      --line: #dce8df;
+      --green-950: #111111;
+      --green-900: #1b1b1b;
+      --green-800: #2B2B2B;
+      --green-700: var(--brand-primary);
+      --green-600: var(--brand-primary-hover);
+      --green-500: var(--brand-primary-light);
+      --green-100: #fff3e8;
+      --green-50: var(--brand-bg);
+      --text: #111111;
+      --muted: #2B2B2B;
+      --line: var(--brand-border);
       --white: #ffffff;
       --shadow: 0 24px 70px rgba(7, 27, 18, 0.14);
       --radius: 24px;
@@ -83,8 +84,8 @@
       display: grid;
       place-items: center;
       border-radius: 14px;
-      background: linear-gradient(135deg, var(--green-500), #d8f7df);
-      box-shadow: 0 12px 30px rgba(56, 182, 107, 0.28);
+      background: linear-gradient(135deg, var(--green-500), #ffd8bf);
+      box-shadow: 0 12px 30px rgba(230, 74, 0, 0.22);
     }
 
     .nav-links {
@@ -125,12 +126,12 @@
     .btn-primary {
       background: linear-gradient(135deg, var(--green-700), var(--green-600));
       color: white;
-      box-shadow: 0 14px 32px rgba(31, 92, 58, 0.26);
+      box-shadow: 0 14px 32px rgba(230, 74, 0, 0.2);
     }
 
     .btn-primary:hover {
       transform: translateY(-2px);
-      box-shadow: 0 18px 38px rgba(31, 92, 58, 0.32);
+      box-shadow: 0 18px 38px rgba(230, 74, 0, 0.24);
     }
 
     .btn-secondary {
@@ -161,8 +162,8 @@
       overflow: hidden;
       padding: 86px 0 70px;
       background:
-        radial-gradient(circle at 12% 15%, rgba(56, 182, 107, 0.20), transparent 30%),
-        radial-gradient(circle at 90% 12%, rgba(31, 92, 58, 0.16), transparent 28%);
+        radial-gradient(circle at 12% 15%, rgba(255, 138, 51, 0.2), transparent 30%),
+        radial-gradient(circle at 90% 12%, rgba(255, 90, 0, 0.14), transparent 28%);
     }
 
     .hero-grid {
@@ -183,7 +184,7 @@
       font-size: 13px;
       font-weight: 900;
       margin-bottom: 22px;
-      border: 1px solid rgba(45, 139, 85, 0.16);
+      border: 1px solid rgba(255, 90, 0, 0.18);
     }
 
     .hero h1 {
@@ -473,7 +474,7 @@
     }
 
     .ops-row strong {
-      color: #d8f7df;
+      color: #ffd9c0;
     }
 
     .pricing-grid {
@@ -492,7 +493,7 @@
     }
 
     .price-card.featured {
-      border-color: rgba(45, 139, 85, 0.45);
+      border-color: rgba(255, 90, 0, 0.45);
       box-shadow: var(--shadow);
       transform: translateY(-8px);
     }

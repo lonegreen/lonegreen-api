@@ -6,6 +6,7 @@ const MAX_ATTEMPTS = Number(process.env.JOB_QUEUE_MAX_ATTEMPTS || 3);
 const BASE_BACKOFF_MS = Number(process.env.JOB_QUEUE_BASE_BACKOFF_MS || 1000);
 const UNKNOWN_HANDLER_RETRY_MS = Number(process.env.JOB_QUEUE_UNKNOWN_HANDLER_RETRY_MS || 15000);
 const WORKER_ID = `${process.pid}`;
+const IS_PRODUCTION = String(process.env.NODE_ENV || "").toLowerCase() === "production";
 
 const handlers = new Map();
 let running = false;
@@ -23,6 +24,19 @@ function safeMaxQueueSize() {
 
 async function ensureQueueSchema() {
   if (schemaReady) {
+    return;
+  }
+  if (IS_PRODUCTION) {
+    const tableCheck = await pool.query(
+      "SELECT to_regclass('public.background_jobs') AS regclass"
+    );
+    const hasQueueTable = Boolean(tableCheck.rows[0] && tableCheck.rows[0].regclass);
+    if (!hasQueueTable) {
+      throw new Error(
+        "Production startup blocked: required table 'background_jobs' is missing. Run migrations before starting the app."
+      );
+    }
+    schemaReady = true;
     return;
   }
   await pool.query(`
@@ -82,6 +96,22 @@ function scheduleNext(delayMs = 0) {
 }
 
 async function claimNextJob() {
+  const reclaimed = await pool.query(`
+    UPDATE background_jobs
+    SET
+      status = 'retry',
+      locked_at = NULL,
+      locked_by = NULL,
+      updated_at = CURRENT_TIMESTAMP
+    WHERE status = 'running'
+      AND locked_at IS NOT NULL
+      AND locked_at < (CURRENT_TIMESTAMP - INTERVAL '15 minutes')
+    RETURNING id
+  `);
+  for (const row of reclaimed.rows) {
+    logger.warn("JOB_QUEUE_RECLAIMED_STUCK_JOB", { id: row.id });
+  }
+
   const result = await pool.query(`
     WITH candidate AS (
       SELECT id

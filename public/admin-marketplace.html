@@ -4,46 +4,48 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>FairLinx | Admin Marketplace Moderation</title>
+  <link rel="stylesheet" href="/css/brand.css">
+
   <link rel="stylesheet" href="/app-shell.css">
   <link rel="stylesheet" href="/ui-cleanup.css">
   <style>
     * { box-sizing: border-box; }
-    body { margin: 0; font-family: Inter, Arial, sans-serif; color: #173327; background: radial-gradient(circle at top left, rgba(31,92,58,.08), transparent 28%), linear-gradient(180deg,#edf5f0 0%,#f6f8f7 210px,#f4f6f8 100%); padding: 22px; }
+    body { margin: 0; font-family: Inter, Arial, sans-serif; color: var(--brand-black); background: radial-gradient(circle at top left, rgba(31,92,58,.08), transparent 28%), linear-gradient(180deg,#edf5f0 0%,#f6f8f7 210px,#f4f6f8 100%); padding: 22px; }
     .page { width: min(1260px,100%); margin: 0 auto; display: grid; gap: 16px; }
     .hero { display:flex; justify-content:space-between; align-items:flex-end; gap:12px; flex-wrap:wrap; }
-    .hero h1 { margin:0 0 6px; color:#1f5c3a; font-size:32px; letter-spacing:-.02em; }
+    .hero h1 { margin:0 0 6px; color:var(--brand-primary); font-size:32px; letter-spacing:-.02em; }
     .hero p { margin:0; color:#60786e; line-height:1.5; }
     .hero-actions { display:flex; gap:10px; flex-wrap:wrap; }
     .btn { border:none; border-radius:12px; padding:10px 14px; font:inherit; font-weight:800; cursor:pointer; transition:transform .15s ease, box-shadow .15s ease, opacity .15s ease; }
     .btn:hover:not(:disabled){ transform:translateY(-1px); }
-    .btn.primary { background:linear-gradient(135deg,#1f5c3a,#2d8b55); color:#fff; box-shadow:0 10px 22px rgba(31,92,58,.16); }
-    .btn.secondary { background:#edf6f0; color:#1f5c3a; border:1px solid #d0dfd5; }
+    .btn.primary { background:linear-gradient(135deg,var(--brand-primary),var(--brand-primary-hover)); color:#fff; box-shadow:0 10px 22px rgba(31,92,58,.16); }
+    .btn.secondary { background:var(--brand-bg); color:var(--brand-primary); border:1px solid var(--brand-border); }
     .btn.danger { background:#b42318; color:#fff; }
     .btn:disabled { opacity:.62; cursor:not-allowed; transform:none; box-shadow:none; }
     .status-line { min-height:18px; color:#60786e; font-size:13px; font-weight:700; }
     .status-line.error { color:#b42318; } .status-line.ok { color:#166534; }
     .kpis { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:12px; }
-    .kpi { background:rgba(255,255,255,.96); border:1px solid #dbe7df; border-radius:16px; box-shadow:0 18px 38px rgba(16,24,40,.06); padding:14px; display:grid; gap:6px; }
+    .kpi { background:rgba(255,255,255,.96); border:1px solid var(--brand-border); border-radius:16px; box-shadow:0 18px 38px rgba(16,24,40,.06); padding:14px; display:grid; gap:6px; }
     .kpi span { color:#648076; font-size:12px; font-weight:800; text-transform:uppercase; letter-spacing:.04em; }
-    .kpi strong { color:#173327; font-size:32px; line-height:1.1; font-weight:900; font-variant-numeric:tabular-nums; }
+    .kpi strong { color:var(--brand-black); font-size:32px; line-height:1.1; font-weight:900; font-variant-numeric:tabular-nums; }
     .grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; align-items:start; }
-    .panel { background:rgba(255,255,255,.96); border:1px solid #dbe7df; border-radius:16px; box-shadow:0 18px 38px rgba(16,24,40,.06); padding:16px; display:grid; gap:12px; }
-    .panel h2 { margin:0; color:#1f5c3a; font-size:21px; }
+    .panel { background:rgba(255,255,255,.96); border:1px solid var(--brand-border); border-radius:16px; box-shadow:0 18px 38px rgba(16,24,40,.06); padding:16px; display:grid; gap:12px; }
+    .panel h2 { margin:0; color:var(--brand-primary); font-size:21px; }
     .subhead { margin:0; color:#678075; font-size:13px; line-height:1.45; }
     .list { display:grid; gap:8px; max-height:380px; overflow:auto; padding-right:2px; }
     .item { border:1px solid #dce9e2; border-radius:12px; background:#fbfdfc; padding:10px; display:grid; gap:6px; }
     .item-top { display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap; }
-    .item h3 { margin:0; color:#173327; font-size:15px; font-weight:800; overflow-wrap:anywhere; }
+    .item h3 { margin:0; color:var(--brand-black); font-size:15px; font-weight:800; overflow-wrap:anywhere; }
     .meta { margin:0; color:#637b71; font-size:12px; line-height:1.45; }
-    .badge { border-radius:999px; padding:4px 9px; font-size:10px; font-weight:900; text-transform:uppercase; letter-spacing:.03em; background:#eef7f2; color:#1f5c3a; white-space:nowrap; }
+    .badge { border-radius:999px; padding:4px 9px; font-size:10px; font-weight:900; text-transform:uppercase; letter-spacing:.03em; background:var(--brand-bg); color:var(--brand-primary); white-space:nowrap; }
     .badge.pending,.badge.open { background:#fff7ed; color:#c2410c; }
     .badge.accepted,.badge.matched,.badge.active,.badge.trialing { background:#ecfdf3; color:#027a48; }
     .badge.rejected,.badge.suspended,.badge.cancelled,.badge.closed { background:#fef2f2; color:#b42318; }
     .actions { display:flex; gap:8px; flex-wrap:wrap; }
     .actions .btn { padding:8px 10px; font-size:12px; }
-    .audit { border:1px solid #dce9e2; border-radius:12px; background:#f8fbf9; padding:10px; display:grid; gap:5px; }
-    .empty { border:1px dashed #d5e3db; border-radius:12px; background:#f8fbf9; padding:14px; color:#657d73; font-size:13px; line-height:1.5; text-align:center; }
-    .empty strong { display:block; margin-bottom:5px; color:#173327; }
+    .audit { border:1px solid #dce9e2; border-radius:12px; background:var(--brand-bg); padding:10px; display:grid; gap:5px; }
+    .empty { border:1px dashed #d5e3db; border-radius:12px; background:var(--brand-bg); padding:14px; color:#657d73; font-size:13px; line-height:1.5; text-align:center; }
+    .empty strong { display:block; margin-bottom:5px; color:var(--brand-black); }
     @media (max-width:1080px){ .kpis{grid-template-columns:repeat(2,minmax(0,1fr));} .grid{grid-template-columns:1fr;} }
     @media (max-width:720px){ body{padding:14px;} .hero h1{font-size:28px;} .hero-actions{width:100%;display:grid;grid-template-columns:1fr;} .hero-actions .btn,.actions .btn{width:100%;} .kpis{grid-template-columns:1fr;} }
   </style>

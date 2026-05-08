@@ -6,6 +6,8 @@ const logger = require("./logger");
 
 const UPLOAD_DIR = path.join(__dirname, "..", "public", "uploads");
 const MAX_FILE_SIZE = 8 * 1024 * 1024;
+const EXTERNAL_DRIVER_NOT_READY_MESSAGE =
+  "External upload storage driver is configured but not implemented/enabled yet.";
 const ALLOWED_EXTENSION_MIME = {
   ".jpg": new Set(["image/jpeg"]),
   ".jpeg": new Set(["image/jpeg"]),
@@ -22,6 +24,20 @@ const ALLOWED_MIME_TYPES = new Set(
 const DANGEROUS_NAME_RE = /\.(exe|bat|cmd|com|pif|scr|vbs|js|jar|mjs|cjs|sh|bash|php|phtml|phar|asp|aspx|jsp|jspx|cgi|pl|ps1|psm1|hta|svg)(\.|$)/i;
 
 let hasLoggedEphemeralStorageWarning = false;
+const LOCAL_PROD_DURABILITY_WARNING =
+  "Local upload storage is not durable in production. Configure external object storage before public launch.";
+
+function getUploadStorageDriver() {
+  const raw = String(process.env.UPLOAD_STORAGE_DRIVER || "local").trim().toLowerCase();
+  if (["local", "s3", "r2"].includes(raw)) {
+    return raw;
+  }
+  return "local";
+}
+
+function isExternalUploadStorageEnabled() {
+  return getUploadStorageDriver() !== "local";
+}
 
 function maybeWarnEphemeralLocalUploads() {
   if (hasLoggedEphemeralStorageWarning) {
@@ -36,13 +52,21 @@ function maybeWarnEphemeralLocalUploads() {
     process.env.RENDER_EXTERNAL_URL,
     process.env.DYNO
   ].filter(Boolean);
+  const isLocalDriver = getUploadStorageDriver() === "local";
 
-  if (isProduction && hostSignals.length > 0) {
+  if (isProduction && isLocalDriver) {
+    logger.warn("UPLOAD_LOCAL_STORAGE_PRODUCTION_WARNING", {
+      detail: LOCAL_PROD_DURABILITY_WARNING
+    });
+  }
+
+  if (isProduction && isLocalDriver && hostSignals.length > 0) {
     logger.warn("UPLOAD_EPHEMERAL_STORAGE_WARNING", {
       detail: "local disk uploads on ephemeral host; /public/uploads may be lost on redeploy"
     });
-    hasLoggedEphemeralStorageWarning = true;
   }
+
+  hasLoggedEphemeralStorageWarning = true;
 }
 
 function ensureUploadDir() {
@@ -70,6 +94,10 @@ function safeFilename(file) {
 }
 
 function fileFilter(req, file, callback) {
+  if (isExternalUploadStorageEnabled()) {
+    return callback(new Error(EXTERNAL_DRIVER_NOT_READY_MESSAGE));
+  }
+
   const ext = safeExtension(file.originalname);
   const allowedMimeForExt = ALLOWED_EXTENSION_MIME[ext];
 
@@ -84,7 +112,9 @@ function fileFilter(req, file, callback) {
   return callback(null, true);
 }
 
-ensureUploadDir();
+if (!isExternalUploadStorageEnabled()) {
+  ensureUploadDir();
+}
 maybeWarnEphemeralLocalUploads();
 
 const storage = multer.diskStorage({
@@ -116,17 +146,22 @@ function getUploadReadiness() {
     process.env.DYNO
   ].filter(Boolean);
 
+  const driver = getUploadStorageDriver();
+  const externalEnabled = driver !== "local";
+
   return {
-    status: nodeEnv === "production" && ephemeralSignals.length ? "warning" : "ok",
-    storage: "local",
+    status: driver === "local" && nodeEnv === "production" && ephemeralSignals.length ? "warning" : "ok",
+    storage: driver,
+    external_storage_enabled: externalEnabled,
+    external_storage_scaffold_only: externalEnabled,
     upload_dir: UPLOAD_DIR,
     max_file_size_mb: Math.round(MAX_FILE_SIZE / 1024 / 1024),
     allowed_extensions: Array.from(ALLOWED_EXTENSIONS),
-    ephemeral_storage_warning: nodeEnv === "production" && ephemeralSignals.length > 0
+    ephemeral_storage_warning: driver === "local" && nodeEnv === "production" && ephemeralSignals.length > 0
   };
 }
 
-function publicUploadUrl(filename) {
+function localPublicUploadUrl(filename) {
   return `/uploads/${path.basename(filename)}`;
 }
 
@@ -214,6 +249,41 @@ async function deleteLocalUpload(imageUrl) {
   }
 }
 
+function getPublicUploadUrl(keyOrPath) {
+  if (isExternalUploadStorageEnabled()) {
+    throw new Error(EXTERNAL_DRIVER_NOT_READY_MESSAGE);
+  }
+  return localPublicUploadUrl(keyOrPath);
+}
+
+async function saveUploadedFile(file, options = {}) {
+  if (isExternalUploadStorageEnabled()) {
+    throw new Error(EXTERNAL_DRIVER_NOT_READY_MESSAGE);
+  }
+  const fallbackName = options.filename || options.key || "";
+  const key = path.basename((file && file.filename) || fallbackName);
+  if (!key) {
+    throw new Error("Missing uploaded file key");
+  }
+  return {
+    driver: "local",
+    key,
+    url: localPublicUploadUrl(key),
+    path: (file && file.path) || path.join(UPLOAD_DIR, key)
+  };
+}
+
+async function deleteStoredFile(urlOrKey) {
+  if (isExternalUploadStorageEnabled()) {
+    throw new Error(EXTERNAL_DRIVER_NOT_READY_MESSAGE);
+  }
+  return deleteLocalUpload(urlOrKey);
+}
+
+function publicUploadUrl(filename) {
+  return getPublicUploadUrl(filename);
+}
+
 module.exports = {
   UPLOAD_DIR,
   MAX_FILE_SIZE,
@@ -221,6 +291,11 @@ module.exports = {
   ALLOWED_MIME_TYPES,
   upload,
   ensureUploadDir,
+  getUploadStorageDriver,
+  isExternalUploadStorageEnabled,
+  saveUploadedFile,
+  deleteStoredFile,
+  getPublicUploadUrl,
   getUploadReadiness,
   publicUploadUrl,
   deleteLocalUpload,

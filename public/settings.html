@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>My Account</title>
+  <link rel="stylesheet" href="/css/brand.css">
   <link rel="stylesheet" href="/app-shell.css">
   <style>
     * { box-sizing: border-box; }
@@ -11,20 +12,20 @@
     :root {
       --bg: #f5f7f6;
       --panel: #ffffff;
-      --panel-soft: #f8fbf9;
-      --border: #dce7df;
+      --panel-soft: var(--brand-bg);
+      --border: var(--brand-border);
       --border-strong: #c8d8ce;
       --text: #172b22;
       --muted: #64776d;
       --muted-2: #7b8e84;
-      --green: #1f5c3a;
+      --green: var(--brand-primary);
       --green-2: #2f7a50;
       --green-soft: #edf7f0;
       --red: #b42318;
       --red-soft: #fff1f0;
       --yellow: #9a6700;
       --yellow-soft: #fff7e6;
-      --blue: #175cd3;
+      --blue: var(--brand-primary);
       --blue-soft: #eff6ff;
       --shadow: 0 16px 40px rgba(16, 24, 40, 0.07);
       --radius: 18px;
@@ -35,7 +36,7 @@
       font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
       color: var(--text);
       background:
-        radial-gradient(circle at top left, rgba(31, 92, 58, 0.10), transparent 28%),
+        radial-gradient(circle at top left, rgba(255,90,0,0.10), transparent 28%),
         radial-gradient(circle at top right, rgba(47, 122, 80, 0.08), transparent 24%),
         linear-gradient(180deg, #edf4ef 0%, var(--bg) 42%, #fbfcfb 100%);
       padding: 24px;
@@ -86,7 +87,7 @@
 
     .hero-card {
       min-width: 240px;
-      background: linear-gradient(135deg, #f0f8f2, #ffffff);
+      background: linear-gradient(135deg, #fff7f2, #ffffff);
       border: 1px solid var(--border);
       border-radius: 18px;
       padding: 14px 16px;
@@ -219,7 +220,7 @@
     input:focus,
     textarea:focus {
       border-color: var(--green);
-      box-shadow: 0 0 0 4px rgba(31, 92, 58, 0.12);
+      box-shadow: 0 0 0 4px rgba(255,90,0,0.14);
     }
 
     input:disabled,
@@ -249,14 +250,14 @@
       color: white;
       font-weight: 900;
       cursor: pointer;
-      box-shadow: 0 12px 22px rgba(31, 92, 58, 0.18);
+      box-shadow: 0 12px 22px rgba(230,74,0,0.16);
       transition: transform 0.14s ease, box-shadow 0.14s ease, background 0.14s ease;
     }
 
     button:hover:not(:disabled) {
       background: var(--green-2);
       transform: translateY(-1px);
-      box-shadow: 0 16px 28px rgba(31, 92, 58, 0.22);
+      box-shadow: 0 16px 28px rgba(230,74,0,0.20);
     }
 
     button.secondary {

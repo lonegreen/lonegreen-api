@@ -16,8 +16,8 @@ button.btn {
 .primary,
 .add,
 .primary-action {
-  background: #1f5c3a;
-  color: #fff;
+  background: var(--brand-primary);
+  color: var(--brand-white);
 }
 
 .btn.red,
@@ -25,8 +25,8 @@ button.btn {
 .delete,
 .danger,
 .btn.danger {
-  background: #dc2626;
-  color: #fff;
+  background: var(--danger);
+  color: var(--brand-white);
 }
 
 .btn.gray,
@@ -34,9 +34,9 @@ button.btn {
 .edit-btn,
 .soft,
 .btn.soft {
-  background: #eef2f0;
-  color: #1f5c3a;
-  border: 1px solid #dbe7df;
+  background: var(--brand-bg);
+  color: var(--brand-primary);
+  border: 1px solid var(--brand-border);
 }
 
 .actions,
@@ -83,16 +83,16 @@ button.btn {
 
 .status-in_progress,
 .status-paused {
-  background: #f4f0ff;
-  color: #7c3aed;
+  background: color-mix(in srgb, var(--brand-primary-light) 14%, var(--brand-white));
+  color: var(--brand-primary-light);
 }
 
 .status-completed,
 .status-paid,
 .status-active,
 .badge.active {
-  background: #ecfdf3;
-  color: #027a48;
+  background: color-mix(in srgb, var(--success) 12%, var(--brand-white));
+  color: var(--success);
 }
 
 .status-cancelled,
@@ -100,11 +100,11 @@ button.btn {
 .status-overdue,
 .status-hidden {
   background: #fef2f2;
-  color: #b42318;
+  color: var(--danger);
 }
 
 .badge.inactive {
-  background: #eef2f0;
+  background: var(--brand-bg);
   color: #4b5563;
 }
 

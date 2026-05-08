@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <title>Workers</title>
+  <link rel="stylesheet" href="/css/brand.css">
   <link rel="stylesheet" href="/app-shell.css">
   <style>
     * { box-sizing: border-box; }
@@ -13,7 +14,7 @@
       background:
         radial-gradient(circle at top left, rgba(31, 92, 58, 0.08), transparent 28%),
         linear-gradient(180deg, #edf5f0 0%, #f7f9f8 180px, #f4f6f8 100%);
-      color: #173327;
+      color: var(--brand-black);
       padding: 22px;
     }
 
@@ -33,7 +34,7 @@
 
     .hero h1 {
       margin: 0 0 6px;
-      color: #1f5c3a;
+      color: var(--brand-primary);
       font-size: 32px;
       letter-spacing: -0.03em;
     }
@@ -46,7 +47,7 @@
 
     .panel {
       background: rgba(255,255,255,0.96);
-      border: 1px solid #dbe7df;
+      border: 1px solid var(--brand-border);
       border-radius: 20px;
       box-shadow: 0 18px 42px rgba(16,24,40,0.06);
     }
@@ -74,7 +75,7 @@
     .value {
       font-size: 28px;
       font-weight: 800;
-      color: #1f5c3a;
+      color: var(--brand-primary);
       letter-spacing: -0.03em;
     }
 
@@ -107,7 +108,7 @@
 
     .title {
       margin: 0 0 6px;
-      color: #173327;
+      color: var(--brand-black);
       font-size: 20px;
       letter-spacing: -0.02em;
       word-break: break-word;
@@ -182,11 +183,11 @@
       box-shadow: none;
     }
 
-    .primary { background: #1f5c3a; color: white; }
-    .blue { background: #2563eb; color: white; }
+    .primary { background: var(--brand-primary); color: white; }
+    .blue { background: var(--brand-primary); color: white; }
     .orange { background: #f59e0b; color: white; }
     .red { background: #dc2626; color: white; }
-    .gray { background: #eef2f0; color: #1f5c3a; border: 1px solid #dbe7df; }
+    .gray { background: var(--brand-bg); color: var(--brand-primary); border: 1px solid var(--brand-border); }
 
     .actions {
       display: flex;
@@ -198,16 +199,16 @@
       width: 100%;
       padding: 11px 13px;
       border-radius: 12px;
-      border: 1px solid #cfe0d5;
+      border: 1px solid var(--brand-border);
       background: white;
-      color: #173327;
+      color: var(--brand-black);
       font: inherit;
       outline: none;
       transition: border .15s ease, box-shadow .15s ease;
     }
 
     input:focus {
-      border-color: #1f5c3a;
+      border-color: var(--brand-primary);
       box-shadow: 0 0 0 4px rgba(31,92,58,0.10);
     }
 
@@ -233,7 +234,7 @@
 
     .modal-box h3 {
       margin: 0 0 16px;
-      color: #1f5c3a;
+      color: var(--brand-primary);
       font-size: 22px;
       letter-spacing: -0.02em;
     }
@@ -249,9 +250,9 @@
       align-items: center;
       gap: 10px;
       padding: 12px;
-      border: 1px solid #dbe7df;
+      border: 1px solid var(--brand-border);
       border-radius: 14px;
-      background: #f8fbf9;
+      background: var(--brand-bg);
       color: #315548;
       font-weight: 800;
     }
@@ -270,9 +271,9 @@
 
     .empty {
       padding: 28px;
-      border: 1px dashed #dbe7df;
+      border: 1px dashed var(--brand-border);
       border-radius: 18px;
-      background: #f8fbf9;
+      background: var(--brand-bg);
       color: #688076;
       grid-column: 1 / -1;
       line-height: 1.5;
@@ -280,7 +281,7 @@
 
     .empty strong {
       display: block;
-      color: #173327;
+      color: var(--brand-black);
       font-size: 18px;
       margin-bottom: 6px;
     }

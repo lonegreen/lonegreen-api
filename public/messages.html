@@ -4,6 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>FairLinx | Messages</title>
+  <link rel="stylesheet" href="/css/brand.css">
+
   <link rel="stylesheet" href="/ui-cleanup.css" />
   <style>
     :root {
@@ -381,6 +383,11 @@
         return d.toLocaleString([], { dateStyle: "short", timeStyle: "short" });
       }
 
+      function safeText(value, fallback) {
+        if (value === null || value === undefined || value === "") return fallback || "";
+        return String(value);
+      }
+
       function isMine(msg) {
         if (state.actorType === "customer") {
           return msg.sender_type === "customer";
@@ -429,9 +436,12 @@
       }
 
       function renderConversations() {
-        conversationList.innerHTML = "";
+        conversationList.textContent = "";
         if (!state.conversations.length) {
-          conversationList.innerHTML = '<div class="empty">No conversations yet. Start one to begin messaging.</div>';
+          const empty = document.createElement("div");
+          empty.className = "empty";
+          empty.textContent = "No conversations yet. Start one to begin messaging.";
+          conversationList.appendChild(empty);
           return;
         }
         for (const c of state.conversations) {
@@ -441,16 +451,29 @@
           item.dataset.id = String(c.id);
 
           const unread = hasUnread(c);
-          const unreadBadge = unread ? '<span class="badge-unread">Unread</span>' : "";
+          const top = document.createElement("div");
+          top.className = "conversation-top";
+          const idSpan = document.createElement("span");
+          idSpan.className = "conversation-id";
+          idSpan.textContent = "Conversation #" + safeText(c.id, "-");
+          const timeSpan = document.createElement("span");
+          timeSpan.className = "conversation-time";
+          timeSpan.textContent = safeText(fmtDate(c.created_at), "");
+          top.appendChild(idSpan);
+          top.appendChild(timeSpan);
+          item.appendChild(top);
 
-          item.innerHTML = [
-            '<div class="conversation-top">',
-            '<span class="conversation-id">Conversation #' + c.id + '</span>',
-            '<span class="conversation-time">' + fmtDate(c.created_at) + "</span>",
-            "</div>",
-            '<div class="thread-meta">Client ' + c.client_id + " • Company " + c.company_id + "</div>",
-            unreadBadge
-          ].join("");
+          const meta = document.createElement("div");
+          meta.className = "thread-meta";
+          meta.textContent = "Client " + safeText(c.client_id, "-") + " • Company " + safeText(c.company_id, "-");
+          item.appendChild(meta);
+
+          if (unread) {
+            const badge = document.createElement("span");
+            badge.className = "badge-unread";
+            badge.textContent = "Unread";
+            item.appendChild(badge);
+          }
 
           item.addEventListener("click", function () {
             selectConversation(c.id);
@@ -460,27 +483,38 @@
       }
 
       function renderMessages() {
-        messagesEl.innerHTML = "";
+        messagesEl.textContent = "";
         if (!state.selectedConversationId) {
-          messagesEl.innerHTML = '<div class="empty">Select a conversation from the left to view messages.</div>';
+          const empty = document.createElement("div");
+          empty.className = "empty";
+          empty.textContent = "Select a conversation from the left to view messages.";
+          messagesEl.appendChild(empty);
           return;
         }
         if (!state.messages.length) {
-          messagesEl.innerHTML = '<div class="empty">No messages yet. Send one below.</div>';
+          const empty = document.createElement("div");
+          empty.className = "empty";
+          empty.textContent = "No messages yet. Send one below.";
+          messagesEl.appendChild(empty);
           return;
         }
 
         for (const msg of state.messages) {
           const bubble = document.createElement("article");
           bubble.className = "bubble" + (isMine(msg) ? " me" : "");
-          bubble.innerHTML = [
-            '<div class="bubble-top">',
-            "<span>" + (msg.sender_type === "customer" ? "Customer" : "Company") + "</span>",
-            "<time>" + fmtDate(msg.created_at) + "</time>",
-            "</div>",
-            '<div class="bubble-text"></div>'
-          ].join("");
-          bubble.querySelector(".bubble-text").textContent = msg.message_text || "";
+          const top = document.createElement("div");
+          top.className = "bubble-top";
+          const sender = document.createElement("span");
+          sender.textContent = msg.sender_type === "customer" ? "Customer" : "Company";
+          const time = document.createElement("time");
+          time.textContent = safeText(fmtDate(msg.created_at), "");
+          top.appendChild(sender);
+          top.appendChild(time);
+          bubble.appendChild(top);
+          const text = document.createElement("div");
+          text.className = "bubble-text";
+          text.textContent = safeText(msg.message_text, "");
+          bubble.appendChild(text);
           messagesEl.appendChild(bubble);
         }
         messagesEl.scrollTop = messagesEl.scrollHeight;

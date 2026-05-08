@@ -4,6 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>FairLinx | Marketplace Opportunities</title>
+  <link rel="stylesheet" href="/css/brand.css">
+
   <link rel="stylesheet" href="/app-shell.css">
   <link rel="stylesheet" href="/ui-cleanup.css">
   <style>
@@ -11,7 +13,7 @@
     body {
       margin: 0;
       font-family: Inter, Arial, sans-serif;
-      color: #173327;
+      color: var(--brand-black);
       background:
         radial-gradient(circle at top left, rgba(31, 92, 58, 0.08), transparent 28%),
         linear-gradient(180deg, #edf5f0 0%, #f6f8f7 210px, #f4f6f8 100%);
@@ -32,7 +34,7 @@
     }
     .hero h1 {
       margin: 0 0 6px;
-      color: #1f5c3a;
+      color: var(--brand-primary);
       font-size: 32px;
       letter-spacing: -0.02em;
     }
@@ -57,14 +59,14 @@
     }
     .btn:hover:not(:disabled) { transform: translateY(-1px); }
     .btn.primary {
-      background: linear-gradient(135deg, #1f5c3a, #2d8b55);
+      background: linear-gradient(135deg, var(--brand-primary), var(--brand-primary-hover));
       color: #fff;
       box-shadow: 0 10px 22px rgba(31, 92, 58, 0.16);
     }
     .btn.secondary {
-      background: #edf6f0;
-      color: #1f5c3a;
-      border: 1px solid #d0dfd5;
+      background: var(--brand-bg);
+      color: var(--brand-primary);
+      border: 1px solid var(--brand-border);
     }
     .btn:disabled {
       opacity: 0.62;
@@ -88,7 +90,7 @@
     }
     .panel {
       background: rgba(255, 255, 255, 0.96);
-      border: 1px solid #dbe7df;
+      border: 1px solid var(--brand-border);
       border-radius: 16px;
       box-shadow: 0 18px 38px rgba(16, 24, 40, 0.06);
       padding: 16px;
@@ -97,7 +99,7 @@
     }
     .panel h2 {
       margin: 0;
-      color: #1f5c3a;
+      color: var(--brand-primary);
       font-size: 20px;
     }
     .subhead {
@@ -136,7 +138,7 @@
       border: 1px solid #d6e3db;
       border-radius: 11px;
       background: #fff;
-      color: #173327;
+      color: var(--brand-black);
       padding: 10px 12px;
       font: inherit;
       outline: none;
@@ -164,8 +166,8 @@
       font-weight: 800;
       text-transform: uppercase;
       letter-spacing: 0.04em;
-      background: #eef7f2;
-      color: #1f5c3a;
+      background: var(--brand-bg);
+      color: var(--brand-primary);
     }
     .opportunities-list {
       display: grid;
@@ -186,7 +188,7 @@
       cursor: pointer;
     }
     .opp-item.active {
-      border-color: #1f5c3a;
+      border-color: var(--brand-primary);
       background: #f2fbf5;
     }
     .opp-top {
@@ -197,7 +199,7 @@
     }
     .opp-title {
       margin: 0;
-      color: #173327;
+      color: var(--brand-black);
       font-size: 15px;
       font-weight: 800;
       overflow-wrap: anywhere;
@@ -215,8 +217,8 @@
       font-weight: 900;
       text-transform: uppercase;
       letter-spacing: 0.03em;
-      background: #eef7f2;
-      color: #1f5c3a;
+      background: var(--brand-bg);
+      color: var(--brand-primary);
       white-space: nowrap;
     }
     .badge.open { background: #fff7ed; color: #c2410c; }
@@ -231,7 +233,7 @@
     }
     .detail-title {
       margin: 0;
-      color: #1f5c3a;
+      color: var(--brand-primary);
       font-size: 24px;
       overflow-wrap: anywhere;
     }
@@ -247,7 +249,7 @@
     }
     .detail-card {
       border: 1px solid #dce9e2;
-      background: #f8fbf9;
+      background: var(--brand-bg);
       border-radius: 12px;
       padding: 10px;
       display: grid;
@@ -262,7 +264,7 @@
     }
     .detail-card strong {
       font-size: 14px;
-      color: #173327;
+      color: var(--brand-black);
       word-break: break-word;
     }
     .section {
@@ -275,13 +277,13 @@
     }
     .section h3 {
       margin: 0;
-      color: #1f5c3a;
+      color: var(--brand-primary);
       font-size: 18px;
     }
     .offer-summary {
       border: 1px solid #dce9e2;
       border-radius: 12px;
-      background: #f8fbf9;
+      background: var(--brand-bg);
       padding: 10px;
       display: none;
       gap: 5px;
@@ -296,7 +298,7 @@
     .empty {
       border: 1px dashed #d5e3db;
       border-radius: 12px;
-      background: #f8fbf9;
+      background: var(--brand-bg);
       padding: 14px;
       color: #657d73;
       font-size: 13px;
@@ -306,7 +308,7 @@
     .empty strong {
       display: block;
       margin-bottom: 5px;
-      color: #173327;
+      color: var(--brand-black);
     }
     @media (max-width: 1080px) {
       .layout { grid-template-columns: 1fr; }

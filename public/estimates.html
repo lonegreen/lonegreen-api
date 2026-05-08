@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <title>Estimates</title>
+  <link rel="stylesheet" href="/css/brand.css">
   <link rel="stylesheet" href="/app-shell.css">
   <style>
     * { box-sizing: border-box; }
@@ -10,8 +11,8 @@
     body {
       margin: 0;
       font-family: Arial, sans-serif;
-      background: linear-gradient(180deg, #edf6f0 0%, #f6f9f7 180px, #f4f6f8 100%);
-      color: #163328;
+      background: linear-gradient(180deg, var(--brand-bg) 0%, #f6f9f7 180px, #f4f6f8 100%);
+      color: var(--brand-black);
     }
 
     .page {
@@ -31,7 +32,7 @@
 
     .hero h1 {
       margin: 0 0 6px;
-      color: #1f5c3a;
+      color: var(--brand-primary);
       font-size: 32px;
       letter-spacing: -0.03em;
     }
@@ -70,19 +71,19 @@
       box-shadow: none;
     }
 
-    .primary { background: #1f5c3a; color: white; }
-    .blue { background: #2563eb; color: white; }
+    .primary { background: var(--brand-primary); color: white; }
+    .blue { background: var(--brand-primary); color: white; }
     .orange { background: #f59e0b; color: white; }
     .red { background: #dc2626; color: white; }
     .gray {
       background: #edf2ef;
-      color: #1f5c3a;
-      border: 1px solid #dbe8df;
+      color: var(--brand-primary);
+      border: 1px solid var(--brand-border);
     }
 
     .panel {
       background: rgba(255,255,255,0.96);
-      border: 1px solid #dbe8df;
+      border: 1px solid var(--brand-border);
       border-radius: 18px;
       box-shadow: 0 18px 38px rgba(16, 24, 40, 0.06);
     }
@@ -117,7 +118,7 @@
 
     .tab,
     .filter-chip {
-      border: 1px solid #dbe8df;
+      border: 1px solid var(--brand-border);
       background: white;
       color: #35584b;
       border-radius: 999px;
@@ -128,9 +129,9 @@
     }
 
     .filter-chip.active {
-      background: #1f5c3a;
+      background: var(--brand-primary);
       color: white;
-      border-color: #1f5c3a;
+      border-color: var(--brand-primary);
       box-shadow: 0 10px 20px rgba(31, 92, 58, 0.18);
     }
 
@@ -146,19 +147,19 @@
       padding: 16px 20px;
       border-radius: 18px;
       background: #f5fbf7;
-      border: 1px solid #dbe8df;
+      border: 1px solid var(--brand-border);
       margin-bottom: 14px;
     }
 
     .section-header strong {
       font-size: 16px;
-      color: #173327;
+      color: var(--brand-black);
     }
 
     .section-count {
       font-size: 14px;
       font-weight: 800;
-      color: #1f5c3a;
+      color: var(--brand-primary);
     }
 
     .section-body {
@@ -188,13 +189,13 @@
     }
 
     .tab:hover {
-      border-color: #1f5c3a;
+      border-color: var(--brand-primary);
     }
 
     .tab.active {
-      background: #1f5c3a;
+      background: var(--brand-primary);
       color: white;
-      border-color: #1f5c3a;
+      border-color: var(--brand-primary);
       box-shadow: 0 10px 20px rgba(31, 92, 58, 0.18);
     }
 
@@ -221,7 +222,7 @@
     .value {
       font-size: 28px;
       font-weight: 800;
-      color: #173327;
+      color: var(--brand-black);
       letter-spacing: -0.03em;
     }
 
@@ -229,16 +230,16 @@
       width: 100%;
       padding: 11px 13px;
       border-radius: 12px;
-      border: 1px solid #cfe0d5;
+      border: 1px solid var(--brand-border);
       background: white;
-      color: #163328;
+      color: var(--brand-black);
       font: inherit;
       outline: none;
       transition: border .15s ease, box-shadow .15s ease;
     }
 
     input:focus, select:focus, textarea:focus {
-      border-color: #1f5c3a;
+      border-color: var(--brand-primary);
       box-shadow: 0 0 0 4px rgba(31, 92, 58, 0.10);
     }
 
@@ -294,13 +295,13 @@
     }
 
     .status-new, .status-draft {
-      background: #eef2f0;
+      background: var(--brand-bg);
       color: #4d6359;
     }
 
     .status-contacted, .status-sent {
       background: #ebf3ff;
-      color: #1d4ed8;
+      color: var(--brand-primary-hover);
     }
 
     .status-approved, .status-converted, .status-paid {
@@ -329,7 +330,7 @@
       padding: 12px;
       border-radius: 14px;
       background: #f7faf8;
-      border: 1px solid #dbe8df;
+      border: 1px solid var(--brand-border);
       min-width: 0;
       word-break: break-word;
     }
@@ -341,8 +342,8 @@
     .notes {
       padding: 14px;
       border-radius: 14px;
-      background: #f8fbf9;
-      border: 1px solid #dbe8df;
+      background: var(--brand-bg);
+      border: 1px solid var(--brand-border);
       color: #50665c;
       min-height: 62px;
       margin-bottom: 14px;
@@ -367,7 +368,7 @@
 
     .empty strong {
       display: block;
-      color: #173327;
+      color: var(--brand-black);
       font-size: 18px;
       margin-bottom: 6px;
     }
@@ -396,7 +397,7 @@
 
     .modal-box h3 {
       margin-top: 0;
-      color: #1f5c3a;
+      color: var(--brand-primary);
       font-size: 22px;
       letter-spacing: -0.02em;
     }

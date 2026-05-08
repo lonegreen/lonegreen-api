@@ -99,6 +99,27 @@ async function getMigrationStatus() {
   };
 }
 
+async function assertProductionSchemaReady() {
+  const tableResult = await pool.query(
+    "SELECT to_regclass('public.schema_migrations') AS regclass"
+  );
+  const hasTrackingTable = Boolean(tableResult.rows[0] && tableResult.rows[0].regclass);
+  if (!hasTrackingTable) {
+    throw new Error(
+      "Production startup blocked: required table 'schema_migrations' is missing. Run migrations before starting the app."
+    );
+  }
+
+  const files = await listMigrationFiles();
+  const applied = await getAppliedMigrations();
+  const pending = files.filter((file) => !applied.has(file));
+  if (pending.length > 0) {
+    throw new Error(
+      `Production startup blocked: ${pending.length} pending migration(s). Run migrations before starting the app.`
+    );
+  }
+}
+
 async function createBaseTables() {
   await runMigrations();
 }
@@ -202,6 +223,7 @@ module.exports = {
   listMigrationFiles,
   getAppliedMigrations,
   getMigrationStatus,
+  assertProductionSchemaReady,
   runMigrationFile,
   createBaseTables,
   runMigrations,

@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <title>ZIP Groups</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="/css/brand.css">
   <link rel="stylesheet" href="/app-shell.css">
 
   <style>
@@ -12,13 +13,13 @@
     :root {
       --bg: #f5f8f6;
       --panel: #ffffff;
-      --text: #173327;
+      --text: var(--brand-black);
       --muted: #648076;
-      --border: #dbe7df;
-      --green: #1f5c3a;
+      --border: var(--brand-border);
+      --green: var(--brand-primary);
       --green-dark: #17462c;
       --green-soft: #eaf5ee;
-      --blue: #2563eb;
+      --blue: var(--brand-primary);
       --blue-soft: #ebf3ff;
       --red: #dc2626;
       --red-soft: #fff1f1;
@@ -95,7 +96,7 @@
       width: 100%;
       padding: 11px 12px;
       border-radius: 12px;
-      border: 1px solid #cfe0d5;
+      border: 1px solid var(--brand-border);
       font: inherit;
       color: var(--text);
       background: white;
@@ -193,7 +194,7 @@
       display: inline-flex;
       align-items: center;
       gap: 8px;
-      background: #eef4f0;
+      background: var(--brand-bg);
       border: 1px solid #dce9e1;
       padding: 7px 10px;
       border-radius: 999px;
@@ -215,7 +216,7 @@
       gap: 8px;
       background: var(--blue-soft);
       border: 1px solid #d8e7ff;
-      color: #1d4ed8;
+      color: var(--brand-primary-hover);
       padding: 7px 10px;
       border-radius: 999px;
       font-size: 13px;

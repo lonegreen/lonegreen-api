@@ -11,7 +11,7 @@
       --text: #17211b;
       --muted: #6b7280;
       --border: #e5e7eb;
-      --green: #1f5c3a;
+      --green: var(--brand-primary);
       --green-dark: #17462c;
       --soft-green: #eef7f1;
       --shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
@@ -230,18 +230,18 @@
     }
 
     .scheduled { background: #f59e0b; }
-    .confirmed { background: #2563eb; }
-    .assigned { background: #0ea5e9; }
-    .en_route { background: #4f46e5; }
-    .arrived { background: #7c3aed; }
-    .in_progress { background: #9333ea; }
+    .confirmed { background: var(--brand-primary); }
+    .assigned { background: var(--brand-primary-light); }
+    .en_route { background: var(--brand-primary-light); }
+    .arrived { background: var(--brand-primary-light); }
+    .in_progress { background: var(--brand-primary-light); }
     .completed { background: #16a34a; }
     .rescheduled { background: #0891b2; }
     .cancelled { background: #dc2626; }
     .skipped { background: #6b7280; }
     .no_access { background: #b91c1c; }
     .no_show { background: #be123c; }
-    .weather_delay { background: #1d4ed8; }
+    .weather_delay { background: var(--brand-primary-hover); }
     .needs_followup { background: #c2410c; }
     .needs_rework { background: #7c2d12; }
     .draft { background: #6b7280; }
@@ -477,9 +477,10 @@ function buildJobHtml(j){
   const workerText = j.worker_name || (j.worker_id ? "#" + j.worker_id : "No Worker");
   const status = j.status || "scheduled";
   const statusClass = safeStatusClass(status);
+  const jobId = Number(j.id);
 
   return `
-    <div class="job ${statusClass}" draggable="true" ondragstart="drag(${Number(j.id)})">
+    <div class="job ${statusClass}" draggable="true" data-job-id="${jobId}">
       <div><b>${escapeHtml(j.client_name || "No Client")}</b></div>
       <div>${escapeHtml(j.service || "")}</div>
       <div class="muted">${escapeHtml(status)} • ${escapeHtml(workerText)}</div>
@@ -555,6 +556,11 @@ async function load(){
         cell.ondrop = (e) => drop(e, dateStr, h);
 
         cell.innerHTML = cellJobs.map(buildJobHtml).join("");
+        cell.querySelectorAll(".job[data-job-id]").forEach((jobEl) => {
+          jobEl.addEventListener("dragstart", () => {
+            drag(Number(jobEl.dataset.jobId));
+          });
+        });
         grid.appendChild(cell);
       }
     });
@@ -589,7 +595,7 @@ async function drop(e, date, hour){
   const end = endHour.toString().padStart(2, "0") + ":00";
 
   try {
-    const res = await apiFetch(API + "/jobs/update/" + draggedJob, {
+    const res = await apiFetch(API + "/workflow/jobs/" + draggedJob, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json"

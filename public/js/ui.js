@@ -1,4 +1,17 @@
 (function () {
+  const emptyStateActions = new Map();
+
+  function escapeHTML(value) {
+    return String(value == null ? "" : value).replace(/[&<>"']/g, function (ch) {
+      return ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[ch];
+    });
+  }
+
+  function safeText(value, fallback) {
+    if (value === null || value === undefined || value === "") return fallback || "";
+    return String(value);
+  }
+
   function ensureShell() {
     if (document.querySelector(".page-status")) return;
 
@@ -58,35 +71,51 @@
   }
 
   function emptyState(title, message, actions) {
-    const buttons = Array.isArray(actions)
-      ? actions
-          .map((action) => {
-            const label = action && action.label ? action.label : "Open";
-            const onClick = action && action.onClick ? action.onClick : "";
-            const className = action && action.className ? action.className : "btn primary";
+    const stateId = "es-" + Date.now() + "-" + Math.random().toString(36).slice(2, 8);
+    const safeActions = Array.isArray(actions)
+      ? actions.filter(function (action) {
+        return action && typeof action.onClick === "function";
+      }).map(function (action) {
+        return {
+          label: safeText(action.label, "Open"),
+          className: safeText(action.className, "btn primary"),
+          onClick: action.onClick
+        };
+      })
+      : [];
 
-            return (
-              '<button class="' +
-              className +
-              '" onclick="' +
-              onClick +
-              '">' +
-              label +
-              "</button>"
-            );
-          })
-          .join("")
-      : "";
+    if (safeActions.length) {
+      emptyStateActions.set(stateId, safeActions);
+      window.setTimeout(function () {
+        const host = document.querySelector('[data-empty-state-id="' + stateId + '"] [data-empty-state-actions]');
+        const scopedActions = emptyStateActions.get(stateId) || [];
+        if (!host || !scopedActions.length) {
+          emptyStateActions.delete(stateId);
+          return;
+        }
+        scopedActions.forEach(function (action) {
+          const button = document.createElement("button");
+          button.type = "button";
+          button.className = action.className;
+          button.textContent = action.label;
+          button.addEventListener("click", function (event) {
+            action.onClick(event);
+          });
+          host.appendChild(button);
+        });
+        emptyStateActions.delete(stateId);
+      }, 0);
+    }
 
     return (
-      '<div class="page-empty">' +
+      '<div class="page-empty" data-empty-state-id="' + stateId + '">' +
       "<h3>" +
-      title +
+      escapeHTML(safeText(title, "")) +
       "</h3>" +
       "<p>" +
-      message +
+      escapeHTML(safeText(message, "")) +
       "</p>" +
-      (buttons ? '<div class="page-empty-actions">' + buttons + "</div>" : "") +
+      (safeActions.length ? '<div class="page-empty-actions" data-empty-state-actions></div>' : "") +
       "</div>"
     );
   }
