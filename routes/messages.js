@@ -1,8 +1,9 @@
 const express = require("express");
 const jwt = require("jsonwebtoken");
+const rateLimit = require("express-rate-limit");
 const pool = require("../db/pool");
 const { SECRET } = require("../config/env");
-const { classifyTokenBoundary, normalizeRole } = require("../middleware/auth");
+const { classifyTokenBoundary, normalizeRole, verifyActiveCustomerBearerToken } = require("../middleware/auth");
 const { validateMessageContent } = require("../middleware/abuseGuards");
 const { sendSafeServerError } = require("../services/safeServerError");
 const { sendOperationalEmailSafe } = require("../services/emailService");
@@ -13,6 +14,12 @@ const {
 } = require("../services/customerPortalScope");
 
 const router = express.Router();
+const messageReportLimiter = rateLimit({
+  windowMs: 10 * 60 * 1000,
+  max: 20,
+  standardHeaders: true,
+  legacyHeaders: false
+});
 
 function queueSafeEmail(payload, options) {
   Promise.resolve()
@@ -145,10 +152,13 @@ async function participantAuth(req, res, next) {
     const isCustomerToken = boundary.type === "customer";
 
     if (isCustomerToken) {
-      const customerActor = await resolveCustomerActor(decoded);
+      const active = await verifyActiveCustomerBearerToken(req.headers.authorization);
+      const customerActor = await resolveCustomerActor(active.customer);
       if (!customerActor) {
         return res.status(403).json({ error: "Forbidden" });
       }
+      req.customer = active.customer;
+      req.customerAccount = active.account;
       req.participant = customerActor;
       return next();
     }
@@ -160,7 +170,9 @@ async function participantAuth(req, res, next) {
     req.participant = companyActor;
     return next();
   } catch (err) {
-    return res.status(401).json({ error: "Invalid token" });
+    return res.status(err.status || 401).json({
+      error: err.status ? err.message : "Invalid token"
+    });
   }
 }
 
@@ -465,6 +477,73 @@ router.post("/conversations/:id/messages", participantAuth, validateMessageConte
     return res.status(201).json(withModerationFlag(insertedMessage, res));
   } catch (err) {
     return sendSafeServerError(res, err, "CONVERSATION MESSAGE CREATE ERROR");
+  }
+});
+
+router.post("/messages/:id/report", participantAuth, messageReportLimiter, async (req, res) => {
+  try {
+    const messageId = Number(req.params.id);
+    const reason = String((req.body && req.body.reason) || "").trim().slice(0, 200);
+    const details = String((req.body && req.body.details) || "").trim().slice(0, 4000);
+    if (!Number.isInteger(messageId) || messageId <= 0) {
+      return res.status(400).json({ error: "Invalid message id" });
+    }
+    if (reason.length < 3) {
+      return res.status(400).json({ error: "Reason is required" });
+    }
+
+    const messageResult = await pool.query(
+      `
+      SELECT m.id, m.conversation_id, c.company_id
+      FROM messages m
+      JOIN conversations c ON c.id = m.conversation_id
+      WHERE m.id = $1
+      LIMIT 1
+      `,
+      [messageId]
+    );
+    if (!messageResult.rows.length) {
+      return res.status(404).json({ error: "Message not found" });
+    }
+
+    const message = messageResult.rows[0];
+    const conversation = await getConversationIfParticipant(Number(message.conversation_id), req.participant);
+    if (!conversation) {
+      return res.status(403).json({ error: "Forbidden" });
+    }
+    const reporterUserId = req.participant.actor_type === "company"
+      ? Number(req.participant.user_id || 0)
+      : null;
+    const reporterCustomerId = req.participant.actor_type === "customer"
+      ? Number(req.participant.client_id || 0)
+      : null;
+
+    const inserted = await pool.query(
+      `
+      INSERT INTO abuse_reports (
+        reporter_user_id,
+        reporter_customer_id,
+        company_id,
+        target_type,
+        target_id,
+        reason,
+        details
+      )
+      VALUES ($1, $2, $3, 'message', $4, $5, $6)
+      RETURNING id, target_type, target_id, reason, details, status, priority, created_at
+      `,
+      [
+        reporterUserId || null,
+        reporterCustomerId || null,
+        message.company_id || null,
+        messageId,
+        reason,
+        details || null
+      ]
+    );
+    return res.status(201).json(inserted.rows[0]);
+  } catch (err) {
+    return sendSafeServerError(res, err, "MESSAGE REPORT CREATE ERROR");
   }
 });
 

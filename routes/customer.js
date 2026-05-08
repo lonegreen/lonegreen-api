@@ -1,4 +1,5 @@
 const express = require("express");
+const crypto = require("crypto");
 const pool = require("../db/pool");
 const {
   safeJsonParse,
@@ -18,8 +19,47 @@ const {
   loadPortalScopes,
   scopePairsInclude
 } = require("../services/customerPortalScope");
+const {
+  notifyMarketplaceRequestCreated
+} = require("../services/notificationService");
 
 const router = express.Router();
+
+router.get("/invites/:token/validate", async (req, res) => {
+  try {
+    const token = String(req.params.token || "").trim();
+    if (!token || token.length < 16) {
+      return res.status(400).json({ valid: false, error: "Invalid token" });
+    }
+    const tokenHash = crypto.createHash("sha256").update(token).digest("hex");
+    const result = await pool.query(
+      `
+      SELECT id, invite_type, status, invited_email, created_at, accepted_at
+      FROM company_invites
+      WHERE token_hash = $1
+      LIMIT 1
+      `,
+      [tokenHash]
+    );
+    if (!result.rows.length) {
+      return res.json({ valid: false });
+    }
+    const invite = result.rows[0];
+    return res.json({
+      valid: String(invite.status) === "pending",
+      invite: {
+        id: Number(invite.id),
+        invite_type: invite.invite_type,
+        status: invite.status,
+        invited_email: invite.invited_email,
+        created_at: invite.created_at,
+        accepted_at: invite.accepted_at
+      }
+    });
+  } catch (err) {
+    return sendSafeServerError(res, err, "INVITE VALIDATE ERROR");
+  }
+});
 
 function portalEstimateStatus(status) {
   return status === "converted" ? "converted" : normalizeEstimateStatus(status);
@@ -710,6 +750,14 @@ router.post("/customer/service-requests", customerAuth, async (req, res) => {
         visit_date: visitDate
       }
     });
+    try {
+      await notifyMarketplaceRequestCreated({
+        companyId: client.company_id,
+        customerId: Number(req.customer && req.customer.client_id),
+        requestId: Number(result.rows[0] && result.rows[0].id),
+        service
+      });
+    } catch (_) {}
 
     res.status(201).json(result.rows[0]);
   } catch (err) {

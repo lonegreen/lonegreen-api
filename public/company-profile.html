@@ -15,7 +15,7 @@
     body {
       margin: 0;
       min-height: 100vh;
-      background: linear-gradient(180deg, #edf5f0 0%, #f7f9f8 190px, #f4f6f8 100%);
+      background: linear-gradient(180deg, #f5f5f5 0%, #f7f9f8 190px, #f4f6f8 100%);
       color: var(--brand-black);
       padding: 20px;
     }
@@ -45,10 +45,41 @@
     }
     .logo img { width: 100%; height: 100%; object-fit: cover; display: block; }
     h1 { margin: 0 0 4px; color: var(--brand-primary); font-size: 30px; }
-    .muted { margin: 0; color: #648076; line-height: 1.5; }
-    .hero-summary { margin: 0; color: #3a4f45; max-width: 72ch; line-height: 1.6; }
+    .muted { margin: 0; color: #5f646d; line-height: 1.5; }
+    .hero-summary { margin: 0; color: #3f434b; max-width: 72ch; line-height: 1.6; }
     .hero-meta { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
     .hero-cta { display: flex; gap: 10px; flex-wrap: wrap; }
+    .hero-topline {
+      display: grid;
+      gap: 10px;
+      grid-template-columns: 1fr auto;
+      align-items: start;
+    }
+    .hero-trust-grid {
+      display: grid;
+      gap: 8px;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+    }
+    .hero-trust-card {
+      border: 1px solid #e3ebe6;
+      border-radius: 12px;
+      background: #f9fbfa;
+      padding: 10px;
+      display: grid;
+      gap: 3px;
+    }
+    .hero-trust-card span {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+      color: #678075;
+      font-weight: 800;
+    }
+    .hero-trust-card strong {
+      font-size: 14px;
+      color: var(--brand-black);
+      font-weight: 900;
+    }
     .btn {
       border: none;
       border-radius: 10px;
@@ -65,7 +96,7 @@
     .btn.primary {
       background: linear-gradient(135deg, var(--brand-primary), var(--brand-primary-hover));
       color: #fff;
-      box-shadow: 0 12px 24px rgba(31, 92, 58, 0.16);
+      box-shadow: 0 12px 24px rgba(230, 74, 0, 0.16);
     }
     .btn.secondary {
       background: #fff;
@@ -89,13 +120,14 @@
       gap: 10px;
     }
     .panel h2 { margin: 0; color: var(--brand-primary); font-size: 20px; }
+    .panel h3 { margin: 0; color: #143225; font-size: 15px; }
     .chips { display: flex; flex-wrap: wrap; gap: 8px; }
     .chip {
       border-radius: 999px; background: var(--brand-bg); color: var(--brand-primary);
       padding: 6px 10px; font-size: 12px; font-weight: 800;
     }
     a.chip { text-decoration: none; }
-    .chip.badge-green { background: #e9f8ef; color: #166534; }
+    .chip.badge-green { background: #fff3e8; color: var(--brand-primary-hover); }
     .chip.badge-blue { background: #eaf1ff; color: #1f4ea3; }
     .chip.badge-warn { background: #fff8e8; color: #8a5a00; }
     .chip.badge-slate { background: #f1f3f5; color: #364152; }
@@ -112,9 +144,24 @@
       display: grid;
       gap: 6px;
     }
-    .service-title, .area-title { margin: 0; font-size: 15px; color: #143225; }
-    .service-desc, .area-meta, .review-meta, .review-text { margin: 0; color: #4d6358; font-size: 13px; line-height: 1.5; }
+    .service-title, .area-title { margin: 0; font-size: 15px; color: #262a31; }
+    .service-desc, .area-meta, .review-meta, .review-text { margin: 0; color: #545a63; font-size: 13px; line-height: 1.5; }
     .service-pills { display: flex; gap: 6px; flex-wrap: wrap; }
+    .service-group {
+      border: 1px solid #dce9e2;
+      border-radius: 12px;
+      padding: 10px;
+      background: #fff;
+      display: grid;
+      gap: 8px;
+    }
+    .service-group h3 {
+      margin: 0;
+      color: #262a31;
+      font-size: 14px;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+    }
     .stat-row {
       display: flex;
       gap: 10px;
@@ -129,6 +176,20 @@
       min-width: 120px;
     }
     .stat strong { display: block; font-size: 18px; color: var(--brand-primary); }
+    .overview-grid {
+      display: grid;
+      gap: 10px;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    }
+    .overview-card {
+      border: 1px solid #e3ebe6;
+      border-radius: 12px;
+      padding: 12px;
+      background: #f9fbfa;
+      display: grid;
+      gap: 5px;
+    }
+    .overview-card p { margin: 0; color: #4d6358; font-size: 13px; }
     .trust-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
@@ -159,12 +220,32 @@
       display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 10px;
     }
     .gallery img {
-      width: 100%; height: 120px; object-fit: cover; border-radius: 10px; border: 1px solid var(--brand-border);
+      width: 100%; height: 140px; object-fit: cover; border-radius: 10px; border: 1px solid var(--brand-border);
       background: #f8fcf9;
+    }
+    .gallery img:first-child { grid-column: span 2; height: 180px; }
+    .breakdown { display: grid; gap: 6px; }
+    .breakdown-row {
+      display: grid;
+      grid-template-columns: 58px 1fr 42px;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      color: #4d6358;
+    }
+    .breakdown-track {
+      height: 8px;
+      border-radius: 999px;
+      background: #e8efe9;
+      overflow: hidden;
+    }
+    .breakdown-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--brand-primary), var(--brand-primary-hover));
     }
     .kv { margin: 0; color: var(--brand-black); }
     .kv strong { color: var(--brand-primary); }
-    a.link { color: #1f6f42; font-weight: 700; text-decoration: none; word-break: break-all; }
+    a.link { color: var(--brand-primary); font-weight: 700; text-decoration: none; word-break: break-all; }
     a.link:hover { text-decoration: underline; }
     .status {
       min-height: 20px;
@@ -195,7 +276,7 @@
       display: grid;
       gap: 10px;
       align-items: center;
-      background: linear-gradient(120deg, #143225, #1e5b39);
+      background: linear-gradient(120deg, #1f1f1f, #2a2a2a);
       color: #fff;
     }
     .cta-panel h2 { color: #fff; }
@@ -217,31 +298,62 @@
       color: #fff;
       background: rgba(255,255,255,0.08);
     }
+    .sticky-cta {
+      position: fixed;
+      left: 12px;
+      right: 12px;
+      bottom: 12px;
+      z-index: 70;
+      display: none;
+      border: 1px solid rgba(20,50,37,.18);
+      border-radius: 14px;
+      background: rgba(255,255,255,.98);
+      box-shadow: 0 18px 32px rgba(16,24,40,.16);
+      padding: 10px;
+      gap: 8px;
+      grid-template-columns: 1fr 1fr 1fr;
+    }
+    .sticky-cta .btn {
+      width: 100%;
+      min-height: 42px;
+      font-size: 12px;
+      padding: 8px 10px;
+    }
     @media (max-width: 860px) {
       body { padding: 14px; }
       .grid { grid-template-columns: 1fr; }
+      .hero-topline { grid-template-columns: 1fr; }
+      .hero-trust-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .gallery { grid-template-columns: 1fr 1fr; }
       .hero-cta .btn { flex: 1 1 auto; }
+      .sticky-cta { display: grid; }
+      .page { padding-bottom: 84px; }
     }
     @media (max-width: 560px) {
       .gallery { grid-template-columns: 1fr; }
+      .gallery img:first-child { grid-column: span 1; height: 140px; }
       h1 { font-size: 26px; }
       .hero-cta, .cta-actions { display: grid; }
+      .hero-trust-grid { grid-template-columns: 1fr; }
     }
   </style>
 </head>
 <body>
-  <main class="page">
-    <section class="hero">
+  <main class="page fx-layout-public">
+    <section class="hero fx-hero">
       <div id="cover" class="cover">Company Profile</div>
       <div class="hero-body">
         <div class="identity">
           <div id="logo" class="logo">CO</div>
           <div>
-            <h1 id="companyName">Loading...</h1>
+            <div class="hero-topline">
+              <h1 id="companyName">Loading...</h1>
+              <div id="heroQuickBadge" class="chips"></div>
+            </div>
             <p id="description" class="hero-summary"></p>
             <div id="heroCoverage" class="hero-meta"></div>
             <div id="trustBadges" class="chips" style="margin-top:8px;"></div>
+            <div id="heroTrustSummary" class="hero-trust-grid" style="margin-top:10px;"></div>
           </div>
         </div>
         <div id="heroCtas" class="hero-cta"></div>
@@ -250,42 +362,51 @@
     </section>
 
     <section class="grid">
-      <article class="panel">
+      <article class="panel fx-card" style="grid-column: 1 / -1;">
+        <h2>Company Overview</h2>
+        <p id="companyOverview" class="muted">Company details and marketplace trust information.</p>
+        <div id="overviewCards" class="overview-grid"></div>
+      </article>
+
+      <article class="panel fx-card">
         <h2>Services</h2>
+        <div id="serviceGroups" class="cards"></div>
         <div id="services" class="cards"></div>
       </article>
 
-      <article class="panel">
+      <article class="panel fx-card">
         <h2>Coverage Areas</h2>
+        <div id="coverageSummary" class="chips"></div>
         <div id="serviceAreas" class="cards"></div>
       </article>
 
-      <article class="panel">
+      <article class="panel fx-card">
         <h2>Business Hours</h2>
         <div id="hours"></div>
       </article>
 
-      <article class="panel">
+      <article class="panel fx-card">
         <h2>Contact</h2>
         <div id="contact"></div>
       </article>
     </section>
 
-    <section class="panel">
+    <section class="panel fx-card">
       <h2>Reviews</h2>
       <div id="reviewStats" class="stat-row"></div>
+      <div id="ratingBreakdown" class="breakdown"></div>
       <div id="reviewsPreview" class="cards"></div>
     </section>
 
-    <section class="panel">
+    <section class="panel fx-card">
       <div class="panel-head">
-        <h2>Business Verification</h2>
+        <h2>Trust &amp; Safety</h2>
         <a class="panel-link" href="/trust.html">How trust badges work</a>
       </div>
       <div id="trustDetails" class="trust-grid"></div>
     </section>
 
-    <section class="panel">
+    <section class="panel fx-card">
       <div class="panel-head">
         <h2>Recent Activity</h2>
         <a class="panel-link" href="/trust.html">Trust & Safety details</a>
@@ -293,23 +414,29 @@
       <div id="activityFeed" class="cards"></div>
     </section>
 
-    <section class="panel">
+    <section class="panel fx-card">
       <h2>Gallery</h2>
       <div id="gallery" class="gallery"></div>
     </section>
 
-    <section class="panel cta-panel">
+    <section class="panel cta-panel fx-card">
       <h2>Need help from this company?</h2>
       <p>Send a request, ask questions, and save this company to compare options later.</p>
       <div id="conversionCtas" class="cta-actions"></div>
       <div id="seoAreaLinks" class="seo-links"></div>
     </section>
   </main>
+  <aside id="stickyCta" class="sticky-cta" aria-label="Quick actions">
+    <a id="stickyRequestBtn" class="btn primary fx-btn fx-btn--primary" href="/marketplace.html">Request Service</a>
+    <a id="stickyContactBtn" class="btn secondary fx-btn fx-btn--secondary" href="#contact">Contact</a>
+    <button id="stickySaveBtn" class="btn secondary fx-btn fx-btn--secondary" type="button">Save Company</button>
+  </aside>
 
   <script>
     const params = new URLSearchParams(window.location.search);
     const slug = String(params.get("slug") || "").trim().toLowerCase();
     const API_BASE = window.location.origin;
+    const SAVED_KEY = "company-profile:saved";
 
     function setStatus(message, type) {
       const el = document.getElementById("status");
@@ -373,16 +500,48 @@
 
     function createButtonLink(text, href, className) {
       var a = document.createElement("a");
-      a.className = "btn " + (className || "secondary");
+      var mapped = className === "primary" ? "fx-btn fx-btn--primary" : "fx-btn fx-btn--secondary";
+      a.className = "btn " + (className || "secondary") + " " + mapped;
       a.textContent = text;
       a.setAttribute("href", href);
       return a;
     }
 
+    function getAnyAuthToken() {
+      return String(localStorage.getItem("customerToken") || localStorage.getItem("token") || "").trim();
+    }
+
+    async function submitCompanyReport(companyId) {
+      var token = getAnyAuthToken();
+      if (!token) {
+        alert("Please log in as a customer or company user to report this company.");
+        return;
+      }
+      var reason = String(window.prompt("Report reason (required):", "misleading profile") || "").trim();
+      if (reason.length < 3) {
+        alert("A short reason is required.");
+        return;
+      }
+      var details = String(window.prompt("Additional details (optional):", "") || "").trim();
+      var res = await fetch(API_BASE + "/companies/" + encodeURIComponent(String(companyId || "")) + "/report", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer " + token
+        },
+        body: JSON.stringify({ reason: reason, details: details })
+      });
+      var payload = await res.json().catch(function(){ return {}; });
+      if (!res.ok) {
+        throw new Error(payload.error || "Unable to submit report.");
+      }
+      alert("Report submitted. Our moderation team will review it.");
+    }
+
     function setEmptyState(host, text) {
       host.textContent = "";
       var empty = document.createElement("div");
-      empty.className = "empty-state";
+      empty.className = "empty-state fx-empty";
       empty.textContent = text;
       host.appendChild(empty);
     }
@@ -422,15 +581,52 @@
 
     function renderServices(data) {
       var host = document.getElementById("services");
+      var groupHost = document.getElementById("serviceGroups");
       host.textContent = "";
+      groupHost.textContent = "";
       var services = Array.isArray(data.marketplace_services) ? data.marketplace_services : [];
       if (!services.length) {
+        setEmptyState(groupHost, "Service fit details are not published yet.");
         setEmptyState(host, "No public services listed yet.");
         return;
       }
+      var names = services.map(function(service) {
+        return safeText(service.display_name, "Service");
+      }).filter(Boolean);
+      var primary = names.slice(0, 3);
+      var secondary = names.slice(3, 6);
+      var specialties = names.slice(6);
+      [
+        { title: "Primary Services", list: primary, empty: "Primary services not listed" },
+        { title: "Secondary Services", list: secondary, empty: "Secondary services not listed" },
+        { title: "Featured Specialties", list: specialties, empty: "Specialties not listed" }
+      ].forEach(function(group) {
+        var card = document.createElement("article");
+        card.className = "service-group fx-card";
+        var h3 = document.createElement("h3");
+        h3.textContent = group.title;
+        var chips = document.createElement("div");
+        chips.className = "chips";
+        if (group.list.length) {
+          group.list.forEach(function(item) {
+            var chip = document.createElement("span");
+            chip.className = "chip badge-slate fx-badge fx-badge--neutral";
+            chip.textContent = item;
+            chips.appendChild(chip);
+          });
+        } else {
+          var fallback = document.createElement("p");
+          fallback.className = "muted";
+          fallback.textContent = group.empty;
+          chips.appendChild(fallback);
+        }
+        card.appendChild(h3);
+        card.appendChild(chips);
+        groupHost.appendChild(card);
+      });
       services.forEach(function(service) {
         var card = document.createElement("article");
-        card.className = "service-card";
+        card.className = "service-card fx-card";
         var title = document.createElement("h3");
         title.className = "service-title";
         title.textContent = safeText(service.display_name, "Service");
@@ -440,10 +636,10 @@
         var pills = document.createElement("div");
         pills.className = "service-pills";
         var price = document.createElement("span");
-        price.className = "chip badge-slate";
+        price.className = "chip badge-slate fx-badge fx-badge--neutral";
         price.textContent = "Pricing: Request quote";
         var availability = document.createElement("span");
-        availability.className = "chip badge-green";
+        availability.className = "chip badge-green fx-badge fx-badge--success";
         availability.textContent = "Available";
         pills.appendChild(price);
         pills.appendChild(availability);
@@ -456,24 +652,46 @@
 
     function renderCoverage(data) {
       var host = document.getElementById("serviceAreas");
+      var summary = document.getElementById("coverageSummary");
       host.textContent = "";
+      summary.textContent = "";
       var areas = Array.isArray(data.marketplace_service_areas) ? data.marketplace_service_areas : [];
       if (!areas.length) {
+        var noSummary = document.createElement("span");
+        noSummary.className = "chip badge-slate";
+        noSummary.textContent = "Coverage details not published";
+        summary.appendChild(noSummary);
         setEmptyState(host, "Coverage areas are not published yet.");
         return;
       }
+      var cities = {};
+      var zips = {};
+      var maxRadius = 0;
       areas.forEach(function(area) {
         var card = document.createElement("article");
-        card.className = "area-card";
+        card.className = "area-card fx-card";
         var title = document.createElement("h3");
         title.className = "area-title";
         title.textContent = [area.city, area.state, area.zip_code].filter(Boolean).join(", ").replace(/, ([A-Z]{2}),/, ", $1 ");
         var radius = document.createElement("p");
         radius.className = "area-meta";
         radius.textContent = "Service radius: " + (Number(area.radius_miles || 0) > 0 ? (Number(area.radius_miles) + " miles") : "Not specified");
+        if (area.city) cities[String(area.city).trim()] = true;
+        if (area.zip_code) zips[String(area.zip_code).trim()] = true;
+        if (Number(area.radius_miles || 0) > maxRadius) maxRadius = Number(area.radius_miles || 0);
         card.appendChild(title);
         card.appendChild(radius);
         host.appendChild(card);
+      });
+      [
+        "Cities served: " + Object.keys(cities).length,
+        "Zip areas: " + Object.keys(zips).length,
+        "Max radius: " + (maxRadius > 0 ? (maxRadius + " miles") : "Not specified")
+      ].forEach(function(text) {
+        var chip = document.createElement("span");
+        chip.className = "chip badge-slate fx-badge fx-badge--neutral";
+        chip.textContent = text;
+        summary.appendChild(chip);
       });
     }
 
@@ -484,42 +702,65 @@
       if (!areas.length) return;
       areas.slice(0, 4).forEach(function(area) {
         var chip = document.createElement("span");
-        chip.className = "chip badge-slate";
+        chip.className = "chip badge-slate fx-badge fx-badge--neutral";
         chip.textContent = area;
         host.appendChild(chip);
       });
     }
 
     function renderCtas(data) {
-      var phone = toDisplayPhone(data && data.contact && data.contact.phone);
       var ctaHost = document.getElementById("heroCtas");
       ctaHost.textContent = "";
-      ctaHost.appendChild(createButtonLink("Request Service", "/discover.html", "primary"));
-      ctaHost.appendChild(createButtonLink("Message Company", "/discover.html?company=" + encodeURIComponent(String(data.public_slug || "")), "secondary"));
-      if (phone) {
-        ctaHost.appendChild(createButtonLink("Call Company", "tel:" + phone.replace(/\s+/g, ""), "ghost"));
-      }
+      ctaHost.appendChild(createButtonLink("Request Service", "/marketplace.html?company=" + encodeURIComponent(String(data.public_slug || "")), "primary"));
+      var saveBtn = document.createElement("button");
+      saveBtn.className = "btn secondary";
+      saveBtn.type = "button";
+      saveBtn.id = "saveCompanyBtn";
+      saveBtn.textContent = "Save Company";
+      ctaHost.appendChild(saveBtn);
+      var reportBtn = document.createElement("button");
+      reportBtn.className = "btn secondary";
+      reportBtn.type = "button";
+      reportBtn.id = "reportCompanyBtn";
+      reportBtn.setAttribute("data-report-company-id", String(data.id || ""));
+      reportBtn.textContent = "Report This Company";
+      ctaHost.appendChild(reportBtn);
 
       var conversionHost = document.getElementById("conversionCtas");
       conversionHost.textContent = "";
-      conversionHost.appendChild(createButtonLink("Request Quote", "/discover.html", "primary"));
-      conversionHost.appendChild(createButtonLink("Contact Company", "/discover.html?company=" + encodeURIComponent(String(data.public_slug || "")), "secondary"));
-      conversionHost.appendChild(createButtonLink("Save Company", "/discover.html?save=" + encodeURIComponent(String(data.public_slug || "")), "ghost"));
+      conversionHost.appendChild(createButtonLink("Request Service", "/marketplace.html?company=" + encodeURIComponent(String(data.public_slug || "")), "primary"));
+      conversionHost.appendChild(createButtonLink("Contact", "#contact", "secondary"));
+      conversionHost.appendChild(createButtonLink("Find Services", "/discover.html?company=" + encodeURIComponent(String(data.public_slug || "")), "secondary"));
     }
 
     function renderTrustDetails(data) {
       var host = document.getElementById("trustDetails");
       host.textContent = "";
       var trust = data && data.trust ? data.trust : {};
+      var completedJobs = Number(data.completed_jobs || data.completedJobs || data.jobs_completed || 0);
+      var areasCount = Array.isArray(data.marketplace_service_areas) ? data.marketplace_service_areas.length : 0;
+      var responseMinutes = Number(data.response_time_minutes || trust.response_time_minutes || 0);
+      var reviewCount = Number(data.rating_count || data.reviews_count || data.review_count || 0);
+      var avgRating = Number(data.rating_avg || data.average_rating || data.rating || 0);
+      var verified = trust.verification_status === "verified";
+      var insuranceStatus = String(trust.insurance_status || "").toLowerCase();
+      var licenseStatus = String(trust.license_status || "").toLowerCase();
+      var identityStatus = String(trust.identity_status || "").toLowerCase();
       var rows = [
-        { title: "Verified Badge", value: data.is_verified === true || trust.verification_status === "approved" ? "Verified" : "Not verified" },
-        { title: "Insured Badge", value: trust.insurance_expired === true ? "Expired" : (trust.insurance_status || "pending") },
-        { title: "Licensed Badge", value: trust.license_expired === true ? "Expired" : (trust.license_status || "pending") },
-        { title: "Verification Status", value: trust.verification_status || "pending" }
+        { title: "Verified Business", value: verified ? "Verified badge active" : (trust.verification_status === "pending" ? "Verification pending review" : "Not yet verified") },
+        { title: "Licensed", value: trust.license_expired === true ? "License status expired" : (licenseStatus === "verified" ? "License verified" : (licenseStatus === "pending" ? "License pending review" : "License not yet verified")) },
+        { title: "Insured", value: trust.insurance_expired === true ? "Insurance status expired" : (insuranceStatus === "verified" ? "Insurance verified" : (insuranceStatus === "pending" ? "Insurance pending review" : "Insurance not yet verified")) },
+        { title: "Identity", value: identityStatus === "verified" ? "Identity verified" : (identityStatus === "pending" ? "Identity pending review" : "Identity not yet verified") },
+        { title: "Fair Response Standards", value: responseMinutes > 0 ? ("Average response around " + responseMinutes + " minutes") : "Response standard not published" },
+        { title: "Accountability Standards", value: reviewCount > 0 ? ("Public reviews and trust monitoring active") : "Trust monitoring active; awaiting public reviews" },
+        { title: "Response Time", value: responseMinutes > 0 ? ("~" + responseMinutes + " min average response") : "Response time not published" },
+        { title: "Service Areas", value: areasCount > 0 ? (areasCount + " areas listed") : "Service areas not published" },
+        { title: "Completed Jobs", value: completedJobs > 0 ? (completedJobs + " completed jobs") : "Job completion count not published" },
+        { title: "Reviews Summary", value: reviewCount > 0 ? (avgRating.toFixed(1) + "/5 across " + reviewCount + " reviews") : "No published reviews yet" }
       ];
       rows.forEach(function(row) {
         var card = document.createElement("article");
-        card.className = "trust-card";
+        card.className = "trust-card fx-card";
         var h3 = document.createElement("h3");
         h3.textContent = row.title;
         var p = document.createElement("p");
@@ -527,6 +768,42 @@
         card.appendChild(h3);
         card.appendChild(p);
         host.appendChild(card);
+      });
+    }
+
+    function renderOverview(data) {
+      var textHost = document.getElementById("companyOverview");
+      var cardsHost = document.getElementById("overviewCards");
+      var trust = data && data.trust ? data.trust : {};
+      var areasCount = Array.isArray(data.marketplace_service_areas) ? data.marketplace_service_areas.length : 0;
+      var servicesCount = Array.isArray(data.marketplace_services) ? data.marketplace_services.length : 0;
+      var completedJobs = Number(data.completed_jobs || data.completedJobs || data.jobs_completed || 0);
+      var reviewCount = Number(data.rating_count || data.reviews_count || data.review_count || 0);
+      var avgRating = Number(data.rating_avg || data.average_rating || data.rating || 0);
+      var reputationScore = Number(data.reputation_score || 0);
+      var responseMinutes = Number(data.response_time_minutes || trust.response_time_minutes || 0);
+
+      textHost.textContent = safeText(data.public_description, "This company has an active FairLinx public profile with services, coverage, and trust details.");
+      cardsHost.textContent = "";
+      [
+        { title: "Primary Services", value: servicesCount > 0 ? String(servicesCount) : "Not listed", note: "Published offerings" },
+        { title: "Service Areas", value: areasCount > 0 ? String(areasCount) : "Not listed", note: "Coverage locations" },
+        { title: "Completed Jobs", value: completedJobs > 0 ? String(completedJobs) : "Not published", note: "Reported completions" },
+        { title: "Response Time", value: responseMinutes > 0 ? (responseMinutes + " min") : "Not published", note: "Average reply speed" },
+        { title: "Review Rating", value: reviewCount > 0 ? (avgRating.toFixed(1) + "/5") : "No rating", note: reviewCount > 0 ? (reviewCount + " reviews") : "Awaiting reviews" }
+      ].forEach(function(cardData) {
+        var card = document.createElement("article");
+        card.className = "overview-card fx-card";
+        var h3 = document.createElement("h3");
+        h3.textContent = cardData.title;
+        var value = document.createElement("p");
+        value.innerHTML = "<strong>" + escapeHTML(cardData.value) + "</strong>";
+        var note = document.createElement("p");
+        note.textContent = cardData.note;
+        card.appendChild(h3);
+        card.appendChild(value);
+        card.appendChild(note);
+        cardsHost.appendChild(card);
       });
     }
 
@@ -587,7 +864,7 @@
         }
         items.slice(0, 6).forEach(function(item) {
           var card = document.createElement("article");
-          card.className = "activity-card";
+          card.className = "activity-card fx-card";
           var title = document.createElement("h3");
           title.className = "activity-title";
           title.textContent = safeText(item.title, "Activity update");
@@ -610,9 +887,12 @@
     async function loadReviews(companyId) {
       var reviewStats = document.getElementById("reviewStats");
       var reviewList = document.getElementById("reviewsPreview");
+      var breakdownHost = document.getElementById("ratingBreakdown");
       reviewStats.textContent = "";
       reviewList.textContent = "";
+      breakdownHost.textContent = "";
       if (!companyId) {
+        breakdownHost.innerHTML = '<div class="empty-state">Rating breakdown is unavailable.</div>';
         setEmptyState(reviewList, "Reviews are not available.");
         return;
       }
@@ -627,34 +907,83 @@
         var count = Number(summary.total_reviews || 0);
 
         var avgStat = document.createElement("div");
-        avgStat.className = "stat";
+        avgStat.className = "stat fx-stat";
         avgStat.innerHTML = "<strong>" + escapeHTML(avg) + " / 5</strong><span>Average rating</span>";
         var countStat = document.createElement("div");
-        countStat.className = "stat";
+        countStat.className = "stat fx-stat";
         countStat.innerHTML = "<strong>" + escapeHTML(String(count)) + "</strong><span>Public reviews</span>";
         reviewStats.appendChild(avgStat);
         reviewStats.appendChild(countStat);
 
         if (!Array.isArray(reviews) || !reviews.length) {
+          breakdownHost.innerHTML = '<div class="empty-state">Rating breakdown appears once reviews are published.</div>';
           setEmptyState(reviewList, "No public reviews yet.");
           return;
         }
+        var counts = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
         reviews.slice(0, 3).forEach(function(review) {
           var card = document.createElement("article");
-          card.className = "review-card";
+          card.className = "review-card fx-card";
           var meta = document.createElement("p");
           meta.className = "review-meta";
           meta.textContent = (Number(review.rating || 0).toFixed(1)) + " stars";
           var text = document.createElement("p");
           text.className = "review-text";
           text.textContent = safeText(review.review_text, "Customer left a rating.");
+          var stars = Math.max(1, Math.min(5, Math.round(Number(review.rating || 0))));
+          counts[stars] = (counts[stars] || 0) + 1;
           card.appendChild(meta);
           card.appendChild(text);
           reviewList.appendChild(card);
         });
+        var total = Number(summary.total_reviews || 0) || reviews.length;
+        [5, 4, 3, 2, 1].forEach(function(star) {
+          var count = Number(counts[star] || 0);
+          var pct = total > 0 ? Math.round((count / total) * 100) : 0;
+          var row = document.createElement("div");
+          row.className = "breakdown-row";
+          row.innerHTML = '<span>' + star + ' star</span><div class="breakdown-track"><div class="breakdown-fill" style="width:' + pct + '%;"></div></div><strong>' + count + '</strong>';
+          breakdownHost.appendChild(row);
+        });
       } catch (_) {
+        breakdownHost.innerHTML = '<div class="empty-state">Unable to load rating breakdown right now.</div>';
         setEmptyState(reviewList, "Unable to load reviews right now.");
       }
+    }
+
+    function getSavedMap() {
+      try {
+        var raw = localStorage.getItem(SAVED_KEY);
+        var parsed = raw ? JSON.parse(raw) : {};
+        return parsed && typeof parsed === "object" ? parsed : {};
+      } catch (_) {
+        return {};
+      }
+    }
+
+    function updateSaveButtons(data) {
+      var key = String(data.public_slug || data.id || data.name || "");
+      var map = getSavedMap();
+      var saved = !!map[key];
+      var heroSave = document.getElementById("saveCompanyBtn");
+      var stickySave = document.getElementById("stickySaveBtn");
+      if (heroSave) heroSave.textContent = saved ? "Saved" : "Save Company";
+      if (stickySave) stickySave.textContent = saved ? "Saved" : "Save Company";
+    }
+
+    function bindSaveButtons(data) {
+      var key = String(data.public_slug || data.id || data.name || "");
+      function toggleSaved() {
+        var map = getSavedMap();
+        map[key] = !map[key];
+        if (!map[key]) delete map[key];
+        localStorage.setItem(SAVED_KEY, JSON.stringify(map));
+        updateSaveButtons(data);
+      }
+      var heroSave = document.getElementById("saveCompanyBtn");
+      var stickySave = document.getElementById("stickySaveBtn");
+      if (heroSave) heroSave.addEventListener("click", toggleSaved);
+      if (stickySave) stickySave.addEventListener("click", toggleSaved);
     }
 
     function renderCompany(data) {
@@ -694,23 +1023,28 @@
 
       renderHeroCoverage(data);
       renderServices(data);
+      renderOverview(data);
       const trustHost = document.getElementById("trustBadges");
       trustHost.textContent = "";
       const trust = data && data.trust ? data.trust : {};
       const insuranceStatus = String(trust.insurance_status || "").toLowerCase();
       const licenseStatus = String(trust.license_status || "").toLowerCase();
-      const insuranceVerified = insuranceStatus === "verified" || insuranceStatus === "approved";
-      const licenseVerified = licenseStatus === "verified" || licenseStatus === "approved";
+      const insuranceVerified = insuranceStatus === "verified";
+      const licenseVerified = licenseStatus === "verified";
+      const identityVerified = String((trust && trust.identity_status) || "").toLowerCase() === "verified";
       function addBadge(text, className){
         var el = document.createElement("span");
-        el.className = "chip " + className;
+        var tone = className === "badge-green" ? "fx-badge--success" : (className === "badge-warn" ? "fx-badge--warning" : "fx-badge--info");
+        el.className = "chip fx-badge " + tone + " " + className;
         el.textContent = text;
         trustHost.appendChild(el);
       }
-      if (data.is_verified === true || trust.verification_status === "approved") {
+      if (trust.verification_status === "verified") {
         addBadge("Verified Company", "badge-green");
-      } else if (trust.verification_status === "submitted") {
+      } else if (trust.verification_status === "pending") {
         addBadge("Verification In Review", "badge-warn");
+      } else {
+        addBadge("Not Yet Verified", "badge-warn");
       }
       if (insuranceVerified && trust.insurance_expired !== true) {
         addBadge("Insured", "badge-blue");
@@ -718,14 +1052,54 @@
       if (licenseVerified && trust.license_expired !== true) {
         addBadge("Licensed", "badge-blue");
       }
+      if (identityVerified) {
+        addBadge("Identity Verified", "badge-blue");
+      }
       var trustLink = document.createElement("a");
-      trustLink.className = "chip badge-slate";
+      trustLink.className = "chip badge-slate fx-badge fx-badge--neutral";
       trustLink.setAttribute("href", "/trust.html");
       trustLink.textContent = "About trust badges";
       trustHost.appendChild(trustLink);
+      var quickBadge = document.getElementById("heroQuickBadge");
+      quickBadge.textContent = "";
+      var quickVerified = document.createElement("span");
+      quickVerified.className = "chip fx-badge " + (trust.verification_status === "verified" ? "fx-badge--success badge-green" : "fx-badge--warning badge-warn");
+      quickVerified.textContent = trust.verification_status === "verified"
+        ? "Verified Business"
+        : (trust.verification_status === "pending" ? "Verification Pending" : "Not Yet Verified");
+      quickBadge.appendChild(quickVerified);
+      var summaryHost = document.getElementById("heroTrustSummary");
+      summaryHost.textContent = "";
+      var reviewCount = Number(data.rating_count || data.reviews_count || data.review_count || 0);
+      var avgRating = Number(data.rating_avg || data.average_rating || data.rating || 0);
+      var responseMinutes = Number(data.response_time_minutes || trust.response_time_minutes || 0);
+      var completedJobs = Number(data.completed_jobs || data.completedJobs || data.jobs_completed || 0);
+      var areasCount = Array.isArray(data.marketplace_service_areas) ? data.marketplace_service_areas.length : 0;
+      var reputationTier = reputationScore >= 85 ? "Excellent" : (reputationScore >= 70 ? "Strong" : (reputationScore > 0 ? "Developing" : "Neutral"));
+      [
+        { label: "Rating", value: reviewCount > 0 ? (avgRating.toFixed(1) + "/5") : "No rating yet" },
+        { label: "Reviews", value: reviewCount > 0 ? String(reviewCount) : "No reviews" },
+        { label: "Response Time", value: responseMinutes > 0 ? ("~" + responseMinutes + " min") : "Not published" },
+        { label: "Completed Jobs", value: completedJobs > 0 ? String(completedJobs) : "Not published" },
+        { label: "Service Areas", value: areasCount > 0 ? String(areasCount) : "Not published" },
+        { label: "Reputation", value: reputationScore > 0 ? reputationScore.toFixed(2) : "Neutral" },
+        { label: "Reputation Tier", value: reputationTier }
+      ].forEach(function(item) {
+        var card = document.createElement("article");
+        card.className = "hero-trust-card fx-stat";
+        var label = document.createElement("span");
+        label.textContent = item.label;
+        var value = document.createElement("strong");
+        value.textContent = item.value;
+        card.appendChild(label);
+        card.appendChild(value);
+        summaryHost.appendChild(card);
+      });
       renderCoverage(data);
       renderTrustDetails(data);
       renderCtas(data);
+      updateSaveButtons(data);
+      bindSaveButtons(data);
       renderSeoAreaLinks(data);
       loadActivity(data.id);
 
@@ -809,6 +1183,18 @@
       }
 
       loadReviews(data.id);
+      var stickyRequestBtn = document.getElementById("stickyRequestBtn");
+      if (stickyRequestBtn) stickyRequestBtn.setAttribute("href", "/marketplace.html?company=" + encodeURIComponent(String(data.public_slug || "")));
+      var reportBtn = document.getElementById("reportCompanyBtn");
+      if (reportBtn) {
+        reportBtn.addEventListener("click", async function(){
+          try {
+            await submitCompanyReport(data.id);
+          } catch (err) {
+            alert(err && err.message ? err.message : "Unable to submit report.");
+          }
+        });
+      }
       setStatus("Public profile loaded.", "");
     }
 

@@ -12,8 +12,8 @@
       margin: 0;
       font-family: Arial, sans-serif;
       background:
-        radial-gradient(circle at top left, rgba(31, 92, 58, 0.08), transparent 28%),
-        linear-gradient(180deg, #edf5f0 0%, #f7f9f8 180px, #f4f7f5 100%);
+        radial-gradient(circle at top left, rgba(255, 90, 0, 0.08), transparent 28%),
+        linear-gradient(180deg, #f5f5f5 0%, #f7f9f8 180px, #f4f7f5 100%);
       padding: 22px;
       color: var(--brand-black);
     }
@@ -40,7 +40,7 @@
       font-size: 14px; outline: none; transition: 0.15s;
     }
     input:focus, select:focus, textarea:focus {
-      border-color: #2c8b55; box-shadow: 0 0 0 3px rgba(44,139,85,0.12);
+      border-color: rgba(255,90,0,0.5); box-shadow: 0 0 0 3px rgba(255,90,0,0.12);
     }
     textarea { min-height: 100px; resize: vertical; font-family: inherit; }
     .btn {
@@ -62,19 +62,22 @@
       padding: 12px 14px; border-radius: 12px; border: 1px solid #e1ece5;
       background: white; cursor: pointer; transition: 0.12s;
     }
-    .ticket-item:hover { border-color: #2c8b55; box-shadow: 0 4px 14px rgba(31,92,58,0.08); }
-    .ticket-item.active { border-color: #2c8b55; background: #f3faf5; }
+    .ticket-item:hover { border-color: rgba(255,90,0,0.5); box-shadow: 0 4px 14px rgba(230,74,0,0.08); }
+    .ticket-item.active { border-color: rgba(255,90,0,0.5); background: #fff3e8; }
     .ticket-meta { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; font-size: 11px; color: #6b7c73; }
     .pill {
       display: inline-block; padding: 2px 8px; border-radius: 999px;
       font-size: 11px; font-weight: 700; letter-spacing: 0.02em; text-transform: uppercase;
     }
-    .pill.status-open    { background: #e6f4ec; color: #1f6f42; }
+    .pill.status-open    { background: #fff3e8; color: var(--brand-primary-hover); }
+    .pill.status-in_progress { background: #eaf1ff; color: #2050b4; }
+    .pill.status-waiting_customer { background: #fff4d6; color: #8a6300; }
     .pill.status-pending { background: #fff4d6; color: #8a6300; }
     .pill.status-resolved{ background: #e8eefc; color: #2050b4; }
     .pill.status-closed  { background: #ececec; color: #4a4a4a; }
     .pill.priority-low    { background: #eef4ef; color: #4a6357; }
-    .pill.priority-normal { background: #e6f4ec; color: #1f6f42; }
+    .pill.priority-medium { background: #fff3e8; color: var(--brand-primary-hover); }
+    .pill.priority-normal { background: #fff3e8; color: var(--brand-primary-hover); }
     .pill.priority-high   { background: #ffe9d6; color: #9a4a00; }
     .pill.priority-urgent { background: #fde0de; color: #b42318; }
     .ticket-title { font-weight: 700; color: #1c2c25; margin: 4px 0; }
@@ -92,7 +95,7 @@
     .toolbar .meta { font-size: 12px; color: #6b7c73; }
     #status { min-height: 18px; font-size: 13px; color: #5f6e66; margin-top: 6px; }
     #status.error { color: #b42318; font-weight: 700; }
-    #status.success { color: #027a48; font-weight: 700; }
+    #status.success { color: var(--brand-primary-hover); font-weight: 700; }
     .platform-badge {
       display: inline-block; padding: 3px 10px; border-radius: 999px;
       background: #2050b4; color: white; font-size: 11px; font-weight: 800;
@@ -104,47 +107,53 @@
   </style>
 </head>
 <body>
-  <div class="page">
-    <div class="hero">
+  <div class="page fx-layout-public">
+    <div class="hero fx-hero fx-section-head">
       <div>
         <h1>Support<span id="platformBadge" class="platform-badge" style="display:none">Platform Owner</span></h1>
         <p class="lead" id="leadCopy">Open a ticket if something is not working, or browse your existing conversations with the FairLinx team.</p>
       </div>
-      <div class="row">
-        <button class="btn ghost" id="refreshBtn" type="button">Refresh</button>
+      <div class="row fx-cta-row">
+        <button class="btn ghost fx-btn fx-btn--secondary" id="refreshBtn" type="button">Refresh</button>
       </div>
     </div>
 
     <div class="grid">
       <!-- LEFT: list + create form -->
-      <div class="panel">
+      <div class="panel fx-card">
         <h2 id="listHeading">Your tickets</h2>
 
-        <div class="filter-bar">
-          <select id="filterStatus">
+        <div class="filter-bar fx-toolbar">
+          <select id="filterStatus" class="fx-select">
             <option value="">All statuses</option>
             <option value="open">Open</option>
             <option value="in_progress">In Progress</option>
             <option value="waiting_customer">Waiting Customer</option>
-            <option value="pending">Pending (Legacy)</option>
             <option value="resolved">Resolved</option>
             <option value="closed">Closed</option>
+          </select>
+          <select id="filterPriority" class="fx-select">
+            <option value="">All priorities</option>
+            <option value="low">Low</option>
+            <option value="medium">Medium</option>
+            <option value="high">High</option>
+            <option value="urgent">Urgent</option>
           </select>
         </div>
 
         <div id="ticketList" class="ticket-list" aria-live="polite">
-          <div class="empty">Loading tickets...</div>
+          <div class="empty fx-empty">Loading tickets...</div>
         </div>
 
         <hr style="margin:18px 0;border:0;border-top:1px solid #e1ece5">
 
         <h2 id="createHeading">Open a new ticket</h2>
         <form id="createForm">
-          <label>Subject
-            <input id="newSubject" type="text" maxlength="200" required>
+          <label class="fx-field">Subject
+            <input id="newSubject" class="fx-input" type="text" maxlength="200" required>
           </label>
-          <label>Category
-            <select id="newCategory">
+          <label class="fx-field">Category
+            <select id="newCategory" class="fx-select">
               <option value="general">General</option>
               <option value="billing">Billing</option>
               <option value="bug">Bug</option>
@@ -153,28 +162,28 @@
               <option value="marketplace">Marketplace</option>
             </select>
           </label>
-          <label>Priority
-            <select id="newPriority">
+          <label class="fx-field">Priority
+            <select id="newPriority" class="fx-select">
               <option value="low">Low</option>
-              <option value="normal" selected>Normal</option>
+              <option value="medium" selected>Medium</option>
               <option value="high">High</option>
               <option value="urgent">Urgent</option>
             </select>
           </label>
-          <label>Message
-            <textarea id="newMessage" maxlength="5000" required placeholder="Describe what is happening, what you expected, and any steps to reproduce."></textarea>
+          <label class="fx-field">Message
+            <textarea id="newMessage" class="fx-textarea" maxlength="5000" required placeholder="Describe what is happening, what you expected, and any steps to reproduce."></textarea>
           </label>
-          <label>Attachment (optional)
-            <input id="newAttachmentFile" type="file" accept="image/*">
+          <label class="fx-field">Attachment (optional)
+            <input id="newAttachmentFile" class="fx-input" type="file" accept="image/*,.pdf,application/pdf">
           </label>
-          <button class="btn" id="createBtn" type="submit">Open ticket</button>
+          <button class="btn fx-btn fx-btn--primary" id="createBtn" type="submit">Open ticket</button>
         </form>
-        <div id="status" role="status" aria-live="polite"></div>
+        <div id="status" class="fx-alert" role="status" aria-live="polite"></div>
       </div>
 
       <!-- RIGHT: detail / thread -->
-      <div class="panel" id="detailPanel">
-        <div class="empty">Select a ticket on the left to view the conversation.</div>
+      <div class="panel fx-card" id="detailPanel">
+        <div class="empty fx-empty">Select a ticket on the left to view the conversation.</div>
       </div>
     </div>
   </div>
@@ -248,6 +257,22 @@
 
     async function uploadSupportAttachment(file){
       if(!file) return null;
+      const maxBytes = 10 * 1024 * 1024;
+      const allowedMime = new Set([
+        "image/png",
+        "image/jpeg",
+        "image/jpg",
+        "image/gif",
+        "image/webp",
+        "application/pdf"
+      ]);
+      const extOk = /\.(png|jpe?g|gif|webp|pdf)$/i.test(String(file.name || ""));
+      if (!allowedMime.has(String(file.type || "").toLowerCase()) && !extOk) {
+        throw new Error("Attachment must be an image or PDF.");
+      }
+      if (Number(file.size || 0) > maxBytes) {
+        throw new Error("Attachment must be 10MB or smaller.");
+      }
       const form = new FormData();
       form.append("file", file);
       const init = { method: "POST", headers: { Authorization: "Bearer " + (getToken() || "") }, body: form };
@@ -259,14 +284,19 @@
       }
       return {
         file_url: String(data.url),
-        file_name: String(file.name || "attachment")
+        file_name: String(file.name || "attachment"),
+        file_size: Number(file.size || 0)
       };
     }
 
     function listEndpoint() {
       const status = $("filterStatus").value;
+      const priority = $("filterPriority").value;
       const base = isPlatform ? "/platform/support/tickets" : "/support/tickets";
-      const q = status ? ("?status=" + encodeURIComponent(status)) : "";
+      const qs = new URLSearchParams();
+      if (status) qs.set("status", status);
+      if (priority) qs.set("priority", priority);
+      const q = qs.toString() ? ("?" + qs.toString()) : "";
       return base + q;
     }
 
@@ -325,7 +355,7 @@
       if (isPlatform) {
         return (
           '<select id="statusSelect" style="width:auto;padding:8px 10px">' +
-          ["open", "in_progress", "waiting_customer", "resolved", "closed", "pending"].map(s =>
+          ["open", "in_progress", "waiting_customer", "resolved", "closed"].map(s =>
             '<option value="' + s + '"' + (ticket.status === s ? " selected" : "") + '>' + s + '</option>'
           ).join("") +
           '</select>' +
@@ -372,6 +402,8 @@
       const status = escapeHtml(t.status || "open");
       const priority = escapeHtml(t.priority || "normal");
       const category = escapeHtml(t.category || "general");
+      const contextCompany = currentTickets.find(item => String(item.id) === String(t.id || activeTicketId));
+      const companyContext = contextCompany && contextCompany.company_name ? contextCompany.company_name : null;
 
       const head = (
         '<h2 style="margin-bottom:6px">' + subject + '</h2>' +
@@ -381,6 +413,7 @@
         '<span>' + category + '</span>' +
         '<span>opened ' + fmtDate(t.created_at) + '</span>' +
         (t.assigned_to_user_id ? '<span>assigned to user #' + t.assigned_to_user_id + '</span>' : '') +
+        (companyContext ? '<span>company: ' + escapeHtml(companyContext) + '</span>' : '') +
         '</div>'
       );
 
@@ -423,6 +456,18 @@
         ? '<div class="empty" style="text-align:left">Ticket is closed. Reopen it before replying.</div>'
         : '';
 
+      const internalNoteBlock = isPlatform
+        ? ('<label>Internal note<textarea id="internalText" maxlength="5000"></textarea></label>' +
+           '<button class="btn ghost" id="internalBtn" type="button">Add internal note</button>')
+        : "";
+      const disputeBlock = !isPlatform
+        ? (
+          '<div class="empty" style="text-align:left">' +
+          'Disputes are reviewed by FairLinx. This does not automatically issue refunds or payment reversals.' +
+          '</div>' +
+          '<button class="btn ghost" id="openDisputeBtn" type="button">Open dispute</button>'
+        )
+        : "";
       detailEl.innerHTML = (
         head +
         '<div class="toolbar">' +
@@ -434,8 +479,10 @@
         '<hr style="margin:14px 0;border:0;border-top:1px solid #e1ece5">' +
         replyHint +
         '<label>Reply<textarea id="replyText" maxlength="5000" ' + replyDisabled + '></textarea></label>' +
-        '<label>Attachment (optional)<input id="replyAttachmentFile" type="file" accept="image/*" ' + replyDisabled + '></label>' +
-        '<button class="btn" id="replyBtn" type="button" ' + replyDisabled + '>Send reply</button>'
+        '<label>Attachment (optional)<input id="replyAttachmentFile" type="file" accept="image/*,.pdf,application/pdf" ' + replyDisabled + '></label>' +
+        '<button class="btn" id="replyBtn" type="button" ' + replyDisabled + '>Send reply</button>' +
+        disputeBlock +
+        internalNoteBlock
       );
 
       const replyBtn = $("replyBtn");
@@ -450,6 +497,10 @@
       if (setStatusBtn) setStatusBtn.addEventListener("click", () => updatePlatformStatus(t.id));
       const assignBtn = $("assignBtn");
       if (assignBtn) assignBtn.addEventListener("click", () => updateAssignee(t.id));
+      const internalBtn = $("internalBtn");
+      if (internalBtn) internalBtn.addEventListener("click", () => addInternalNote(t.id));
+      const openDisputeBtn = $("openDisputeBtn");
+      if (openDisputeBtn) openDisputeBtn.addEventListener("click", () => openDisputeFromTicket(t.id));
     }
 
     async function sendReply(id) {
@@ -516,6 +567,41 @@
       }
     }
 
+    async function addInternalNote(id) {
+      const text = $("internalText").value.trim();
+      if (!text) { setStatus("Internal note is required.", "error"); return; }
+      setStatus("Adding internal note...", "");
+      try {
+        await api("/platform/support/tickets/" + encodeURIComponent(id) + "/internal-note", {
+          method: "POST",
+          body: JSON.stringify({ message: text })
+        });
+        setStatus("Internal note added.", "success");
+        await Promise.all([loadTickets(), openTicket(id)]);
+      } catch (err) {
+        setStatus(err.message || "Could not add internal note.", "error");
+      }
+    }
+
+    async function openDisputeFromTicket(id) {
+      const reason = String(window.prompt("Dispute reason (required):", "service conflict") || "").trim();
+      if (reason.length < 3) {
+        setStatus("Dispute reason is required.", "error");
+        return;
+      }
+      const details = String(window.prompt("Additional details (optional):", "") || "").trim();
+      setStatus("Opening dispute...", "");
+      try {
+        await api("/support/tickets/" + encodeURIComponent(id) + "/dispute", {
+          method: "POST",
+          body: JSON.stringify({ reason, details })
+        });
+        setStatus("Dispute opened. FairLinx moderation will review it.", "success");
+      } catch (err) {
+        setStatus(err.message || "Could not open dispute.", "error");
+      }
+    }
+
     document.getElementById("createForm").addEventListener("submit", async event => {
       event.preventDefault();
       const subject = $("newSubject").value.trim();
@@ -543,7 +629,7 @@
         $("newSubject").value = "";
         $("newMessage").value = "";
         $("newCategory").value = "general";
-        $("newPriority").value = "normal";
+        $("newPriority").value = "medium";
         $("newAttachmentFile").value = "";
         setStatus("Ticket opened.", "success");
         await loadTickets();
@@ -556,6 +642,7 @@
     });
 
     document.getElementById("filterStatus").addEventListener("change", loadTickets);
+    document.getElementById("filterPriority").addEventListener("change", loadTickets);
     document.getElementById("refreshBtn").addEventListener("click", loadTickets);
 
     loadTickets();

@@ -14,8 +14,8 @@
       margin: 0;
       font-family: Arial, sans-serif;
       background:
-        radial-gradient(circle at top left, rgba(31, 92, 58, 0.08), transparent 28%),
-        linear-gradient(180deg, #edf5f0 0%, #f6f8f7 210px, #f4f6f8 100%);
+        radial-gradient(circle at top left, rgba(255, 90, 0, 0.08), transparent 28%),
+        linear-gradient(180deg, #f5f5f5 0%, #f6f8f7 210px, #f4f6f8 100%);
       color: var(--brand-black);
       padding: 22px;
     }
@@ -100,12 +100,9 @@
       background: var(--brand-primary);
       color: white;
       transition: transform .15s ease, box-shadow .15s ease, opacity .15s ease;
-      box-shadow: 0 10px 22px rgba(31, 92, 58, 0.16);
+      box-shadow: 0 10px 22px rgba(230, 74, 0, 0.16);
     }
-    .btn:hover:not(:disabled) {
-      transform: translateY(-1px);
-      box-shadow: 0 14px 26px rgba(31, 92, 58, 0.2);
-    }
+    .btn:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 14px 26px rgba(230, 74, 0, 0.2); }
     .btn.secondary {
       background: var(--brand-bg);
       color: var(--brand-primary);
@@ -125,7 +122,7 @@
       font-size: 13px;
       font-weight: 700;
     }
-    .status.ok { color: #166534; }
+    .status.ok { color: var(--brand-primary-hover); }
     .status.error { color: #b42318; }
 
     .alert {
@@ -221,10 +218,7 @@
       display: grid;
       gap: 10px;
     }
-    .plan-card.current {
-      border-color: var(--brand-primary);
-      background: #f2fbf5;
-    }
+    .plan-card.current { border-color: var(--brand-primary); background: #fff3e8; }
     .plan-card h3 {
       margin: 0;
       color: var(--brand-black);
@@ -301,8 +295,8 @@
     })();
   </script>
 
-  <div class="page">
-    <header class="hero">
+  <div class="page fx-layout-public">
+    <header class="hero fx-hero fx-section-head">
       <div>
         <h1>Billing Plans</h1>
         <p>Manage plan, billing status, usage limits, and upgrade actions for your company workspace.</p>
@@ -310,22 +304,22 @@
       <span id="billingStatusPill" class="pill">Loading</span>
     </header>
 
-    <section class="panel">
+    <section class="panel fx-card">
       <div class="head-row">
         <div>
           <h2>Billing Actions</h2>
           <p>Refresh billing data, open customer portal, and change plan safely.</p>
         </div>
         <div class="actions">
-          <button id="refreshBtn" class="btn secondary" type="button">Refresh Billing</button>
-          <button id="portalBtn" class="btn secondary" type="button">Open Billing Portal</button>
+          <button id="refreshBtn" class="btn secondary fx-btn fx-btn--secondary" type="button">Refresh Billing</button>
+          <button id="portalBtn" class="btn secondary fx-btn fx-btn--secondary" type="button">Open Billing Portal</button>
         </div>
       </div>
-      <div id="warningBox" class="alert"></div>
-      <div id="globalStatus" class="status"></div>
+      <div id="warningBox" class="alert fx-alert"></div>
+      <div id="globalStatus" class="status fx-alert"></div>
     </section>
 
-    <section class="panel">
+    <section class="panel fx-card">
       <div class="head-row">
         <div>
           <h2>Current Plan</h2>
@@ -335,7 +329,7 @@
       <div id="currentPlanGrid" class="current-grid"></div>
     </section>
 
-    <section class="panel">
+    <section class="panel fx-card">
       <div class="head-row">
         <div>
           <h2>Usage & Limits</h2>
@@ -343,10 +337,10 @@
         </div>
       </div>
       <div id="usageGrid" class="usage-grid"></div>
-      <div id="upgradeSuggestion" class="status"></div>
+      <div id="upgradeSuggestion" class="status fx-alert"></div>
     </section>
 
-    <section class="panel">
+    <section class="panel fx-card">
       <div class="head-row">
         <div>
           <h2>Available Plans</h2>

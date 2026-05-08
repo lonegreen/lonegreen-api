@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>FairLinx | Messages</title>
   <link rel="stylesheet" href="/css/brand.css">
+  <link rel="stylesheet" href="/app-shell.css">
 
   <link rel="stylesheet" href="/ui-cleanup.css" />
   <style>
@@ -14,9 +15,9 @@
       --line: #e4e9f2;
       --text: #1f2a44;
       --muted: #6d7890;
-      --brand: #2f6fed;
-      --brand-2: #1c52bf;
-      --ok: #11a36a;
+      --brand: var(--brand-primary);
+      --brand-2: var(--brand-primary-hover);
+      --ok: var(--brand-primary-hover);
       --danger: #d64545;
     }
     * { box-sizing: border-box; }
@@ -246,49 +247,42 @@
   </style>
 </head>
 <body>
-  <div class="page">
-    <nav class="customer-nav">
-      <a href="/customer-dashboard.html">Dashboard</a>
-      <a href="/marketplace.html">Marketplace</a>
-      <a href="/discover.html">Discover</a>
-      <a href="/messages.html">Messages</a>
-      <a href="/customer-profile.html">Profile</a>
-      <a href="#" id="customerLogoutLink">Logout</a>
-    </nav>
-    <div class="topbar">
-      <h1 class="title">Messages</h1>
-      <div class="pill" id="sessionPill">Loading session...</div>
+  <div class="page fx-layout-public">
+    <nav class="customer-nav" id="messageNav"></nav>
+    <div class="topbar fx-section-head">
+      <h1 class="title">Marketplace Messages</h1>
+      <div class="pill fx-badge fx-badge--neutral" id="sessionPill">Loading session...</div>
     </div>
 
     <div class="layout">
-      <section class="panel">
-        <div class="panel-head">
+      <section class="panel fx-card">
+        <div class="panel-head fx-toolbar">
           <h2>Conversations</h2>
           <div class="row">
-            <button class="btn secondary" id="refreshBtn" type="button">Refresh</button>
-            <button class="btn secondary" id="newConversationBtn" type="button">Start</button>
+            <button class="btn secondary fx-btn fx-btn--secondary" id="refreshBtn" type="button">Refresh</button>
+            <button class="btn secondary fx-btn fx-btn--secondary" id="newConversationBtn" type="button">Start</button>
           </div>
           <div class="row" id="companyClientRow" style="display:none;">
-            <input id="clientIdInput" type="number" min="1" placeholder="Client ID (company view)" />
+            <input id="clientIdInput" class="fx-input" type="number" min="1" placeholder="Client ID (company view)" />
           </div>
           <div class="status" id="leftStatus"></div>
         </div>
         <div class="conversation-list" id="conversationList"></div>
       </section>
 
-      <section class="panel">
-        <div class="thread-head">
+      <section class="panel fx-card">
+        <div class="thread-head fx-section-head">
           <div>
             <p class="thread-title" id="threadTitle">Select a conversation</p>
             <p class="thread-meta" id="threadMeta">Messages auto-refresh every 5 seconds</p>
           </div>
-          <button class="btn secondary" id="reloadMessagesBtn" type="button">Reload</button>
+          <button class="btn secondary fx-btn fx-btn--secondary" id="reloadMessagesBtn" type="button">Reload</button>
         </div>
         <div class="messages" id="messages"></div>
         <form class="composer" id="composerForm">
-          <textarea id="messageInput" rows="3" maxlength="4000" placeholder="Type your message..." disabled></textarea>
+          <textarea id="messageInput" class="fx-textarea" rows="3" maxlength="4000" placeholder="Type your message..." disabled></textarea>
           <div class="row">
-            <button class="btn" id="sendBtn" type="submit" disabled>Send Message</button>
+            <button class="btn fx-btn fx-btn--primary" id="sendBtn" type="submit" disabled>Send Message</button>
             <span class="status" id="composerStatus"></span>
           </div>
         </form>
@@ -317,7 +311,7 @@
       const messageInput = document.getElementById("messageInput");
       const sendBtn = document.getElementById("sendBtn");
       const composerStatus = document.getElementById("composerStatus");
-      const customerLogoutLink = document.getElementById("customerLogoutLink");
+      const messageNav = document.getElementById("messageNav");
 
       const state = {
         token: "",
@@ -450,7 +444,7 @@
         conversationList.textContent = "";
         if (!state.conversations.length) {
           const empty = document.createElement("div");
-          empty.className = "empty";
+          empty.className = "empty fx-empty";
           empty.textContent = "No conversations yet. Start one to begin messaging.";
           conversationList.appendChild(empty);
           return;
@@ -497,14 +491,14 @@
         messagesEl.textContent = "";
         if (!state.selectedConversationId) {
           const empty = document.createElement("div");
-          empty.className = "empty";
+          empty.className = "empty fx-empty";
           empty.textContent = "Select a conversation from the left to view messages.";
           messagesEl.appendChild(empty);
           return;
         }
         if (!state.messages.length) {
           const empty = document.createElement("div");
-          empty.className = "empty";
+          empty.className = "empty fx-empty";
           empty.textContent = "No messages yet. Send one below.";
           messagesEl.appendChild(empty);
           return;
@@ -686,6 +680,18 @@
         sessionPill.textContent = state.actorType === "customer"
           ? "Customer session"
           : "Company session";
+        messageNav.innerHTML = state.actorType === "customer"
+          ? '<a href="/customer-dashboard.html">Dashboard</a><a href="/marketplace.html">My Requests</a><a href="/discover.html">Discover</a><a href="/messages.html">Messages</a><a href="/customer-profile.html">Profile</a><a href="#" id="customerLogoutLink">Logout</a>'
+          : '<a href="/marketplace-dashboard.html">Marketplace Dashboard</a><a href="/marketplace-opportunities.html">Opportunities</a><a href="/marketplace-offers.html">Offers</a><a href="/messages.html">Messages</a>';
+        const customerLogoutLink = document.getElementById("customerLogoutLink");
+        if (customerLogoutLink) {
+          customerLogoutLink.addEventListener("click", function(event){
+            event.preventDefault();
+            localStorage.removeItem("customerToken");
+            localStorage.removeItem("customer");
+            window.location.href = "/";
+          });
+        }
         companyClientRow.style.display = state.actorType === "company" ? "flex" : "none";
         return true;
       }
@@ -694,13 +700,6 @@
       reloadMessagesBtn.addEventListener("click", function () { loadMessages(true); });
       newConversationBtn.addEventListener("click", startConversation);
       composerForm.addEventListener("submit", sendMessage);
-      customerLogoutLink.addEventListener("click", function(event){
-        event.preventDefault();
-        localStorage.removeItem("customerToken");
-        localStorage.removeItem("customer");
-        window.location.href = "/customer-login-v2.html";
-      });
-
       if (initSession()) {
         updateThreadHeader();
         loadConversations(true);

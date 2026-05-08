@@ -1,8 +1,11 @@
 const express = require("express");
+const jwt = require("jsonwebtoken");
+const rateLimit = require("express-rate-limit");
 const pool = require("../db/pool");
 const companyAuth = require("../middleware/auth");
 const requireCompanyBillingForMutations = require("../middleware/requireCompanyBillingForMutations");
-const { requireMinimumRole, verifyCustomerBearerToken } = require("../middleware/auth");
+const { SECRET } = require("../config/env");
+const { requireMinimumRole, requireActiveCustomer, getBearerToken, classifyTokenBoundary, normalizeRole, verifyActiveCustomerBearerToken } = require("../middleware/auth");
 const {
   marketplaceCustomerRequestCreateLimiter,
   marketplaceOfferAcceptLimiter,
@@ -31,14 +34,20 @@ function parsePagination(query) {
   return { limit, offset };
 }
 
-function customerAuth(req, res, next) {
-  try {
-    req.customer = verifyCustomerBearerToken(req.headers.authorization);
-    return next();
-  } catch (err) {
-    return res.status(err.status || 401).json({ error: err.message || "Invalid customer token" });
-  }
-}
+const customerAuth = requireActiveCustomer;
+const marketplaceReportLimiter = rateLimit({
+  windowMs: 10 * 60 * 1000,
+  max: 20,
+  standardHeaders: true,
+  legacyHeaders: false
+});
+const marketplaceDisputeLimiter = rateLimit({
+  windowMs: 10 * 60 * 1000,
+  max: 20,
+  standardHeaders: true,
+  legacyHeaders: false
+});
+
 
 function cleanText(value) {
   return String(value || "").trim();
@@ -193,6 +202,51 @@ async function canCompanyMatchRequest(companyId, requestRow) {
   return result.rows.length > 0;
 }
 
+async function marketplaceDisputeAuth(req, res, next) {
+  try {
+    const token = getBearerToken(req && req.headers && req.headers.authorization);
+    if (!token) {
+      return res.status(401).json({ error: "Authorization required" });
+    }
+    const decoded = jwt.verify(token, SECRET);
+    const boundary = classifyTokenBoundary(decoded);
+    if (boundary.type === "mixed") {
+      return res.status(403).json({ error: "Mixed auth boundary token" });
+    }
+    if (boundary.type === "customer") {
+      const active = await verifyActiveCustomerBearerToken(req.headers.authorization);
+      req.disputeActor = {
+        actor_type: "customer",
+        customer_id: Number(active.customer && active.customer.client_id) || null
+      };
+      req.customer = active.customer;
+      return next();
+    }
+    if (boundary.type !== "staff") {
+      return res.status(403).json({ error: "Forbidden" });
+    }
+    const userId = Number(decoded && decoded.id);
+    const companyId = Number(decoded && decoded.company_id);
+    const role = normalizeRole(decoded && decoded.role);
+    if (!Number.isInteger(userId) || userId <= 0 || !["owner", "admin", "manager", "worker", "platform_owner"].includes(role || "")) {
+      return res.status(403).json({ error: "Forbidden" });
+    }
+    if (role !== "platform_owner" && (!Number.isInteger(companyId) || companyId <= 0)) {
+      return res.status(403).json({ error: "Forbidden" });
+    }
+    req.disputeActor = {
+      actor_type: role === "platform_owner" ? "platform" : "company",
+      user_id: userId,
+      company_id: role === "platform_owner" ? null : companyId
+    };
+    return next();
+  } catch (err) {
+    return res.status(err && err.status ? err.status : 401).json({
+      error: (err && err.status) ? err.message : "Invalid token"
+    });
+  }
+}
+
 router.get("/marketplace/opportunities", companyAuth, requireMinimumRole("manager"), async (req, res) => {
   try {
     const companyId = Number(req.user && req.user.company_id);
@@ -312,13 +366,10 @@ router.post("/marketplace/requests", customerAuth, marketplaceCustomerRequestCre
     const city = cleanText(req.body?.city);
     const state = cleanText(req.body?.state);
     const zipCode = cleanText(req.body?.zip_code);
-    const status = normalizeStatus(req.body?.status || "open");
+    const status = "open";
 
     if (!categoryId || !title) {
       return res.status(400).json({ error: "category_id and title are required" });
-    }
-    if (!status) {
-      return res.status(400).json({ error: "Invalid status" });
     }
 
     const categoryCheck = await pool.query(
@@ -1327,6 +1378,134 @@ router.get("/marketplace/requests/:id", customerAuth, async (req, res) => {
     return res.json(requestRow);
   } catch (err) {
     return sendSafeServerError(res, err, "MARKETPLACE REQUEST DETAIL ERROR");
+  }
+});
+
+router.post("/marketplace/requests/:id/dispute", marketplaceDisputeAuth, marketplaceDisputeLimiter, async (req, res) => {
+  try {
+    const requestId = Number(req.params.id);
+    const reason = cleanText(req.body && req.body.reason).slice(0, 200);
+    const details = cleanText(req.body && req.body.details).slice(0, 4000);
+    if (!Number.isInteger(requestId) || requestId <= 0) {
+      return res.status(400).json({ error: "Invalid request id" });
+    }
+    if (reason.length < 3) {
+      return res.status(400).json({ error: "Reason is required" });
+    }
+
+    const actor = req.disputeActor || {};
+    let requestRow = null;
+    if (actor.actor_type === "customer") {
+      requestRow = await getOwnedRequest(requestId, req.customer);
+      if (!requestRow) {
+        return res.status(404).json({ error: "Request not found" });
+      }
+    } else if (actor.actor_type === "company") {
+      const companyId = Number(actor.company_id || 0);
+      const requestResult = await pool.query(
+        `
+        SELECT mr.id, mr.client_id
+        FROM marketplace_requests mr
+        WHERE mr.id = $1
+          AND (
+            EXISTS (
+              SELECT 1
+              FROM marketplace_offers mo
+              WHERE mo.request_id = mr.id
+                AND mo.company_id = $2
+            )
+            OR EXISTS (
+              SELECT 1
+              FROM companies c
+              JOIN company_services cs
+                ON cs.company_id = c.id
+               AND cs.active = TRUE
+               AND cs.category_id = mr.category_id
+              WHERE c.id = $2
+            )
+          )
+        LIMIT 1
+        `,
+        [requestId, companyId]
+      );
+      requestRow = requestResult.rows[0] || null;
+      if (!requestRow) {
+        return res.status(404).json({ error: "Request not found" });
+      }
+    } else {
+      return res.status(403).json({ error: "Forbidden" });
+    }
+
+    const inserted = await pool.query(
+      `
+      INSERT INTO disputes (
+        marketplace_request_id,
+        support_ticket_id,
+        company_id,
+        customer_id,
+        opened_by_type,
+        opened_by_user_id,
+        opened_by_customer_id,
+        reason,
+        details,
+        status,
+        priority
+      )
+      VALUES ($1, NULL, $2, $3, $4, $5, $6, $7, $8, 'open', 'medium')
+      RETURNING id, marketplace_request_id, support_ticket_id, company_id, customer_id, opened_by_type, reason, details, status, priority, created_at
+      `,
+      [
+        requestId,
+        actor.actor_type === "company" ? Number(actor.company_id || 0) : null,
+        actor.actor_type === "customer" ? Number(requestRow.client_id || actor.customer_id || 0) : Number(requestRow.client_id || 0) || null,
+        actor.actor_type,
+        actor.actor_type === "company" ? Number(actor.user_id || 0) : null,
+        actor.actor_type === "customer" ? Number(actor.customer_id || 0) : null,
+        reason,
+        details || null
+      ]
+    );
+    return res.status(201).json(inserted.rows[0]);
+  } catch (err) {
+    return sendSafeServerError(res, err, "MARKETPLACE REQUEST DISPUTE CREATE ERROR");
+  }
+});
+
+router.post("/marketplace/requests/:id/report", customerAuth, marketplaceReportLimiter, async (req, res) => {
+  try {
+    const requestId = Number(req.params.id);
+    const reason = cleanText(req.body && req.body.reason).slice(0, 200);
+    const details = cleanText(req.body && req.body.details).slice(0, 4000);
+    if (!Number.isInteger(requestId) || requestId <= 0) {
+      return res.status(400).json({ error: "Invalid request id" });
+    }
+    if (reason.length < 3) {
+      return res.status(400).json({ error: "Reason is required" });
+    }
+
+    const requestRow = await getOwnedRequest(requestId, req.customer);
+    if (!requestRow) {
+      return res.status(404).json({ error: "Request not found" });
+    }
+
+    const inserted = await pool.query(
+      `
+      INSERT INTO abuse_reports (
+        reporter_customer_id,
+        company_id,
+        target_type,
+        target_id,
+        reason,
+        details
+      )
+      VALUES ($1, NULL, 'marketplace_request', $2, $3, $4)
+      RETURNING id, target_type, target_id, reason, details, status, priority, created_at
+      `,
+      [req.customer.client_id, requestId, reason, details || null]
+    );
+    return res.status(201).json(inserted.rows[0]);
+  } catch (err) {
+    return sendSafeServerError(res, err, "MARKETPLACE REQUEST REPORT CREATE ERROR");
   }
 });
 

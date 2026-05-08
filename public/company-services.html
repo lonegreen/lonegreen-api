@@ -12,7 +12,7 @@
     body {
       margin: 0;
       min-height: 100vh;
-      background: linear-gradient(180deg, #edf5f0 0%, #f7f9f8 180px, #f4f6f8 100%);
+      background: linear-gradient(180deg, #f5f5f5 0%, #f7f9f8 180px, #f4f6f8 100%);
       color: var(--brand-black);
       padding: 20px;
     }
@@ -56,7 +56,7 @@
     .btn.primary {
       background: linear-gradient(135deg, var(--brand-primary), var(--brand-primary-hover));
       color: #fff;
-      box-shadow: 0 12px 28px rgba(31,92,58,0.2);
+      box-shadow: 0 12px 28px rgba(230,74,0,0.2);
     }
     .btn.secondary {
       background: var(--brand-bg);
@@ -71,7 +71,7 @@
       font-size: 14px;
     }
     .status.error { color: #b42318; font-weight: 700; }
-    .status.success { color: #027a48; font-weight: 700; }
+    .status.success { color: var(--brand-primary-hover); font-weight: 700; }
     .grid {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -141,15 +141,15 @@
       transition: 0.18s ease;
     }
     input[type="text"]:focus {
-      border-color: #2c8b55;
-      box-shadow: 0 0 0 4px rgba(44,139,85,0.12);
+      border-color: rgba(255,90,0,0.5);
+      box-shadow: 0 0 0 4px rgba(255,90,0,0.12);
     }
     .inactive {
       opacity: 0.7;
     }
     .empty {
       border: 1px dashed var(--brand-border);
-      background: #f8fcf9;
+      background: #fffaf5;
       border-radius: 14px;
       padding: 18px;
       text-align: center;
@@ -167,19 +167,19 @@
   </style>
 </head>
 <body>
-  <main class="page">
-    <section class="hero">
+  <main class="page fx-layout-public">
+    <section class="hero fx-hero fx-section-head">
       <div>
         <h1>Company Services</h1>
         <p class="muted">Select which service categories your company offers and optionally set custom display names.</p>
       </div>
-      <div class="actions">
-        <button id="refreshBtn" class="btn secondary" type="button">Refresh</button>
-        <button id="saveBtn" class="btn primary" type="button">Save Services</button>
+      <div class="actions fx-cta-row">
+        <button id="refreshBtn" class="btn secondary fx-btn fx-btn--secondary" type="button">Refresh</button>
+        <button id="saveBtn" class="btn primary fx-btn fx-btn--primary" type="button">Save Services</button>
       </div>
     </section>
 
-    <div id="status" class="status" role="status" aria-live="polite"></div>
+    <div id="status" class="status fx-alert" role="status" aria-live="polite"></div>
     <section id="servicesGrid" class="grid"></section>
   </main>
 
@@ -220,7 +220,7 @@
 
     function render() {
       if (!state.categories.length) {
-        els.grid.innerHTML = '<div class="empty">No service categories are available yet.</div>';
+        els.grid.innerHTML = '<div class="empty fx-empty">No service categories are available yet.</div>';
         return;
       }
 
@@ -228,7 +228,7 @@
         const selected = state.selectedByCategoryId[cat.id] || { active: false, custom_name: "" };
         const inactiveClass = selected.active ? "" : "inactive";
         return (
-          '<article class="card ' + inactiveClass + '">' +
+          '<article class="card fx-card ' + inactiveClass + '">' +
             '<div class="head">' +
               '<div>' +
                 '<h2 class="name">' + cat.name + '</h2>' +
@@ -239,9 +239,9 @@
                 '<span>' + (selected.active ? "Active" : "Inactive") + '</span>' +
               '</label>' +
             '</div>' +
-            '<div class="field">' +
+            '<div class="field fx-field">' +
               '<label>Custom Service Name (Optional)</label>' +
-              '<input type="text" data-action="custom-name" data-category-id="' + cat.id + '" value="' + (selected.custom_name || "").replace(/"/g, "&quot;") + '" placeholder="Use category default if blank">' +
+              '<input class="fx-input" type="text" data-action="custom-name" data-category-id="' + cat.id + '" value="' + (selected.custom_name || "").replace(/"/g, "&quot;") + '" placeholder="Use category default if blank">' +
             '</div>' +
           '</article>'
         );
@@ -298,7 +298,7 @@
         setStatus("Service categories loaded.", "");
       } catch (err) {
         setStatus(err.message || "Unable to load services.", "error");
-        els.grid.innerHTML = '<div class="empty">Unable to load company services right now.</div>';
+        els.grid.innerHTML = '<div class="empty fx-empty">Unable to load company services right now.</div>';
       }
     }
 

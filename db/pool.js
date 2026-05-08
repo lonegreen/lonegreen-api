@@ -8,8 +8,9 @@ const { Pool } = require("pg");
 const { DATABASE_URL, NODE_ENV } = require("../config/env");
 const logger = require("../services/logger");
 
-if (!DATABASE_URL) {
-  throw new Error("DATABASE_URL is missing");
+const rawDatabaseUrl = String(DATABASE_URL || "").trim();
+if (!rawDatabaseUrl) {
+  throw new Error("DATABASE_URL is missing or empty");
 }
 
 let ssl = false;
@@ -23,14 +24,34 @@ function integerEnv(name, fallback, min, max) {
   return Math.max(min, Math.min(max, parsed));
 }
 
+function assertResolvableDatabaseHostname(hostname) {
+  const host = String(hostname || "").trim().toLowerCase();
+  if (!host) {
+    throw new Error("DATABASE_URL must include a non-empty hostname");
+  }
+  if (host.length > 253) {
+    throw new Error("DATABASE_URL hostname is invalid (too long)");
+  }
+  if (/[\s@]/.test(host)) {
+    throw new Error("DATABASE_URL hostname appears malformed");
+  }
+}
+
 const poolMax = integerEnv("PG_POOL_MAX", 20, 1, 50);
 const poolIdleTimeoutMillis = integerEnv("PG_POOL_IDLE_TIMEOUT_MS", 30000, 1000, 300000);
 const poolConnectionTimeoutMillis = integerEnv("PG_POOL_CONNECTION_TIMEOUT_MS", 10000, 1000, 60000);
 
 try {
-  const parsed = new URL(DATABASE_URL);
+  let parsed;
+  try {
+    parsed = new URL(rawDatabaseUrl);
+  } catch (cause) {
+    const detail = cause && cause.message ? cause.message : String(cause);
+    throw new Error(`DATABASE_URL is not a valid URL (${detail})`);
+  }
 
-  databaseHost = (parsed.hostname || "").toLowerCase();
+  databaseHost = String(parsed.hostname || "").trim().toLowerCase();
+  assertResolvableDatabaseHostname(databaseHost);
 
   sslMode = (
     parsed.searchParams.get("sslmode") || ""
@@ -53,12 +74,15 @@ try {
     };
   }
 
-} catch {
-  throw new Error("Invalid DATABASE_URL format");
+} catch (err) {
+  if (err && err.message && String(err.message).startsWith("DATABASE_URL")) {
+    throw err;
+  }
+  throw new Error(`DATABASE_URL could not be parsed safely: ${err.message || err}`);
 }
 
 const pool = new Pool({
-  connectionString: DATABASE_URL,
+  connectionString: rawDatabaseUrl,
   ...(ssl ? { ssl } : {}),
   max: poolMax,
   idleTimeoutMillis: poolIdleTimeoutMillis,
@@ -68,6 +92,8 @@ const pool = new Pool({
 pool.on("error", (err) => {
   logger.error("POSTGRES_POOL_ERROR", {
     host: databaseHost,
+    dns_safe_log: true,
+    code: err && err.code ? err.code : undefined,
     error: err
   });
 });
@@ -85,6 +111,7 @@ async function testDatabaseConnection() {
 
 logger.info("Database configuration loaded", {
   host: databaseHost,
+  dns_safe_log: true,
   ssl: Boolean(ssl),
   ssl_reject_unauthorized: Boolean(ssl && ssl.rejectUnauthorized),
   pool_max: poolMax,

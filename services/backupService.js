@@ -73,6 +73,69 @@ function listDumpFiles(backupDir) {
     .sort((a, b) => b.mtimeMs - a.mtimeMs);
 }
 
+function parseCronLike(value) {
+  const text = String(value || "").trim();
+  if (!text) {
+    return { valid: false, value: "" };
+  }
+  const parts = text.split(/\s+/);
+  return { valid: parts.length >= 5 && parts.length <= 6, value: text };
+}
+
+function validateBackupScheduleReadiness() {
+  const enabled = String(process.env.BACKUP_AUTOMATION_ENABLED || "").toLowerCase() === "true";
+  const schedule = parseCronLike(process.env.BACKUP_SCHEDULE_CRON || "");
+  return {
+    status: enabled && schedule.valid ? "ok" : "needs_review",
+    enabled,
+    schedule: schedule.value || "unset",
+    valid_schedule: schedule.valid
+  };
+}
+
+function validateBackupRetentionReadiness() {
+  const retentionDays = Number(process.env.BACKUP_RETENTION_DAYS || 0);
+  const keepCount = Number(process.env.BACKUP_KEEP_COUNT || 0);
+  const status = Number.isInteger(retentionDays) && retentionDays >= 7 && Number.isInteger(keepCount) && keepCount >= 1
+    ? "ok"
+    : "needs_review";
+  return {
+    status,
+    retention_days: Number.isFinite(retentionDays) ? retentionDays : 0,
+    keep_count: Number.isFinite(keepCount) ? keepCount : 0
+  };
+}
+
+function validateRestoreDrillReadiness() {
+  const restoreManifest = String(process.env.BACKUP_RESTORE_MANIFEST_PATH || "").trim();
+  const restoreTarget = String(process.env.BACKUP_RESTORE_TARGET || "").trim();
+  return {
+    status: restoreManifest && restoreTarget ? "ok" : "needs_review",
+    restore_manifest_path: restoreManifest || null,
+    restore_target: restoreTarget || null
+  };
+}
+
+function getBackupReadiness() {
+  const storage = String(process.env.BACKUP_STORAGE || "").trim().toLowerCase();
+  const schedule = validateBackupScheduleReadiness();
+  const retention = validateBackupRetentionReadiness();
+  const restore = validateRestoreDrillReadiness();
+  const warnings = [];
+  if (!storage) warnings.push("BACKUP_STORAGE is not configured.");
+  if (schedule.status !== "ok") warnings.push("Backup schedule readiness needs review.");
+  if (retention.status !== "ok") warnings.push("Backup retention readiness needs review.");
+  if (restore.status !== "ok") warnings.push("Restore drill readiness needs review.");
+  return {
+    status: warnings.length ? "needs_review" : "ok",
+    storage: storage || "unset",
+    schedule,
+    retention,
+    restore,
+    warnings
+  };
+}
+
 /**
  * Deletes older dumps by age and by excess count. Keeps at least one newest file if any exist.
  */
@@ -248,5 +311,9 @@ module.exports = {
   listRecentBackups,
   rotateBackups,
   appendBackupLog,
-  DUMP_NAME_RE
+  DUMP_NAME_RE,
+  getBackupReadiness,
+  validateBackupScheduleReadiness,
+  validateBackupRetentionReadiness,
+  validateRestoreDrillReadiness
 };

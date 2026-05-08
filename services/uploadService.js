@@ -91,9 +91,37 @@ function isR2Configured() {
   return r2MissingEnvKeys().length === 0;
 }
 
+function readS3Config() {
+  return {
+    bucket: String(process.env.S3_BUCKET_NAME || process.env.S3_BUCKET || "").trim(),
+    region: String(process.env.S3_REGION || "").trim(),
+    accessKeyId: String(process.env.S3_ACCESS_KEY_ID || "").trim(),
+    secretAccessKey: String(process.env.S3_SECRET_ACCESS_KEY || "").trim(),
+    publicBaseUrl: String(process.env.S3_PUBLIC_BASE_URL || "").trim().replace(/\/+$/, "")
+  };
+}
+
+function s3MissingEnvKeys() {
+  const cfg = readS3Config();
+  const missing = [];
+  if (!cfg.bucket) missing.push("S3_BUCKET_NAME");
+  if (!cfg.region) missing.push("S3_REGION");
+  if (!cfg.accessKeyId) missing.push("S3_ACCESS_KEY_ID");
+  if (!cfg.secretAccessKey) missing.push("S3_SECRET_ACCESS_KEY");
+  if (!cfg.publicBaseUrl) missing.push("S3_PUBLIC_BASE_URL");
+  return missing;
+}
+
+function isS3Configured() {
+  return s3MissingEnvKeys().length === 0;
+}
+
 function getEffectiveUploadStorageDriver() {
   const driver = getUploadStorageDriver();
   if (driver === "r2" && !isR2Configured()) {
+    return "local";
+  }
+  if (driver === "s3" && !isS3Configured()) {
     return "local";
   }
   return driver;
@@ -339,6 +367,8 @@ function getUploadReadiness() {
   const externalEnabled = driver !== "local";
   const r2Configured = driver === "r2" ? isR2Configured() : null;
   const r2Missing = driver === "r2" ? r2MissingEnvKeys() : [];
+  const s3Configured = driver === "s3" ? isS3Configured() : null;
+  const s3Missing = driver === "s3" ? s3MissingEnvKeys() : [];
 
   let status = "ok";
   if (driver === "local" && nodeEnv === "production" && ephemeralSignals.length) {
@@ -348,7 +378,7 @@ function getUploadReadiness() {
     status = "error";
   }
   if (driver === "s3") {
-    status = "error"; // scaffold-only
+    status = isS3Configured() ? "warning" : "error";
   }
 
   return {
@@ -361,10 +391,103 @@ function getUploadReadiness() {
     r2_missing_env: r2Missing,
     r2_public_base_url: driver === "r2" ? readR2Config().publicBaseUrl || null : null,
     r2_fallback_to_local: driver === "r2" && effectiveDriver === "local",
+    s3_configured: s3Configured,
+    s3_missing_env: s3Missing,
+    s3_fallback_to_local: driver === "s3" && effectiveDriver === "local",
     upload_dir: UPLOAD_DIR,
     max_file_size_mb: Math.round(MAX_FILE_SIZE / 1024 / 1024),
     allowed_extensions: Array.from(ALLOWED_EXTENSIONS),
     ephemeral_storage_warning: driver === "local" && nodeEnv === "production" && ephemeralSignals.length > 0
+  };
+}
+
+function validateStorageDriverEnv() {
+  const configuredDriver = getUploadStorageDriver();
+  if (configuredDriver === "r2") {
+    return {
+      driver: "r2",
+      ready: isR2Configured(),
+      missing_env: r2MissingEnvKeys()
+    };
+  }
+  if (configuredDriver === "s3") {
+    return {
+      driver: "s3",
+      ready: isS3Configured(),
+      missing_env: s3MissingEnvKeys()
+    };
+  }
+  return {
+    driver: "local",
+    ready: true,
+    missing_env: []
+  };
+}
+
+function getStorageActivationStatus() {
+  const configured = getUploadStorageDriver();
+  const effective = getEffectiveUploadStorageDriver();
+  const validation = validateStorageDriverEnv();
+  const activation_blockers = [];
+  if (configured !== "local" && !validation.ready) {
+    activation_blockers.push(`Missing env for ${configured}: ${validation.missing_env.join(", ")}`);
+  }
+  if (configured === "s3") {
+    activation_blockers.push("S3 upload adapter remains scaffold-only in this phase.");
+  }
+  return {
+    status: activation_blockers.length ? "needs_review" : "ready",
+    configured_driver: configured,
+    effective_driver: effective,
+    env_ready: validation.ready,
+    missing_env: validation.missing_env,
+    activation_blockers
+  };
+}
+
+function adapterNotReady(message, code) {
+  const err = new Error(message);
+  err.code = code || "UPLOAD_ADAPTER_NOT_READY";
+  err.statusCode = 503;
+  return err;
+}
+
+function buildStorageAdapters() {
+  return {
+    local: {
+      ready: true,
+      publicUrlFromKey: (key) => localPublicUploadUrl(path.basename(String(key || ""))),
+      upload: async ({ key }) => ({ key: path.basename(String(key || "")), url: localPublicUploadUrl(path.basename(String(key || ""))) }),
+      remove: async ({ url }) => deleteLocalUpload(url)
+    },
+    r2: {
+      ready: isR2Configured(),
+      publicUrlFromKey: (key) => r2PublicUrlFromKey(path.basename(String(key || ""))),
+      upload: async ({ key, filePath, contentType }) => {
+        if (!isR2Configured()) throw adapterNotReady("R2 adapter is not configured", "UPLOAD_R2_NOT_CONFIGURED");
+        const safeKey = path.basename(String(key || ""));
+        const buffer = await fs.promises.readFile(filePath);
+        await r2PutObject(safeKey, buffer, contentType);
+        return { key: safeKey, url: r2PublicUrlFromKey(safeKey) };
+      },
+      remove: async ({ url }) => {
+        if (!isR2Configured()) return false;
+        const key = r2KeyFromPublicUrl(url);
+        return key ? r2DeleteObject(key) : false;
+      }
+    },
+    s3: {
+      ready: false,
+      publicUrlFromKey: (key) => {
+        const cfg = readS3Config();
+        if (!cfg.publicBaseUrl) throw adapterNotReady("S3 public URL base is not configured", "UPLOAD_S3_NOT_CONFIGURED");
+        return `${cfg.publicBaseUrl}/${path.basename(String(key || ""))}`;
+      },
+      upload: async () => {
+        throw adapterNotReady("S3 adapter scaffold is not enabled for uploads in this phase", "UPLOAD_S3_SCAFFOLD");
+      },
+      remove: async () => false
+    }
   };
 }
 
@@ -633,6 +756,16 @@ function publicUploadUrl(filename) {
   throw externalDriverNotReadyError();
 }
 
+function getUploadAdapter() {
+  const adapters = buildStorageAdapters();
+  const driver = getEffectiveUploadStorageDriver();
+  return adapters[driver] || adapters.local;
+}
+
+function getDeleteAdapter() {
+  return getUploadAdapter();
+}
+
 module.exports = {
   UPLOAD_DIR,
   MAX_FILE_SIZE,
@@ -655,5 +788,12 @@ module.exports = {
   assertUploadContentMatchesMime,
   assertUploadPathWithinDir,
   isR2Configured,
-  r2MissingEnvKeys
+  r2MissingEnvKeys,
+  isS3Configured,
+  s3MissingEnvKeys,
+  buildStorageAdapters,
+  getUploadAdapter,
+  getDeleteAdapter,
+  validateStorageDriverEnv,
+  getStorageActivationStatus
 };

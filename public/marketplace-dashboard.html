@@ -16,7 +16,7 @@
       color: var(--brand-black);
       background:
         radial-gradient(circle at top left, rgba(255,90,0,0.08), transparent 28%),
-        linear-gradient(180deg, #edf5f0 0%, #f6f8f7 210px, #f4f6f8 100%);
+        linear-gradient(180deg, #f5f5f5 0%, #f6f8f7 210px, #f4f6f8 100%);
       padding: 22px;
     }
     .page {
@@ -172,6 +172,21 @@
       border-color: var(--brand-primary);
       background: #f2fbf5;
     }
+    .flow-strip {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 8px;
+    }
+    .flow-step {
+      border: 1px solid #dce9e2;
+      border-radius: 12px;
+      background: var(--brand-bg);
+      padding: 10px;
+      color: var(--brand-black);
+      font-size: 13px;
+      font-weight: 900;
+      text-align: center;
+    }
     .activity-list {
       display: grid;
       gap: 8px;
@@ -268,68 +283,75 @@
       .hero h1 { font-size: 28px; }
       .hero-actions { width: 100%; display: grid; grid-template-columns: 1fr; }
       .hero-actions .btn { width: 100%; }
-      .kpi-grid, .quick-links, .marketplace-kpi-grid { grid-template-columns: 1fr; }
+      .kpi-grid, .quick-links, .marketplace-kpi-grid, .flow-strip { grid-template-columns: 1fr; }
     }
   </style>
 </head>
 <body>
-  <main class="page">
-    <header class="hero">
+  <main class="page fx-layout-public">
+    <header class="hero fx-hero fx-section-head">
       <div>
         <h1>Marketplace Dashboard</h1>
         <p>Unified command center for requests, offers, matching activity, and performance KPIs.</p>
       </div>
       <div class="hero-actions">
-        <button id="refreshBtn" class="btn secondary" type="button">Refresh</button>
+        <button id="refreshBtn" class="btn secondary fx-btn fx-btn--secondary" type="button">Refresh</button>
       </div>
     </header>
 
     <div id="globalStatus" class="status-line" role="status" aria-live="polite"></div>
 
+    <section class="flow-strip" aria-label="Marketplace lifecycle">
+      <div class="flow-step">Opportunity</div>
+      <div class="flow-step">Submit Offer</div>
+      <div class="flow-step">Accepted Offer</div>
+      <div class="flow-step">Convert to Estimate</div>
+    </section>
+
     <section class="kpi-grid" aria-label="Marketplace KPI cards">
-      <article class="kpi-card">
+      <article class="kpi-card fx-stat">
         <span class="kpi-label">Active Requests</span>
         <p id="kpiActiveRequests" class="kpi-value">0</p>
       </article>
-      <article class="kpi-card">
+      <article class="kpi-card fx-stat">
         <span class="kpi-label">Active Offers</span>
         <p id="kpiActiveOffers" class="kpi-value">0</p>
       </article>
-      <article class="kpi-card">
+      <article class="kpi-card fx-stat">
         <span class="kpi-label">Matched Requests</span>
         <p id="kpiMatchedRequests" class="kpi-value">0</p>
       </article>
-      <article class="kpi-card">
+      <article class="kpi-card fx-stat">
         <span class="kpi-label">Accepted Offers</span>
         <p id="kpiAcceptedOffers" class="kpi-value">0</p>
       </article>
     </section>
 
     <section class="layout">
-      <article class="panel">
+      <article class="panel fx-card">
         <h2>Quick Links</h2>
         <p class="subhead">Jump into key marketplace workflows by role.</p>
         <div class="quick-links">
-          <a class="quick-link" href="/marketplace.html">
-            <strong>Customer Requests</strong>
-            <span>Create and manage marketplace requests.</span>
-          </a>
           <a class="quick-link" href="/marketplace-opportunities.html">
-            <strong>Company Opportunities</strong>
+            <strong>Opportunities</strong>
             <span>Browse opportunities and submit offers.</span>
           </a>
           <a class="quick-link" href="/marketplace-offers.html">
             <strong>Offers Inbox</strong>
-            <span>Track submitted offers and statuses.</span>
+            <span>Track pending and accepted offers.</span>
           </a>
-          <a class="quick-link" href="/customer-dashboard-v2.html">
-            <strong>Customer Portal</strong>
-            <span>Review marketplace activity in customer dashboard.</span>
+          <a class="quick-link" href="/messages.html">
+            <strong>Messages</strong>
+            <span>Coordinate with matched customers.</span>
+          </a>
+          <a class="quick-link" href="/company-public-profile.html">
+            <strong>Public Profile</strong>
+            <span>Keep your marketplace presence current.</span>
           </a>
         </div>
       </article>
 
-      <article class="panel">
+      <article class="panel fx-card">
         <h2>Marketplace KPIs</h2>
         <p class="subhead">Snapshot derived from your current marketplace data.</p>
         <div class="marketplace-kpi-grid">
@@ -353,7 +375,7 @@
       </article>
     </section>
 
-    <section class="panel">
+    <section class="panel fx-card">
       <h2>Latest Activity</h2>
       <p class="subhead">Recent request/offer events from available marketplace endpoints.</p>
       <div id="activityList" class="activity-list"></div>
@@ -547,7 +569,7 @@
         els.activityList.textContent = "";
         if (!activity.length) {
           var empty = document.createElement("div");
-          empty.className = "empty";
+          empty.className = "empty fx-empty";
           var strong = document.createElement("strong");
           strong.textContent = "No activity yet";
           empty.appendChild(strong);
@@ -565,7 +587,7 @@
           title.className = "activity-title";
           title.textContent = safeText(item.title, "");
           var badge = document.createElement("span");
-          badge.className = badgeClass(item.status);
+          badge.className = badgeClass(item.status) + " fx-badge";
           badge.textContent = safeText(prettyStatus(item.status), "");
           top.appendChild(title);
           top.appendChild(badge);

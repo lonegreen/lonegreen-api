@@ -3,6 +3,8 @@
 <head>
   <title>Calendar</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="/css/brand.css">
+  <link rel="stylesheet" href="/app-shell.css">
 
   <style>
     :root {
@@ -12,8 +14,8 @@
       --muted: #6b7280;
       --border: #e5e7eb;
       --green: var(--brand-primary);
-      --green-dark: #17462c;
-      --soft-green: #eef7f1;
+      --green-dark: var(--brand-primary-hover);
+      --soft-green: #fff3e8;
       --shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
       --radius: 16px;
     }
@@ -82,9 +84,7 @@
       border-color: var(--green);
     }
 
-    .topbar button.primary:hover {
-      background: var(--green-dark);
-    }
+    .topbar button.primary:hover { background: var(--green-dark); }
 
     .page {
       padding: 18px;
@@ -183,10 +183,7 @@
       opacity: 1;
     }
 
-    .header.today {
-      background: var(--soft-green);
-      color: var(--green);
-    }
+    .header.today { background: var(--soft-green); color: var(--green); }
 
     .time {
       text-align: center;
@@ -644,21 +641,21 @@ document.addEventListener("DOMContentLoaded", function(){
 });
 </script>
 
-<div class="topbar">
-  <button type="button" id="calPrevWeek">⬅ Prev</button>
+<div class="topbar fx-toolbar">
+  <button type="button" class="fx-btn fx-btn--secondary" id="calPrevWeek">⬅ Prev</button>
 
   <h2>
     Calendar
     <span class="sub" id="weekLabel">Loading week...</span>
   </h2>
 
-  <button type="button" id="calToday">Today</button>
-  <button type="button" class="primary" id="calNextWeek">Next ➡</button>
+  <button type="button" class="fx-btn fx-btn--secondary" id="calToday">Today</button>
+  <button type="button" class="primary fx-btn fx-btn--primary" id="calNextWeek">Next ➡</button>
 </div>
 
-<div class="page">
-  <div class="calendar-shell">
-    <div class="calendar-toolbar">
+<div class="page fx-layout-public">
+  <div class="calendar-shell fx-card">
+    <div class="calendar-toolbar fx-toolbar">
       <div>
         <div class="calendar-title">Weekly Schedule</div>
         <div class="calendar-note">Calendar adjusts automatically based on scheduled jobs.</div>

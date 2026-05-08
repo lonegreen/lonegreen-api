@@ -485,7 +485,7 @@
   <script src="/js/role-guard.js"></script>
 </head>
 
-<body>
+<body class="phase2-internal">
   <script>
 (function(){
   const token = localStorage.getItem("token");
@@ -513,46 +513,46 @@
 </script>
 
 <div class="page">
-  <div class="page-header">
-    <div class="page-title">
+  <div class="page-header fx-section-head">
+    <div class="page-title fx-section-head__content">
       <h1>Clients</h1>
       <p>Manage customer details, service activity, and upcoming work from one place.</p>
     </div>
   </div>
 
-  <div id="clientsHint" class="page-hint" style="display:none;">
+  <div id="clientsHint" class="page-hint fx-alert fx-alert--warning" style="display:none;">
     <strong>Build your client base first.</strong>
     <p>Add your first client here, then open the profile to create jobs, estimates, subscriptions, and invoices from one connected timeline.</p>
   </div>
 
-  <div class="panel form-panel">
+  <div class="panel form-panel fx-card">
     <h3>Add Client</h3>
     <div class="form-grid">
-      <div class="field">
+      <div class="field fx-field">
         <label for="name">Name</label>
-        <input id="name" placeholder="Client name">
+        <input id="name" class="fx-input" placeholder="Client name">
       </div>
-      <div class="field">
+      <div class="field fx-field">
         <label for="phone">Phone</label>
-        <input id="phone" placeholder="Phone number">
+        <input id="phone" class="fx-input" placeholder="Phone number">
       </div>
-      <div class="field">
+      <div class="field fx-field">
         <label for="address">Address</label>
-        <input id="address" placeholder="Street address">
+        <input id="address" class="fx-input" placeholder="Street address">
       </div>
-      <div class="field">
+      <div class="field fx-field">
         <label for="zip">ZIP</label>
-        <input id="zip" placeholder="ZIP code">
+        <input id="zip" class="fx-input" placeholder="ZIP code">
       </div>
     </div>
     <div class="card-actions">
-      <button type="button" class="add" id="clientsBtnAdd">Add Client</button>
+      <button type="button" class="add fx-btn fx-btn--primary" id="clientsBtnAdd">Add Client</button>
     </div>
   </div>
 
-  <div class="panel search-panel">
+  <div class="panel search-panel fx-toolbar">
     <label for="search">Search Clients</label>
-    <input id="search" class="search-input" placeholder="Search by name, phone, address, or ZIP">
+    <input id="search" class="search-input fx-input" placeholder="Search by name, phone, address, or ZIP">
   </div>
 
   <div id="list" class="clients-grid">
@@ -570,104 +570,104 @@
 </div>
 
 <div id="subModal" class="modal-overlay">
-  <div class="modal-box">
+  <div class="modal-box fx-card">
     <h3>Add Subscription</h3>
 
     <div class="modal-stack">
-      <input id="sub_service" placeholder="Service">
+      <input id="sub_service" class="fx-input" placeholder="Service">
 
-      <select id="sub_freq">
+      <select id="sub_freq" class="fx-select">
         <option value="weekly">Weekly</option>
         <option value="biweekly">Biweekly</option>
         <option value="monthly">Monthly</option>
       </select>
 
       <label for="sub_date">Start Date</label>
-      <input type="date" id="sub_date">
+      <input type="date" id="sub_date" class="fx-input">
 
-      <input id="sub_price" placeholder="Price">
+      <input id="sub_price" class="fx-input" placeholder="Price">
 
-      <select id="sub_worker">
+      <select id="sub_worker" class="fx-select">
         <option value="">Select Worker</option>
       </select>
     </div>
 
     <div class="modal-actions">
-      <button type="button" class="add" id="clientsBtnConfirmSub">Add</button>
-      <button type="button" class="edit-btn" id="clientsBtnCancelSub">Cancel</button>
+      <button type="button" class="add fx-btn fx-btn--primary" id="clientsBtnConfirmSub">Add</button>
+      <button type="button" class="edit-btn fx-btn fx-btn--secondary" id="clientsBtnCancelSub">Cancel</button>
     </div>
   </div>
 </div>
 
 <div id="jobModal" class="modal-overlay">
-  <div class="modal-box">
+  <div class="modal-box fx-card">
     <h3>Add Job</h3>
 
     <div class="modal-stack">
-      <input id="job_service" placeholder="Service">
+      <input id="job_service" class="fx-input" placeholder="Service">
 
       <label for="job_date">Date</label>
-      <input type="date" id="job_date">
+      <input type="date" id="job_date" class="fx-input">
 
       <label for="job_start">Start Time</label>
-      <input type="time" id="job_start">
+      <input type="time" id="job_start" class="fx-input">
 
       <label for="job_end">End Time</label>
-      <input type="time" id="job_end">
+      <input type="time" id="job_end" class="fx-input">
 
-      <input id="job_price" placeholder="Price">
+      <input id="job_price" class="fx-input" placeholder="Price">
 
-      <select id="job_worker">
+      <select id="job_worker" class="fx-select">
         <option value="">Select Worker</option>
       </select>
     </div>
 
     <div class="modal-actions">
-      <button type="button" class="add" id="clientsBtnConfirmJob">Add</button>
-      <button type="button" class="edit-btn" id="clientsBtnCancelJob">Cancel</button>
+      <button type="button" class="add fx-btn fx-btn--primary" id="clientsBtnConfirmJob">Add</button>
+      <button type="button" class="edit-btn fx-btn fx-btn--secondary" id="clientsBtnCancelJob">Cancel</button>
     </div>
   </div>
 </div>
 
 <div id="clientEditModal" class="modal-overlay">
-  <div class="modal-box">
+  <div class="modal-box fx-card">
     <h3 id="clientEditTitle">Edit Client</h3>
     <div class="modal-grid">
-      <div class="field">
+      <div class="field fx-field">
         <label for="edit_client_name">Name</label>
-        <input id="edit_client_name" placeholder="Client name">
+        <input id="edit_client_name" class="fx-input" placeholder="Client name">
       </div>
-      <div class="field">
+      <div class="field fx-field">
         <label for="edit_client_phone">Phone</label>
-        <input id="edit_client_phone" placeholder="Phone number">
+        <input id="edit_client_phone" class="fx-input" placeholder="Phone number">
       </div>
-      <div class="field wide">
+      <div class="field wide fx-field">
         <label for="edit_client_address">Address</label>
-        <input id="edit_client_address" placeholder="Street address">
+        <input id="edit_client_address" class="fx-input" placeholder="Street address">
       </div>
-      <div class="field">
+      <div class="field fx-field">
         <label for="edit_client_zip">ZIP</label>
-        <input id="edit_client_zip" placeholder="ZIP code">
+        <input id="edit_client_zip" class="fx-input" placeholder="ZIP code">
       </div>
-      <div class="field wide">
+      <div class="field wide fx-field">
         <label for="edit_client_notes">Notes</label>
-        <input id="edit_client_notes" placeholder="Client notes">
+        <input id="edit_client_notes" class="fx-input" placeholder="Client notes">
       </div>
     </div>
     <div class="modal-actions">
-      <button type="button" class="add" id="clientsBtnSaveEdit">Save</button>
-      <button type="button" class="edit-btn" id="clientsBtnCancelEdit">Cancel</button>
+      <button type="button" class="add fx-btn fx-btn--primary" id="clientsBtnSaveEdit">Save</button>
+      <button type="button" class="edit-btn fx-btn fx-btn--secondary" id="clientsBtnCancelEdit">Cancel</button>
     </div>
   </div>
 </div>
 
 <div id="deleteClientModal" class="modal-overlay">
-  <div class="modal-box">
+  <div class="modal-box fx-card">
     <h3>Delete Client</h3>
     <p>This will safely archive, cancel, deactivate, or delete only when safe.</p>
     <div class="modal-actions">
-      <button type="button" class="edit-btn" id="clientsBtnCancelDelete">Cancel</button>
-      <button type="button" class="delete" id="clientsBtnConfirmDelete">Delete</button>
+      <button type="button" class="edit-btn fx-btn fx-btn--secondary" id="clientsBtnCancelDelete">Cancel</button>
+      <button type="button" class="delete fx-btn fx-btn--danger" id="clientsBtnConfirmDelete">Delete</button>
     </div>
   </div>
 </div>
@@ -708,15 +708,15 @@ const SafeUI = {
       }
       if(!key) return "";
       return `
-      <button type="button" class="${escapeHtml(action.className || "add")}" data-clients-empty="${escapeHtml(key)}">
+      <button type="button" class="${escapeHtml(action.className || "add")} fx-btn ${String(action.className || "add").includes("edit-btn") ? "fx-btn--secondary" : "fx-btn--primary"}" data-clients-empty="${escapeHtml(key)}">
         ${escapeHtml(action.label || "Action")}
       </button>`;
     }).join("");
 
     return `
-      <div class="empty">
-        <strong>${escapeHtml(title)}</strong>
-        <div>${escapeHtml(message || "")}</div>
+      <div class="empty fx-empty">
+        <strong class="fx-empty__title">${escapeHtml(title)}</strong>
+        <div class="fx-empty__text">${escapeHtml(message || "")}</div>
         ${actionHtml ? `<div class="card-actions">${actionHtml}</div>` : ""}
       </div>
     `;
@@ -971,7 +971,7 @@ async function confirmSub(){
 
 function renderClient(c){
   const card = document.createElement("div");
-  card.className = "card";
+  card.className = "card fx-card";
 
   const header = document.createElement("div");
   header.className = "card-header";
@@ -986,14 +986,14 @@ function renderClient(c){
 
   if(c.has_active_subscription){
     const badge = document.createElement("span");
-    badge.className = "badge badge-subscription";
+    badge.className = "badge badge-subscription fx-badge fx-badge--success";
     badge.textContent = "Active Subscription";
     badgeRow.appendChild(badge);
   }
 
   if(Number(c.upcoming_jobs_count || 0) > 0){
     const badge = document.createElement("span");
-    badge.className = "badge badge-upcoming";
+    badge.className = "badge badge-upcoming fx-badge fx-badge--info";
     badge.textContent = `${c.upcoming_jobs_count} Upcoming Job${Number(c.upcoming_jobs_count) === 1 ? "" : "s"}`;
     badgeRow.appendChild(badge);
   }
@@ -1050,27 +1050,27 @@ function renderClient(c){
   actions.className = "card-actions";
 
   const openBtn = document.createElement("button");
-  openBtn.className = "open-btn";
+  openBtn.className = "open-btn fx-btn fx-btn--primary";
   openBtn.textContent = "Open Profile";
   openBtn.onclick = () => openClient(c.id);
 
   const editBtn = document.createElement("button");
-  editBtn.className = "edit-btn";
+  editBtn.className = "edit-btn fx-btn fx-btn--secondary";
   editBtn.textContent = "Edit";
   editBtn.onclick = () => openEditClient(c.id);
 
   const jobBtn = document.createElement("button");
-  jobBtn.className = "edit-btn";
+  jobBtn.className = "edit-btn fx-btn fx-btn--secondary";
   jobBtn.textContent = "Add Job";
   jobBtn.onclick = () => openJob(c.id);
 
   const subBtn = document.createElement("button");
-  subBtn.className = "edit-btn";
+  subBtn.className = "edit-btn fx-btn fx-btn--secondary";
   subBtn.textContent = "Add Subscription";
   subBtn.onclick = () => openSub(c.id);
 
   const deleteBtn = document.createElement("button");
-  deleteBtn.className = "delete";
+  deleteBtn.className = "delete fx-btn fx-btn--danger";
   deleteBtn.textContent = "Archive Client";
   deleteBtn.onclick = () => archiveClient(c.id);
 
@@ -1082,7 +1082,7 @@ function renderClient(c){
 
   if(canDeleteRecords()){
     const permanentDeleteBtn = document.createElement("button");
-    permanentDeleteBtn.className = "delete";
+    permanentDeleteBtn.className = "delete fx-btn fx-btn--danger";
     permanentDeleteBtn.textContent = "Delete";
     permanentDeleteBtn.onclick = () => openDeleteClient(c.id);
     actions.appendChild(permanentDeleteBtn);

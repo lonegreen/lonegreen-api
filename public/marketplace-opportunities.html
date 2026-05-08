@@ -149,6 +149,21 @@
     }
     textarea { resize: vertical; min-height: 96px; }
     .actions { display: flex; gap: 10px; flex-wrap: wrap; }
+    .flow-strip {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 8px;
+    }
+    .flow-step {
+      border: 1px solid #dce9e2;
+      border-radius: 12px;
+      background: var(--brand-bg);
+      padding: 10px;
+      color: var(--brand-black);
+      font-size: 13px;
+      font-weight: 900;
+      text-align: center;
+    }
     .list-head {
       display: flex;
       align-items: center;
@@ -320,7 +335,7 @@
       .hero h1 { font-size: 28px; }
       .hero-actions { width: 100%; display: grid; grid-template-columns: 1fr; }
       .hero-actions .btn { width: 100%; }
-      .filter-grid, .detail-grid { grid-template-columns: 1fr; }
+      .filter-grid, .detail-grid, .flow-strip { grid-template-columns: 1fr; }
       .actions .btn { width: 100%; }
     }
   </style>
@@ -330,15 +345,23 @@
     <header class="hero">
       <div>
         <h1>Marketplace Opportunities</h1>
-        <p>Browse customer requests in your service area and submit competitive offers.</p>
+        <p>Opportunity to offer: select a request, submit an offer, then track acceptance in the Offers inbox.</p>
       </div>
       <div class="hero-actions">
-        <a class="btn secondary" href="/dashboard.html">Dashboard</a>
+        <a class="btn secondary" href="/marketplace-dashboard.html">Marketplace Dashboard</a>
+        <a class="btn secondary" href="/marketplace-offers.html">Offers Inbox</a>
         <button id="refreshBtn" type="button" class="btn secondary">Refresh</button>
       </div>
     </header>
 
     <div id="globalStatus" class="status-line" role="status" aria-live="polite"></div>
+
+    <section class="flow-strip" aria-label="Marketplace lifecycle">
+      <div class="flow-step">Opportunity</div>
+      <div class="flow-step">Submit Offer</div>
+      <div class="flow-step">Accepted Offer</div>
+      <div class="flow-step">Convert to Estimate</div>
+    </section>
 
     <section class="layout">
       <aside class="panel">

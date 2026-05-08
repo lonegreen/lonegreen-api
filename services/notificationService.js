@@ -1,6 +1,48 @@
 const pool = require("../db/pool");
 
+const ALLOWED_TYPES = new Set(["marketplace", "support", "dispute", "verification", "billing", "system"]);
 let notificationsSchemaReadyPromise = null;
+
+function cleanText(value, maxLen) {
+  const text = String(value == null ? "" : value).trim();
+  return maxLen ? text.slice(0, maxLen) : text;
+}
+
+function normalizeId(value) {
+  if (value === null || value === undefined || value === "") {
+    return null;
+  }
+  const n = Number(value);
+  if (!Number.isInteger(n) || n <= 0) {
+    return null;
+  }
+  return n;
+}
+
+function cleanType(value) {
+  const normalized = String(value || "").trim().toLowerCase();
+  if (!normalized) return "system";
+  return ALLOWED_TYPES.has(normalized) ? normalized : "system";
+}
+
+function shapeNotificationRow(row) {
+  const readAt = row.read_at || null;
+  const body = row.body || "";
+  return {
+    id: Number(row.id),
+    company_id: row.company_id == null ? null : Number(row.company_id),
+    user_id: row.user_id == null ? null : Number(row.user_id),
+    customer_id: row.customer_id == null ? null : Number(row.customer_id),
+    type: row.type,
+    title: row.title,
+    body,
+    link_url: row.link_url || null,
+    read_at: readAt,
+    created_at: row.created_at,
+    message: body,
+    is_read: Boolean(readAt)
+  };
+}
 
 async function ensureNotificationsSchema() {
   if (!notificationsSchemaReadyPromise) {
@@ -8,83 +50,278 @@ async function ensureNotificationsSchema() {
       await pool.query(`
         CREATE TABLE IF NOT EXISTS notifications (
           id SERIAL PRIMARY KEY,
-          company_id INTEGER NOT NULL,
-          user_id INTEGER,
+          company_id INTEGER NULL,
+          user_id INTEGER NULL,
+          customer_id INTEGER NULL,
           type TEXT NOT NULL,
           title TEXT NOT NULL,
-          message TEXT NOT NULL,
-          is_read BOOLEAN DEFAULT FALSE,
-          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+          body TEXT,
+          link_url TEXT,
+          read_at TIMESTAMPTZ,
+          created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
         )
       `);
       await pool.query(`
-        ALTER TABLE notifications ADD COLUMN IF NOT EXISTS metadata JSONB NOT NULL DEFAULT '{}'::jsonb
+        ALTER TABLE notifications
+          ADD COLUMN IF NOT EXISTS company_id INTEGER NULL,
+          ADD COLUMN IF NOT EXISTS user_id INTEGER NULL,
+          ADD COLUMN IF NOT EXISTS customer_id INTEGER NULL,
+          ADD COLUMN IF NOT EXISTS type TEXT,
+          ADD COLUMN IF NOT EXISTS title TEXT,
+          ADD COLUMN IF NOT EXISTS body TEXT,
+          ADD COLUMN IF NOT EXISTS link_url TEXT,
+          ADD COLUMN IF NOT EXISTS read_at TIMESTAMPTZ,
+          ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ
       `);
-    })().catch(err => {
+      await pool.query(`ALTER TABLE notifications ALTER COLUMN created_at SET DEFAULT NOW()`);
+      await pool.query(`
+        UPDATE notifications
+        SET type = 'system'
+        WHERE COALESCE(NULLIF(TRIM(type), ''), '') = ''
+      `);
+      await pool.query(`
+        UPDATE notifications
+        SET title = 'Notification'
+        WHERE COALESCE(NULLIF(TRIM(title), ''), '') = ''
+      `);
+      await pool.query(`
+        ALTER TABLE notifications
+          ALTER COLUMN type SET NOT NULL,
+          ALTER COLUMN title SET NOT NULL
+      `);
+      await pool.query(`
+        CREATE INDEX IF NOT EXISTS idx_notifications_company_id ON notifications(company_id);
+        CREATE INDEX IF NOT EXISTS idx_notifications_user_id ON notifications(user_id);
+        CREATE INDEX IF NOT EXISTS idx_notifications_customer_id ON notifications(customer_id);
+        CREATE INDEX IF NOT EXISTS idx_notifications_type ON notifications(type);
+        CREATE INDEX IF NOT EXISTS idx_notifications_read_at ON notifications(read_at);
+        CREATE INDEX IF NOT EXISTS idx_notifications_created_at ON notifications(created_at);
+      `);
+    })().catch((err) => {
       notificationsSchemaReadyPromise = null;
       throw err;
     });
   }
-
   return notificationsSchemaReadyPromise;
 }
 
-async function createNotification({ companyId, userId = null, type, title, message, metadata = null }) {
+async function createNotification({ companyId = null, userId = null, customerId = null, type, title, body, linkUrl, message }) {
   await ensureNotificationsSchema();
+  const cleanNotificationType = cleanType(type);
+  if (!cleanNotificationType) {
+    throw new Error("Notification type is required");
+  }
+  const cleanTitle = cleanText(title, 200);
+  if (!cleanTitle) {
+    throw new Error("Notification title is required");
+  }
+  const cleanBody = cleanText(body != null ? body : message, 4000) || null;
+  const cleanLink = cleanText(linkUrl, 1024) || null;
+  const normalizedCompanyId = normalizeId(companyId);
+  const normalizedUserId = normalizeId(userId);
+  const normalizedCustomerId = normalizeId(customerId);
+  if (!normalizedUserId && !normalizedCustomerId) {
+    throw new Error("Notification recipient is required");
+  }
+  const result = await pool.query(
+    `
+    INSERT INTO notifications (
+      company_id, user_id, customer_id, type, title, body, link_url, read_at
+    )
+    VALUES ($1, $2, $3, $4, $5, $6, $7, NULL)
+    RETURNING id, company_id, user_id, customer_id, type, title, body, link_url, read_at, created_at
+    `,
+    [normalizedCompanyId, normalizedUserId, normalizedCustomerId, cleanNotificationType, cleanTitle, cleanBody, cleanLink]
+  );
+  return shapeNotificationRow(result.rows[0]);
+}
 
-  const metaJson = JSON.stringify(metadata && typeof metadata === "object" ? metadata : {});
+async function listNotificationsForUser({ userId = null, companyId = null, customerId = null, limit = 25 }) {
+  await ensureNotificationsSchema();
+  const normalizedUserId = normalizeId(userId);
+  const normalizedCompanyId = normalizeId(companyId);
+  const normalizedCustomerId = normalizeId(customerId);
+  const safeLimit = Number.isInteger(Number(limit)) && Number(limit) > 0 ? Math.min(Number(limit), 100) : 25;
+  if (normalizedCustomerId) {
+    const result = await pool.query(
+      `
+      SELECT id, company_id, user_id, customer_id, type, title, body, link_url, read_at, created_at
+      FROM notifications
+      WHERE customer_id = $1
+      ORDER BY created_at DESC, id DESC
+      LIMIT $2
+      `,
+      [normalizedCustomerId, safeLimit]
+    );
+    return result.rows.map(shapeNotificationRow);
+  }
+  if (!normalizedUserId || !normalizedCompanyId) {
+    return [];
+  }
+  const result = await pool.query(
+    `
+    SELECT id, company_id, user_id, customer_id, type, title, body, link_url, read_at, created_at
+    FROM notifications
+    WHERE company_id = $1
+      AND (user_id IS NULL OR user_id = $2)
+      AND customer_id IS NULL
+    ORDER BY created_at DESC, id DESC
+    LIMIT $3
+    `,
+    [normalizedCompanyId, normalizedUserId, safeLimit]
+  );
+  return result.rows.map(shapeNotificationRow);
+}
 
-  const result = await pool.query(`
-    INSERT INTO notifications (company_id, user_id, type, title, message, metadata)
-    VALUES ($1,$2,$3,$4,$5,$6::jsonb)
-    RETURNING id, company_id, user_id, type, title, message, is_read, metadata, created_at
-  `, [companyId, userId, type, title, message, metaJson]);
+async function markNotificationRead({ notificationId, userId = null, companyId = null, customerId = null }) {
+  await ensureNotificationsSchema();
+  const normalizedNotificationId = normalizeId(notificationId);
+  const normalizedUserId = normalizeId(userId);
+  const normalizedCompanyId = normalizeId(companyId);
+  const normalizedCustomerId = normalizeId(customerId);
+  if (!normalizedNotificationId) {
+    return null;
+  }
+  if (normalizedCustomerId) {
+    const result = await pool.query(
+      `
+      UPDATE notifications
+      SET read_at = COALESCE(read_at, CURRENT_TIMESTAMP)
+      WHERE id = $1
+        AND customer_id = $2
+      RETURNING id, company_id, user_id, customer_id, type, title, body, link_url, read_at, created_at
+      `,
+      [normalizedNotificationId, normalizedCustomerId]
+    );
+    return result.rows[0] ? shapeNotificationRow(result.rows[0]) : null;
+  }
+  if (!normalizedUserId || !normalizedCompanyId) {
+    return null;
+  }
+  const result = await pool.query(
+    `
+    UPDATE notifications
+    SET read_at = COALESCE(read_at, CURRENT_TIMESTAMP)
+    WHERE id = $1
+      AND company_id = $2
+      AND customer_id IS NULL
+      AND (user_id IS NULL OR user_id = $3)
+    RETURNING id, company_id, user_id, customer_id, type, title, body, link_url, read_at, created_at
+    `,
+    [normalizedNotificationId, normalizedCompanyId, normalizedUserId]
+  );
+  return result.rows[0] ? shapeNotificationRow(result.rows[0]) : null;
+}
 
-  return result.rows[0];
+async function countUnreadNotifications({ userId = null, companyId = null, customerId = null }) {
+  await ensureNotificationsSchema();
+  const normalizedUserId = normalizeId(userId);
+  const normalizedCompanyId = normalizeId(companyId);
+  const normalizedCustomerId = normalizeId(customerId);
+  if (normalizedCustomerId) {
+    const result = await pool.query(
+      `
+      SELECT COUNT(*)::int AS unread_count
+      FROM notifications
+      WHERE customer_id = $1
+        AND read_at IS NULL
+      `,
+      [normalizedCustomerId]
+    );
+    return Number(result.rows[0] && result.rows[0].unread_count) || 0;
+  }
+  if (!normalizedUserId || !normalizedCompanyId) {
+    return 0;
+  }
+  const result = await pool.query(
+    `
+    SELECT COUNT(*)::int AS unread_count
+    FROM notifications
+    WHERE company_id = $1
+      AND customer_id IS NULL
+      AND (user_id IS NULL OR user_id = $2)
+      AND read_at IS NULL
+    `,
+    [normalizedCompanyId, normalizedUserId]
+  );
+  return Number(result.rows[0] && result.rows[0].unread_count) || 0;
 }
 
 async function ensureUniqueNotification({ companyId, userId = null, type, title, message, metadata = null }) {
+  const normalizedCompanyId = normalizeId(companyId);
+  const normalizedUserId = normalizeId(userId);
+  const cleanNotificationType = cleanType(type);
+  const cleanTitle = cleanText(title, 200);
+  const cleanBody = cleanText(message, 4000);
+  if (!normalizedCompanyId || !cleanNotificationType || !cleanTitle || !cleanBody) {
+    return null;
+  }
   await ensureNotificationsSchema();
-
-  const existing = await pool.query(`
-    SELECT id
+  const existing = await pool.query(
+    `
+    SELECT id, company_id, user_id, customer_id, type, title, body, link_url, read_at, created_at
     FROM notifications
     WHERE company_id = $1
       AND type = $2
       AND title = $3
-      AND message = $4
-      AND is_read = FALSE
+      AND COALESCE(body, '') = $4
+      AND read_at IS NULL
+      AND customer_id IS NULL
+      AND (($5::int IS NULL AND user_id IS NULL) OR user_id = $5)
+    ORDER BY id DESC
     LIMIT 1
-  `, [companyId, type, title, message]);
-
-  if (existing.rows.length > 0) {
-    return existing.rows[0];
+    `,
+    [normalizedCompanyId, cleanNotificationType, cleanTitle, cleanBody, normalizedUserId]
+  );
+  if (existing.rows.length) {
+    return shapeNotificationRow(existing.rows[0]);
   }
-
-  return createNotification({ companyId, userId, type, title, message, metadata });
+  return createNotification({
+    companyId: normalizedCompanyId,
+    userId: normalizedUserId,
+    type: cleanNotificationType,
+    title: cleanTitle,
+    body: cleanBody,
+    linkUrl: metadata && typeof metadata.link_url === "string" ? metadata.link_url : null
+  });
 }
 
 async function createNotificationIfMissing({ companyId, type, title, message, userId = null, metadata = null }) {
+  const normalizedCompanyId = normalizeId(companyId);
+  const normalizedUserId = normalizeId(userId);
+  const cleanNotificationType = cleanType(type);
+  const cleanTitle = cleanText(title, 200);
+  const cleanBody = cleanText(message, 4000);
+  if (!normalizedCompanyId || !cleanNotificationType || !cleanTitle || !cleanBody) {
+    return null;
+  }
   await ensureNotificationsSchema();
-
-  const existing = await pool.query(`
+  const existing = await pool.query(
+    `
     SELECT id
     FROM notifications
     WHERE company_id = $1
       AND type = $2
       AND title = $3
-      AND message = $4
+      AND COALESCE(body, '') = $4
+      AND customer_id IS NULL
+      AND (($5::int IS NULL AND user_id IS NULL) OR user_id = $5)
       AND DATE(created_at) = CURRENT_DATE
     LIMIT 1
-  `, [companyId, type, title, message]);
-
-  if (existing.rows.length === 0) {
-    const metaJson = JSON.stringify(metadata && typeof metadata === "object" ? metadata : {});
-    await pool.query(`
-      INSERT INTO notifications (company_id, user_id, type, title, message, is_read, metadata)
-      VALUES ($1,$2,$3,$4,$5,FALSE,$6::jsonb)
-    `, [companyId, userId, type, title, message, metaJson]);
+    `,
+    [normalizedCompanyId, cleanNotificationType, cleanTitle, cleanBody, normalizedUserId]
+  );
+  if (!existing.rows.length) {
+    return createNotification({
+      companyId: normalizedCompanyId,
+      userId: normalizedUserId,
+      type: cleanNotificationType,
+      title: cleanTitle,
+      body: cleanBody,
+      linkUrl: metadata && typeof metadata.link_url === "string" ? metadata.link_url : null
+    });
   }
+  return null;
 }
 
 async function syncAlerts(companyId) {
@@ -147,11 +384,84 @@ async function createFinancialNotification({ companyId, type, title, message, me
   return ensureUniqueNotification({ companyId, type, title, message, metadata });
 }
 
+async function notifyMarketplaceRequestCreated({ companyId, customerId, requestId, service }) {
+  return createNotification({
+    companyId,
+    customerId,
+    type: "marketplace",
+    title: "Marketplace request created",
+    body: `${service || "Service request"} is now in the marketplace queue.`,
+    linkUrl: requestId ? `/marketplace?request=${Number(requestId)}` : ""
+  });
+}
+
+async function notifyOfferReceived({ customerId, requestId, companyName }) {
+  return createNotification({
+    customerId,
+    type: "marketplace",
+    title: "New offer received",
+    body: `${companyName || "A company"} sent a new offer for your request.`,
+    linkUrl: requestId ? `/customer-dashboard.html?request=${Number(requestId)}` : ""
+  });
+}
+
+async function notifySupportTicketCreated({ companyId, customerId, ticketId, subject }) {
+  return createNotification({
+    companyId,
+    customerId,
+    type: "support",
+    title: "Support ticket created",
+    body: subject || "A new support ticket was opened.",
+    linkUrl: ticketId ? `/support?ticket=${Number(ticketId)}` : ""
+  });
+}
+
+async function notifyDisputeOpened({ companyId, customerId, disputeId, reason }) {
+  return createNotification({
+    companyId,
+    customerId,
+    type: "dispute",
+    title: "Dispute opened",
+    body: reason || "A new dispute was opened and requires review.",
+    linkUrl: disputeId ? `/disputes?id=${Number(disputeId)}` : ""
+  });
+}
+
+async function notifyVerificationApproved({ companyId }) {
+  return createNotification({
+    companyId,
+    type: "verification",
+    title: "Verification approved",
+    body: "Your company verification has been approved.",
+    linkUrl: "/control.html?page=settings"
+  });
+}
+
+async function notifyBillingWarning({ companyId, warningMessage }) {
+  return createNotification({
+    companyId,
+    type: "billing",
+    title: "Billing warning",
+    body: warningMessage || "A billing lifecycle warning needs review.",
+    linkUrl: "/control.html?page=billing"
+  });
+}
+
 module.exports = {
+  ALLOWED_TYPES,
   ensureNotificationsSchema,
   createNotification,
+  listNotificationsForUser,
+  markNotificationRead,
+  countUnreadNotifications,
   ensureUniqueNotification,
   createNotificationIfMissing,
   createFinancialNotification,
-  syncAlerts
+  syncAlerts,
+  notifyMarketplaceRequestCreated,
+  notifyOfferReceived,
+  notifySupportTicketCreated,
+  notifyDisputeOpened,
+  notifyVerificationApproved,
+  notifyBillingWarning
 };

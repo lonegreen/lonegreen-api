@@ -10,7 +10,7 @@
   <link rel="stylesheet" href="/ui-cleanup.css">
   <style>
     * { box-sizing: border-box; }
-    body { margin: 0; font-family: Inter, Arial, sans-serif; color: var(--brand-black); background: radial-gradient(circle at top left, rgba(31,92,58,.08), transparent 28%), linear-gradient(180deg,#edf5f0 0%,#f6f8f7 210px,#f4f6f8 100%); padding: 22px; }
+    body { margin: 0; font-family: Inter, Arial, sans-serif; color: var(--brand-black); background: radial-gradient(circle at top left, rgba(255,90,0,.08), transparent 28%), linear-gradient(180deg,#f5f5f5 0%,#f6f8f7 210px,#f4f6f8 100%); padding: 22px; }
     .page { width: min(1260px,100%); margin: 0 auto; display: grid; gap: 16px; }
     .hero { display:flex; justify-content:space-between; align-items:flex-end; gap:12px; flex-wrap:wrap; }
     .hero h1 { margin:0 0 6px; color:var(--brand-primary); font-size:32px; letter-spacing:-.02em; }
@@ -51,14 +51,14 @@
   </style>
 </head>
 <body>
-  <main class="page">
-    <header class="hero">
+  <main class="page fx-layout-public">
+    <header class="hero fx-hero fx-section-head">
       <div>
         <h1>Marketplace Admin Moderation</h1>
         <p>Moderate marketplace trust, verification, and platform safety controls.</p>
       </div>
-      <div class="hero-actions">
-        <button id="refreshBtn" class="btn secondary" type="button">Refresh</button>
+      <div class="hero-actions fx-cta-row">
+        <button id="refreshBtn" class="btn secondary fx-btn fx-btn--secondary" type="button">Refresh</button>
       </div>
     </header>
 
@@ -72,37 +72,37 @@
     </section>
 
     <section class="grid">
-      <article class="panel">
+      <article class="panel fx-card">
         <h2>Requests Moderation List</h2>
         <p class="subhead">Marketplace admin request moderation endpoint not exposed in current API.</p>
         <div id="requestsList" class="list"></div>
       </article>
 
-      <article class="panel">
+      <article class="panel fx-card">
         <h2>Offers Moderation List</h2>
         <p class="subhead">Marketplace admin offer moderation endpoint not exposed in current API.</p>
         <div id="offersList" class="list"></div>
       </article>
 
-      <article class="panel">
+      <article class="panel fx-card">
         <h2>Reviews Moderation List</h2>
         <p class="subhead">Company review summaries from public review APIs.</p>
         <div id="reviewsList" class="list"></div>
       </article>
 
-      <article class="panel">
+      <article class="panel fx-card">
         <h2>Reported Items List</h2>
         <p class="subhead">Flagged from platform billing risk/suspension indicators.</p>
         <div id="reportedList" class="list"></div>
       </article>
 
-      <article class="panel">
+      <article class="panel fx-card">
         <h2>Company Verification Controls</h2>
         <p class="subhead">Platform owner can verify/unverify and suspend/unlock companies.</p>
         <div id="companiesList" class="list"></div>
       </article>
 
-      <article class="panel">
+      <article class="panel fx-card">
         <h2>Activity Audit Log</h2>
         <p class="subhead">Recent moderation actions in this session.</p>
         <div id="auditList" class="list"></div>
@@ -309,7 +309,7 @@
             '<article class="item">' +
               '<div class="item-top">' +
                 '<h3>' + esc(txt(c.company_name || c.name, "Company")) + "</h3>" +
-                '<span class="' + badgeClass(c.billing_status || "pending") + '">' + esc(statusText(c.billing_status || "unknown")) + "</span>' +
+                '<span class="' + badgeClass(c.billing_status || "pending") + '">' + esc(statusText(c.billing_status || "unknown")) + "</span>" +
               '</div>' +
               '<p class="meta">Company ID: ' + esc(companyId) + " • Verified: " + esc(verified ? "Yes" : "No") + "</p>" +
               '<p class="meta">Plan: ' + esc(txt(c.plan, "-")) + " • Platform Suspended: " + esc(suspended ? "Yes" : "No") + "</p>" +

@@ -518,6 +518,39 @@
 
   <script>
     const API = window.location.origin;
+    const STAFF_LOGIN_TARGET = "/control.html";
+    const CUSTOMER_LOGIN_TARGET = "/customer-dashboard.html";
+    const STAFF_AUTO_BOUNCE_ROLES = ["owner", "admin", "manager", "worker", "platform_owner"];
+
+    function parseStoredUser() {
+      try {
+        const parsed = JSON.parse(localStorage.getItem("user") || "null");
+        return parsed && typeof parsed === "object" ? parsed : null;
+      } catch (err) {
+        return null;
+      }
+    }
+
+    function autoBounceAuthenticatedSession() {
+      const customerToken = localStorage.getItem("customerToken");
+      if (customerToken) {
+        if (window.location.pathname === CUSTOMER_LOGIN_TARGET) return;
+        window.location.assign(CUSTOMER_LOGIN_TARGET);
+        return;
+      }
+
+      const storedToken = localStorage.getItem("token");
+      if (!storedToken) return;
+
+      const storedUser = parseStoredUser();
+      const storedRole = storedUser && storedUser.role ? String(storedUser.role).toLowerCase() : "";
+      if (!STAFF_AUTO_BOUNCE_ROLES.includes(storedRole)) return;
+      if (window.location.pathname === STAFF_LOGIN_TARGET) return;
+
+      window.location.assign(STAFF_LOGIN_TARGET);
+    }
+
+    autoBounceAuthenticatedSession();
 
     function showMessage(message, type) {
       const box = document.getElementById("messageBox");
@@ -617,6 +650,8 @@
         }
 
         const page = getRoleDefaultPage(data.user);
+        localStorage.removeItem("customerToken");
+        localStorage.removeItem("currentPage");
         localStorage.setItem("token", data.token);
         localStorage.setItem("user", JSON.stringify(data.user));
         localStorage.setItem("currentPage", page);

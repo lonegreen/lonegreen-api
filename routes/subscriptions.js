@@ -52,6 +52,7 @@ const { sendSafeServerError } = require("../services/safeServerError");
 const { enqueueEmailTask } = require("../services/backgroundTasks");
 const { buildSubscriptionReminderPayload } = require("../services/emailService");
 const logger = require("../services/logger");
+const { notifyBillingWarning } = require("../services/notificationService");
 // Subscription mark-paid paths run inside a single transaction (BEGIN/COMMIT on a
 // pool.connect() client) and therefore inline the canonical equivalent of
 // createPaymentRecord: lock invoice FOR UPDATE -> assertPaymentWithinRemaining ->
@@ -67,6 +68,42 @@ const {
 
 const router = express.Router();
 const DEPRECATED_ENDPOINT_ERROR = { error: "Deprecated endpoint. Use canonical API route." };
+
+const BILLING_STATES = new Set(["trialing", "active", "past_due", "unpaid", "canceled", "suspended"]);
+
+function evaluateBillingLifecycleState(rawStatus) {
+  const normalized = String(rawStatus || "").trim().toLowerCase();
+  const state = BILLING_STATES.has(normalized) ? normalized : "active";
+  const warnings = [];
+  if (state === "past_due" || state === "unpaid") warnings.push("billing_attention_required");
+  if (state === "canceled" || state === "suspended") warnings.push("billing_reactivation_required");
+  return { state, warnings, blocking: false };
+}
+
+async function billingLifecycleAuditOnlyMiddleware(req, res, next) {
+  try {
+    const companyId = Number(req.user && req.user.company_id);
+    if (!Number.isInteger(companyId) || companyId <= 0) return next();
+    const result = await pool.query(
+      "SELECT billing_status FROM companies WHERE id=$1 LIMIT 1",
+      [companyId]
+    );
+    const evalResult = evaluateBillingLifecycleState(result.rows[0] && result.rows[0].billing_status);
+    req.billingLifecycle = evalResult;
+    if (evalResult.warnings.length) {
+      res.setHeader("x-fairlinx-billing-warning", evalResult.warnings.join(","));
+      try {
+        await notifyBillingWarning({
+          companyId,
+          warningMessage: `Billing lifecycle warning: ${evalResult.state}`
+        });
+      } catch (_) {}
+    }
+    return next();
+  } catch (err) {
+    return next();
+  }
+}
 
 function parsePagination(query) {
   const parsedLimit = Number(query && query.limit);
@@ -97,6 +134,7 @@ function lockDeprecatedLegacyMutations(req, res, next) {
   return next();
 }
 router.use(lockDeprecatedLegacyMutations);
+router.use(auth, billingLifecycleAuditOnlyMiddleware);
 
 function hasBodyField(req, field) {
   return Object.prototype.hasOwnProperty.call(req.body || {}, field);

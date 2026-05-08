@@ -272,7 +272,7 @@ if (NODE_ENV !== "production") {
 /* Root */
 app.get("/", (req, res) => {
   res.sendFile(
-    path.join(__dirname, "public", "login.html")
+    path.join(__dirname, "public", "index.html")
   );
 });
 

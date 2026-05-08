@@ -15,7 +15,9 @@
       window.AppAuth.redirectToLogin();
     } else {
       localStorage.removeItem("token");
+      localStorage.removeItem("customerToken");
       localStorage.removeItem("user");
+      localStorage.removeItem("currentPage");
       window.top.location.href = "/login.html";
     }
   }

@@ -1,4 +1,5 @@
 ﻿const jwt = require("jsonwebtoken");
+const pool = require("../db/pool");
 const { SECRET } = require("../config/env");
 
 const ROLE_RANK = {
@@ -142,6 +143,97 @@ function verifyCustomerBearerToken(header) {
   return parseCustomerPrincipal(decoded);
 }
 
+async function loadActiveCustomerAccount(customer) {
+  const customerAccountId = toPositiveInteger(customer && customer.customer_account_id)
+    || toPositiveInteger(customer && customer.id);
+  const clientId = toPositiveInteger(customer && customer.client_id);
+
+  let result;
+  if (customerAccountId) {
+    result = await pool.query(
+      `
+      SELECT id, client_id, email, first_name, last_name, phone, is_verified, status, deactivated_at
+      FROM customer_accounts
+      WHERE id = $1
+      LIMIT 1
+      `,
+      [customerAccountId]
+    );
+  } else if (clientId) {
+    result = await pool.query(
+      `
+      SELECT id, client_id, email, first_name, last_name, phone, is_verified, status, deactivated_at
+      FROM customer_accounts
+      WHERE client_id = $1
+      LIMIT 1
+      `,
+      [clientId]
+    );
+  } else {
+    result = { rows: [] };
+  }
+
+  const account = result.rows[0];
+  if (!account) {
+    const error = new Error("Customer account not found");
+    error.status = 403;
+    throw error;
+  }
+
+  const status = String(account.status || "active").trim().toLowerCase();
+  if (account.deactivated_at || status === "deactivated") {
+    const error = new Error("Customer account is deactivated");
+    error.status = 403;
+    throw error;
+  }
+  if (status !== "active") {
+    const error = new Error(status === "suspended"
+      ? "Customer account is suspended"
+      : "Customer account is not active");
+    error.status = 403;
+    throw error;
+  }
+
+  return {
+    id: account.id,
+    client_id: account.client_id,
+    email: account.email,
+    first_name: account.first_name,
+    last_name: account.last_name,
+    phone: account.phone,
+    is_verified: account.is_verified,
+    status,
+    deactivated_at: account.deactivated_at
+  };
+}
+
+async function verifyActiveCustomerBearerToken(header) {
+  const customer = verifyCustomerBearerToken(header);
+  const account = await loadActiveCustomerAccount(customer);
+  return {
+    customer: {
+      ...customer,
+      customer_account_id: account.id,
+      customer_status: account.status,
+      customer_deactivated_at: account.deactivated_at || null
+    },
+    account
+  };
+}
+
+async function requireActiveCustomer(req, res, next) {
+  try {
+    const active = await verifyActiveCustomerBearerToken(req.headers.authorization);
+    req.customer = active.customer;
+    req.customerAccount = active.account;
+    return next();
+  } catch (err) {
+    return res.status(err.status || 401).json({
+      error: err.message || "Invalid customer token"
+    });
+  }
+}
+
 function auth(req, res, next) {
   const token = getBearerToken(req.headers.authorization);
 
@@ -281,3 +373,5 @@ module.exports.ROLE_RANK = ROLE_RANK;
 module.exports.getBearerToken = getBearerToken;
 module.exports.classifyTokenBoundary = classifyTokenBoundary;
 module.exports.verifyCustomerBearerToken = verifyCustomerBearerToken;
+module.exports.verifyActiveCustomerBearerToken = verifyActiveCustomerBearerToken;
+module.exports.requireActiveCustomer = requireActiveCustomer;

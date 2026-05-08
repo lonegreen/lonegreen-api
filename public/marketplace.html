@@ -16,7 +16,7 @@
       color: var(--brand-black);
       background:
         radial-gradient(circle at top left, rgba(255,90,0,0.08), transparent 28%),
-        linear-gradient(180deg, #edf5f0 0%, #f6f8f7 210px, #f4f6f8 100%);
+        linear-gradient(180deg, #f5f5f5 0%, #f6f8f7 210px, #f4f6f8 100%);
       padding: 22px;
     }
     .page {
@@ -38,11 +38,7 @@
       font-size: 32px;
       letter-spacing: -0.02em;
     }
-    .hero p {
-      margin: 0;
-      color: #60786e;
-      line-height: 1.5;
-    }
+    .hero p { margin: 0; color: #5f646d; line-height: 1.5; }
     .customer-nav { display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; }
     .customer-nav a { border:1px solid var(--brand-border); background:#fff; color:var(--brand-primary); border-radius:999px; padding:8px 12px; font-size:13px; font-weight:800; text-decoration:none; }
     .seo-links { display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; }
@@ -111,18 +107,125 @@
       font-size: 13px;
       line-height: 1.45;
     }
-    .status-line {
-      min-height: 18px;
-      color: #60786e;
-      font-size: 13px;
-      font-weight: 700;
-    }
+    .status-line { min-height: 18px; color: #5f646d; font-size: 13px; font-weight: 700; }
     .status-line.error { color: #b42318; }
-    .status-line.ok { color: #166534; }
+    .status-line.ok { color: var(--brand-primary-hover); }
     .field-grid {
       display: grid;
       gap: 10px;
       grid-template-columns: 1fr 1fr;
+    }
+    .stepper {
+      display: grid;
+      gap: 10px;
+    }
+    .progress-track {
+      width: 100%;
+      height: 10px;
+      border-radius: 999px;
+      background: #e7efe9;
+      overflow: hidden;
+      border: 1px solid #d6e3db;
+    }
+    .progress-fill {
+      height: 100%;
+      width: 25%;
+      background: linear-gradient(90deg, var(--brand-primary), var(--brand-primary-hover));
+      transition: width .2s ease;
+    }
+    .step-list {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 8px;
+    }
+    .step-pill {
+      border: 1px solid #dce9e2;
+      border-radius: 10px;
+      padding: 8px;
+      background: #fff;
+      color: #678075;
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      text-align: center;
+    }
+    .step-pill.active {
+      border-color: var(--brand-primary);
+      color: var(--brand-primary);
+      background: #fff3e8;
+    }
+    .step-pill.done {
+      border-color: #ffd5bf;
+      color: var(--brand-primary-hover);
+      background: #fff3e8;
+    }
+    .step-card {
+      border: 1px solid #dce9e2;
+      border-radius: 14px;
+      background: #fff;
+      padding: 12px;
+      display: grid;
+      gap: 10px;
+    }
+    .step-panel { display: none; gap: 10px; }
+    .step-panel.active { display: grid; }
+    .step-head h3 {
+      margin: 0;
+      color: var(--brand-black);
+      font-size: 17px;
+    }
+    .step-head p {
+      margin: 4px 0 0;
+      color: #60786e;
+      font-size: 13px;
+      line-height: 1.45;
+    }
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border: 1px solid #d6e3db;
+      border-radius: 11px;
+      background: #fff;
+      padding: 10px 12px;
+    }
+    .toggle-row input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      margin: 0;
+      padding: 0;
+    }
+    .review-grid {
+      display: grid;
+      gap: 8px;
+      grid-template-columns: 1fr 1fr;
+    }
+    .review-item {
+      border: 1px solid #dce9e2;
+      border-radius: 10px;
+      background: #fbfdfc;
+      padding: 10px;
+      display: grid;
+      gap: 4px;
+    }
+    .review-item span {
+      font-size: 11px;
+      color: #678075;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+      font-weight: 800;
+    }
+    .review-item strong {
+      font-size: 13px;
+      color: var(--brand-black);
+      overflow-wrap: anywhere;
+      font-weight: 700;
+    }
+    .step-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
     }
     .field {
       display: grid;
@@ -148,7 +251,7 @@
       outline: none;
     }
     input:focus, textarea:focus, select:focus {
-      border-color: #a8cab8;
+      border-color: rgba(255,90,0,0.42);
       box-shadow: 0 0 0 2px rgba(255,90,0,0.14);
     }
     textarea { resize: vertical; min-height: 84px; }
@@ -225,10 +328,10 @@
       white-space: nowrap;
     }
     .badge.open { background: #fff7ed; color: #c2410c; }
-    .badge.matched { background: #ecfdf3; color: #027a48; }
+    .badge.matched { background: #fff3e8; color: var(--brand-primary-hover); }
     .badge.closed, .badge.cancelled, .badge.rejected { background: #fef2f2; color: #b42318; }
     .badge.pending { background: #fff7ed; color: #c2410c; }
-    .badge.accepted { background: #ecfdf3; color: #027a48; }
+    .badge.accepted { background: #fff3e8; color: var(--brand-primary-hover); }
     .detail-header {
       display: flex;
       justify-content: space-between;
@@ -356,17 +459,20 @@
       .hero-actions { width: 100%; display: grid; grid-template-columns: 1fr; }
       .hero-actions .btn { width: 100%; }
       .field-grid { grid-template-columns: 1fr; }
+      .step-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .review-grid { grid-template-columns: 1fr; }
       .detail-grid { grid-template-columns: 1fr; }
+      .step-actions { grid-template-columns: 1fr; }
       .section-head .btn { width: 100%; }
     }
   </style>
 </head>
 <body>
-  <main class="page">
-    <header class="hero">
+  <main class="page fx-layout-public">
+    <header class="hero fx-hero fx-section-head">
       <div>
-        <h1>Marketplace Requests</h1>
-        <p>Create service requests, compare company offers, and accept the best match.</p>
+        <h1>Request Service</h1>
+        <p>Request service from FairLinx companies. Sign in or create a customer account if your session is needed.</p>
         <div class="seo-links">
           <a href="/service-area.html?service=lawn-care&city=Richmond&state=TX">Lawn Care in Richmond</a>
           <a href="/service-area.html?service=landscaping&city=Sugar+Land&state=TX">Landscaping in Sugar Land</a>
@@ -375,104 +481,174 @@
         <p class="trust-link"><a href="/trust.html">Read FairLinx Trust & Safety</a></p>
         <nav class="customer-nav">
           <a href="/customer-dashboard.html">Dashboard</a>
-          <a href="/marketplace.html">Marketplace</a>
+          <a href="/marketplace.html">My Requests</a>
           <a href="/discover.html">Discover</a>
           <a href="/messages.html">Messages</a>
           <a href="/customer-profile.html">Profile</a>
           <a href="#" id="customerLogoutLink">Logout</a>
         </nav>
       </div>
-      <div class="hero-actions">
-        <a class="btn secondary" href="/customer-dashboard-v2.html">Dashboard</a>
-        <button id="refreshAllBtn" class="btn secondary" type="button">Refresh</button>
+      <div class="hero-actions fx-cta-row">
+        <a class="btn secondary fx-btn fx-btn--secondary" href="/discover.html">Find Services</a>
+        <button id="refreshAllBtn" class="btn secondary fx-btn fx-btn--secondary" type="button">Refresh</button>
       </div>
     </header>
 
-    <div id="globalStatus" class="status-line" role="status" aria-live="polite"></div>
+    <div id="globalStatus" class="status-line fx-alert" role="status" aria-live="polite"></div>
 
     <section class="layout">
-      <aside class="panel">
+      <aside class="panel fx-card">
         <h2>Create Request</h2>
-        <p class="subhead">Required: category and title. Add location and details to improve matching.</p>
+        <p class="subhead">Complete 4 quick steps to send a clear service request.</p>
+        <div class="stepper" aria-label="Request progress">
+          <div class="progress-track"><div id="stepProgressFill" class="progress-fill"></div></div>
+          <div class="step-list">
+            <div id="stepPill1" class="step-pill active">1. Service Type</div>
+            <div id="stepPill2" class="step-pill">2. Location</div>
+            <div id="stepPill3" class="step-pill">3. Schedule</div>
+            <div id="stepPill4" class="step-pill">4. Job Details</div>
+          </div>
+        </div>
         <form id="requestForm" class="field-grid">
-          <div class="field">
-            <label for="categoryId">Category *</label>
-            <select id="categoryId" name="category_id" required>
-              <option value="">Select a category</option>
-            </select>
-          </div>
-          <div class="field">
-            <label for="requestedDate">Requested Date</label>
-            <input id="requestedDate" name="requested_date" type="date">
+          <div class="field full">
+            <div class="step-card fx-card">
+              <section id="step1" class="step-panel active" aria-label="Step 1 Service type">
+                <div class="step-head">
+                  <h3>What service do you need?</h3>
+                  <p>Choose the category, then enter a specific service type.</p>
+                </div>
+                <div class="field fx-field">
+                  <label for="categoryId">Category *</label>
+                  <select id="categoryId" class="fx-select" name="category_id" required>
+                    <option value="">Select a category</option>
+                  </select>
+                </div>
+                <div class="field fx-field">
+                  <label for="title">Service Type *</label>
+                  <input id="title" class="fx-input" name="title" type="text" maxlength="140" required placeholder="Example: Weekly lawn mowing">
+                </div>
+              </section>
+
+              <section id="step2" class="step-panel" aria-label="Step 2 Location">
+                <div class="step-head">
+                  <h3>Where is the service needed?</h3>
+                  <p>Add location details to improve company matching in your area.</p>
+                </div>
+                <div class="field fx-field">
+                  <label for="address">Service Address</label>
+                  <input id="address" class="fx-input" name="address" type="text" maxlength="160" placeholder="123 Main St">
+                </div>
+                <div class="field-grid">
+                  <div class="field fx-field">
+                    <label for="zipCode">Zip Code</label>
+                    <input id="zipCode" class="fx-input" name="zip_code" type="text" maxlength="5" inputmode="numeric" placeholder="10001">
+                  </div>
+                  <div class="field fx-field">
+                    <label for="city">City</label>
+                    <input id="city" class="fx-input" name="city" type="text" maxlength="60" placeholder="New York">
+                  </div>
+                  <div class="field fx-field">
+                    <label for="state">State</label>
+                    <input id="state" class="fx-input" name="state" type="text" maxlength="2" placeholder="NY">
+                  </div>
+                </div>
+              </section>
+
+              <section id="step3" class="step-panel" aria-label="Step 3 Schedule">
+                <div class="step-head">
+                  <h3>When do you need service?</h3>
+                  <p>Select your preferred date and urgency. Flexible scheduling helps with faster matches.</p>
+                </div>
+                <div class="field-grid">
+                  <div class="field fx-field">
+                    <label for="requestedDate">Requested Date</label>
+                    <input id="requestedDate" class="fx-input" name="requested_date" type="date">
+                  </div>
+                  <div class="field fx-field">
+                    <label for="requestedTime">Requested Time</label>
+                    <input id="requestedTime" class="fx-input" name="requested_time" type="time">
+                  </div>
+                  <div class="field fx-field">
+                    <label for="urgencyLevel">Urgency</label>
+                    <select id="urgencyLevel" class="fx-select" name="urgency_level">
+                      <option value="">Select urgency</option>
+                      <option value="asap">ASAP</option>
+                      <option value="this_week">This week</option>
+                      <option value="planned">Planned / flexible</option>
+                    </select>
+                  </div>
+                </div>
+                <label class="toggle-row" for="flexibleSchedule">
+                  <input id="flexibleSchedule" name="flexible_schedule" type="checkbox">
+                  <span>My schedule is flexible</span>
+                </label>
+              </section>
+
+              <section id="step4" class="step-panel" aria-label="Step 4 Job details and review">
+                <div class="step-head">
+                  <h3>Job details and review</h3>
+                  <p>Add details, confirm your contact and location, then submit.</p>
+                </div>
+                <div class="field fx-field">
+                  <label for="description">Description</label>
+                  <textarea id="description" class="fx-textarea" name="description" maxlength="2000" placeholder="Describe scope, property size, and special requests."></textarea>
+                </div>
+                <label class="toggle-row" for="contactConfirm">
+                  <input id="contactConfirm" name="contact_confirm" type="checkbox" required>
+                  <span>I confirm my contact/location details are accurate for company responses.</span>
+                </label>
+                <div>
+                  <label style="font-size:12px; font-weight:800; text-transform:uppercase; letter-spacing:.04em; color:#4f6a5f;">Final Review</label>
+                  <div id="reviewSummary" class="review-grid"></div>
+                </div>
+              </section>
+
+              <div class="step-actions">
+                <button id="backStepBtn" class="btn secondary fx-btn fx-btn--secondary" type="button" disabled>Back</button>
+                <button id="nextStepBtn" class="btn secondary fx-btn fx-btn--secondary" type="button">Next</button>
+              </div>
+            </div>
           </div>
           <div class="field full">
-            <label for="title">Title *</label>
-            <input id="title" name="title" type="text" maxlength="140" required placeholder="Example: Weekly lawn mowing">
-          </div>
-          <div class="field full">
-            <label for="description">Description</label>
-            <textarea id="description" name="description" maxlength="2000" placeholder="Describe scope, property size, and special requests."></textarea>
-          </div>
-          <div class="field">
-            <label for="requestedTime">Requested Time</label>
-            <input id="requestedTime" name="requested_time" type="time">
-          </div>
-          <div class="field">
-            <label for="zipCode">Zip Code</label>
-            <input id="zipCode" name="zip_code" type="text" maxlength="5" inputmode="numeric" placeholder="10001">
-          </div>
-          <div class="field full">
-            <label for="address">Address</label>
-            <input id="address" name="address" type="text" maxlength="160" placeholder="123 Main St">
-          </div>
-          <div class="field">
-            <label for="city">City</label>
-            <input id="city" name="city" type="text" maxlength="60" placeholder="New York">
-          </div>
-          <div class="field">
-            <label for="state">State</label>
-            <input id="state" name="state" type="text" maxlength="2" placeholder="NY">
-          </div>
-          <div class="field full">
-            <button id="submitRequestBtn" class="btn primary" type="submit">Create Request</button>
+            <button id="submitRequestBtn" class="btn primary fx-btn fx-btn--primary" type="submit">Create Request</button>
           </div>
         </form>
         <div id="formStatus" class="status-line"></div>
 
         <div class="list-head">
           <h2>My Requests</h2>
-          <span id="requestCountPill" class="pill">0</span>
+          <span id="requestCountPill" class="pill fx-badge fx-badge--info">0</span>
         </div>
         <div id="requestsList" class="requests-list"></div>
       </aside>
 
-      <section class="panel">
+      <section class="panel fx-card">
         <div class="detail-header">
           <div>
             <h2 id="detailTitle" class="detail-title">Select a request</h2>
             <p id="detailMeta" class="detail-meta">Request details, matches, and offers will appear here.</p>
           </div>
-          <span id="detailStatusBadge" class="badge">N/A</span>
+          <span id="detailStatusBadge" class="badge fx-badge fx-badge--neutral">N/A</span>
         </div>
 
         <div id="requestDetailsGrid" class="detail-grid"></div>
 
-        <section class="section">
-          <div class="section-head">
+        <section class="section fx-card">
+          <div class="section-head fx-section-head">
             <h3>Matched Companies</h3>
-            <button id="refreshMatchesBtn" type="button" class="btn secondary">Refresh Matches</button>
+            <button id="refreshMatchesBtn" type="button" class="btn secondary fx-btn fx-btn--secondary">Refresh Matches</button>
           </div>
-          <div id="matchesStatus" class="status-line"></div>
+          <div id="matchesStatus" class="status-line fx-alert"></div>
           <div id="matchesList" class="cards"></div>
         </section>
 
-        <section class="section">
-          <div class="section-head">
+        <section class="section fx-card">
+          <div class="section-head fx-section-head">
             <h3>Offers</h3>
-            <button id="refreshOffersBtn" type="button" class="btn secondary">Refresh Offers</button>
+            <button id="refreshOffersBtn" type="button" class="btn secondary fx-btn fx-btn--secondary">Refresh Offers</button>
           </div>
-          <div id="offersStatus" class="status-line"></div>
-          <div id="offersNextStep" class="status-line"></div>
+          <div id="offersStatus" class="status-line fx-alert"></div>
+          <div id="offersNextStep" class="status-line fx-alert"></div>
           <div id="offersList" class="cards"></div>
         </section>
       </section>
@@ -515,9 +691,19 @@
         offersStatus: document.getElementById("offersStatus"),
         offersNextStep: document.getElementById("offersNextStep"),
         matchesList: document.getElementById("matchesList"),
-        offersList: document.getElementById("offersList")
+        offersList: document.getElementById("offersList"),
+        stepPanels: Array.from(document.querySelectorAll(".step-panel")),
+        stepPills: [1, 2, 3, 4].map(function(i) { return document.getElementById("stepPill" + i); }),
+        stepProgressFill: document.getElementById("stepProgressFill"),
+        nextStepBtn: document.getElementById("nextStepBtn"),
+        backStepBtn: document.getElementById("backStepBtn"),
+        reviewSummary: document.getElementById("reviewSummary"),
+        urgencyLevel: document.getElementById("urgencyLevel"),
+        flexibleSchedule: document.getElementById("flexibleSchedule"),
+        contactConfirm: document.getElementById("contactConfirm")
       };
       const customerLogoutLink = document.getElementById("customerLogoutLink");
+      let currentStep = 1;
 
       function getToken() {
         return localStorage.getItem("customerToken");
@@ -621,7 +807,7 @@
         els.requestCountPill.textContent = String(list.length);
 
         if (!list.length) {
-          els.requestsList.innerHTML = '<div class="empty"><strong>No requests yet</strong>Create your first marketplace request to start receiving offers.</div>';
+          els.requestsList.innerHTML = '<div class="empty fx-empty"><strong class="fx-empty__title">No requests yet</strong><span class="fx-empty__text">Create your first marketplace request to start receiving offers.</span></div>';
           return;
         }
 
@@ -645,9 +831,9 @@
         if (!r) {
           els.detailTitle.textContent = "Select a request";
           els.detailMeta.textContent = "Request details, matches, and offers will appear here.";
-          els.detailStatusBadge.className = "badge";
+          els.detailStatusBadge.className = "badge fx-badge fx-badge--neutral";
           els.detailStatusBadge.textContent = "N/A";
-          els.requestDetailsGrid.innerHTML = '<div class="empty"><strong>No request selected</strong>Pick a request from My Requests to view full details.</div>';
+          els.requestDetailsGrid.innerHTML = '<div class="empty fx-empty"><strong class="fx-empty__title">No request selected</strong><span class="fx-empty__text">Pick a request from My Requests to view full details.</span></div>';
           return;
         }
 
@@ -657,36 +843,36 @@
         els.detailStatusBadge.textContent = prettyStatus(r.status);
 
         els.requestDetailsGrid.innerHTML = [
-          '<article class="detail-card"><span>Category ID</span><strong>' + esc(niceText(r.category_id)) + "</strong></article>",
-          '<article class="detail-card"><span>Requested Date</span><strong>' + esc(fmtDateOnly(r.requested_date)) + "</strong></article>",
-          '<article class="detail-card"><span>Requested Time</span><strong>' + esc(niceText(r.requested_time)) + "</strong></article>",
-          '<article class="detail-card"><span>Accepted Offer</span><strong>' + esc(niceText(r.accepted_offer_id)) + "</strong></article>",
-          '<article class="detail-card"><span>Address</span><strong>' + esc(niceText(r.address)) + "</strong></article>",
-          '<article class="detail-card"><span>City</span><strong>' + esc(niceText(r.city)) + "</strong></article>",
-          '<article class="detail-card"><span>State</span><strong>' + esc(niceText(r.state)) + "</strong></article>",
-          '<article class="detail-card"><span>Zip Code</span><strong>' + esc(niceText(r.zip_code)) + "</strong></article>",
-          '<article class="detail-card" style="grid-column: 1 / -1;"><span>Description</span><strong>' + esc(niceText(r.description, "No description provided.")) + "</strong></article>"
+            '<article class="detail-card fx-stat"><span class="fx-stat__label">Category ID</span><strong class="fx-stat__value">' + esc(niceText(r.category_id)) + "</strong></article>",
+          '<article class="detail-card fx-stat"><span class="fx-stat__label">Requested Date</span><strong class="fx-stat__value">' + esc(fmtDateOnly(r.requested_date)) + "</strong></article>",
+          '<article class="detail-card fx-stat"><span class="fx-stat__label">Requested Time</span><strong class="fx-stat__value">' + esc(niceText(r.requested_time)) + "</strong></article>",
+          '<article class="detail-card fx-stat"><span class="fx-stat__label">Accepted Offer</span><strong class="fx-stat__value">' + esc(niceText(r.accepted_offer_id)) + "</strong></article>",
+          '<article class="detail-card fx-stat"><span class="fx-stat__label">Address</span><strong class="fx-stat__value">' + esc(niceText(r.address)) + "</strong></article>",
+          '<article class="detail-card fx-stat"><span class="fx-stat__label">City</span><strong class="fx-stat__value">' + esc(niceText(r.city)) + "</strong></article>",
+          '<article class="detail-card fx-stat"><span class="fx-stat__label">State</span><strong class="fx-stat__value">' + esc(niceText(r.state)) + "</strong></article>",
+          '<article class="detail-card fx-stat"><span class="fx-stat__label">Zip Code</span><strong class="fx-stat__value">' + esc(niceText(r.zip_code)) + "</strong></article>",
+          '<article class="detail-card fx-stat" style="grid-column: 1 / -1;"><span class="fx-stat__label">Description</span><strong class="fx-stat__value">' + esc(niceText(r.description, "No description provided.")) + "</strong></article>"
         ].join("");
       }
 
       function renderMatches() {
         const list = state.matches || [];
         if (!state.selectedRequestId) {
-          els.matchesList.innerHTML = '<div class="empty"><strong>No request selected</strong>Select a request to view matched companies.</div>';
+          els.matchesList.innerHTML = '<div class="empty fx-empty"><strong class="fx-empty__title">No request selected</strong><span class="fx-empty__text">Select a request to view matched companies.</span></div>';
           return;
         }
         if (!list.length) {
-          els.matchesList.innerHTML = '<div class="empty"><strong>No matches yet</strong>There are currently no companies matching this request area/category.</div>';
+          els.matchesList.innerHTML = '<div class="empty fx-empty"><strong class="fx-empty__title">No matches yet</strong><span class="fx-empty__text">There are currently no companies matching this request area/category.</span></div>';
           return;
         }
 
         els.matchesList.innerHTML = list.map(function(c) {
-          const profileUrl = c.public_slug ? "/company-public-profile.html?slug=" + encodeURIComponent(c.public_slug) : "";
+          const profileUrl = c.public_slug ? "/company-profile.html?slug=" + encodeURIComponent(c.public_slug) : "";
           return (
-            '<article class="card">' +
+            '<article class="card fx-card">' +
               '<div class="card-top">' +
                 "<h4>" + esc(niceText(c.name, "Company")) + "</h4>" +
-                '<span class="' + badgeClass(c.billing_status || "active") + '">' + esc(prettyStatus(c.billing_status || "active")) + "</span>" +
+                '<span class="' + badgeClass(c.billing_status || "active") + ' fx-badge fx-badge--neutral">' + esc(prettyStatus(c.billing_status || "active")) + "</span>" +
               "</div>" +
               '<p>Email: ' + esc(niceText(c.email)) + "</p>" +
               '<p>Phone: ' + esc(niceText(c.phone)) + "</p>" +
@@ -707,11 +893,11 @@
       function renderOffers() {
         const list = state.offers || [];
         if (!state.selectedRequestId) {
-          els.offersList.innerHTML = '<div class="empty"><strong>No request selected</strong>Select a request to view offers.</div>';
+          els.offersList.innerHTML = '<div class="empty fx-empty"><strong class="fx-empty__title">No request selected</strong><span class="fx-empty__text">Select a request to view offers.</span></div>';
           return;
         }
         if (!list.length) {
-          els.offersList.innerHTML = '<div class="empty"><strong>No offers yet</strong>Offers from matched companies will appear here.</div>';
+          els.offersList.innerHTML = '<div class="empty fx-empty"><strong class="fx-empty__title">No offers yet</strong><span class="fx-empty__text">Offers from matched companies will appear here.</span></div>';
           return;
         }
 
@@ -721,19 +907,19 @@
           const buttonLabel = isAccepting ? "Accepting..." : "Accept Offer";
 
           return (
-            '<article class="card">' +
+            '<article class="card fx-card">' +
               '<div class="card-top">' +
                 '<div>' +
                   "<h4>" + esc(niceText(o.company_name, "Company")) + "</h4>" +
                   '<p>Offer #' + esc(o.id) + " • " + esc(fmtDate(o.created_at)) + "</p>" +
                 "</div>" +
-                '<span class="' + badgeClass(o.status) + '">' + esc(prettyStatus(o.status)) + "</span>" +
+                '<span class="' + badgeClass(o.status) + ' fx-badge fx-badge--neutral">' + esc(prettyStatus(o.status)) + "</span>" +
               "</div>" +
               '<div class="price">' + esc(money(o.price)) + "</div>" +
               '<p>Message: ' + esc(niceText(o.message, "No message provided.")) + "</p>" +
               '<p>Estimated Start: ' + esc(fmtDateOnly(o.estimated_start_date)) + "</p>" +
               '<div class="actions">' +
-                '<button type="button" class="btn primary" data-accept-offer-id="' + esc(o.id) + '" ' + (canAccept ? "" : "disabled") + ">" + esc(buttonLabel) + "</button>" +
+                '<button type="button" class="btn primary fx-btn fx-btn--primary" data-accept-offer-id="' + esc(o.id) + '" ' + (canAccept ? "" : "disabled") + ">" + esc(buttonLabel) + "</button>" +
               "</div>" +
             "</article>"
           );
@@ -900,9 +1086,107 @@
         return payload;
       }
 
+      function getStepFields(step) {
+        if (step === 1) return [document.getElementById("categoryId"), document.getElementById("title")];
+        if (step === 2) return [document.getElementById("address"), document.getElementById("zipCode"), document.getElementById("city")];
+        if (step === 3) return [document.getElementById("requestedDate"), document.getElementById("urgencyLevel")];
+        if (step === 4) return [document.getElementById("description"), document.getElementById("contactConfirm")];
+        return [];
+      }
+
+      function validateStep(step) {
+        var fields = getStepFields(step);
+        var category = document.getElementById("categoryId");
+        var title = document.getElementById("title");
+        var zip = document.getElementById("zipCode");
+        var city = document.getElementById("city");
+        var contactConfirm = document.getElementById("contactConfirm");
+
+        if (step === 1 && (!String(category.value || "").trim() || !String(title.value || "").trim())) {
+          setLine(els.formStatus, "Please select a category and enter service type.", "error");
+          return false;
+        }
+        if (step === 2) {
+          var hasLocation = String(zip.value || "").trim() || String(city.value || "").trim() || String(document.getElementById("address").value || "").trim();
+          if (!hasLocation) {
+            setLine(els.formStatus, "Add at least one location detail (address, zip, or city).", "error");
+            return false;
+          }
+        }
+        if (step === 4 && !contactConfirm.checked) {
+          setLine(els.formStatus, "Please confirm your contact/location details before submitting.", "error");
+          return false;
+        }
+        for (var i = 0; i < fields.length; i += 1) {
+          var field = fields[i];
+          if (!field) continue;
+          if (typeof field.reportValidity === "function" && !field.reportValidity()) return false;
+        }
+        setLine(els.formStatus, "", "");
+        return true;
+      }
+
+      function updateReviewSummary() {
+        if (!els.reviewSummary) return;
+        var categoryId = document.getElementById("categoryId").value;
+        var categoryName = "-";
+        for (var i = 0; i < categories.length; i += 1) {
+          if (String(categories[i].id) === String(categoryId)) {
+            categoryName = categories[i].name || ("Category " + categories[i].id);
+            break;
+          }
+        }
+        var reviewData = [
+          { label: "Category", value: categoryName },
+          { label: "Service Type", value: document.getElementById("title").value || "-" },
+          { label: "Address", value: document.getElementById("address").value || "-" },
+          { label: "City / State", value: ((document.getElementById("city").value || "-") + " / " + (document.getElementById("state").value || "-")) },
+          { label: "Zip", value: document.getElementById("zipCode").value || "-" },
+          { label: "Requested Date", value: document.getElementById("requestedDate").value || "-" },
+          { label: "Requested Time", value: document.getElementById("requestedTime").value || "-" },
+          { label: "Urgency", value: els.urgencyLevel.value || "-" },
+          { label: "Flexible Schedule", value: els.flexibleSchedule.checked ? "Yes" : "No" },
+          { label: "Description", value: document.getElementById("description").value || "-" }
+        ];
+        els.reviewSummary.innerHTML = reviewData.map(function(item) {
+          return '<article class="review-item"><span>' + esc(item.label) + '</span><strong>' + esc(item.value) + "</strong></article>";
+        }).join("");
+      }
+
+      function renderStepFlow() {
+        els.stepPanels.forEach(function(panel, idx) {
+          var step = idx + 1;
+          panel.classList.toggle("active", step === currentStep);
+        });
+        els.stepPills.forEach(function(pill, idx) {
+          if (!pill) return;
+          var step = idx + 1;
+          pill.classList.remove("active", "done");
+          if (step < currentStep) pill.classList.add("done");
+          if (step === currentStep) pill.classList.add("active");
+        });
+        var percent = (currentStep / 4) * 100;
+        els.stepProgressFill.style.width = percent + "%";
+        els.backStepBtn.disabled = currentStep === 1 || state.creatingRequest;
+        els.nextStepBtn.style.display = currentStep === 4 ? "none" : "inline-flex";
+        els.submitRequestBtn.style.display = currentStep === 4 ? "inline-flex" : "none";
+        if (currentStep === 4) updateReviewSummary();
+      }
+
+      function setStep(step) {
+        currentStep = Math.max(1, Math.min(4, Number(step) || 1));
+        renderStepFlow();
+      }
+
       async function handleCreateRequest(event) {
         event.preventDefault();
         if (state.creatingRequest) return;
+        if (currentStep < 4) {
+          if (!validateStep(currentStep)) return;
+          setStep(currentStep + 1);
+          return;
+        }
+        if (!validateStep(4)) return;
 
         const payload = createPayloadFromForm(els.form);
         if (!payload.category_id || !payload.title) {
@@ -922,6 +1206,10 @@
           });
           setLine(els.formStatus, "Request created successfully.", "ok");
           els.form.reset();
+          if (els.flexibleSchedule) els.flexibleSchedule.checked = false;
+          if (els.contactConfirm) els.contactConfirm.checked = false;
+          if (els.urgencyLevel) els.urgencyLevel.value = "";
+          setStep(1);
           await loadRequests(created && created.id ? created.id : null);
         } catch (err) {
           setLine(els.formStatus, err.message || "Unable to create request.", "error");
@@ -956,6 +1244,20 @@
 
       function bindEvents() {
         els.form.addEventListener("submit", handleCreateRequest);
+        els.nextStepBtn.addEventListener("click", function() {
+          if (!validateStep(currentStep)) return;
+          setStep(currentStep + 1);
+        });
+        els.backStepBtn.addEventListener("click", function() {
+          setLine(els.formStatus, "", "");
+          setStep(currentStep - 1);
+        });
+        els.form.addEventListener("input", function() {
+          if (currentStep === 4) updateReviewSummary();
+        });
+        els.form.addEventListener("change", function() {
+          if (currentStep === 4) updateReviewSummary();
+        });
         els.refreshAllBtn.addEventListener("click", function() {
           loadRequests(state.selectedRequestId);
         });
@@ -998,6 +1300,7 @@
         bindEvents();
         await loadCategories();
         setButtonsState();
+        setStep(1);
         renderRequests();
         renderRequestDetails();
         renderMatches();

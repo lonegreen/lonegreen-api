@@ -1,13 +1,22 @@
 const express = require("express");
 const jwt = require("jsonwebtoken");
+const rateLimit = require("express-rate-limit");
 const { SECRET } = require("../config/env");
 const pool = require("../db/pool");
 const auth = require("../middleware/auth");
-const { requireMinimumRole, requirePlatformOwner, getBearerToken, classifyTokenBoundary, normalizeRole } = auth;
+const requireCompanyBillingForMutations = require("../middleware/requireCompanyBillingForMutations");
+const { requireMinimumRole, requirePlatformOwner, getBearerToken, classifyTokenBoundary, normalizeRole, verifyActiveCustomerBearerToken } = auth;
 const { sendSafeServerError } = require("../services/safeServerError");
 const { sendOperationalEmailSafe } = require("../services/emailService");
+const { refreshCompanyReputation } = require("../services/reputationService");
 
 const router = express.Router();
+const companyReportLimiter = rateLimit({
+  windowMs: 10 * 60 * 1000,
+  max: 20,
+  standardHeaders: true,
+  legacyHeaders: false
+});
 
 function queueSafeEmail(payload, options) {
   Promise.resolve()
@@ -185,15 +194,18 @@ async function shapePublicCompany(row) {
     instagram_url: row.instagram_url || "",
     is_verified: row.is_verified === true,
     trust: {
-      verification_status: row.verification_status || "pending",
-      insurance_status: row.insurance_status || "pending",
-      license_status: row.license_status || "pending",
+      verification_status: row.verification_status || "unverified",
+      verified_at: row.verified_at || null,
+      insurance_status: row.insurance_status || "unknown",
+      license_status: row.license_status || "unknown",
+      identity_status: row.identity_status || "unknown",
       insurance_expiry_date: row.insurance_expiry_date || null,
       license_expiry_date: row.license_expiry_date || null,
       insurance_expired: row.insurance_expired === true,
       license_expired: row.license_expired === true
     },
     ranking_score: Number(row.ranking_score || 0),
+    reputation_score: Number(row.reputation_score || 0),
     rating_summary: {
       average_rating: Number(row.average_rating || 0),
       review_count: Number(row.review_count || 0)
@@ -282,6 +294,44 @@ function canReadCompanyPrivateMetadata(req, targetCompanyId) {
   }
 }
 
+async function resolveReportActor(req) {
+  const token = getBearerToken(req && req.headers && req.headers.authorization);
+  if (!token) {
+    return null;
+  }
+  const decoded = jwt.verify(token, SECRET);
+  const boundary = classifyTokenBoundary(decoded);
+  if (boundary.type === "mixed") {
+    return null;
+  }
+  if (boundary.type === "customer") {
+    const active = await verifyActiveCustomerBearerToken(req.headers.authorization);
+    return {
+      reporter_user_id: null,
+      reporter_customer_id: Number(active.customer && active.customer.client_id) || null
+    };
+  }
+  if (boundary.type !== "staff") {
+    return null;
+  }
+  const userId = Number(decoded && decoded.id);
+  const role = normalizeRole(decoded && decoded.role);
+  const companyId = Number(decoded && decoded.company_id);
+  if (!Number.isInteger(userId) || userId <= 0) {
+    return null;
+  }
+  if (!["owner", "admin", "manager", "worker", "platform_owner"].includes(role || "")) {
+    return null;
+  }
+  if (role !== "platform_owner" && (!Number.isInteger(companyId) || companyId <= 0)) {
+    return null;
+  }
+  return {
+    reporter_user_id: userId,
+    reporter_customer_id: null
+  };
+}
+
 router.get("/companies/public", async (req, res) => {
   try {
     const result = await pool.query(
@@ -311,13 +361,17 @@ router.get("/companies/public", async (req, res) => {
         billing_bonus,
         verified_bonus,
         verification_status,
+        verified_at,
         insurance_status,
         license_status,
+        identity_status,
         insurance_expiry_date,
         license_expiry_date,
         insurance_expired,
         license_expired,
         ranking_score
+        ,
+        reputation_score
       FROM (
         SELECT
           c.id,
@@ -344,8 +398,10 @@ router.get("/companies/public", async (req, res) => {
           CASE WHEN c.billing_status IN ('active', 'trialing') OR c.billing_status IS NULL THEN 1 ELSE 0 END::numeric AS billing_bonus,
           CASE WHEN c.is_verified = TRUE THEN 1 ELSE 0 END::numeric AS verified_bonus,
           c.verification_status,
+          c.verified_at,
           c.insurance_status,
           c.license_status,
+          c.identity_status,
           c.insurance_expiry_date,
           c.license_expiry_date,
           CASE
@@ -463,8 +519,10 @@ router.get("/companies/public/search", async (req, res) => {
         COALESCE(rev.average_rating, 0)::numeric AS average_rating,
         COALESCE(rev.review_count, 0)::int AS review_count,
         c.verification_status,
+        c.verified_at,
         c.insurance_status,
         c.license_status,
+        c.identity_status,
         c.insurance_expiry_date,
         c.license_expiry_date,
         CASE
@@ -483,6 +541,8 @@ router.get("/companies/public/search", async (req, res) => {
         0::numeric AS billing_bonus,
         0::numeric AS verified_bonus,
         0::numeric AS ranking_score
+        ,
+        COALESCE(c.reputation_score, 0)::numeric AS reputation_score
       FROM companies c
       LEFT JOIN (
         SELECT
@@ -578,8 +638,10 @@ router.get("/companies/public/:slug", async (req, res) => {
         facebook_url,
         instagram_url,
         verification_status,
+        verified_at,
         insurance_status,
         license_status,
+        identity_status,
         insurance_expiry_date,
         license_expiry_date,
         CASE
@@ -593,6 +655,8 @@ router.get("/companies/public/:slug", async (req, res) => {
         phone,
         email,
         address
+        ,
+        reputation_score
       FROM companies
       WHERE is_public = TRUE
         AND LOWER(public_slug) = LOWER($1)
@@ -626,8 +690,10 @@ router.get("/companies/public/:id/activity", async (req, res) => {
         is_public,
         is_verified,
         verification_status,
+        verified_at,
         insurance_status,
-        license_status
+        license_status,
+        identity_status
       FROM companies
       WHERE id = $1
       LIMIT 1
@@ -714,9 +780,10 @@ router.get("/companies/public/:id/activity", async (req, res) => {
       type: "trust_badge_updated",
       title: "Trust badge status",
       detail: [
-        company.is_verified === true || company.verification_status === "approved" ? "Verified" : null,
-        company.insurance_status === "verified" || company.insurance_status === "approved" ? "Insured" : null,
-        company.license_status === "verified" || company.license_status === "approved" ? "Licensed" : null
+        company.verification_status === "verified" ? "Verified" : null,
+        company.identity_status === "verified" ? "Identity Verified" : null,
+        company.insurance_status === "verified" ? "Insured" : null,
+        company.license_status === "verified" ? "Licensed" : null
       ].filter(Boolean).join(" • ") || "Trust status available",
       occurred_at: null
     });
@@ -736,7 +803,64 @@ router.get("/companies/public/:id/activity", async (req, res) => {
   }
 });
 
-router.put("/companies/public-profile", auth, requireMinimumRole("admin"), async (req, res) => {
+router.post("/companies/:id/report", companyReportLimiter, async (req, res) => {
+  try {
+    const companyId = Number(req.params.id);
+    const reason = cleanText(req.body && req.body.reason).slice(0, 200);
+    const details = cleanText(req.body && req.body.details).slice(0, 4000);
+    if (!Number.isInteger(companyId) || companyId <= 0) {
+      return res.status(400).json({ error: "Invalid company id" });
+    }
+    if (reason.length < 3) {
+      return res.status(400).json({ error: "Reason is required" });
+    }
+    let actor;
+    try {
+      actor = await resolveReportActor(req);
+    } catch (_) {
+      actor = null;
+    }
+    if (!actor) {
+      return res.status(401).json({ error: "Login required to submit a report" });
+    }
+
+    const exists = await pool.query(
+      "SELECT id FROM companies WHERE id = $1 LIMIT 1",
+      [companyId]
+    );
+    if (!exists.rows.length) {
+      return res.status(404).json({ error: "Company not found" });
+    }
+
+    const inserted = await pool.query(
+      `
+      INSERT INTO abuse_reports (
+        reporter_user_id,
+        reporter_customer_id,
+        company_id,
+        target_type,
+        target_id,
+        reason,
+        details
+      )
+      VALUES ($1, $2, $3, 'company', $3, $4, $5)
+      RETURNING id, target_type, target_id, reason, details, status, priority, created_at
+      `,
+      [
+        actor.reporter_user_id,
+        actor.reporter_customer_id,
+        companyId,
+        reason,
+        details || null
+      ]
+    );
+    return res.status(201).json(inserted.rows[0]);
+  } catch (err) {
+    return sendSafeServerError(res, err, "COMPANY REPORT CREATE ERROR");
+  }
+});
+
+router.put("/companies/public-profile", auth, requireCompanyBillingForMutations, requireMinimumRole("admin"), async (req, res) => {
   try {
     const companyId = req.user.company_id;
     if (!companyId) {
@@ -916,7 +1040,7 @@ router.post("/companies/unverify/:companyId", auth, requirePlatformOwner, async 
   }
 });
 
-router.put("/companies/services", auth, requireMinimumRole("admin"), async (req, res) => {
+router.put("/companies/services", auth, requireCompanyBillingForMutations, requireMinimumRole("admin"), async (req, res) => {
   const client = await pool.connect();
   try {
     const companyId = req.user && req.user.company_id;
@@ -1082,7 +1206,7 @@ router.get("/companies/:id/service-areas", async (req, res) => {
   }
 });
 
-router.put("/companies/service-areas", auth, requireMinimumRole("admin"), async (req, res) => {
+router.put("/companies/service-areas", auth, requireCompanyBillingForMutations, requireMinimumRole("admin"), async (req, res) => {
   const client = await pool.connect();
   try {
     const companyId = req.user && req.user.company_id;
@@ -1202,7 +1326,7 @@ router.get("/companies/:id/availability", async (req, res) => {
   }
 });
 
-router.put("/companies/availability", auth, requireMinimumRole("admin"), async (req, res) => {
+router.put("/companies/availability", auth, requireCompanyBillingForMutations, requireMinimumRole("admin"), async (req, res) => {
   const client = await pool.connect();
   try {
     const companyId = req.user && req.user.company_id;
@@ -1295,6 +1419,23 @@ router.put("/companies/availability", auth, requireMinimumRole("admin"), async (
     sendSafeServerError(res, err, "COMPANY AVAILABILITY UPDATE ERROR");
   } finally {
     client.release();
+  }
+});
+
+router.post("/companies/reputation/refresh", auth, requireMinimumRole("admin"), async (req, res) => {
+  try {
+    const companyId = Number(req.user && req.user.company_id);
+    if (!Number.isInteger(companyId) || companyId <= 0) {
+      return res.status(403).json({ error: "Forbidden" });
+    }
+    const refreshed = await refreshCompanyReputation(companyId);
+    return res.json({
+      company_id: companyId,
+      reputation_score: refreshed.score,
+      factors: refreshed.factors
+    });
+  } catch (err) {
+    return sendSafeServerError(res, err, "COMPANY REPUTATION REFRESH ERROR");
   }
 });
 

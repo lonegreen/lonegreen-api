@@ -1,6 +1,6 @@
 const express = require("express");
 const pool = require("../db/pool");
-const { verifyCustomerBearerToken } = require("../middleware/auth");
+const { requireActiveCustomer } = require("../middleware/auth");
 const { sendSafeServerError } = require("../services/safeServerError");
 const {
   resolveCustomerAccountId,
@@ -10,14 +10,8 @@ const {
 
 const router = express.Router();
 
-function customerAuth(req, res, next) {
-  try {
-    req.customer = verifyCustomerBearerToken(req.headers.authorization);
-    return next();
-  } catch (err) {
-    return res.status(err.status || 401).json({ error: err.message || "Invalid customer token" });
-  }
-}
+const customerAuth = requireActiveCustomer;
+
 
 async function getScopedCustomer(req) {
   const accountId = await resolveCustomerAccountId(req.customer);

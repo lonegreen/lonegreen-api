@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FairLinx for Customers | Find Local Services</title>
+  <meta name="description" content="Find trusted local service companies near you with FairLinx." />
+  <link rel="stylesheet" href="/css/brand.css">
+  <style>
+    :root {
+      --bg: #f5f7fb;
+      --surface: #ffffff;
+      --surface-soft: #f8faff;
+      --text: #101828;
+      --muted: #475467;
+      --line: #d0d5dd;
+      --brand: #ff5a00;
+      --brand-dark: #e04d00;
+      --ink: #182230;
+      --shadow: 0 14px 34px rgba(16, 24, 40, 0.08);
+      --radius: 20px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: Inter, Arial, sans-serif; }
+    body { background: var(--bg); color: var(--text); line-height: 1.6; }
+    a { color: inherit; text-decoration: none; }
+    .container { width: min(1140px, calc(100% - 32px)); margin: 0 auto; }
+
+    .navbar {
+      border-bottom: 1px solid rgba(208, 213, 221, 0.9);
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(8px);
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+
+    .nav-inner {
+      min-height: 74px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 22px;
+      font-weight: 900;
+      color: var(--ink);
+    }
+
+    .logo-mark {
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      display: grid;
+      place-items: center;
+      font-size: 14px;
+      font-weight: 900;
+      background: linear-gradient(140deg, #fff0e8, #ffd7bf);
+      border: 1px solid #ffc9a8;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 44px;
+      padding: 10px 16px;
+      border-radius: 999px;
+      border: 1px solid transparent;
+      font-size: 14px;
+      font-weight: 800;
+      cursor: pointer;
+      transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+      white-space: nowrap;
+    }
+
+    .btn-primary {
+      background: linear-gradient(140deg, var(--brand), var(--brand-dark));
+      color: #fff;
+      box-shadow: 0 12px 24px rgba(255, 90, 0, 0.22);
+    }
+
+    .btn-secondary {
+      background: #fff;
+      border-color: var(--line);
+      color: var(--ink);
+    }
+
+    .btn:hover { transform: translateY(-1px); }
+    .btn-secondary:hover { border-color: var(--brand); color: var(--brand); }
+
+    .hero {
+      padding: 100px 0 70px;
+      background:
+        radial-gradient(56% 58% at 0% 0%, rgba(255, 90, 0, 0.14), transparent 66%),
+        radial-gradient(45% 52% at 100% 0%, rgba(24, 34, 48, 0.08), transparent 72%);
+    }
+
+    .hero h1 {
+      font-size: clamp(32px, 5vw, 56px);
+      line-height: 1.08;
+      letter-spacing: -1.1px;
+      margin-bottom: 14px;
+      max-width: 900px;
+    }
+
+    .hero p {
+      font-size: 18px;
+      color: var(--muted);
+      max-width: 860px;
+      margin-bottom: 32px;
+    }
+
+    .cta-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .cta-row .btn-primary {
+      min-height: 48px;
+      font-size: 15px;
+      box-shadow: 0 16px 30px rgba(255, 90, 0, 0.28);
+    }
+
+    section { padding: 64px 0; }
+
+    .section-head h2 {
+      font-size: clamp(26px, 3.8vw, 40px);
+      line-height: 1.2;
+      margin-bottom: 10px;
+      color: var(--ink);
+    }
+
+    .section-head p { color: var(--muted); max-width: 760px; }
+
+    .category-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 14px;
+      margin-top: 24px;
+    }
+
+    .category-card {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 16px;
+      font-weight: 800;
+      color: #1f2937;
+      text-align: center;
+      box-shadow: var(--shadow);
+    }
+
+    .flow-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 14px;
+      margin-top: 24px;
+    }
+
+    .flow-step {
+      background: var(--surface-soft);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 16px;
+      font-weight: 800;
+      text-align: center;
+      color: #1f2937;
+    }
+
+    .trust-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 14px;
+      margin-top: 24px;
+    }
+
+    .trust-card {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 16px;
+      box-shadow: var(--shadow);
+    }
+
+    .trust-card h3 {
+      font-size: 17px;
+      margin-bottom: 6px;
+      color: var(--ink);
+    }
+
+    .trust-card {
+      border-color: #c9d2f0;
+    }
+
+    .trust-card p { font-size: 14px; color: var(--muted); }
+
+    .cta-panel {
+      background: linear-gradient(140deg, #101828, #1d2939);
+      border: 1px solid #344054;
+      border-radius: var(--radius);
+      color: #f2f4f7;
+      padding: 26px;
+      margin-top: 10px;
+    }
+
+    .cta-panel h2 {
+      font-size: clamp(26px, 4vw, 36px);
+      line-height: 1.2;
+      margin-bottom: 10px;
+    }
+
+    .cta-panel p { color: #d0d5dd; margin-bottom: 16px; }
+
+    footer {
+      background: #101828;
+      border-top: 1px solid #344054;
+      color: #f2f4f7;
+      padding: 28px 0;
+      margin-top: 30px;
+    }
+
+    .footer-inner {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+    }
+
+    .footer-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 14px;
+      font-size: 14px;
+      font-weight: 700;
+      color: #d0d5dd;
+    }
+
+    .footer-links a:hover { color: #ffffff; }
+
+    @media (max-width: 980px) {
+      .category-grid,
+      .flow-grid,
+      .trust-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+
+    @media (max-width: 760px) {
+      .container { width: min(1140px, calc(100% - 24px)); }
+      .nav-inner { padding: 14px 0; }
+      .cta-row .btn { width: 100%; }
+      .category-grid,
+      .flow-grid,
+      .trust-grid { grid-template-columns: 1fr; }
+      section { padding: 48px 0; }
+      .hero { padding: 68px 0 44px; }
+    }
+  </style>
+</head>
+<body>
+  <header class="navbar">
+    <div class="container nav-inner">
+      <a href="/" class="logo" aria-label="FairLinx Home">
+        <span class="logo-mark">FL</span>
+        <span>FairLinx</span>
+      </a>
+      <a class="btn btn-secondary" href="/for-companies.html">For Companies</a>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="container">
+        <h1>Find trusted local service companies near you.</h1>
+        <p>Discover home and local services, request the work you need, and choose providers with clear reviews and service coverage.</p>
+        <div class="cta-row">
+          <a class="btn btn-primary" href="/discover.html">Find Services</a>
+          <a class="btn btn-secondary" href="/marketplace.html">Request Service</a>
+          <a class="btn btn-secondary" href="/customer-signup.html">Customer Signup</a>
+          <a class="btn btn-secondary" href="/customer-login-v2.html">Customer Login</a>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="container">
+        <div class="section-head">
+          <h2>Service categories</h2>
+          <p>Find local service businesses for everyday home and local services.</p>
+        </div>
+        <div class="category-grid" aria-label="Service categories">
+          <article class="category-card">Cleaning</article>
+          <article class="category-card">Plumbing</article>
+          <article class="category-card">HVAC</article>
+          <article class="category-card">Electrical</article>
+          <article class="category-card">Landscaping</article>
+          <article class="category-card">Moving</article>
+          <article class="category-card">Repairs</article>
+          <article class="category-card">Pressure Washing</article>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="container">
+        <div class="section-head">
+          <h2>How it works</h2>
+          <p>Get from request to booked work in a simple customer flow.</p>
+        </div>
+        <div class="flow-grid" aria-label="Customer workflow">
+          <div class="flow-step">Request service</div>
+          <div class="flow-step">Get offers</div>
+          <div class="flow-step">Choose company</div>
+          <div class="flow-step">Book work</div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="container">
+        <div class="section-head">
+          <h2>Trust signals</h2>
+          <p>Choose with confidence based on quality, coverage, and responsiveness.</p>
+        </div>
+        <div class="trust-grid">
+          <article class="trust-card"><h3>Reviews</h3><p>Compare service experiences from real local customers.</p></article>
+          <article class="trust-card"><h3>Verified companies</h3><p>Browse service companies with completed profile details and active presence.</p></article>
+          <article class="trust-card"><h3>Service areas</h3><p>See whether companies operate in your neighborhood before you request.</p></article>
+          <article class="trust-card"><h3>Response time</h3><p>Find providers that can answer quickly and move your request forward.</p></article>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="container">
+        <div class="cta-panel">
+          <h2>Start your request today</h2>
+          <p>FairLinx helps customers connect to trusted local service companies without the usual back and forth.</p>
+          <div class="cta-row">
+            <a class="btn btn-primary" href="/discover.html">Find Services</a>
+            <a class="btn btn-secondary" href="/marketplace.html">Request Service</a>
+            <a class="btn btn-secondary" href="/customer-signup.html">Customer Signup</a>
+            <a class="btn btn-secondary" href="/customer-login-v2.html">Customer Login</a>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="container footer-inner">
+      <a href="/" class="logo" style="color:#ffffff;">
+        <span class="logo-mark">FL</span>
+        <span>FairLinx</span>
+      </a>
+      <nav class="footer-links" aria-label="Footer links">
+        <a href="/for-customers.html">For Customers</a>
+        <a href="/for-companies.html">For Companies</a>
+        <a href="/discover.html">Find Services</a>
+        <a href="/marketplace.html">Request Service</a>
+        <a href="/customer-login-v2.html">Customer Login</a>
+        <a href="/login.html">Company Login</a>
+        <a href="/company-signup.html">Company Signup</a>
+        <a href="/terms.html">Terms</a>
+        <a href="/privacy.html">Privacy</a>
+      </nav>
+    </div>
+  </footer>
+</body>
+</html>

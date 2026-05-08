@@ -12,6 +12,8 @@
     .hero { display:flex; justify-content:space-between; gap:14px; align-items:flex-end; flex-wrap:wrap; }
     .customer-nav { display:flex; flex-wrap:wrap; gap:8px; margin-top:8px; }
     .customer-nav a { border:1px solid var(--brand-border); background:white; color:var(--brand-primary); border-radius:999px; padding:8px 12px; font-size:13px; font-weight:800; text-decoration:none; }
+    .marketplace-hub { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:10px; }
+    .marketplace-hub a { border:1px solid var(--brand-border); background:white; color:var(--brand-primary); border-radius:14px; padding:12px; font-size:14px; font-weight:900; text-decoration:none; text-align:center; }
     h1 { margin:0 0 6px; color:var(--brand-primary); font-size:32px; }
     p { margin:0; color:#648076; }
     .tabs { display:flex; flex-wrap:wrap; gap:8px; }
@@ -97,12 +99,12 @@
       .customer-invoice-sheet { box-shadow:none !important; border:none !important; border-radius:0 !important; padding:16px !important; }
       .inv-table-wrap { border:none; }
     }
-    @media (max-width:820px){ body{padding:12px;} .grid{grid-template-columns:1fr;} }
+    @media (max-width:820px){ body{padding:12px;} .grid,.marketplace-hub{grid-template-columns:1fr;} }
   </style>
 </head>
 <body>
-<div class="page">
-  <div class="hero no-print">
+<div class="page fx-layout-public">
+  <div class="hero no-print fx-hero fx-section-head">
     <div>
       <h1>Customer Portal</h1>
       <p id="welcome">Loading...</p>
@@ -115,31 +117,37 @@
         <a href="#" data-customer-action="logout">Logout</a>
       </nav>
     </div>
-    <button type="button" class="btn gray" data-customer-action="logout">Log Out</button>
   </div>
-  <div class="panel no-print" id="companyBox">Loading company contact...</div>
+  <div class="panel no-print fx-card" id="companyBox">Loading company contact...</div>
+  <div class="marketplace-hub no-print" aria-label="Marketplace actions">
+    <a href="/discover.html">Find Services</a>
+    <a href="/marketplace.html?action=create">Request Service</a>
+    <a href="/marketplace.html">My Requests</a>
+    <a href="#" data-customer-tab-link="offers">Offers</a>
+    <a href="/messages.html">Messages</a>
+  </div>
   <div class="tabs no-print" id="customerPortalTabs">
-    <button type="button" class="tab active" data-customer-tab="overview">Overview</button>
-    <button type="button" class="tab" data-customer-tab="estimates">Estimates</button>
-    <button type="button" class="tab" data-customer-tab="invoices">Invoices</button>
-    <button type="button" class="tab" data-customer-tab="jobs">Jobs</button>
-    <button type="button" class="tab" data-customer-tab="offers">Offers</button>
-    <button type="button" class="tab" data-customer-tab="subscriptions">Subscriptions</button>
-    <button type="button" class="tab" data-customer-tab="serviceRequest">Service Request</button>
+    <button type="button" class="tab fx-badge fx-badge--info active" data-customer-tab="overview">Overview</button>
+    <button type="button" class="tab fx-badge fx-badge--neutral" data-customer-tab="estimates">Estimates</button>
+    <button type="button" class="tab fx-badge fx-badge--neutral" data-customer-tab="invoices">Invoices</button>
+    <button type="button" class="tab fx-badge fx-badge--neutral" data-customer-tab="jobs">Jobs</button>
+    <button type="button" class="tab fx-badge fx-badge--neutral" data-customer-tab="offers">Offers</button>
+    <button type="button" class="tab fx-badge fx-badge--neutral" data-customer-tab="subscriptions">Subscriptions</button>
+    <button type="button" class="tab fx-badge fx-badge--neutral" data-customer-tab="serviceRequest">Service Request</button>
   </div>
   <div id="overview" class="section active no-print"></div>
   <div id="estimates" class="section no-print"></div>
   <div id="invoices" class="section no-print">
     <div id="invoiceListHost"></div>
     <div id="invoiceDetailSection" class="invoice-detail-wrap hidden">
-      <div class="panel invoice-detail-toolbar no-print">
-        <button type="button" class="btn gray sm" data-customer-action="close-invoice-detail">← Back to invoices</button>
+      <div class="panel invoice-detail-toolbar no-print fx-toolbar">
+        <button type="button" class="btn gray sm fx-btn fx-btn--secondary" data-customer-action="close-invoice-detail">← Back to invoices</button>
         <div class="invoice-detail-actions">
-          <button type="button" class="btn gray sm" data-customer-action="print-invoice-detail">Print / Save as PDF</button>
-          <button type="button" class="btn sm" data-customer-action="download-current-invoice-pdf">Download PDF</button>
+          <button type="button" class="btn gray sm fx-btn fx-btn--secondary" data-customer-action="print-invoice-detail">Print / Save as PDF</button>
+          <button type="button" class="btn sm fx-btn fx-btn--primary" data-customer-action="download-current-invoice-pdf">Download PDF</button>
         </div>
       </div>
-      <div id="invoiceDetailBody" class="customer-invoice-sheet panel"></div>
+      <div id="invoiceDetailBody" class="customer-invoice-sheet panel fx-card"></div>
     </div>
   </div>
   <div id="jobs" class="section no-print"></div>
@@ -154,6 +162,8 @@ const API = window.location.origin;
 let state = null;
 let currentInvoiceId = null;
 let marketplaceRequests = [];
+let customerNotifications = [];
+let customerUnreadNotifications = 0;
 
 function token(){ return localStorage.getItem("customerToken"); }
 function headers(){ return { Authorization: "Bearer " + token() }; }
@@ -161,23 +171,47 @@ function esc(v){ return AppFormat.escapeHtml(v || ""); }
 function money(v){ return AppFormat.formatMoney(v || 0); }
 function date(v){ return v ? String(v).split("T")[0] : "-"; }
 
-function logout(){ localStorage.removeItem("customerToken"); localStorage.removeItem("customer"); window.location.href="/customer-login-v2.html"; }
+function clearCustomerSession(){
+  localStorage.removeItem("token");
+  localStorage.removeItem("customerToken");
+  localStorage.removeItem("user");
+  localStorage.removeItem("currentPage");
+  localStorage.removeItem("customer");
+}
+
+function logout(){
+  clearCustomerSession();
+  window.location.href="/";
+}
+
+function redirectCustomerLogin(){
+  clearCustomerSession();
+  window.location.href="/customer-login-v2.html";
+}
 
 async function customerFetch(url, options){
   const res = await fetch(url, Object.assign({}, options || {}, { headers: Object.assign({}, (options && options.headers) || {}, headers()) }));
-  if(res.status === 401 || res.status === 403){ logout(); throw new Error("Unauthorized"); }
+  if(res.status === 401 || res.status === 403){ redirectCustomerLogin(); throw new Error("Unauthorized"); }
   return res;
 }
 
 function showTab(id, button){
   document.querySelectorAll(".section").forEach(item => item.classList.toggle("active", item.id === id));
-  document.querySelectorAll(".tab").forEach(item => item.classList.remove("active"));
-  if(button) button.classList.add("active");
+  document.querySelectorAll(".tab").forEach(function(item){
+    item.classList.remove("active", "fx-badge--info");
+    if(!item.classList.contains("fx-badge")) item.classList.add("fx-badge");
+    if(!item.classList.contains("fx-badge--neutral")) item.classList.add("fx-badge--neutral");
+  });
+  if(button){
+    button.classList.add("active");
+    button.classList.remove("fx-badge--neutral");
+    button.classList.add("fx-badge--info");
+  }
 }
 
 function card(title, lines, status, actions){
-  return '<div class="card"><div class="card-title">' + esc(title) + '</div>' +
-    (status ? '<span class="status">' + esc(status) + '</span>' : '') +
+  return '<div class="card fx-card"><div class="card-title">' + esc(title) + '</div>' +
+    (status ? '<span class="status fx-badge fx-badge--neutral">' + esc(status) + '</span>' : '') +
     lines.map(line => '<div class="muted">' + line + '</div>').join('') +
     (actions ? '<div class="actions">' + actions + '</div>' : '') + '</div>';
 }
@@ -232,11 +266,62 @@ function renderOverview(){
   }).length;
   document.getElementById("overview").innerHTML =
     '<div class="panel"><strong>Account</strong><br>' + esc(client.name || "") + '<br>' + esc(client.phone || "") + '<br>' + esc(client.address || "") + '<br>' + esc(client.zip || "") + '</div>' +
+    '<div class="panel"><strong>Notifications</strong><br><span class="muted">Unread: ' + esc(String(customerUnreadNotifications)) + '</span><div id="customerNotificationsPanel" style="display:grid;gap:8px;margin-top:10px;"></div></div>' +
     '<div class="grid">' +
     card("Upcoming Jobs", [String((state.upcoming_jobs || []).length)], "", "") +
     card("Open Invoices", [String(openCount)], "", "") +
     card("Active Subscriptions", [String((state.subscriptions || []).filter(function(s){ return s.status === "active"; }).length)], "", "") +
     '</div>';
+  renderNotificationsPanel();
+}
+
+function renderNotificationsPanel(){
+  const host = document.getElementById("customerNotificationsPanel");
+  if(!host) return;
+  if(!customerNotifications.length){
+    host.innerHTML = '<div class="muted">No notifications yet.</div>';
+    return;
+  }
+  host.innerHTML = customerNotifications.slice(0,5).map(function(item){
+    const read = item && item.is_read === true;
+    const title = esc(item && item.title ? item.title : "Notification");
+    const body = esc(item && item.body ? item.body : "");
+    const id = Number(item && item.id);
+    return '<div class="card" style="padding:10px;">' +
+      '<div class="card-title" style="font-size:14px;">' + title + (read ? '' : ' <span class="status">Unread</span>') + '</div>' +
+      '<div class="muted">' + body + '</div>' +
+      '<div class="actions">' + (read ? '' : '<button type="button" class="btn gray sm" data-customer-action="mark-notification-read" data-customer-notification-id="' + id + '">Mark read</button>') + '</div>' +
+    '</div>';
+  }).join("");
+}
+
+async function loadNotifications(){
+  try {
+    const res = await customerFetch(API + "/customer/notifications");
+    const payload = await res.json();
+    if(!res.ok){
+      customerNotifications = [];
+      customerUnreadNotifications = 0;
+      return;
+    }
+    customerNotifications = Array.isArray(payload.notifications) ? payload.notifications : [];
+    customerUnreadNotifications = Number(payload.unread_count || 0);
+  } catch (_) {
+    customerNotifications = [];
+    customerUnreadNotifications = 0;
+  }
+}
+
+async function markNotificationRead(id){
+  const notificationId = Number(id);
+  if(!notificationId) return;
+  const res = await customerFetch(API + "/customer/notifications/" + encodeURIComponent(notificationId) + "/read", { method: "PATCH" });
+  const data = await res.json();
+  if(!res.ok){
+    AppUI.showToast(data.error || "Unable to mark notification as read.", "error");
+    return;
+  }
+  await load();
 }
 
 function renderEstimates(){
@@ -249,7 +334,7 @@ function renderEstimates(){
       item.status,
       decisionButtons + '<button type="button" class="btn gray" data-customer-action="download-pdf" data-customer-pdf-path="/customer/estimates/' + item.id + '/pdf" data-customer-pdf-file="estimate-' + item.id + '.pdf">Download PDF</button>'
     );
-  }).join("") : '<div class="panel empty-panel"><strong>No estimates yet</strong>Your estimates will appear here when available.</div>';
+  }).join("") : '<div class="panel empty-panel fx-empty"><strong class="fx-empty__title">No estimates yet</strong><span class="fx-empty__text">Your estimates will appear here when available.</span></div>';
 }
 
 function renderInvoices(){
@@ -257,7 +342,7 @@ function renderInvoices(){
   const host = document.getElementById("invoiceListHost");
   if(!host) return;
   if(!items.length){
-    host.innerHTML = '<div class="panel empty-panel"><strong>No invoices yet</strong>When your provider sends an invoice, it will show up here.</div>';
+    host.innerHTML = '<div class="panel empty-panel fx-empty"><strong class="fx-empty__title">No invoices yet</strong><span class="fx-empty__text">When your provider sends an invoice, it will show up here.</span></div>';
     return;
   }
   host.innerHTML =
@@ -426,9 +511,9 @@ function renderJobs(){
   const history = state.job_history || [];
   document.getElementById("jobs").innerHTML =
     '<div class="panel"><strong>Upcoming Jobs</strong></div>' +
-    (upcoming.length ? upcoming.map(function(item){ return card(item.service || "Job", ["Date: " + date(item.date), "Time: " + (item.start_time || "") + " - " + (item.end_time || ""), "Worker: " + esc(item.worker_name || "TBD")], item.status, ""); }).join("") : '<div class="panel empty-panel"><strong>No upcoming jobs</strong>Scheduled visits will appear here.</div>') +
+    (upcoming.length ? upcoming.map(function(item){ return card(item.service || "Job", ["Date: " + date(item.date), "Time: " + (item.start_time || "") + " - " + (item.end_time || ""), "Worker: " + esc(item.worker_name || "TBD")], item.status, ""); }).join("") : '<div class="panel empty-panel fx-empty"><strong class="fx-empty__title">No upcoming jobs</strong><span class="fx-empty__text">Scheduled visits will appear here.</span></div>') +
     '<div class="panel"><strong>Job History</strong></div>' +
-    (history.length ? history.map(function(item){ return card(item.service || "Job", ["Date: " + date(item.date), "Time: " + (item.start_time || "") + " - " + (item.end_time || "")], item.status, ""); }).join("") : '<div class="panel empty-panel"><strong>No job history yet</strong>Past jobs will show here.</div>');
+    (history.length ? history.map(function(item){ return card(item.service || "Job", ["Date: " + date(item.date), "Time: " + (item.start_time || "") + " - " + (item.end_time || "")], item.status, ""); }).join("") : '<div class="panel empty-panel fx-empty"><strong class="fx-empty__title">No job history yet</strong><span class="fx-empty__text">Past jobs will show here.</span></div>');
 }
 
 function renderOffers(){
@@ -449,16 +534,16 @@ function renderSubscriptions(){
     ["Frequency: " + esc(item.frequency || ""), "Next Visit: " + date(item.next_date), "Price: " + money(item.price), "Worker: " + esc(item.worker_name || "TBD")],
     item.status,
     ""
-  ); }).join("") : '<div class="panel empty-panel"><strong>No subscriptions yet</strong>Active plans will appear here.</div>';
+  ); }).join("") : '<div class="panel empty-panel fx-empty"><strong class="fx-empty__title">No subscriptions yet</strong><span class="fx-empty__text">Active plans will appear here.</span></div>';
 }
 
 function renderServiceRequest(){
   document.getElementById("serviceRequest").innerHTML =
-    '<div class="panel"><form class="form-grid" id="customerServiceRequestForm">' +
-    '<label>Service<input id="requestService" required placeholder="What service do you need?"></label>' +
-    '<label>Preferred Date<input id="requestDate" type="date"></label>' +
-    '<label>Notes<textarea id="requestNotes" placeholder="Add helpful details"></textarea></label>' +
-    '<div class="actions"><button class="btn" type="submit">Send Request</button></div>' +
+    '<div class="panel fx-card"><form class="form-grid" id="customerServiceRequestForm">' +
+    '<label class="fx-field">Service<input class="fx-input" id="requestService" required placeholder="What service do you need?"></label>' +
+    '<label class="fx-field">Preferred Date<input class="fx-input" id="requestDate" type="date"></label>' +
+    '<label class="fx-field">Notes<textarea class="fx-textarea" id="requestNotes" placeholder="Add helpful details"></textarea></label>' +
+    '<div class="actions"><button class="btn fx-btn fx-btn--primary" type="submit">Send Request</button></div>' +
     '</form></div>';
   const form = document.getElementById("customerServiceRequestForm");
   if(form) form.addEventListener("submit", submitServiceRequest);
@@ -520,10 +605,14 @@ async function submitServiceRequest(event){
 }
 
 async function load(){
-  if(!token()){ window.location.href = "/customer-login-v2.html"; return; }
+  if(!token()){ redirectCustomerLogin(); return; }
   AppUI.setLoading(true, "Loading portal...");
   try {
-    const res = await customerFetch(API + "/customer/dashboard");
+    const [dashboardRes, notificationsRes] = await Promise.all([
+      customerFetch(API + "/customer/dashboard"),
+      loadNotifications()
+    ]);
+    const res = dashboardRes;
     state = await res.json();
     if(!res.ok){
       AppUI.showToast(state.error || "Unable to load portal.", "error");
@@ -549,6 +638,15 @@ document.getElementById("customerPortalTabs").addEventListener("click", function
     closeInvoiceDetail();
   }
   showTab(tabId, tab);
+});
+
+document.querySelectorAll("[data-customer-tab-link]").forEach(function(link){
+  link.addEventListener("click", function(ev){
+    ev.preventDefault();
+    const tabId = link.getAttribute("data-customer-tab-link");
+    const tab = document.querySelector('[data-customer-tab="' + tabId + '"]');
+    if(tab) showTab(tabId, tab);
+  });
 });
 
 document.querySelector(".page").addEventListener("click", function(ev){
@@ -593,6 +691,10 @@ document.querySelector(".page").addEventListener("click", function(ev){
       return;
     }
     void downloadPdf("/customer/invoices/" + encodeURIComponent(currentInvoiceId) + "/pdf", "invoice-" + currentInvoiceId + ".pdf");
+    return;
+  }
+  if(action === "mark-notification-read"){
+    void markNotificationRead(btn.getAttribute("data-customer-notification-id"));
   }
 });
 

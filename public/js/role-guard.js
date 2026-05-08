@@ -125,6 +125,7 @@
 
   if (!token || !user || !role) {
     localStorage.removeItem("token");
+    localStorage.removeItem("customerToken");
     localStorage.removeItem("user");
     localStorage.removeItem("currentPage");
     redirectLogin();

@@ -12,13 +12,13 @@
       margin: 0;
       min-height: 100vh;
       background:
-        radial-gradient(circle at top left, rgba(46, 125, 50, 0.32), transparent 35%),
-        linear-gradient(135deg, #071b12, var(--brand-dark) 48%, #123f28);
+        radial-gradient(circle at top left, rgba(255, 138, 51, 0.26), transparent 35%),
+        linear-gradient(135deg, #181818, #242424 48%, #2d2d2d);
       display: flex;
       align-items: center;
       justify-content: center;
       padding: 24px;
-      color: #102016;
+      color: #23262c;
     }
     .page {
       width: 100%;
@@ -44,7 +44,7 @@
       width: 290px;
       height: 290px;
       border-radius: 999px;
-      background: rgba(80, 200, 120, 0.18);
+      background: rgba(255, 138, 51, 0.18);
       right: -100px;
       bottom: -95px;
     }
@@ -60,12 +60,12 @@
       width: 46px;
       height: 46px;
       border-radius: 15px;
-      background: linear-gradient(135deg, #38b66b, #d7f7df);
-      color: var(--brand-dark);
+      background: linear-gradient(135deg, #ff8a33, #ffd7bf);
+      color: var(--brand-black);
       display: grid;
       place-items: center;
       font-size: 22px;
-      box-shadow: 0 10px 30px rgba(56,182,107,0.35);
+      box-shadow: 0 10px 30px rgba(230,74,0,0.28);
     }
     .brand-panel h1 {
       margin: 0 0 18px;
@@ -98,7 +98,7 @@
     .stat strong { display: block; font-size: 20px; margin-bottom: 4px; }
     .stat span { font-size: 12px; color: rgba(255,255,255,0.72); }
     .auth-panel {
-      background: #f8fbf8;
+      background: #f8f8f8;
       padding: 42px;
       display: flex;
       align-items: center;
@@ -107,7 +107,7 @@
     .auth-card { width: 100%; max-width: 470px; }
     .mobile-logo {
       display: none;
-      color: #143c27;
+      color: #2a2d33;
       margin-bottom: 24px;
     }
     .auth-header { margin-bottom: 22px; }
@@ -115,7 +115,7 @@
       margin: 0 0 8px;
       font-size: 30px;
       letter-spacing: 0;
-      color: #0f2418;
+      color: #23262c;
     }
     .auth-header p {
       margin: 0;
@@ -130,7 +130,7 @@
     }
     .field { display: grid; gap: 7px; text-align: left; }
     .field.full { grid-column: 1 / -1; }
-    label { font-size: 13px; font-weight: 700; color: #1f3528; }
+    label { font-size: 13px; font-weight: 700; color: #3a3f48; }
     input {
       width: 100%;
       padding: 14px;
@@ -143,8 +143,8 @@
       color: var(--brand-black);
     }
     input:focus {
-      border-color: #2c8b55;
-      box-shadow: 0 0 0 4px rgba(44,139,85,0.12);
+      border-color: rgba(255,90,0,0.5);
+      box-shadow: 0 0 0 4px rgba(255,90,0,0.12);
     }
     .actions {
       display: flex;
@@ -155,7 +155,7 @@
       flex-wrap: wrap;
     }
     .link {
-      color: #1f6f42;
+      color: var(--brand-primary);
       font-weight: 800;
       text-decoration: none;
     }
@@ -170,10 +170,10 @@
       font-weight: 800;
       cursor: pointer;
       transition: 0.18s ease;
-      box-shadow: 0 12px 28px rgba(31,92,58,0.22);
+      box-shadow: 0 12px 28px rgba(230,74,0,0.2);
       min-width: 170px;
     }
-    .btn:hover { transform: translateY(-1px); box-shadow: 0 16px 34px rgba(31,92,58,0.28); }
+    .btn:hover { transform: translateY(-1px); box-shadow: 0 16px 34px rgba(230,74,0,0.26); }
     .btn:disabled { cursor: not-allowed; opacity: 0.65; transform: none; }
     .status {
       min-height: 22px;
@@ -182,7 +182,7 @@
       line-height: 1.45;
       color: #5f6e66;
     }
-    .status.success { color: #027a48; font-weight: 700; }
+    .status.success { color: var(--brand-primary-hover); font-weight: 700; }
     .status.error { color: #b42318; font-weight: 700; }
     @media (max-width: 980px) {
       .page { grid-template-columns: 1fr; }
@@ -201,8 +201,8 @@
   </style>
 </head>
 <body>
-  <main class="page">
-    <section class="brand-panel">
+  <main class="page fx-layout-public">
+    <section class="brand-panel fx-card">
       <div class="brand-logo">
         <div class="brand-mark">LG</div>
         <span>FairLinx</span>
@@ -210,13 +210,13 @@
       <h1>Create your customer portal account.</h1>
       <p>Use one secure customer login to manage profile details and access your service history as the portal grows.</p>
       <div class="brand-stats">
-        <div class="stat"><strong>Secure</strong><span>Email-based access</span></div>
-        <div class="stat"><strong>Simple</strong><span>Clean customer profile</span></div>
-        <div class="stat"><strong>Connected</strong><span>Ready for portal data</span></div>
+        <div class="stat fx-stat"><strong class="fx-stat__value">Secure</strong><span class="fx-stat__label">Email-based access</span></div>
+        <div class="stat fx-stat"><strong class="fx-stat__value">Simple</strong><span class="fx-stat__label">Clean customer profile</span></div>
+        <div class="stat fx-stat"><strong class="fx-stat__value">Connected</strong><span class="fx-stat__label">Ready for portal data</span></div>
       </div>
     </section>
 
-    <section class="auth-panel">
+    <section class="auth-panel fx-card">
       <div class="auth-card">
         <div class="mobile-logo">
           <div class="brand-mark">LG</div>
@@ -230,20 +230,20 @@
           </div>
 
           <div class="form-grid">
-            <label class="field">First Name <input id="firstName" autocomplete="given-name" required></label>
-            <label class="field">Last Name <input id="lastName" autocomplete="family-name" required></label>
-            <label class="field full">Email <input id="email" type="email" autocomplete="email" required></label>
-            <label class="field full">Phone <input id="phone" type="tel" autocomplete="tel" required></label>
-            <label class="field">Password <input id="password" type="password" autocomplete="new-password" minlength="8" required></label>
-            <label class="field">Confirm Password <input id="confirmPassword" type="password" autocomplete="new-password" minlength="8" required></label>
+            <label class="field fx-field">First Name <input id="firstName" class="fx-input" autocomplete="given-name" required></label>
+            <label class="field fx-field">Last Name <input id="lastName" class="fx-input" autocomplete="family-name" required></label>
+            <label class="field full fx-field">Email <input id="email" class="fx-input" type="email" autocomplete="email" required></label>
+            <label class="field full fx-field">Phone <input id="phone" class="fx-input" type="tel" autocomplete="tel" required></label>
+            <label class="field fx-field">Password <input id="password" class="fx-input" type="password" autocomplete="new-password" minlength="8" required></label>
+            <label class="field fx-field">Confirm Password <input id="confirmPassword" class="fx-input" type="password" autocomplete="new-password" minlength="8" required></label>
           </div>
 
           <div class="actions">
             <a class="link" href="/customer-login-v2.html">Already have an account?</a>
-            <button id="submitBtn" class="btn" type="submit">Create Account</button>
+            <button id="submitBtn" class="btn fx-btn fx-btn--primary" type="submit">Create Account</button>
           </div>
 
-          <div id="status" class="status" role="status" aria-live="polite"></div>
+          <div id="status" class="status fx-alert" role="status" aria-live="polite"></div>
         </form>
       </div>
     </section>

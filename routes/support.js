@@ -43,7 +43,7 @@ const ALLOWED_STATUSES = new Set([
   "pending" // legacy compatibility
 ]);
 const COMPANY_SETTABLE_STATUSES = new Set(["open", "closed"]);
-const ALLOWED_PRIORITIES = new Set(["low", "normal", "high", "urgent"]);
+const ALLOWED_PRIORITIES = new Set(["low", "medium", "high", "urgent", "normal"]); // normal = legacy compatibility
 const ALLOWED_CATEGORIES = new Set([
   "general", "billing", "bug", "feature_request", "account", "marketplace"
 ]);
@@ -53,6 +53,10 @@ const ALLOWED_SENDER_ROLES = new Set([
 
 const SUBJECT_MAX = 200;
 const MESSAGE_MAX = 5000;
+const SUPPORT_ATTACHMENT_MAX_BYTES = 10 * 1024 * 1024; // frontend should enforce, backend validates when provided
+const ALLOWED_ATTACHMENT_EXTS = new Set([
+  ".png", ".jpg", ".jpeg", ".gif", ".webp", ".pdf"
+]);
 
 /* Per-route mutation limiter (in addition to global apiLimiter). Keeps a single
  * actor from spamming new tickets / replies. Matches the cadence used by other
@@ -87,19 +91,108 @@ function sanitizeTextField(value, maxLen) {
   return trimmed.length > maxLen ? trimmed.slice(0, maxLen) : trimmed;
 }
 
+function supportR2PublicBaseUrl() {
+  return String(process.env.R2_PUBLIC_BASE_URL || "").trim().replace(/\/+$/, "");
+}
+
+function hasUnsafeSupportAttachmentPath(pathOrKey) {
+  const raw = String(pathOrKey || "");
+  if (!raw || raw.includes("\\") || raw.includes("\u0000")) {
+    return true;
+  }
+  try {
+    const decoded = decodeURIComponent(raw);
+    return decoded.split("/").some((part) => part === "..");
+  } catch {
+    return true;
+  }
+}
+
+function isAllowedSupportAttachmentUrl(fileUrl) {
+  const raw = sanitizeTextField(fileUrl, 2000);
+  if (!raw) {
+    return false;
+  }
+
+  if (raw.startsWith("/uploads/")) {
+    return !hasUnsafeSupportAttachmentPath(raw.slice("/uploads/".length));
+  }
+
+  const r2Base = supportR2PublicBaseUrl();
+  if (!r2Base || !raw.startsWith(`${r2Base}/`)) {
+    return false;
+  }
+
+  const key = raw.slice(r2Base.length + 1);
+  if (hasUnsafeSupportAttachmentPath(key)) {
+    return false;
+  }
+
+  try {
+    const base = new URL(r2Base);
+    const url = new URL(raw);
+    return url.origin === base.origin && url.href.startsWith(`${base.href.replace(/\/+$/, "")}/`);
+  } catch {
+    return false;
+  }
+}
+
 function parseTicketId(value) {
   const id = Number(value);
   return Number.isInteger(id) && id > 0 ? id : null;
 }
 
+function normalizeSupportStatus(value) {
+  const clean = sanitizeTextField(value, 24).toLowerCase();
+  if (clean === "pending") return "open"; // legacy status treated as open lifecycle state
+  return clean;
+}
+
+function isValidStatusTransition(currentRaw, nextRaw) {
+  const current = normalizeSupportStatus(currentRaw);
+  const next = normalizeSupportStatus(nextRaw);
+  if (!ALLOWED_STATUSES.has(nextRaw) && !ALLOWED_STATUSES.has(next)) return false;
+  if (current === next) return true;
+  const transitions = {
+    open: new Set(["in_progress", "waiting_customer", "resolved", "closed"]),
+    in_progress: new Set(["waiting_customer", "resolved", "closed"]),
+    waiting_customer: new Set(["in_progress", "resolved", "closed"]),
+    resolved: new Set(["closed", "in_progress", "waiting_customer"]),
+    closed: new Set(["open"])
+  };
+  return !!(transitions[current] && transitions[current].has(next));
+}
+
+function normalizePriority(value) {
+  const clean = sanitizeTextField(value, 16).toLowerCase();
+  if (clean === "normal") return "medium"; // legacy compatibility
+  return clean;
+}
+
 function sanitizeAttachmentList(value) {
   if (!Array.isArray(value)) return [];
+  function hasAllowedFileType(fileName, fileUrl) {
+    const lowerName = String(fileName || "").toLowerCase();
+    const lowerUrl = String(fileUrl || "").toLowerCase().split("?")[0];
+    const extMatch = Array.from(ALLOWED_ATTACHMENT_EXTS).some((ext) => (
+      lowerName.endsWith(ext) || lowerUrl.endsWith(ext)
+    ));
+    return extMatch;
+  }
   return value
     .map((item) => ({
       file_url: sanitizeTextField(item && item.file_url, 2000),
-      file_name: sanitizeTextField(item && item.file_name, 255)
+      file_name: sanitizeTextField(item && item.file_name, 255),
+      file_size: Number(item && item.file_size || 0)
     }))
-    .filter((item) => item.file_url && item.file_name)
+    .filter((item) => (
+      item.file_url &&
+      item.file_name &&
+      isAllowedSupportAttachmentUrl(item.file_url) &&
+      hasAllowedFileType(item.file_name, item.file_url) &&
+      (!item.file_size || (Number.isFinite(item.file_size) && item.file_size > 0 && item.file_size <= SUPPORT_ATTACHMENT_MAX_BYTES))
+    ))
+    .map((item) => ({ file_url: item.file_url, file_name: item.file_name }))
     .slice(0, 10);
 }
 
@@ -311,9 +404,23 @@ async function handlePlatformStatusUpdate(req, res) {
     const ticketId = parseTicketId(req.params.id);
     if (!ticketId) return res.status(400).json({ error: "Invalid ticket id" });
 
-    const requested = sanitizeTextField(req.body && req.body.status, 16).toLowerCase();
+    const requestedRaw = sanitizeTextField(req.body && req.body.status, 16).toLowerCase();
+    const requested = normalizeSupportStatus(requestedRaw);
     if (!ALLOWED_STATUSES.has(requested)) {
       return res.status(400).json({ error: "Invalid status" });
+    }
+
+    const existing = await pool.query(
+      `SELECT id, status FROM support_tickets WHERE id = $1 LIMIT 1`,
+      [ticketId]
+    );
+    if (!existing.rows.length) {
+      return res.status(404).json({ error: "Ticket not found" });
+    }
+    if (!isValidStatusTransition(existing.rows[0].status, requested)) {
+      return res.status(400).json({
+        error: "Invalid status transition"
+      });
     }
 
     const updated = await pool.query(
@@ -357,9 +464,16 @@ router.get(
 
       const params = [company_id];
       let where = "t.company_id = $1";
+      const priority = req.query && req.query.priority
+        ? normalizePriority(req.query.priority)
+        : "";
       if (status && ALLOWED_STATUSES.has(status)) {
         params.push(status);
         where += ` AND t.status = $${params.length}`;
+      }
+      if (priority && ALLOWED_PRIORITIES.has(priority)) {
+        params.push(priority);
+        where += ` AND t.priority = $${params.length}`;
       }
       params.push(limit, offset);
 
@@ -408,10 +522,10 @@ router.post(
       const subject = sanitizeTextField(req.body && req.body.subject, SUBJECT_MAX);
       const initialMessage = sanitizeTextField(req.body && req.body.message, MESSAGE_MAX);
       const rawCategory = sanitizeTextField(req.body && req.body.category, 32).toLowerCase();
-      const rawPriority = sanitizeTextField(req.body && req.body.priority, 16).toLowerCase();
+      const rawPriority = normalizePriority(req.body && req.body.priority);
       const attachments = sanitizeAttachmentList(req.body && req.body.attachments);
       const category = ALLOWED_CATEGORIES.has(rawCategory) ? rawCategory : "general";
-      const priority = ALLOWED_PRIORITIES.has(rawPriority) ? rawPriority : "normal";
+      const priority = ALLOWED_PRIORITIES.has(rawPriority) ? rawPriority : "medium";
 
       if (!subject) {
         return res.status(400).json({ error: "Subject is required" });
@@ -533,7 +647,7 @@ router.patch(
       const ticketId = parseTicketId(req.params.id);
       if (!ticketId) return res.status(400).json({ error: "Invalid ticket id" });
 
-      const requested = sanitizeTextField(req.body && req.body.status, 16).toLowerCase();
+      const requested = normalizeSupportStatus(req.body && req.body.status);
       if (!COMPANY_SETTABLE_STATUSES.has(requested)) {
         return res.status(400).json({
           error: "Companies may only set status to 'open' or 'closed'"
@@ -542,6 +656,17 @@ router.patch(
 
       const company_id = req.user.company_id;
       if (!company_id) return res.status(403).json({ error: "Forbidden" });
+
+      const current = await pool.query(
+        `SELECT id, status FROM support_tickets WHERE id = $1 AND company_id = $2 LIMIT 1`,
+        [ticketId, company_id]
+      );
+      if (!current.rows.length) {
+        return res.status(404).json({ error: "Ticket not found" });
+      }
+      if (!isValidStatusTransition(current.rows[0].status, requested)) {
+        return res.status(400).json({ error: "Invalid status transition" });
+      }
 
       const updated = await pool.query(
         `
@@ -561,6 +686,67 @@ router.patch(
     } catch (err) {
       console.log("UPDATE SUPPORT TICKET STATUS ERROR:", err);
       sendSafeServerError(res, err, "routes/support");
+    }
+  }
+);
+
+router.post(
+  "/support/tickets/:id/dispute",
+  auth,
+  requireMinimumRole("manager"),
+  supportMutationLimiter,
+  async (req, res) => {
+    try {
+      const ticketId = parseTicketId(req.params.id);
+      if (!ticketId) return res.status(400).json({ error: "Invalid ticket id" });
+      const company_id = Number(req.user && req.user.company_id);
+      if (!Number.isInteger(company_id) || company_id <= 0) {
+        return res.status(403).json({ error: "Forbidden" });
+      }
+
+      const reason = sanitizeTextField(req.body && req.body.reason, 200);
+      const details = sanitizeTextField(req.body && req.body.details, 4000);
+      if (reason.length < 3) {
+        return res.status(400).json({ error: "Reason is required" });
+      }
+
+      const ticket = await pool.query(
+        `
+        SELECT id, company_id, created_by_user_id
+        FROM support_tickets
+        WHERE id = $1
+          AND company_id = $2
+        LIMIT 1
+        `,
+        [ticketId, company_id]
+      );
+      if (!ticket.rows.length) {
+        return res.status(404).json({ error: "Ticket not found" });
+      }
+
+      const inserted = await pool.query(
+        `
+        INSERT INTO disputes (
+          marketplace_request_id,
+          support_ticket_id,
+          company_id,
+          customer_id,
+          opened_by_type,
+          opened_by_user_id,
+          opened_by_customer_id,
+          reason,
+          details,
+          status,
+          priority
+        )
+        VALUES (NULL, $1, $2, NULL, 'company', $3, NULL, $4, $5, 'open', 'medium')
+        RETURNING id, marketplace_request_id, support_ticket_id, company_id, customer_id, opened_by_type, reason, details, status, priority, created_at
+        `,
+        [ticketId, company_id, req.user.id, reason, details || null]
+      );
+      return res.status(201).json(inserted.rows[0]);
+    } catch (err) {
+      return sendSafeServerError(res, err, "SUPPORT DISPUTE CREATE ERROR");
     }
   }
 );
@@ -585,9 +771,16 @@ router.get(
 
       const params = [];
       const conds = [];
+      const priority = req.query && req.query.priority
+        ? normalizePriority(req.query.priority)
+        : "";
       if (status && ALLOWED_STATUSES.has(status)) {
         params.push(status);
         conds.push(`t.status = $${params.length}`);
+      }
+      if (priority && ALLOWED_PRIORITIES.has(priority)) {
+        params.push(priority);
+        conds.push(`t.priority = $${params.length}`);
       }
       if (Number.isInteger(companyFilter) && companyFilter > 0) {
         params.push(companyFilter);
@@ -712,6 +905,40 @@ router.patch(
   requirePlatformOwner,
   supportMutationLimiter,
   handlePlatformStatusUpdate
+);
+
+router.patch(
+  "/platform/support/tickets/:id/priority",
+  auth,
+  requirePlatformOwner,
+  supportMutationLimiter,
+  async (req, res) => {
+    try {
+      const ticketId = parseTicketId(req.params.id);
+      if (!ticketId) return res.status(400).json({ error: "Invalid ticket id" });
+      const requested = normalizePriority(req.body && req.body.priority);
+      if (!ALLOWED_PRIORITIES.has(requested)) {
+        return res.status(400).json({ error: "Invalid priority" });
+      }
+      const updated = await pool.query(
+        `
+        UPDATE support_tickets
+        SET priority = $1, updated_at = CURRENT_TIMESTAMP
+        WHERE id = $2
+        RETURNING id, company_id, created_by_user_id, assigned_to_user_id,
+                  subject, category, priority, status, created_at, updated_at
+        `,
+        [requested, ticketId]
+      );
+      if (!updated.rows.length) {
+        return res.status(404).json({ error: "Ticket not found" });
+      }
+      return res.json(updated.rows[0]);
+    } catch (err) {
+      console.log("PLATFORM UPDATE SUPPORT TICKET PRIORITY ERROR:", err);
+      return sendSafeServerError(res, err, "routes/support");
+    }
+  }
 );
 
 router.put(

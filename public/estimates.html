@@ -448,7 +448,7 @@
   <link rel="stylesheet" href="/ui-cleanup.css">
   <script src="/js/role-guard.js"></script>
 </head>
-<body>
+<body class="phase2-internal">
   <script>
 (function(){
   const token = localStorage.getItem("token");
@@ -475,131 +475,131 @@
 </script>
   
 <div class="page">
-  <div class="hero">
+  <div class="hero fx-section-head">
     <div>
       <h1 id="pageTitle">Estimates</h1>
       <p id="pageSubtitle">Review estimates, approve quoted work, and convert approved estimates into clients or jobs.</p>
       <p class="page-note">Archive only duplicates, tests, or inactive records. Active leads and estimates should remain available for conversion or follow-up.</p>
     </div>
-    <button type="button" class="btn primary" id="newLeadButton">+ New Lead</button>
+    <button type="button" class="btn primary fx-btn fx-btn--primary" id="newLeadButton">+ New Lead</button>
   </div>
 
-  <div class="toolbar">
-    <input id="searchInput" placeholder="Search by customer, phone, address, service, or status">
+  <div class="toolbar fx-toolbar">
+    <input id="searchInput" class="fx-input" placeholder="Search by customer, phone, address, service, or status">
     <div class="filters" id="filterBar"></div>
   </div>
 
   <div class="tabs">
-    <button type="button" class="tab active" id="leadTab">Leads</button>
-    <button type="button" class="tab" id="estimateTab">Estimates</button>
+    <button type="button" class="tab active fx-badge fx-badge--info" id="leadTab">Leads</button>
+    <button type="button" class="tab fx-badge fx-badge--neutral" id="estimateTab">Estimates</button>
   </div>
 
   <div class="summary">
-    <div class="panel" id="leadTotalCard"><div class="label">Total Leads</div><div class="value" id="leadCount">0</div></div>
-    <div class="panel" id="leadOpenCard"><div class="label">Open Leads</div><div class="value" id="leadOpenCount">0</div></div>
-    <div class="panel" id="estimateTotalCard"><div class="label">Total Estimates</div><div class="value" id="estimateCount">0</div></div>
-    <div class="panel" id="estimateApprovedCard"><div class="label">Approved Estimates</div><div class="value" id="estimateApprovedCount">0</div></div>
+    <div class="panel fx-stat" id="leadTotalCard"><div class="label fx-stat__label">Total Leads</div><div class="value fx-stat__value" id="leadCount">0</div></div>
+    <div class="panel fx-stat" id="leadOpenCard"><div class="label fx-stat__label">Open Leads</div><div class="value fx-stat__value" id="leadOpenCount">0</div></div>
+    <div class="panel fx-stat" id="estimateTotalCard"><div class="label fx-stat__label">Total Estimates</div><div class="value fx-stat__value" id="estimateCount">0</div></div>
+    <div class="panel fx-stat" id="estimateApprovedCard"><div class="label fx-stat__label">Approved Estimates</div><div class="value fx-stat__value" id="estimateApprovedCount">0</div></div>
   </div>
 
   <div id="list" class="grid"></div>
 </div>
 
 <div id="leadModal" class="modal">
-  <div class="modal-box">
+  <div class="modal-box fx-card">
     <h3 id="leadModalTitle">New Lead</h3>
     <div class="form-grid">
-      <input id="lead_name" placeholder="Customer name">
-      <input id="lead_phone" placeholder="Phone">
-      <input id="lead_service" placeholder="Service needed">
-      <input id="lead_visit_date" type="date">
-      <input id="lead_price" type="number" placeholder="Quoted price">
-      <select id="lead_status">
+      <input id="lead_name" class="fx-input" placeholder="Customer name">
+      <input id="lead_phone" class="fx-input" placeholder="Phone">
+      <input id="lead_service" class="fx-input" placeholder="Service needed">
+      <input id="lead_visit_date" class="fx-input" type="date">
+      <input id="lead_price" class="fx-input" type="number" placeholder="Quoted price">
+      <select id="lead_status" class="fx-select">
         <option value="new">New</option>
         <option value="contacted">Contacted</option>
         <option value="quoted">Quoted</option>
         <option value="approved">Approved</option>
         <option value="rejected">Rejected</option>
       </select>
-      <input id="lead_zip" placeholder="ZIP">
-      <input id="lead_address" class="wide" placeholder="Address">
-      <textarea id="lead_notes" class="wide" rows="4" placeholder="Lead notes"></textarea>
+      <input id="lead_zip" class="fx-input" placeholder="ZIP">
+      <input id="lead_address" class="wide fx-input" placeholder="Address">
+      <textarea id="lead_notes" class="wide fx-textarea" rows="4" placeholder="Lead notes"></textarea>
     </div>
     <div class="modal-actions">
-      <button type="button" class="btn primary" id="btnSaveLead">Save Lead</button>
-      <button type="button" class="btn gray" id="btnCancelLeadModal">Cancel</button>
+      <button type="button" class="btn primary fx-btn fx-btn--primary" id="btnSaveLead">Save Lead</button>
+      <button type="button" class="btn gray fx-btn fx-btn--secondary" id="btnCancelLeadModal">Cancel</button>
     </div>
   </div>
 </div>
 
 <div id="estimateModal" class="modal">
-  <div class="modal-box">
+  <div class="modal-box fx-card">
     <h3>Edit Estimate</h3>
     <div class="form-grid">
-      <input id="estimate_name" placeholder="Customer name">
-      <input id="estimate_phone" placeholder="Phone">
-      <input id="estimate_service" placeholder="Service">
-      <input id="estimate_visit_date" type="date">
-      <input id="estimate_price" type="number" placeholder="Quoted price">
-      <select id="estimate_status">
+      <input id="estimate_name" class="fx-input" placeholder="Customer name">
+      <input id="estimate_phone" class="fx-input" placeholder="Phone">
+      <input id="estimate_service" class="fx-input" placeholder="Service">
+      <input id="estimate_visit_date" class="fx-input" type="date">
+      <input id="estimate_price" class="fx-input" type="number" placeholder="Quoted price">
+      <select id="estimate_status" class="fx-select">
         <option value="draft">Draft</option>
         <option value="sent">Sent</option>
         <option value="approved">Approved</option>
         <option value="rejected">Rejected</option>
       </select>
-      <input id="estimate_zip" placeholder="ZIP">
-      <input id="estimate_address" class="wide" placeholder="Address">
-      <textarea id="estimate_notes" class="wide" rows="4" placeholder="Estimate notes"></textarea>
+      <input id="estimate_zip" class="fx-input" placeholder="ZIP">
+      <input id="estimate_address" class="wide fx-input" placeholder="Address">
+      <textarea id="estimate_notes" class="wide fx-textarea" rows="4" placeholder="Estimate notes"></textarea>
     </div>
     <div class="modal-actions">
-      <button type="button" class="btn primary" id="btnSaveEstimate">Save Estimate</button>
-      <button type="button" class="btn gray" id="btnCancelEstimateModal">Cancel</button>
+      <button type="button" class="btn primary fx-btn fx-btn--primary" id="btnSaveEstimate">Save Estimate</button>
+      <button type="button" class="btn gray fx-btn fx-btn--secondary" id="btnCancelEstimateModal">Cancel</button>
     </div>
   </div>
 </div>
 
 <div id="convertJobModal" class="modal">
-  <div class="modal-box">
+  <div class="modal-box fx-card">
     <h3>Convert To Job</h3>
     <div class="form-grid">
-      <input id="convert_job_date" type="date">
-      <input id="convert_job_price" type="number" placeholder="Price">
-      <input id="convert_job_start" type="time">
-      <input id="convert_job_end" type="time">
-      <input id="convert_job_worker_id" placeholder="Worker ID (optional)">
-      <select id="convert_job_status">
+      <input id="convert_job_date" class="fx-input" type="date">
+      <input id="convert_job_price" class="fx-input" type="number" placeholder="Price">
+      <input id="convert_job_start" class="fx-input" type="time">
+      <input id="convert_job_end" class="fx-input" type="time">
+      <input id="convert_job_worker_id" class="fx-input" placeholder="Worker ID (optional)">
+      <select id="convert_job_status" class="fx-select">
         <option value="scheduled">Scheduled</option>
         <option value="assigned">Assigned</option>
         <option value="in_progress">In Progress</option>
         <option value="completed">Completed</option>
         <option value="cancelled">Cancelled</option>
       </select>
-      <textarea id="convert_job_notes" class="wide" rows="4" placeholder="Internal notes"></textarea>
+      <textarea id="convert_job_notes" class="wide fx-textarea" rows="4" placeholder="Internal notes"></textarea>
     </div>
     <div class="modal-actions">
-      <button type="button" class="btn primary" id="btnSubmitConvertJob">Create Job</button>
-      <button type="button" class="btn gray" id="btnCancelConvertJobModal">Cancel</button>
+      <button type="button" class="btn primary fx-btn fx-btn--primary" id="btnSubmitConvertJob">Create Job</button>
+      <button type="button" class="btn gray fx-btn fx-btn--secondary" id="btnCancelConvertJobModal">Cancel</button>
     </div>
   </div>
 </div>
 
 <div id="archiveModal" class="modal">
-  <div class="modal-box">
+  <div class="modal-box fx-card">
     <h3>Archive Record</h3>
     <p id="archiveModalMessage">This will archive the record and hide it from active workflow. Use this only for test, duplicate, or inactive records.</p>
     <div class="modal-actions">
-      <button type="button" class="btn gray" id="btnCancelArchiveModal">Cancel</button>
-      <button type="button" class="btn red" id="btnConfirmArchive">Archive</button>
+      <button type="button" class="btn gray fx-btn fx-btn--secondary" id="btnCancelArchiveModal">Cancel</button>
+      <button type="button" class="btn red fx-btn fx-btn--danger" id="btnConfirmArchive">Archive</button>
     </div>
   </div>
 </div>
 
 <div id="deleteModal" class="modal">
-  <div class="modal-box">
+  <div class="modal-box fx-card">
     <h3 id="deleteModalTitle">Delete Record</h3>
     <p id="deleteModalMessage">Are you sure you want to permanently delete this record? This should only be used for test or incorrect records.</p>
     <div class="modal-actions">
-      <button type="button" class="btn gray" id="btnCancelDeleteModal">Cancel</button>
-      <button type="button" class="btn red" id="btnConfirmDelete">Delete</button>
+      <button type="button" class="btn gray fx-btn fx-btn--secondary" id="btnCancelDeleteModal">Cancel</button>
+      <button type="button" class="btn red fx-btn fx-btn--danger" id="btnConfirmDelete">Delete</button>
     </div>
   </div>
 </div>
@@ -730,7 +730,7 @@ function renderFilters(){
   if(!bar) return;
   const quickFilters = currentTab === "leads" ? leadFilters : estimateFilters;
   bar.innerHTML = quickFilters.map(filter => `
-    <button type="button" class="filter-chip ${filter === currentFilter ? "active" : ""}" data-est-filter="${escapeHtml(filter)}">${escapeHtml(filter)}</button>
+    <button type="button" class="filter-chip fx-badge ${filter === currentFilter ? "active fx-badge--info" : "fx-badge--neutral"}" data-est-filter="${escapeHtml(filter)}">${escapeHtml(filter)}</button>
   `).join("");
 }
 
@@ -843,7 +843,7 @@ function filterByQuickFilter(items){
 function renderSection(title, items){
   if(!items || items.length === 0) return "";
   return `<div class="section-block">
-    <div class="section-header">
+    <div class="section-header fx-section-head">
       <strong>${escapeHtml(title)}</strong>
       <span class="section-count">${items.length}</span>
     </div>
@@ -861,12 +861,12 @@ function render(){
   const list = document.getElementById("list");
 
   if(isLoading){
-    list.innerHTML = `<div class="panel empty"><strong>Loading ${escapeHtml(currentTab)}...</strong>Please wait while the latest records are loaded.</div>`;
+    list.innerHTML = `<div class="panel empty fx-empty"><strong class="fx-empty__title">Loading ${escapeHtml(currentTab)}...</strong><span class="fx-empty__text">Please wait while the latest records are loaded.</span></div>`;
     return;
   }
 
   if(pageError){
-    list.innerHTML = `<div class="panel empty"><strong>Unable to load data</strong>${escapeHtml(pageError)}</div>`;
+    list.innerHTML = `<div class="panel empty fx-empty"><strong class="fx-empty__title">Unable to load data</strong><span class="fx-empty__text">${escapeHtml(pageError)}</span></div>`;
     return;
   }
 
@@ -881,7 +881,7 @@ function render(){
   const content = sectionOrder.map(section => renderSection(section, grouped[section])).join("");
 
   if(!content.trim()){
-    list.innerHTML = `<div class="panel empty"><strong>No ${escapeHtml(currentTab)} found</strong>No records match the current search and filters.</div>`;
+    list.innerHTML = `<div class="panel empty fx-empty"><strong class="fx-empty__title">No ${escapeHtml(currentTab)} found</strong><span class="fx-empty__text">No records match the current search and filters.</span></div>`;
     return;
   }
 
@@ -979,13 +979,13 @@ function renderLeadCard(item){
   const ageDays = recordDate ? Math.floor((today - recordDate) / 86400000) : null;
   const needsFollowUp = !["rejected", "converted", "approved"].includes(status) && ageDays !== null && ageDays > 2;
 
-  return `<div class="panel card${needsFollowUp ? " urgent" : ""}">
+  return `<div class="panel card fx-card${needsFollowUp ? " urgent" : ""}">
     <div class="card-top">
       <div>
         <h3 class="title">${escapeHtml(item.customer_name || "Lead")}</h3>
         <div class="sub">${escapeHtml(item.service || "")}</div>
       </div>
-      <div class="badge ${statusClass(item.status)}">${escapeHtml(item.status || "new")}</div>
+      <div class="badge fx-badge ${statusClass(item.status)}">${escapeHtml(item.status || "new")}</div>
     </div>
 
     ${cardMeta([
@@ -998,12 +998,12 @@ function renderLeadCard(item){
     <div class="notes">${escapeHtml(item.notes || "No notes yet.")}</div>
 
     <div class="actions">
-      <button type="button" class="btn blue" data-est-action="edit-lead" data-est-id="${Number(item.id)}">Edit</button>
-      ${!isConvertedLead ? `<button type="button" class="btn orange" data-est-action="convert-lead-to-estimate" data-est-id="${Number(item.id)}">Convert to Estimate</button>` : ""}
-      ${!isConvertedLead ? `<button type="button" class="btn gray" data-est-action="convert-lead-to-client" data-est-id="${Number(item.id)}">Convert to Client</button>` : ""}
-      ${isConvertedLead && item.converted_client_id ? `<button type="button" class="btn primary" data-est-action="navigate-client" data-est-client-id="${escapeHtml(String(item.converted_client_id))}">Open Client</button>` : ""}
-      ${canDeleteRecords() ? `<button type="button" class="btn red" data-est-action="delete-lead" data-est-id="${Number(item.id)}">Delete</button>` : ""}
-      <button type="button" class="btn red" data-est-action="archive-lead" data-est-id="${Number(item.id)}">Archive</button>
+      <button type="button" class="btn blue fx-btn fx-btn--secondary" data-est-action="edit-lead" data-est-id="${Number(item.id)}">Edit</button>
+      ${!isConvertedLead ? `<button type="button" class="btn orange fx-btn fx-btn--ghost" data-est-action="convert-lead-to-estimate" data-est-id="${Number(item.id)}">Convert to Estimate</button>` : ""}
+      ${!isConvertedLead ? `<button type="button" class="btn gray fx-btn fx-btn--secondary" data-est-action="convert-lead-to-client" data-est-id="${Number(item.id)}">Convert to Client</button>` : ""}
+      ${isConvertedLead && item.converted_client_id ? `<button type="button" class="btn primary fx-btn fx-btn--primary" data-est-action="navigate-client" data-est-client-id="${escapeHtml(String(item.converted_client_id))}">Open Client</button>` : ""}
+      ${canDeleteRecords() ? `<button type="button" class="btn red fx-btn fx-btn--danger" data-est-action="delete-lead" data-est-id="${Number(item.id)}">Delete</button>` : ""}
+      <button type="button" class="btn red fx-btn fx-btn--danger" data-est-action="archive-lead" data-est-id="${Number(item.id)}">Archive</button>
     </div>
   </div>`;
 }
@@ -1018,14 +1018,14 @@ function renderEstimateCard(item){
   const isApproved = status === "approved";
   const isConvertedEstimate = status === "converted";
 
-  return `<div class="panel card${needsFollowUp ? " urgent" : ""}">
+  return `<div class="panel card fx-card${needsFollowUp ? " urgent" : ""}">
     <div class="card-top">
       <div>
         <h3 class="title">${escapeHtml(item.customer_name || "Estimate")}</h3>
         <div class="sub">${escapeHtml(item.service || "")}</div>
         <div class="sub">Client: ${escapeHtml(item.client_name || "Not attached yet")}</div>
       </div>
-      <div class="badge ${statusClass(item.status)}">${escapeHtml(item.status || "draft")}</div>
+      <div class="badge fx-badge ${statusClass(item.status)}">${escapeHtml(item.status || "draft")}</div>
     </div>
 
     ${cardMeta([
@@ -1038,15 +1038,15 @@ function renderEstimateCard(item){
     <div class="notes">${escapeHtml(item.notes || "No notes yet.")}</div>
 
     <div class="actions">
-      <button type="button" class="btn blue" data-est-action="edit-estimate" data-est-id="${Number(item.id)}">Edit</button>
-      ${isDraftSentQuoted ? `<button type="button" class="btn blue" data-est-action="set-estimate-status" data-est-id="${Number(item.id)}" data-est-status="approved">Approve</button>` : ""}
-      ${isDraftSentQuoted ? `<button type="button" class="btn red" data-est-action="set-estimate-status" data-est-id="${Number(item.id)}" data-est-status="rejected">Reject</button>` : ""}
-      ${isApproved ? `<button type="button" class="btn gray" data-est-action="convert-estimate-client" data-est-id="${Number(item.id)}">Convert to Client</button>` : ""}
-      ${isApproved ? `<button type="button" class="btn primary" data-est-action="convert-estimate-job" data-est-id="${Number(item.id)}">Convert to Job</button>` : ""}
-      ${isConvertedEstimate && item.converted_client_id ? `<button type="button" class="btn gray" data-est-action="navigate-client" data-est-client-id="${escapeHtml(String(item.converted_client_id))}">Open Client</button>` : ""}
-      ${isConvertedEstimate && item.converted_job_id ? `<button type="button" class="btn primary" data-est-action="navigate-job" data-est-job-id="${escapeHtml(String(item.converted_job_id))}">Open Job</button>` : ""}
-      ${canDeleteRecords() ? `<button type="button" class="btn red" data-est-action="delete-estimate" data-est-id="${Number(item.id)}">Delete</button>` : ""}
-      <button type="button" class="btn red" data-est-action="archive-estimate" data-est-id="${Number(item.id)}">Archive</button>
+      <button type="button" class="btn blue fx-btn fx-btn--secondary" data-est-action="edit-estimate" data-est-id="${Number(item.id)}">Edit</button>
+      ${isDraftSentQuoted ? `<button type="button" class="btn blue fx-btn fx-btn--secondary" data-est-action="set-estimate-status" data-est-id="${Number(item.id)}" data-est-status="approved">Approve</button>` : ""}
+      ${isDraftSentQuoted ? `<button type="button" class="btn red fx-btn fx-btn--danger" data-est-action="set-estimate-status" data-est-id="${Number(item.id)}" data-est-status="rejected">Reject</button>` : ""}
+      ${isApproved ? `<button type="button" class="btn gray fx-btn fx-btn--secondary" data-est-action="convert-estimate-client" data-est-id="${Number(item.id)}">Convert to Client</button>` : ""}
+      ${isApproved ? `<button type="button" class="btn primary fx-btn fx-btn--primary" data-est-action="convert-estimate-job" data-est-id="${Number(item.id)}">Convert to Job</button>` : ""}
+      ${isConvertedEstimate && item.converted_client_id ? `<button type="button" class="btn gray fx-btn fx-btn--secondary" data-est-action="navigate-client" data-est-client-id="${escapeHtml(String(item.converted_client_id))}">Open Client</button>` : ""}
+      ${isConvertedEstimate && item.converted_job_id ? `<button type="button" class="btn primary fx-btn fx-btn--primary" data-est-action="navigate-job" data-est-job-id="${escapeHtml(String(item.converted_job_id))}">Open Job</button>` : ""}
+      ${canDeleteRecords() ? `<button type="button" class="btn red fx-btn fx-btn--danger" data-est-action="delete-estimate" data-est-id="${Number(item.id)}">Delete</button>` : ""}
+      <button type="button" class="btn red fx-btn fx-btn--danger" data-est-action="archive-estimate" data-est-id="${Number(item.id)}">Archive</button>
     </div>
   </div>`;
 }

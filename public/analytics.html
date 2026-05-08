@@ -383,43 +383,43 @@
     }
   </style>
 </head>
-<body>
+<body class="phase2-internal">
 <div class="page">
-  <div class="hero">
+  <div class="hero fx-section-head">
     <div>
       <h1>Analytics</h1>
       <p>Internal business reporting for revenue, work, workers, and clients.</p>
     </div>
-    <button type="button" class="btn" id="analyticsRefreshBtn">Refresh</button>
+    <button type="button" class="btn fx-btn fx-btn--primary" id="analyticsRefreshBtn">Refresh</button>
   </div>
 
   <div class="tabs">
-    <button type="button" class="tab active" data-analytics-tab="overview">Overview</button>
-    <button type="button" class="tab" data-analytics-tab="revenue">Revenue</button>
-    <button type="button" class="tab" data-analytics-tab="pro">Pro</button>
-    <button type="button" class="tab" data-analytics-tab="workers">Workers</button>
-    <button type="button" class="tab" data-analytics-tab="clients">Clients</button>
+    <button type="button" class="tab active fx-badge fx-badge--info" data-analytics-tab="overview">Overview</button>
+    <button type="button" class="tab fx-badge fx-badge--neutral" data-analytics-tab="revenue">Revenue</button>
+    <button type="button" class="tab fx-badge fx-badge--neutral" data-analytics-tab="pro">Pro</button>
+    <button type="button" class="tab fx-badge fx-badge--neutral" data-analytics-tab="workers">Workers</button>
+    <button type="button" class="tab fx-badge fx-badge--neutral" data-analytics-tab="clients">Clients</button>
   </div>
 
   <div id="overview" class="section active">
-    <div class="panel"><div class="kpi-grid" id="overviewKpis"></div></div>
+    <div class="panel fx-card"><div class="kpi-grid" id="overviewKpis"></div></div>
   </div>
 
   <div id="revenue" class="section">
-    <div class="panel"><div class="kpi-grid" id="revenueKpis"></div></div>
+    <div class="panel fx-card"><div class="kpi-grid" id="revenueKpis"></div></div>
 
     <div class="chart-grid">
-      <div class="panel">
+      <div class="panel fx-card">
         <h3 class="chart-title">Monthly Revenue</h3>
         <div id="monthlyRevenueChart" class="css-chart"></div>
       </div>
-      <div class="panel">
+      <div class="panel fx-card">
         <h3 class="chart-title">Invoice Totals</h3>
         <div id="invoiceTotalsChart" class="css-chart"></div>
       </div>
     </div>
 
-    <div class="panel table-wrap">
+    <div class="panel table-wrap fx-table-wrap fx-card">
       <table>
         <thead><tr><th>Payment Method</th><th>Count</th><th>Total</th></tr></thead>
         <tbody id="paymentRows"></tbody>
@@ -428,23 +428,23 @@
   </div>
 
   <div id="pro" class="section">
-    <div class="panel"><div class="kpi-grid" id="proKpis"></div></div>
+    <div class="panel fx-card"><div class="kpi-grid" id="proKpis"></div></div>
     <div class="pro-grid">
-      <div class="panel">
+      <div class="panel fx-card">
         <h3 class="chart-title">Top Workers</h3>
         <div id="proTopWorkers" class="compact-list"></div>
       </div>
-      <div class="panel">
+      <div class="panel fx-card">
         <h3 class="chart-title">Alerts</h3>
         <div id="proAlerts" class="compact-list"></div>
       </div>
     </div>
     <div class="chart-grid">
-      <div class="panel">
+      <div class="panel fx-card">
         <h3 class="chart-title">Revenue Trend</h3>
         <div id="proRevenueTrend" class="css-chart"></div>
       </div>
-      <div class="panel">
+      <div class="panel fx-card">
         <h3 class="chart-title">Jobs Trend</h3>
         <div id="proJobsTrend" class="css-chart"></div>
       </div>
@@ -452,12 +452,12 @@
   </div>
 
   <div id="workers" class="section">
-    <div class="panel">
+    <div class="panel fx-card">
       <h3 class="chart-title">Worker Assigned vs Completed</h3>
       <div id="workerChart" class="split-chart"></div>
     </div>
 
-    <div class="panel table-wrap">
+    <div class="panel table-wrap fx-table-wrap fx-card">
       <table>
         <thead><tr><th>Worker</th><th>Assigned</th><th>Completed</th><th>Completion Rate</th></tr></thead>
         <tbody id="workerRows"></tbody>
@@ -466,7 +466,7 @@
   </div>
 
   <div id="clients" class="section">
-    <div class="panel table-wrap">
+    <div class="panel table-wrap fx-table-wrap fx-card">
       <table>
         <thead><tr><th>Client</th><th>Total Jobs</th><th>Active Subscriptions</th><th>Unpaid Balance</th><th>Last Service</th></tr></thead>
         <tbody id="clientRows"></tbody>
@@ -534,7 +534,7 @@ function showSection(id, button){
 }
 
 function kpi(label, value){
-  return '<div class="kpi"><span>' + esc(label) + '</span><strong>' + esc(value) + '</strong></div>';
+  return '<div class="kpi fx-stat"><span class="fx-stat__label">' + esc(label) + '</span><strong class="fx-stat__value">' + esc(value) + '</strong></div>';
 }
 
 async function safeJson(res){
@@ -568,11 +568,11 @@ async function loadJson(path){
 }
 
 function emptyState(title, text){
-  return '<div class="empty"><strong>' + esc(title) + '</strong><div>' + esc(text || "") + '</div></div>';
+  return '<div class="empty fx-empty"><strong class="fx-empty__title">' + esc(title) + '</strong><div class="fx-empty__text">' + esc(text || "") + '</div></div>';
 }
 
 function errorState(title, text){
-  return '<div class="error-box"><strong>' + esc(title) + '</strong><div>' + esc(text || "") + '</div></div>';
+  return '<div class="error-box fx-alert fx-alert--danger"><strong>' + esc(title) + '</strong><div>' + esc(text || "") + '</div></div>';
 }
 
 function maxValue(rows, key){
@@ -803,7 +803,7 @@ async function load(){
 
   if(!allowed()){
     document.querySelector(".page").innerHTML =
-      '<div class="page-forbidden">You do not have permission to view analytics.</div>';
+      '<div class="page-forbidden fx-alert fx-alert--danger">You do not have permission to view analytics.</div>';
     return;
   }
 

@@ -108,6 +108,21 @@
       font-size: 13px;
       line-height: 1.45;
     }
+    .flow-strip {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 8px;
+    }
+    .flow-step {
+      border: 1px solid #dce9e2;
+      border-radius: 12px;
+      background: var(--brand-bg);
+      padding: 10px;
+      color: var(--brand-black);
+      font-size: 13px;
+      font-weight: 900;
+      text-align: center;
+    }
     .list-head {
       display: flex;
       align-items: center;
@@ -275,27 +290,36 @@
       .hero h1 { font-size: 28px; }
       .hero-actions { width: 100%; display: grid; grid-template-columns: 1fr; }
       .hero-actions .btn { width: 100%; }
-      .detail-grid { grid-template-columns: 1fr; }
+      .detail-grid, .flow-strip { grid-template-columns: 1fr; }
     }
   </style>
 </head>
 <body>
-  <main class="page">
-    <header class="hero">
+  <main class="page fx-layout-public">
+    <header class="hero fx-hero fx-section-head">
       <div>
         <h1>Marketplace Offers Inbox</h1>
-        <p>Track all offers your company has submitted across marketplace requests.</p>
+        <p>Track submitted offers, watch for accepted offers, then convert accepted marketplace work to an estimate.</p>
       </div>
-      <div class="hero-actions">
-        <a class="btn secondary" href="/marketplace-opportunities.html">New Opportunities</a>
-        <button id="refreshBtn" class="btn secondary" type="button">Refresh</button>
+      <div class="hero-actions fx-cta-row">
+        <a class="btn secondary fx-btn fx-btn--secondary" href="/marketplace-dashboard.html">Marketplace Dashboard</a>
+        <a class="btn secondary fx-btn fx-btn--secondary" href="/marketplace-opportunities.html">New Opportunities</a>
+        <a class="btn secondary fx-btn fx-btn--secondary" href="/messages.html">Messages</a>
+        <button id="refreshBtn" class="btn secondary fx-btn fx-btn--secondary" type="button">Refresh</button>
       </div>
     </header>
 
     <div id="globalStatus" class="status-line" role="status" aria-live="polite"></div>
 
+    <section class="flow-strip" aria-label="Marketplace lifecycle">
+      <div class="flow-step">Opportunity</div>
+      <div class="flow-step">Submit Offer</div>
+      <div class="flow-step">Accepted Offer</div>
+      <div class="flow-step">Convert to Estimate</div>
+    </section>
+
     <section class="layout">
-      <aside class="panel">
+      <aside class="panel fx-card">
         <div class="list-head">
           <h2>Submitted Offers</h2>
           <span id="offerCountPill" class="pill">0</span>
@@ -304,20 +328,20 @@
         <div id="offersList" class="offers-list"></div>
       </aside>
 
-      <section class="panel">
+      <section class="panel fx-card">
         <div class="detail-header">
           <div>
             <h2 id="detailTitle" class="detail-title">Select an offer</h2>
             <p id="detailMeta" class="detail-meta">Offer and request context will appear here.</p>
           </div>
-          <span id="detailBadge" class="badge">N/A</span>
+          <span id="detailBadge" class="badge fx-badge">N/A</span>
         </div>
 
         <div id="detailGrid" class="detail-grid"></div>
 
         <section class="section">
           <h3>Customer Request Summary</h3>
-          <p id="requestSummary" class="summary">Select an offer to view the request summary.</p>
+          <p id="requestSummary" class="summary">Select an offer to view the request summary. Accepted offers are ready to convert from the marketplace request workflow.</p>
         </section>
       </section>
     </section>
@@ -451,7 +475,7 @@
         els.offerCountPill.textContent = String(state.offers.length);
 
         if (!state.offers.length) {
-          els.offersList.innerHTML = '<div class="empty"><strong>No offers submitted</strong>Your marketplace offers will show here once submitted.</div>';
+          els.offersList.innerHTML = '<div class="empty fx-empty"><strong>No offers submitted</strong>Your marketplace offers will show here once submitted.</div>';
           return;
         }
 
@@ -461,7 +485,7 @@
             '<button type="button" class="offer-item' + active + '" data-offer-id="' + esc(item.id) + '">' +
               '<div class="offer-top">' +
                 '<p class="offer-title">' + esc(requestTitle(item)) + '</p>' +
-                '<span class="' + badgeClass(item.status) + '">' + esc(prettyStatus(item.status)) + "</span>" +
+                '<span class="' + badgeClass(item.status) + ' fx-badge">' + esc(prettyStatus(item.status)) + "</span>" +
               "</div>" +
               '<p class="offer-meta">Offer Price: ' + esc(money(item.price)) + "</p>" +
               '<p class="offer-meta">Estimated Date: ' + esc(fmtDateOnly(item.estimated_start_date)) + "</p>" +
@@ -478,7 +502,7 @@
           els.detailMeta.textContent = "Offer and request context will appear here.";
           els.detailBadge.className = "badge";
           els.detailBadge.textContent = "N/A";
-          els.detailGrid.innerHTML = '<div class="empty"><strong>No offer selected</strong>Select an offer from the inbox list.</div>';
+          els.detailGrid.innerHTML = '<div class="empty fx-empty"><strong>No offer selected</strong>Select an offer from the inbox list.</div>';
           els.requestSummary.textContent = "Select an offer to view the request summary.";
           return;
         }
@@ -489,7 +513,7 @@
         els.detailBadge.textContent = prettyStatus(item.status);
 
         els.detailGrid.innerHTML = [
-          '<article class="detail-card"><span>Offer Price</span><strong>' + esc(money(item.price)) + "</strong></article>",
+          '<article class="detail-card fx-card"><span>Offer Price</span><strong>' + esc(money(item.price)) + "</strong></article>",
           '<article class="detail-card"><span>Estimated Date</span><strong>' + esc(fmtDateOnly(item.estimated_start_date)) + "</strong></article>",
           '<article class="detail-card"><span>Offer Status</span><strong>' + esc(prettyStatus(item.status)) + "</strong></article>",
           '<article class="detail-card"><span>Request ID</span><strong>' + esc(requestId(item)) + "</strong></article>",

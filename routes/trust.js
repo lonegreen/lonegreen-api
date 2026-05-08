@@ -29,6 +29,52 @@ function cleanDate(value) {
   return match ? text : null;
 }
 
+function trustR2PublicBaseUrl() {
+  return String(process.env.R2_PUBLIC_BASE_URL || "").trim().replace(/\/+$/, "");
+}
+
+function hasUnsafeTrustDocumentPath(pathOrKey) {
+  const raw = String(pathOrKey || "");
+  if (!raw || raw.includes("\\") || raw.includes("\u0000")) {
+    return true;
+  }
+  try {
+    const decoded = decodeURIComponent(raw);
+    return decoded.split("/").some((part) => part === "..");
+  } catch {
+    return true;
+  }
+}
+
+function isAllowedTrustDocumentUrl(fileUrl) {
+  const raw = cleanText(fileUrl);
+  if (!raw) {
+    return false;
+  }
+
+  if (raw.startsWith("/uploads/")) {
+    return !hasUnsafeTrustDocumentPath(raw.slice("/uploads/".length));
+  }
+
+  const r2Base = trustR2PublicBaseUrl();
+  if (!r2Base || !raw.startsWith(`${r2Base}/`)) {
+    return false;
+  }
+
+  const key = raw.slice(r2Base.length + 1);
+  if (hasUnsafeTrustDocumentPath(key)) {
+    return false;
+  }
+
+  try {
+    const base = new URL(r2Base);
+    const url = new URL(raw);
+    return url.origin === base.origin && url.href.startsWith(`${base.href.replace(/\/+$/, "")}/`);
+  } catch {
+    return false;
+  }
+}
+
 function normalizeTrustStatus(value, fallback = "pending") {
   const candidate = cleanText(value).toLowerCase();
   if (candidate === "pending" || candidate === "submitted" || candidate === "approved" || candidate === "rejected") {
@@ -148,6 +194,9 @@ router.post(
       const documentUrl = cleanText(req.body && req.body.insurance_document_url);
       const expiry = cleanDate(req.body && req.body.insurance_expiry_date);
       const status = "submitted";
+      if (documentUrl && !isAllowedTrustDocumentUrl(documentUrl)) {
+        return res.status(400).json({ error: "Document URL must use FairLinx upload storage" });
+      }
 
       const result = await pool.query(
         `
@@ -187,6 +236,9 @@ router.post(
       const documentUrl = cleanText(req.body && req.body.license_document_url);
       const expiry = cleanDate(req.body && req.body.license_expiry_date);
       const status = "submitted";
+      if (documentUrl && !isAllowedTrustDocumentUrl(documentUrl)) {
+        return res.status(400).json({ error: "Document URL must use FairLinx upload storage" });
+      }
 
       const result = await pool.query(
         `

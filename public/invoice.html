@@ -824,8 +824,8 @@
   }
 })();
 </script>
-<div class="page invoice-shell invoice-container">
-  <div class="header invoice-header">
+<div class="page invoice-shell invoice-container fx-layout-public">
+  <div class="header invoice-header fx-card">
     <div id="companyBlock">
       <div class="brand-wrap">
         <div class="brand-copy">
@@ -848,20 +848,20 @@
 
   <div class="body">
     <div class="grid invoice-grid invoice-info-grid">
-      <div class="box"><div class="label">Bill To</div><div id="clientBlock" class="client-lines"></div></div>
-      <div class="box"><div class="label">Service Summary</div><div id="invoiceBlock" class="detail-lines"></div></div>
+      <div class="box fx-card"><div class="label">Bill To</div><div id="clientBlock" class="client-lines"></div></div>
+      <div class="box fx-card"><div class="label">Service Summary</div><div id="invoiceBlock" class="detail-lines"></div></div>
     </div>
 
     <div class="grid invoice-grid invoice-card-grid">
-      <div class="box"><div class="label">Service Address</div><div id="serviceAddressBlock" class="detail-lines">-</div></div>
-      <div class="payment-box">
+      <div class="box fx-card"><div class="label">Service Address</div><div id="serviceAddressBlock" class="detail-lines">-</div></div>
+      <div class="payment-box fx-card">
         <div class="label">Payment Methods</div>
         <div id="paymentMethodsList" class="detail-lines"></div>
       </div>
     </div>
 
-    <div class="table-wrap invoice-table">
-      <table>
+    <div class="table-wrap invoice-table fx-table-wrap">
+      <table class="fx-table">
         <thead>
           <tr><th>Service</th><th>Description</th><th>Qty</th><th class="amount">Unit Price</th><th class="amount">Total</th></tr>
         </thead>
@@ -871,21 +871,21 @@
 
     <div class="totals-wrap invoice-bottom">
       <div class="totals-grid">
-        <div class="money-card">
+        <div class="money-card fx-stat">
           <div class="total-row"><span>Subtotal</span><strong id="subtotalAmount">$0.00</strong></div>
         </div>
-        <div class="money-card" id="taxCard" style="display:none;">
+        <div class="money-card fx-stat" id="taxCard" style="display:none;">
           <div class="total-row"><span>Tax</span><strong id="taxAmount">$0.00</strong></div>
         </div>
-        <div class="money-card grand">
+        <div class="money-card grand fx-stat">
           <div class="label">Total</div>
           <strong id="invoiceTotal">$0.00</strong>
         </div>
-        <div class="money-card paid">
+        <div class="money-card paid fx-stat">
           <div class="label">Net paid</div>
           <strong id="paidAmount">$0.00</strong>
         </div>
-        <div class="money-card remaining">
+        <div class="money-card remaining fx-stat">
           <div class="label">Remaining balance</div>
           <strong id="remainingBalance">$0.00</strong>
         </div>
@@ -899,17 +899,17 @@
 
   <div class="actions">
     <div class="action-group">
-      <button type="button" class="btn gray" id="editInvoiceBtn">Edit Invoice</button>
-      <button type="button" class="btn blue" id="recordPaymentButton">Record Payment</button>
-      <button type="button" class="btn primary" id="markPaidButton">Mark as Paid</button>
+      <button type="button" class="btn gray fx-btn fx-btn--secondary" id="editInvoiceBtn">Edit Invoice</button>
+      <button type="button" class="btn blue fx-btn fx-btn--secondary" id="recordPaymentButton">Record Payment</button>
+      <button type="button" class="btn primary fx-btn fx-btn--primary" id="markPaidButton">Mark as Paid</button>
     </div>
     <div class="action-group">
-      <button type="button" class="btn red" id="cancelInvoiceBtn">Void / Cancel</button>
-      <button type="button" class="btn red" id="deleteInvoiceButton">Delete</button>
-      <button type="button" class="btn gray" id="closeInvoiceBtn">Close</button>
+      <button type="button" class="btn red fx-btn fx-btn--danger" id="cancelInvoiceBtn">Void / Cancel</button>
+      <button type="button" class="btn red fx-btn fx-btn--danger" id="deleteInvoiceButton">Delete</button>
+      <button type="button" class="btn gray fx-btn fx-btn--secondary" id="closeInvoiceBtn">Close</button>
       <div class="print-action-wrap">
-        <button type="button" class="btn primary" id="printInvoiceBtn">Print Invoice</button>
-        <button type="button" class="btn gray" id="downloadPdfBtn">Download PDF</button>
+        <button type="button" class="btn primary fx-btn fx-btn--primary" id="printInvoiceBtn">Print Invoice</button>
+        <button type="button" class="btn gray fx-btn fx-btn--secondary" id="downloadPdfBtn">Download PDF</button>
         <span class="invoice-print-hint">Use Print, then choose Save as PDF.</span>
       </div>
     </div>
@@ -1078,7 +1078,7 @@ function statusLabel(status){
 
 function statusBadge(status){
   const safeStatus = String(status || "draft").replace(/[^a-z_]/g, "");
-  return `<span class="badge status-${safeStatus}">${escapeHtml(statusLabel(status))}</span>`;
+  return `<span class="badge fx-badge status-${safeStatus}">${escapeHtml(statusLabel(status))}</span>`;
 }
 
 function contactLines(lines, emptyText){
@@ -1211,11 +1211,11 @@ function renderLoadError(message){
   document.getElementById("invoiceNumber").textContent = "Invoice unavailable";
   document.getElementById("companyBlock").innerHTML =
     '<div class="brand-wrap"><div class="brand-copy"><div class="brand-name">Company unavailable</div><div class="brand-lines">Unable to load company branding.</div></div></div>';
-  document.getElementById("clientBlock").innerHTML = `<div class="empty">Unable to load client details.</div>`;
-  document.getElementById("invoiceBlock").innerHTML = `<div class="empty">${escapeHtml(message)}</div>`;
+  document.getElementById("clientBlock").innerHTML = `<div class="empty fx-empty">Unable to load client details.</div>`;
+  document.getElementById("invoiceBlock").innerHTML = `<div class="empty fx-empty">${escapeHtml(message)}</div>`;
   document.getElementById("serviceAddressBlock").innerHTML = `<span class="muted">No service address available.</span>`;
-  document.getElementById("lineItems").innerHTML = `<tr><td colspan="5"><div class="empty">No invoice line items available.</div></td></tr>`;
-  document.getElementById("paymentMethodsList").innerHTML = `<div class="empty">Payment methods unavailable.</div>`;
+  document.getElementById("lineItems").innerHTML = `<tr><td colspan="5"><div class="empty fx-empty">No invoice line items available.</div></td></tr>`;
+  document.getElementById("paymentMethodsList").innerHTML = `<div class="empty fx-empty">Payment methods unavailable.</div>`;
   document.getElementById("subtotalAmount").textContent = formatMoney(0);
   document.getElementById("taxAmount").textContent = formatMoney(0);
   document.getElementById("taxCard").style.display = "none";

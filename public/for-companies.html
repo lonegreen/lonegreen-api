@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FairLinx for Companies | Service Business SaaS</title>
+  <meta name="description" content="Run your service business and win local work from one platform with FairLinx." />
+  <link rel="stylesheet" href="/css/brand.css">
+  <style>
+    :root {
+      --bg: #f5f7fb;
+      --surface: #ffffff;
+      --surface-soft: #f8faff;
+      --text: #101828;
+      --muted: #475467;
+      --line: #d0d5dd;
+      --brand: #ff5a00;
+      --brand-dark: #e04d00;
+      --ink: #182230;
+      --shadow: 0 14px 34px rgba(16, 24, 40, 0.08);
+      --radius: 20px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: Inter, Arial, sans-serif; }
+    body { background: var(--bg); color: var(--text); line-height: 1.6; }
+    a { color: inherit; text-decoration: none; }
+    .container { width: min(1140px, calc(100% - 32px)); margin: 0 auto; }
+
+    .navbar {
+      border-bottom: 1px solid rgba(208, 213, 221, 0.9);
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(8px);
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+
+    .nav-inner {
+      min-height: 74px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 22px;
+      font-weight: 900;
+      color: var(--ink);
+    }
+
+    .logo-mark {
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      display: grid;
+      place-items: center;
+      font-size: 14px;
+      font-weight: 900;
+      background: linear-gradient(140deg, #fff0e8, #ffd7bf);
+      border: 1px solid #ffc9a8;
+    }
+
+    section { padding: 64px 0; }
+
+    .hero {
+      padding: 100px 0 72px;
+      background:
+        radial-gradient(56% 58% at 0% 0%, rgba(255, 90, 0, 0.14), transparent 66%),
+        radial-gradient(45% 52% at 100% 0%, rgba(24, 34, 48, 0.08), transparent 72%);
+    }
+
+    .hero h1 {
+      font-size: clamp(32px, 5vw, 56px);
+      line-height: 1.08;
+      letter-spacing: -1.1px;
+      margin-bottom: 14px;
+      max-width: 940px;
+      color: var(--ink);
+    }
+
+    .hero p {
+      font-size: 18px;
+      color: var(--muted);
+      max-width: 880px;
+      margin-bottom: 32px;
+    }
+
+    .cta-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .cta-row .btn-primary {
+      min-height: 48px;
+      font-size: 15px;
+      box-shadow: 0 16px 30px rgba(255, 90, 0, 0.28);
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 44px;
+      padding: 10px 16px;
+      border-radius: 999px;
+      border: 1px solid transparent;
+      font-size: 14px;
+      font-weight: 800;
+      cursor: pointer;
+      transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+      white-space: nowrap;
+    }
+
+    .btn-primary {
+      background: linear-gradient(140deg, var(--brand), var(--brand-dark));
+      color: #fff;
+      box-shadow: 0 12px 24px rgba(255, 90, 0, 0.22);
+    }
+
+    .btn-secondary {
+      background: #fff;
+      border-color: var(--line);
+      color: var(--ink);
+    }
+
+    .btn:hover { transform: translateY(-1px); }
+    .btn-secondary:hover { border-color: var(--brand); color: var(--brand); }
+
+    .section-head h2 {
+      font-size: clamp(26px, 3.8vw, 40px);
+      line-height: 1.2;
+      margin-bottom: 10px;
+      color: var(--ink);
+    }
+
+    .section-head p { color: var(--muted); max-width: 780px; }
+
+    .problem-grid,
+    .solution-grid,
+    .pricing-grid {
+      display: grid;
+      gap: 14px;
+      margin-top: 24px;
+    }
+
+    .problem-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .solution-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .pricing-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 16px;
+      box-shadow: var(--shadow);
+    }
+
+    .card h3 {
+      font-size: 17px;
+      margin-bottom: 6px;
+      color: var(--ink);
+    }
+
+    .card p { font-size: 14px; color: var(--muted); }
+
+    .workflow {
+      background: var(--surface);
+      border-top: 1px solid var(--line);
+      border-bottom: 1px solid var(--line);
+    }
+
+    .flow {
+      display: grid;
+      grid-template-columns: repeat(7, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 24px;
+    }
+
+    .flow-step {
+      background: var(--surface-soft);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 14px 10px;
+      text-align: center;
+      font-weight: 800;
+      color: #1f2937;
+      font-size: 14px;
+    }
+
+    .market-advantage {
+      background: linear-gradient(145deg, #101828, #1d2939);
+      color: #f2f4f7;
+    }
+
+    .market-advantage .section-head h2 { color: #ffffff; }
+    .market-advantage .section-head p { color: #d0d5dd; }
+
+    .market-flow {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 24px;
+    }
+
+    .market-step {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      border-radius: 14px;
+      padding: 14px;
+      text-align: center;
+      font-weight: 800;
+      color: #f2f4f7;
+      font-size: 14px;
+    }
+
+    .no-commission {
+      margin-top: 16px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      border-radius: 14px;
+      padding: 16px;
+      color: #f2f4f7;
+      font-weight: 700;
+      box-shadow: 0 10px 24px rgba(16, 24, 40, 0.18);
+    }
+
+    .price-card {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 20px;
+      box-shadow: var(--shadow);
+    }
+
+    .price-card.featured {
+      border-color: #ffb890;
+      box-shadow: 0 18px 34px rgba(255, 90, 0, 0.14);
+      transform: translateY(-2px);
+    }
+
+    .pill {
+      display: inline-flex;
+      border-radius: 999px;
+      border: 1px solid #ffc9a8;
+      background: #fff0e8;
+      color: var(--brand-dark);
+      font-size: 12px;
+      font-weight: 800;
+      padding: 4px 10px;
+      margin-bottom: 10px;
+    }
+
+    .price-card h3 { font-size: 22px; margin-bottom: 8px; color: var(--ink); }
+    .price-card p { font-size: 14px; color: var(--muted); margin-bottom: 10px; }
+    .price { font-size: 34px; line-height: 1.2; font-weight: 900; margin-bottom: 10px; color: var(--ink); }
+    .price small { font-size: 14px; color: var(--muted); font-weight: 700; }
+
+    .price-card ul { list-style: none; display: grid; gap: 7px; margin-bottom: 14px; }
+    .price-card li { font-size: 14px; color: #1f2937; font-weight: 700; }
+    .price-card li::before { content: "✓ "; color: var(--brand); font-weight: 900; }
+
+    .final-cta {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 26px;
+      margin-top: 8px;
+    }
+
+    .final-cta h2 {
+      font-size: clamp(26px, 4vw, 36px);
+      line-height: 1.2;
+      margin-bottom: 10px;
+      color: var(--ink);
+    }
+
+    .final-cta p { color: var(--muted); margin-bottom: 16px; }
+
+    footer {
+      background: #101828;
+      border-top: 1px solid #344054;
+      color: #f2f4f7;
+      padding: 28px 0;
+      margin-top: 30px;
+    }
+
+    .footer-inner {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+    }
+
+    .footer-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 14px;
+      font-size: 14px;
+      font-weight: 700;
+      color: #d0d5dd;
+    }
+
+    .footer-links a:hover { color: #ffffff; }
+
+    @media (max-width: 1040px) {
+      .problem-grid,
+      .solution-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .flow { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+      .pricing-grid { grid-template-columns: 1fr; }
+      .price-card.featured { transform: none; }
+    }
+
+    @media (max-width: 760px) {
+      .container { width: min(1140px, calc(100% - 24px)); }
+      .nav-inner { padding: 14px 0; }
+      section { padding: 48px 0; }
+      .hero { padding: 68px 0 44px; }
+      .cta-row .btn { width: 100%; }
+      .problem-grid,
+      .solution-grid,
+      .flow,
+      .market-flow { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <header class="navbar">
+    <div class="container nav-inner">
+      <a href="/" class="logo" aria-label="FairLinx Home">
+        <span class="logo-mark">FL</span>
+        <span>FairLinx</span>
+      </a>
+      <a class="btn btn-secondary" href="/for-customers.html">For Customers</a>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="container">
+        <h1>Run your service business and win local work from one platform.</h1>
+        <p>Built for local service businesses and service companies that want one operating system for leads, field operations, and revenue workflow.</p>
+        <div class="cta-row">
+          <a class="btn btn-primary" href="/company-signup.html">Company Signup</a>
+          <a class="btn btn-secondary" href="/login.html">Company Login</a>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="container">
+        <div class="section-head">
+          <h2>Problems growing companies face</h2>
+          <p>Home and local services teams lose time and revenue when work is split across disconnected tools.</p>
+        </div>
+        <div class="problem-grid">
+          <article class="card"><h3>Scattered leads</h3><p>Requests are spread across calls, texts, and apps with inconsistent follow-up.</p></article>
+          <article class="card"><h3>Messy scheduling</h3><p>Dispatch and team coordination become a daily bottleneck.</p></article>
+          <article class="card"><h3>Unpaid invoices</h3><p>Billing visibility and collections are harder than they should be.</p></article>
+          <article class="card"><h3>Worker coordination</h3><p>Keeping crews aligned without one source of truth slows delivery.</p></article>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="container">
+        <div class="section-head">
+          <h2>The FairLinx solution</h2>
+          <p>Everything service companies need to run local operations from one platform.</p>
+        </div>
+        <div class="solution-grid">
+          <article class="card"><h3>CRM</h3><p>Organize lead and client records across your pipeline.</p></article>
+          <article class="card"><h3>Estimates</h3><p>Create and send estimates that convert quickly to booked work.</p></article>
+          <article class="card"><h3>Jobs</h3><p>Schedule and track field jobs with clear team visibility.</p></article>
+          <article class="card"><h3>Invoices</h3><p>Keep billing, status, and payment tracking in one place.</p></article>
+          <article class="card"><h3>Workers</h3><p>Assign, coordinate, and monitor worker activity across jobs.</p></article>
+          <article class="card"><h3>Recurring services</h3><p>Manage repeat service cycles without manual spreadsheets.</p></article>
+          <article class="card"><h3>Marketplace opportunities</h3><p>Respond to customer requests directly from your workflow.</p></article>
+          <article class="card"><h3>Unified operations</h3><p>Run all core SaaS workflow stages in one system.</p></article>
+        </div>
+      </div>
+    </section>
+
+    <section class="workflow">
+      <div class="container">
+        <div class="section-head">
+          <h2>Workflow from lead to recurring revenue</h2>
+          <p>Lead - Estimate - Client - Job - Invoice - Payment - Subscription</p>
+        </div>
+        <div class="flow" aria-label="Company workflow">
+          <div class="flow-step">Lead</div>
+          <div class="flow-step">Estimate</div>
+          <div class="flow-step">Client</div>
+          <div class="flow-step">Job</div>
+          <div class="flow-step">Invoice</div>
+          <div class="flow-step">Payment</div>
+          <div class="flow-step">Subscription</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="market-advantage">
+      <div class="container">
+        <div class="section-head">
+          <h2>Marketplace advantage</h2>
+          <p>Customer demand and business workflow meet in one platform experience.</p>
+        </div>
+        <div class="market-flow" aria-label="Marketplace workflow">
+          <div class="market-step">Customer request</div>
+          <div class="market-step">Company offer</div>
+          <div class="market-step">Accepted work</div>
+          <div class="market-step">Workflow</div>
+        </div>
+        <p class="no-commission">No commission model: no lead fees, no payout split, and you keep job revenue.</p>
+      </div>
+    </section>
+
+    <section>
+      <div class="container">
+        <div class="section-head">
+          <h2>Pricing</h2>
+          <p>Choose a plan built for where your service company is today.</p>
+        </div>
+        <div class="pricing-grid">
+          <article class="price-card">
+            <h3>Starter</h3>
+            <p>For new teams building consistent operating habits.</p>
+            <div class="price">$0 <small>/ demo</small></div>
+            <ul>
+              <li>Leads and client tracking</li>
+              <li>Core estimate tools</li>
+              <li>Basic workflow visibility</li>
+            </ul>
+            <a class="btn btn-secondary" href="/company-signup.html" style="width:100%;">Company Signup</a>
+          </article>
+          <article class="price-card featured">
+            <div class="pill">Popular</div>
+            <h3>Pro</h3>
+            <p>For active local service businesses managing daily field operations.</p>
+            <div class="price">$49 <small>/ month</small></div>
+            <ul>
+              <li>Full jobs and invoicing workflow</li>
+              <li>Workers and recurring services</li>
+              <li>Marketplace opportunity access</li>
+            </ul>
+            <a class="btn btn-primary" href="/company-signup.html" style="width:100%;">Company Signup</a>
+          </article>
+          <article class="price-card">
+            <h3>Business</h3>
+            <p>For larger teams needing more structure and advanced control.</p>
+            <div class="price">Custom</div>
+            <ul>
+              <li>Expanded operations setup</li>
+              <li>Advanced performance insights</li>
+              <li>Flexible account configuration</li>
+            </ul>
+            <a class="btn btn-secondary" href="/company-signup.html" style="width:100%;">Company Signup</a>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="container">
+        <div class="final-cta">
+          <h2>Build a stronger service company with one platform.</h2>
+          <p>Use FairLinx to run sales, jobs, billing, and marketplace demand in a single workflow built for home and local services.</p>
+          <div class="cta-row">
+            <a class="btn btn-primary" href="/company-signup.html">Company Signup</a>
+            <a class="btn btn-secondary" href="/login.html">Company Login</a>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="container footer-inner">
+      <a href="/" class="logo" style="color:#ffffff;">
+        <span class="logo-mark">FL</span>
+        <span>FairLinx</span>
+      </a>
+      <nav class="footer-links" aria-label="Footer links">
+        <a href="/for-customers.html">For Customers</a>
+        <a href="/for-companies.html">For Companies</a>
+        <a href="/discover.html">Find Services</a>
+        <a href="/marketplace.html">Request Service</a>
+        <a href="/customer-login-v2.html">Customer Login</a>
+        <a href="/login.html">Company Login</a>
+        <a href="/company-signup.html">Company Signup</a>
+        <a href="/terms.html">Terms</a>
+        <a href="/privacy.html">Privacy</a>
+      </nav>
+    </div>
+  </footer>
+</body>
+</html>

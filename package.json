@@ -11,6 +11,7 @@
     "check:navigation": "node scripts/check-navigation-integrity.js",
     "check:marketplace-contract": "node scripts/check-marketplace-contract.js",
     "check:final-readiness": "node scripts/final-readiness-report.js",
+    "check:design": "node scripts/check-design-system.js",
     "repair:customer-orphans": "node scripts/repair-customer-orphans.js",
     "start": "node server.js",
     "backup:db": "node scripts/backup-db.js",

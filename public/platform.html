@@ -223,7 +223,7 @@
       text-transform: uppercase;
     }
 
-    input, select {
+    input, select, textarea {
       width: 100%;
       border: 1px solid var(--brand-border);
       border-radius: 12px;
@@ -232,6 +232,7 @@
       background: white;
       color: var(--text);
     }
+    textarea { min-height: 96px; resize: vertical; }
 
     .table-wrap {
       overflow-x: auto;
@@ -469,6 +470,31 @@
       background: #fff7f7;
       border-color: #f0c7c7;
     }
+    .support-table-wrap {
+      overflow-x: auto;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: white;
+    }
+    .support-table {
+      width: 100%;
+      min-width: 780px;
+      border-collapse: collapse;
+    }
+    .support-table th, .support-table td {
+      padding: 10px;
+      border-bottom: 1px solid #e6eee9;
+      text-align: left;
+      font-size: 13px;
+      white-space: nowrap;
+    }
+    .support-table th {
+      background: var(--brand-bg);
+      color: var(--muted);
+      text-transform: uppercase;
+      font-size: 11px;
+      font-weight: 950;
+    }
 
     .warning-list {
       display: grid;
@@ -543,18 +569,20 @@
 </head>
 <body>
 <div class="page" id="platformRoot">
-  <header class="hero">
+  <header class="hero fx-hero fx-section-head">
     <div>
       <h1 id="pageTitle">Platform Command Center</h1>
       <p id="pageSubtitle">Manage companies, plans, usage, payments, and platform health.</p>
     </div>
-    <div class="top-actions">
-      <button class="btn" type="button" data-top-action="refresh">Refresh</button>
-      <button class="btn secondary" type="button" data-top-action="nav-billing">Billing & Subscriptions</button>
-      <button class="btn secondary" type="button" data-top-action="nav-customers">Customers</button>
-      <button class="btn secondary" type="button" data-top-action="nav-verifications">Trust Moderation</button>
-      <button class="btn secondary" type="button" data-top-action="nav-support">Support</button>
-      <button class="btn secondary" type="button" data-top-action="control">Back to Control Panel</button>
+    <div class="top-actions fx-cta-row">
+      <button class="btn fx-btn fx-btn--primary" type="button" data-top-action="refresh">Refresh</button>
+      <button class="btn secondary fx-btn fx-btn--secondary" type="button" data-top-action="nav-billing">Billing & Subscriptions</button>
+      <button class="btn secondary fx-btn fx-btn--secondary" type="button" data-top-action="nav-customers">Customers</button>
+      <button class="btn secondary fx-btn fx-btn--secondary" type="button" data-top-action="nav-verifications">Trust Moderation</button>
+      <button class="btn secondary fx-btn fx-btn--secondary" type="button" data-top-action="nav-support">Support</button>
+      <button class="btn secondary fx-btn fx-btn--secondary" type="button" data-top-action="nav-moderation">Moderation Center</button>
+      <button class="btn secondary fx-btn fx-btn--secondary" type="button" data-top-action="nav-disputes">Dispute Center</button>
+      <button class="btn secondary fx-btn fx-btn--secondary" type="button" data-top-action="refresh-platform">Refresh Platform</button>
     </div>
   </header>
 
@@ -591,6 +619,66 @@
           <p style="margin:16px 0 8px;font-size:13px;color:var(--muted);">Billing analytics (read-only) from <code>/platform/billing/analytics</code>.</p>
           <div class="mini-grid" id="billingAnalyticsGrid">
             <div class="state">Loading billing analytics...</div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="section-head">
+            <h2>Launch Readiness</h2>
+            <span class="count-pill">Owner review</span>
+          </div>
+          <div id="launchReadinessGrid" class="mini-grid">
+            <div class="state">Loading launch readiness...</div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="section-head">
+            <h2>Notification + Invite Readiness</h2>
+            <span class="count-pill">Phase 11</span>
+          </div>
+          <div id="notificationInviteGrid" class="mini-grid">
+            <div class="state">Loading notification and invite readiness...</div>
+          </div>
+          <div style="margin-top:10px;">
+            <label>Founding partner email
+              <input id="foundingInviteEmail" placeholder="partner@example.com">
+            </label>
+            <button class="btn secondary" type="button" id="createFoundingInviteBtn" style="margin-top:8px;">Create invite</button>
+          </div>
+          <div id="foundingInvitesList" class="list" style="margin-top:10px;">
+            <div class="state">Loading invites...</div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="section-head">
+            <h2>Billing Lifecycle Audit</h2>
+            <span class="count-pill">Read-only</span>
+          </div>
+          <div id="billingLifecycleAuditGrid" class="mini-grid">
+            <div class="state">Loading billing lifecycle audit...</div>
+          </div>
+          <div id="billingLifecycleWarnings" class="list" style="margin-top:10px;">
+            <div class="state">Loading billing warnings...</div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="section-head">
+            <h2>Operations Center</h2>
+            <span class="count-pill">Phase 12</span>
+          </div>
+          <div id="operationsCenterGrid" class="mini-grid">
+            <div class="state">Loading operations center...</div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="section-head">
+            <h2>Final Launch Center</h2>
+            <span class="count-pill">Cutover ready</span>
+          </div>
+          <div id="finalLaunchCenterGrid" class="mini-grid">
+            <div class="state">Loading final launch readiness...</div>
+          </div>
+          <div id="launchBlockersList" class="list" style="margin-top:10px;">
+            <div class="state">Loading launch blockers...</div>
           </div>
         </div>
       </section>
@@ -760,12 +848,63 @@
       <section id="verificationsSection" class="section">
         <div class="panel">
           <div class="section-head">
+            <h2>Verification Engine</h2>
+            <span class="count-pill" id="verificationEngineCount">0 companies</span>
+          </div>
+          <div class="toolbar">
+            <label>Search
+              <input id="verificationSearchInput" placeholder="Company, email, phone, or id">
+            </label>
+            <label>Verification
+              <select id="verificationStatusFilter">
+                <option value="">All</option>
+                <option value="unverified">Unverified</option>
+                <option value="pending">Pending</option>
+                <option value="verified">Verified</option>
+                <option value="rejected">Rejected</option>
+                <option value="suspended">Suspended</option>
+              </select>
+            </label>
+            <label>License
+              <select id="verificationLicenseFilter">
+                <option value="">All</option>
+                <option value="unknown">Unknown</option>
+                <option value="pending">Pending</option>
+                <option value="verified">Verified</option>
+                <option value="rejected">Rejected</option>
+                <option value="expired">Expired</option>
+              </select>
+            </label>
+            <label>Insurance
+              <select id="verificationInsuranceFilter">
+                <option value="">All</option>
+                <option value="unknown">Unknown</option>
+                <option value="pending">Pending</option>
+                <option value="verified">Verified</option>
+                <option value="rejected">Rejected</option>
+                <option value="expired">Expired</option>
+              </select>
+            </label>
+          </div>
+          <div id="verificationCompaniesList" class="list">
+            <div class="state">Loading verification companies...</div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="section-head">
             <h2>Trust KPI Cards</h2>
             <button class="btn secondary" type="button" id="syncTrustExpiredBtn">Sync expired trust statuses</button>
           </div>
           <div id="trustKpiGrid" class="mini-grid">
             <div class="state">Loading trust KPIs...</div>
           </div>
+        </div>
+        <div class="panel">
+          <div class="section-head">
+            <h2>Verification Company Detail</h2>
+            <span class="count-pill" id="verificationDetailPill">None selected</span>
+          </div>
+          <div id="verificationDetail" class="state">Select a company from Verification Engine.</div>
         </div>
         <div class="panel">
           <div class="section-head">
@@ -843,6 +982,15 @@
       <section id="supportSection" class="section">
         <div class="panel">
           <div class="section-head">
+            <h2>Support Workflow KPIs</h2>
+            <span class="count-pill">Lifecycle</span>
+          </div>
+          <div id="supportKpiGrid" class="mini-grid">
+            <div class="state">Loading support KPIs...</div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="section-head">
             <h2>Support Tickets</h2>
             <span class="count-pill" id="supportCount">0 tickets</span>
           </div>
@@ -858,9 +1006,36 @@
                 <option value="pending">Pending (Legacy)</option>
               </select>
             </label>
+            <label>Priority
+              <select id="supportPriorityFilter">
+                <option value="">All priorities</option>
+                <option value="low">Low</option>
+                <option value="medium">Medium</option>
+                <option value="high">High</option>
+                <option value="urgent">Urgent</option>
+              </select>
+            </label>
           </div>
           <div id="supportList" class="list">
             <div class="state">Loading support tickets...</div>
+          </div>
+          <div class="support-table-wrap" style="margin-top:12px;">
+            <table class="support-table">
+              <thead>
+                <tr>
+                  <th>Ticket ID</th>
+                  <th>Subject</th>
+                  <th>Owner</th>
+                  <th>Priority</th>
+                  <th>Status</th>
+                  <th>Created At</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="supportTableBody">
+                <tr><td colspan="7">Loading support tickets...</td></tr>
+              </tbody>
+            </table>
           </div>
         </div>
         <div class="panel">
@@ -869,6 +1044,134 @@
             <span class="count-pill" id="supportDetailPill">None selected</span>
           </div>
           <div id="supportDetail" class="state">Select a support ticket.</div>
+        </div>
+      </section>
+      <section id="moderationSection" class="section">
+        <div class="panel">
+          <div class="section-head">
+            <h2>Moderation KPIs</h2>
+            <span class="count-pill">Abuse reports</span>
+          </div>
+          <div id="moderationKpiGrid" class="mini-grid">
+            <div class="state">Loading moderation KPIs...</div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="section-head">
+            <h2>Moderation Reports</h2>
+            <span class="count-pill" id="moderationCount">0 reports</span>
+          </div>
+          <div class="toolbar">
+            <label>Status
+              <select id="moderationStatusFilter">
+                <option value="">All statuses</option>
+                <option value="open">Open</option>
+                <option value="reviewing">Reviewing</option>
+                <option value="action_taken">Action Taken</option>
+                <option value="dismissed">Dismissed</option>
+                <option value="closed">Closed</option>
+              </select>
+            </label>
+            <label>Priority
+              <select id="moderationPriorityFilter">
+                <option value="">All priorities</option>
+                <option value="low">Low</option>
+                <option value="medium">Medium</option>
+                <option value="high">High</option>
+                <option value="urgent">Urgent</option>
+              </select>
+            </label>
+            <label>Target
+              <select id="moderationTargetFilter">
+                <option value="">All targets</option>
+                <option value="company">Company</option>
+                <option value="review">Review</option>
+                <option value="message">Message</option>
+                <option value="marketplace_request">Marketplace Request</option>
+              </select>
+            </label>
+            <label>Search
+              <input id="moderationSearchInput" placeholder="id, company, reason, details">
+            </label>
+          </div>
+          <div id="moderationList" class="list"><div class="state">Loading reports...</div></div>
+          <div class="support-table-wrap" style="margin-top:12px;">
+            <table class="support-table">
+              <thead>
+                <tr>
+                  <th>ID</th><th>Target Type</th><th>Target ID</th><th>Company</th><th>Reason</th><th>Priority</th><th>Status</th><th>Created At</th><th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="moderationTableBody"><tr><td colspan="9">Loading reports...</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="section-head">
+            <h2>Moderation Detail</h2>
+            <span class="count-pill" id="moderationDetailPill">None selected</span>
+          </div>
+          <div id="moderationDetail" class="state">Select a report.</div>
+        </div>
+      </section>
+      <section id="disputesSection" class="section">
+        <div class="panel">
+          <div class="section-head">
+            <h2>Dispute KPIs</h2>
+            <span class="count-pill">Conflict workflow</span>
+          </div>
+          <div id="disputeKpiGrid" class="mini-grid">
+            <div class="state">Loading dispute KPIs...</div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="section-head">
+            <h2>Disputes</h2>
+            <span class="count-pill" id="disputeCount">0 disputes</span>
+          </div>
+          <div class="toolbar">
+            <label>Status
+              <select id="disputeStatusFilter">
+                <option value="">All statuses</option>
+                <option value="open">Open</option>
+                <option value="reviewing">Reviewing</option>
+                <option value="waiting_customer">Waiting Customer</option>
+                <option value="waiting_company">Waiting Company</option>
+                <option value="resolved">Resolved</option>
+                <option value="closed">Closed</option>
+              </select>
+            </label>
+            <label>Priority
+              <select id="disputePriorityFilter">
+                <option value="">All priorities</option>
+                <option value="low">Low</option>
+                <option value="medium">Medium</option>
+                <option value="high">High</option>
+                <option value="urgent">Urgent</option>
+              </select>
+            </label>
+            <label>Search
+              <input id="disputeSearchInput" placeholder="id, reason, company">
+            </label>
+          </div>
+          <div id="disputeList" class="list"><div class="state">Loading disputes...</div></div>
+          <div class="support-table-wrap" style="margin-top:12px;">
+            <table class="support-table">
+              <thead>
+                <tr>
+                  <th>ID</th><th>Reason</th><th>Company</th><th>Customer</th><th>Priority</th><th>Status</th><th>Created At</th><th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="disputeTableBody"><tr><td colspan="8">Loading disputes...</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="section-head">
+            <h2>Dispute Detail</h2>
+            <span class="count-pill" id="disputeDetailPill">None selected</span>
+          </div>
+          <div id="disputeDetail" class="state">Select a dispute.</div>
         </div>
       </section>
     </main>
@@ -912,7 +1215,9 @@ const SECTION_META = {
   activity: ["Activity Logs", "Review platform-wide logs when the endpoint is available."],
   settings: ["Platform Settings", "Future safe settings for platform-level operations."],
   verifications: ["Trust Moderation", "Review and moderate company trust submissions."],
-  support: ["Support Dashboard", "Review and moderate all support tickets."]
+  support: ["Support Dashboard", "Review and moderate all support tickets."],
+  moderation: ["Moderation Center", "Review abuse reports and apply moderation actions."],
+  disputes: ["Dispute Center", "Review marketplace and support disputes without payment reversals."]
 };
 
 let currentSection = "overview";
@@ -930,12 +1235,26 @@ let platformSettings = null;
 let booted = false;
 let billingOverviewData = null;
 let billingAnalyticsData = null;
+let launchReadinessData = null;
+let foundingPartnerInvitesData = [];
+let billingLifecycleAuditData = null;
+let monitoringData = null;
+let backupStatusData = null;
+let storageReadinessData = null;
+let monitoringReadinessData = null;
+let backupReadinessData = null;
 let verificationRows = [];
 let reportRows = [];
 let selectedReport = null;
 let trustKpis = null;
+let verificationCompanies = [];
+let selectedVerificationCompany = null;
 let supportRows = [];
 let selectedSupport = null;
+let moderationRows = [];
+let selectedModeration = null;
+let disputeRows = [];
+let selectedDispute = null;
 let platformCustomers = [];
 let selectedCustomer = null;
 
@@ -960,7 +1279,9 @@ function text(value, fallback){ return value === null || value === undefined || 
 function requirePlatform(){
   if(!token() || !user()){
     localStorage.removeItem("token");
+    localStorage.removeItem("customerToken");
     localStorage.removeItem("user");
+    localStorage.removeItem("currentPage");
     window.top.location.href = "/login.html";
     return false;
   }
@@ -989,6 +1310,7 @@ async function apiFetch(path, options){
 
   if(res.status === 401){
     localStorage.removeItem("token");
+    localStorage.removeItem("customerToken");
     localStorage.removeItem("user");
     localStorage.removeItem("currentPage");
     window.top.location.href = "/login.html";
@@ -1063,19 +1385,13 @@ function showSection(section){
   if(currentSection === "verifications") renderVerifications();
   if(currentSection === "customers") renderCustomers();
   if(currentSection === "support") renderSupport();
-}
-
-function goControl(){
-  if(window.self !== window.top){
-    showToast("You are already in the Control Panel.");
-    return;
-  }
-  window.top.location.href = "/control.html";
+  if(currentSection === "moderation") renderModeration();
+  if(currentSection === "disputes") renderDisputes();
 }
 
 function badge(value, type){
   const clean = String(value || "-").toLowerCase();
-  return '<span class="badge ' + esc(type || clean) + '">' + esc(titleCase(clean)) + '</span>';
+  return '<span class="badge fx-badge ' + esc(type || clean) + '">' + esc(titleCase(clean)) + '</span>';
 }
 
 function toDatetimeLocalValue(iso){
@@ -1107,14 +1423,14 @@ function warningBadges(row){
     : [];
 
   if(!warnings.length){
-    return '<span class="badge">Clear</span>';
+    return '<span class="badge fx-badge">Clear</span>';
   }
 
   return warnings.slice(0, 3).map(warning =>
-    '<span class="badge ' + esc(warning.severity === "danger" ? "danger" : "warning") + '">' +
+    '<span class="badge fx-badge ' + esc(warning.severity === "danger" ? "danger" : "warning") + '">' +
       esc(titleCase(warning.type || "warning")) +
     '</span>'
-  ).join(" ") + (warnings.length > 3 ? ' <span class="badge warning">+' + (warnings.length - 3) + '</span>' : "");
+  ).join(" ") + (warnings.length > 3 ? ' <span class="badge fx-badge warning">+' + (warnings.length - 3) + '</span>' : "");
 }
 
 function limitText(current, limit){
@@ -1124,7 +1440,7 @@ function limitText(current, limit){
 function warningList(warnings){
   const list = warnings && Array.isArray(warnings.warnings) ? warnings.warnings : [];
   if(!list.length){
-    return '<div class="state">No billing warnings for this company.</div>';
+    return '<div class="state fx-empty">No billing warnings for this company.</div>';
   }
 
   return '<div class="warning-list">' + list.map(warning =>
@@ -1219,6 +1535,142 @@ function renderBillingAnalytics(){
   ].join("");
 }
 
+function readinessStatusLabel(value){
+  const normalized = String(value || "").toLowerCase();
+  if(normalized === "ok" || normalized === "configured" || normalized === "ready") return "Ready";
+  return "Needs review";
+}
+
+function renderLaunchReadiness(){
+  const host = document.getElementById("launchReadinessGrid");
+  const data = launchReadinessData;
+  if(!data || typeof data !== "object"){
+    host.innerHTML = [
+      metric("Billing readiness", "Needs review"),
+      metric("Upload storage", "Needs review"),
+      metric("Support system", "Needs review"),
+      metric("Verification system", "Needs review"),
+      metric("Moderation system", "Needs review"),
+      metric("Disputes system", "Needs review"),
+      metric("Backups", "Needs review"),
+      metric("Incident response", "Needs review")
+    ].join("");
+    return;
+  }
+  const checks = data.workflows && data.workflows.checks ? data.workflows.checks : {};
+  host.innerHTML = [
+    metric("Billing readiness", readinessStatusLabel(data.billing && data.billing.status)),
+    metric("Upload storage", readinessStatusLabel(checks.upload_storage && checks.upload_storage.status)),
+    metric("Support system", readinessStatusLabel(checks.support_system && checks.support_system.status)),
+    metric("Verification system", readinessStatusLabel(checks.verification_system && checks.verification_system.status)),
+    metric("Moderation system", readinessStatusLabel(checks.moderation_system && checks.moderation_system.status)),
+    metric("Disputes system", readinessStatusLabel(checks.disputes_system && checks.disputes_system.status)),
+    metric("Backups", readinessStatusLabel(checks.backup_docs && checks.backup_docs.status)),
+    metric("Incident response", readinessStatusLabel(checks.incident_playbook && checks.incident_playbook.status))
+  ].join("");
+}
+
+function renderNotificationInviteReadiness(){
+  const host = document.getElementById("notificationInviteGrid");
+  const workflowChecks = launchReadinessData && launchReadinessData.workflows && launchReadinessData.workflows.checks
+    ? launchReadinessData.workflows.checks
+    : {};
+  host.innerHTML = [
+    metric("Notifications system", readinessStatusLabel(workflowChecks.notifications_system && workflowChecks.notifications_system.status)),
+    metric("Reputation fields", readinessStatusLabel(workflowChecks.reputation_system && workflowChecks.reputation_system.status)),
+    metric("Invite foundation", readinessStatusLabel(workflowChecks.founding_partner_invites && workflowChecks.founding_partner_invites.status)),
+    metric("Billing audit endpoint", readinessStatusLabel(workflowChecks.billing_lifecycle_audit && workflowChecks.billing_lifecycle_audit.status)),
+    metric("Notification plan doc", readinessStatusLabel(workflowChecks.notification_plan_doc && workflowChecks.notification_plan_doc.status)),
+    metric("Billing hardening doc", readinessStatusLabel(workflowChecks.billing_hardening_doc && workflowChecks.billing_hardening_doc.status))
+  ].join("");
+  const listHost = document.getElementById("foundingInvitesList");
+  listHost.innerHTML = Array.isArray(foundingPartnerInvitesData) && foundingPartnerInvitesData.length
+    ? foundingPartnerInvitesData.slice(0, 20).map(function(item){
+      return '<div class="list-item">' +
+        '<div><strong>' + esc(item.invited_email || "-") + '</strong><div class="sub">' + esc(titleCase(item.status || "pending")) + " | " + esc(date(item.created_at)) + '</div></div>' +
+        '<div>' + ((item.status || "") === "pending"
+          ? '<button class="btn secondary" type="button" data-cancel-invite-id="' + esc(String(item.id)) + '">Cancel</button>' +
+            '<button class="btn secondary" type="button" data-accept-invite-id="' + esc(String(item.id)) + '" style="margin-left:6px;">Accept</button>'
+          : '<span class="badge">' + esc(titleCase(item.status || "done")) + '</span>') + '</div>' +
+      '</div>';
+    }).join("")
+    : '<div class="state fx-empty">No founding partner invites yet.</div>';
+}
+
+function renderBillingLifecycleAudit(){
+  const grid = document.getElementById("billingLifecycleAuditGrid");
+  const warningsHost = document.getElementById("billingLifecycleWarnings");
+  const data = billingLifecycleAuditData;
+  if(!data || typeof data !== "object"){
+    grid.innerHTML = [
+      metric("Past due", "0"),
+      metric("Unpaid", "0"),
+      metric("Canceled", "0"),
+      metric("In grace", "0"),
+      metric("Grace expired", "0"),
+      metric("Missing Stripe customer", "0"),
+      metric("Missing Stripe subscription", "0")
+    ].join("");
+    warningsHost.innerHTML = '<div class="state fx-empty">Billing lifecycle audit unavailable.</div>';
+    return;
+  }
+  grid.innerHTML = [
+    metric("Past due", num(data.risk_statuses && data.risk_statuses.past_due)),
+    metric("Unpaid", num(data.risk_statuses && data.risk_statuses.unpaid)),
+    metric("Canceled", num(data.risk_statuses && data.risk_statuses.canceled)),
+    metric("In grace", num(data.grace_period && data.grace_period.in_grace)),
+    metric("Grace expired", num(data.grace_period && data.grace_period.grace_expired)),
+    metric("Missing Stripe customer", num(data.missing_stripe_fields && data.missing_stripe_fields.stripe_customer_id)),
+    metric("Missing Stripe subscription", num(data.missing_stripe_fields && data.missing_stripe_fields.stripe_subscription_id))
+  ].join("");
+  const warnings = Array.isArray(data.warnings) ? data.warnings : [];
+  warningsHost.innerHTML = warnings.length
+    ? '<div class="list">' + warnings.map(function(w){ return listRow("Warning", w); }).join("") + '</div>'
+    : '<div class="state fx-empty">No billing lifecycle warnings.</div>';
+}
+
+function renderOperationsCenter(){
+  const host = document.getElementById("operationsCenterGrid");
+  const checks = launchReadinessData && launchReadinessData.workflows && launchReadinessData.workflows.checks
+    ? launchReadinessData.workflows.checks
+    : {};
+  host.innerHTML = [
+    metric("Monitoring", readinessStatusLabel(checks.monitoring_system && checks.monitoring_system.status)),
+    metric("Backups", readinessStatusLabel(checks.backup_system && checks.backup_system.status)),
+    metric("Notifications", readinessStatusLabel(checks.notification_triggers && checks.notification_triggers.status)),
+    metric("Invites", readinessStatusLabel(checks.invite_validation && checks.invite_validation.status)),
+    metric("Reputation", readinessStatusLabel(checks.reputation_engine && checks.reputation_engine.status)),
+    metric("Scheduler", (monitoringData && monitoringData.scheduler && monitoringData.scheduler.status) || "unknown"),
+    metric("Queue", (monitoringData && monitoringData.queue && monitoringData.queue.status) || "unknown"),
+    metric("Backup status", (backupStatusData && backupStatusData.status) || "unknown")
+  ].join("");
+}
+
+function renderFinalLaunchCenter(){
+  const host = document.getElementById("finalLaunchCenterGrid");
+  const blockersHost = document.getElementById("launchBlockersList");
+  const checks = launchReadinessData && launchReadinessData.workflows && launchReadinessData.workflows.checks
+    ? launchReadinessData.workflows.checks
+    : {};
+  host.innerHTML = [
+    metric("Storage Ready", (storageReadinessData && storageReadinessData.status) || "needs_review"),
+    metric("Monitoring Ready", (monitoringReadinessData && monitoringReadinessData.status) || "needs_review"),
+    metric("Backups Ready", (backupReadinessData && backupReadinessData.status) || "needs_review"),
+    metric("Billing Ready", (launchReadinessData && launchReadinessData.billing && launchReadinessData.billing.status) || "needs_review"),
+    metric("Support Ready", readinessStatusLabel(checks.support_system && checks.support_system.status)),
+    metric("Verification Ready", readinessStatusLabel(checks.verification_system && checks.verification_system.status)),
+    metric("Moderation Ready", readinessStatusLabel(checks.moderation_system && checks.moderation_system.status)),
+    metric("Disputes Ready", readinessStatusLabel(checks.disputes_system && checks.disputes_system.status)),
+    metric("Notifications Ready", readinessStatusLabel(checks.notifications_system && checks.notifications_system.status))
+  ].join("");
+  const blockers = launchReadinessData && launchReadinessData.launch_blockers && Array.isArray(launchReadinessData.launch_blockers.items)
+    ? launchReadinessData.launch_blockers.items
+    : [];
+  blockersHost.innerHTML = blockers.length
+    ? '<div class="list">' + blockers.map(function(item){ return listRow("Blocker", item); }).join("") + '</div>'
+    : '<div class="state">No launch blockers detected.</div>';
+}
+
 function mergedCompanies(){
   return Array.isArray(companies) ? companies : [];
 }
@@ -1254,9 +1706,9 @@ function companyTitle(row){
 
 function platformCell(row){
   if(row.platform_suspended_at){
-    return '<span class="badge danger" title="' + esc(row.platform_suspension_reason || "") + '">Suspended</span>';
+  return '<span class="badge fx-badge danger" title="' + esc(row.platform_suspension_reason || "") + '">Suspended</span>';
   }
-  return '<span class="badge">—</span>';
+  return '<span class="badge fx-badge">—</span>';
 }
 
 function renderCompanies(){
@@ -1648,6 +2100,102 @@ function renderTrustKpis(){
   ].join("");
 }
 
+function renderVerificationCompanies(){
+  const rows = Array.isArray(verificationCompanies) ? verificationCompanies : [];
+  const host = document.getElementById("verificationCompaniesList");
+  const count = document.getElementById("verificationEngineCount");
+  count.textContent = rows.length + (rows.length === 1 ? " company" : " companies");
+  if(!rows.length){
+    host.innerHTML = '<div class="state">No verification records found.</div>';
+    return;
+  }
+  host.innerHTML = rows.map(row =>
+    '<div class="list-row">' +
+      '<span><strong>' + esc(row.name || ("Company #" + row.id)) + '</strong>' +
+      '<div class="sub">' + esc([row.email, row.phone].filter(Boolean).join(" | ") || "No contact") + '</div></span>' +
+      '<strong>' + badge(row.verification_status || "unverified") + ' ' +
+      badge(row.license_status || "unknown") + ' ' +
+      badge(row.insurance_status || "unknown") +
+      ' <button class="btn secondary" type="button" data-verification-company-view="' + esc(String(row.id)) + '">Manage</button></strong>' +
+    '</div>'
+  ).join("");
+}
+
+function renderVerificationDetail(){
+  const host = document.getElementById("verificationDetail");
+  const pill = document.getElementById("verificationDetailPill");
+  if(!selectedVerificationCompany){
+    pill.textContent = "None selected";
+    host.className = "state";
+    host.innerHTML = "Select a company from Verification Engine.";
+    return;
+  }
+  const row = selectedVerificationCompany;
+  pill.textContent = "Company #" + row.id;
+  host.className = "list";
+  host.innerHTML =
+    listRow("Company", text(row.name, "Company #" + row.id)) +
+    listRow("Email", text(row.email)) +
+    listRow("Phone", text(row.phone)) +
+    listRow("Verification", titleCase(row.verification_status || "unverified")) +
+    listRow("License", titleCase(row.license_status || "unknown")) +
+    listRow("Insurance", titleCase(row.insurance_status || "unknown")) +
+    listRow("Identity", titleCase(row.identity_status || "unknown")) +
+    listRow("Verified At", text(row.verified_at)) +
+    listRow("Verified By", text(row.verified_by_username || row.verified_by)) +
+    '<label>Verification Status<select id="verificationDetailStatus"><option value="unverified">Unverified</option><option value="pending">Pending</option><option value="verified">Verified</option><option value="rejected">Rejected</option><option value="suspended">Suspended</option></select></label>' +
+    '<label>License Status<select id="verificationDetailLicense"><option value="unknown">Unknown</option><option value="pending">Pending</option><option value="verified">Verified</option><option value="rejected">Rejected</option><option value="expired">Expired</option></select></label>' +
+    '<label>Insurance Status<select id="verificationDetailInsurance"><option value="unknown">Unknown</option><option value="pending">Pending</option><option value="verified">Verified</option><option value="rejected">Rejected</option><option value="expired">Expired</option></select></label>' +
+    '<label>Identity Status<select id="verificationDetailIdentity"><option value="unknown">Unknown</option><option value="pending">Pending</option><option value="verified">Verified</option><option value="rejected">Rejected</option></select></label>' +
+    '<label>Verification Notes<textarea id="verificationDetailNotes" maxlength="4000">' + esc(text(row.verification_notes, "")) + '</textarea></label>' +
+    '<button class="btn" type="button" id="verificationDetailSaveBtn">Save Verification</button>';
+  document.getElementById("verificationDetailStatus").value = String(row.verification_status || "unverified");
+  document.getElementById("verificationDetailLicense").value = String(row.license_status || "unknown");
+  document.getElementById("verificationDetailInsurance").value = String(row.insurance_status || "unknown");
+  document.getElementById("verificationDetailIdentity").value = String(row.identity_status || "unknown");
+  document.getElementById("verificationDetailSaveBtn").addEventListener("click", saveVerificationDetail);
+}
+
+async function loadVerificationCompanies(){
+  const q = String(document.getElementById("verificationSearchInput").value || "").trim();
+  const verification_status = String(document.getElementById("verificationStatusFilter").value || "");
+  const license_status = String(document.getElementById("verificationLicenseFilter").value || "");
+  const insurance_status = String(document.getElementById("verificationInsuranceFilter").value || "");
+  const qs = new URLSearchParams();
+  if(q) qs.set("q", q);
+  if(verification_status) qs.set("verification_status", verification_status);
+  if(license_status) qs.set("license_status", license_status);
+  if(insurance_status) qs.set("insurance_status", insurance_status);
+  const query = qs.toString() ? ("?" + qs.toString()) : "";
+  verificationCompanies = await apiFetch("/platform/verification/companies" + query);
+  if(!Array.isArray(verificationCompanies)) verificationCompanies = [];
+  renderVerificationCompanies();
+}
+
+function viewVerificationCompany(id){
+  selectedVerificationCompany = (verificationCompanies || []).find(row => String(row.id) === String(id)) || null;
+  renderVerificationDetail();
+}
+
+async function saveVerificationDetail(){
+  if(!selectedVerificationCompany || !selectedVerificationCompany.id) return;
+  const body = {
+    verification_status: document.getElementById("verificationDetailStatus").value,
+    license_status: document.getElementById("verificationDetailLicense").value,
+    insurance_status: document.getElementById("verificationDetailInsurance").value,
+    identity_status: document.getElementById("verificationDetailIdentity").value,
+    verification_notes: document.getElementById("verificationDetailNotes").value
+  };
+  await apiFetch("/platform/verification/companies/" + encodeURIComponent(selectedVerificationCompany.id), {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body)
+  });
+  showToast("Verification record updated.");
+  await loadVerificationCompanies();
+  viewVerificationCompany(selectedVerificationCompany.id);
+}
+
 async function loadTrustKpis(){
   try {
     trustKpis = await apiFetch("/platform/trust/kpis");
@@ -1769,11 +2317,28 @@ async function mutateCustomer(action){
 
 function renderSupport(){
   const host = document.getElementById("supportList");
+  const tableBody = document.getElementById("supportTableBody");
   const count = document.getElementById("supportCount");
   const rows = Array.isArray(supportRows) ? supportRows : [];
   count.textContent = rows.length + (rows.length === 1 ? " ticket" : " tickets");
+  const openCount = rows.filter(r => String(r.status || "") === "open" || String(r.status || "") === "pending").length;
+  const urgentCount = rows.filter(r => String(r.priority || "") === "urgent").length;
+  const waitingCustomerCount = rows.filter(r => String(r.status || "") === "waiting_customer").length;
+  const todayKey = new Date().toISOString().slice(0, 10);
+  const resolvedTodayCount = rows.filter(r => {
+    if (String(r.status || "") !== "resolved") return false;
+    const dt = String(r.updated_at || r.created_at || "");
+    return dt.slice(0, 10) === todayKey;
+  }).length;
+  document.getElementById("supportKpiGrid").innerHTML = [
+    metric("Open Tickets", String(openCount)),
+    metric("Urgent Tickets", String(urgentCount)),
+    metric("Waiting Customer", String(waitingCustomerCount)),
+    metric("Resolved Today", String(resolvedTodayCount))
+  ].join("");
   if(!rows.length){
     host.innerHTML = '<div class="state">No support tickets found.</div>';
+    tableBody.innerHTML = '<tr><td colspan="7">No support tickets found.</td></tr>';
     return;
   }
   host.innerHTML = rows.map(row =>
@@ -1782,14 +2347,253 @@ function renderSupport(){
       '<strong><button class="btn secondary" type="button" data-support-view="' + esc(String(row.id)) + '">View</button></strong>' +
     '</div>'
   ).join("");
+  tableBody.innerHTML = rows.map(row =>
+    '<tr>' +
+      '<td>#' + esc(String(row.id)) + '</td>' +
+      '<td>' + esc(text(row.subject, "(no subject)")) + '</td>' +
+      '<td>' + esc(text(row.created_by_username, "User #" + text(row.created_by_user_id, "-"))) + '</td>' +
+      '<td>' + esc(titleCase(row.priority || "medium")) + '</td>' +
+      '<td>' + esc(titleCase(row.status || "open")) + '</td>' +
+      '<td>' + esc(text(row.created_at, "-")) + '</td>' +
+      '<td><button class="btn secondary" type="button" data-support-view="' + esc(String(row.id)) + '">View</button></td>' +
+    '</tr>'
+  ).join("");
 }
 
 async function loadSupportTickets(){
   const status = document.getElementById("supportStatusFilter").value;
-  const q = status ? ("?status=" + encodeURIComponent(status)) : "";
+  const priority = document.getElementById("supportPriorityFilter").value;
+  const qs = new URLSearchParams();
+  if(status) qs.set("status", status);
+  if(priority) qs.set("priority", priority);
+  const q = qs.toString() ? ("?" + qs.toString()) : "";
   supportRows = await apiFetch("/platform/support/tickets" + q);
   if(!Array.isArray(supportRows)) supportRows = [];
   renderSupport();
+}
+
+function renderModeration(){
+  const host = document.getElementById("moderationList");
+  const tableBody = document.getElementById("moderationTableBody");
+  const count = document.getElementById("moderationCount");
+  const rows = Array.isArray(moderationRows) ? moderationRows : [];
+  count.textContent = rows.length + (rows.length === 1 ? " report" : " reports");
+  const openCount = rows.filter(r => String(r.status || "") === "open").length;
+  const urgentCount = rows.filter(r => String(r.priority || "") === "urgent").length;
+  const reviewingCount = rows.filter(r => String(r.status || "") === "reviewing").length;
+  const actionTakenCount = rows.filter(r => String(r.status || "") === "action_taken").length;
+  document.getElementById("moderationKpiGrid").innerHTML = [
+    metric("Open Reports", String(openCount)),
+    metric("Urgent Reports", String(urgentCount)),
+    metric("Reviewing", String(reviewingCount)),
+    metric("Action Taken", String(actionTakenCount))
+  ].join("");
+  if(!rows.length){
+    host.innerHTML = '<div class="state">No moderation reports found.</div>';
+    tableBody.innerHTML = '<tr><td colspan="9">No moderation reports found.</td></tr>';
+    return;
+  }
+  host.innerHTML = rows.map(row =>
+    '<div class="list-row">' +
+      '<span><strong>Report #' + esc(row.id) + '</strong><div class="sub">' + esc(titleCase(row.target_type || "-") + " #" + text(row.target_id, "-") + " | " + text(row.company_name, "No company")) + '</div></span>' +
+      '<strong><button class="btn secondary" type="button" data-moderation-view="' + esc(String(row.id)) + '">View</button></strong>' +
+    '</div>'
+  ).join("");
+  tableBody.innerHTML = rows.map(row =>
+    '<tr>' +
+      '<td>#' + esc(String(row.id)) + '</td>' +
+      '<td>' + esc(titleCase(row.target_type || "-")) + '</td>' +
+      '<td>' + esc(text(row.target_id, "-")) + '</td>' +
+      '<td>' + esc(text(row.company_name, row.company_id ? ("Company #" + row.company_id) : "-")) + '</td>' +
+      '<td>' + esc(text(row.reason, "-")) + '</td>' +
+      '<td>' + esc(titleCase(row.priority || "medium")) + '</td>' +
+      '<td>' + esc(titleCase(row.status || "open")) + '</td>' +
+      '<td>' + esc(text(row.created_at, "-")) + '</td>' +
+      '<td><button class="btn secondary" type="button" data-moderation-view="' + esc(String(row.id)) + '">View</button></td>' +
+    '</tr>'
+  ).join("");
+}
+
+async function loadModerationReports(){
+  const status = String(document.getElementById("moderationStatusFilter").value || "");
+  const priority = String(document.getElementById("moderationPriorityFilter").value || "");
+  const targetType = String(document.getElementById("moderationTargetFilter").value || "");
+  const q = String(document.getElementById("moderationSearchInput").value || "").trim();
+  const qs = new URLSearchParams();
+  if(status) qs.set("status", status);
+  if(priority) qs.set("priority", priority);
+  if(targetType) qs.set("target_type", targetType);
+  if(q) qs.set("q", q);
+  moderationRows = await apiFetch("/platform/moderation/reports" + (qs.toString() ? ("?" + qs.toString()) : ""));
+  if(!Array.isArray(moderationRows)) moderationRows = [];
+  renderModeration();
+}
+
+function renderModerationDetail(){
+  const pill = document.getElementById("moderationDetailPill");
+  const host = document.getElementById("moderationDetail");
+  if(!selectedModeration){
+    pill.textContent = "None selected";
+    host.className = "state";
+    host.innerHTML = "Select a report.";
+    return;
+  }
+  pill.textContent = "Report #" + selectedModeration.id;
+  host.className = "list";
+  host.innerHTML =
+    listRow("Target Type", titleCase(selectedModeration.target_type || "-")) +
+    listRow("Target ID", text(selectedModeration.target_id)) +
+    listRow("Company", text(selectedModeration.company_name, selectedModeration.company_id ? ("Company #" + selectedModeration.company_id) : "-")) +
+    listRow("Reason", text(selectedModeration.reason)) +
+    listRow("Details", text(selectedModeration.details)) +
+    listRow("Reporter User", text(selectedModeration.reporter_user_id)) +
+    listRow("Reporter Customer", text(selectedModeration.reporter_customer_id)) +
+    listRow("Resolved At", text(selectedModeration.resolved_at)) +
+    listRow("Resolved By", text(selectedModeration.resolved_by_username || selectedModeration.resolved_by)) +
+    '<div style="display:flex;gap:8px;flex-wrap:wrap;">' +
+      '<select id="moderationDetailStatus"><option value="open">Open</option><option value="reviewing">Reviewing</option><option value="action_taken">Action Taken</option><option value="dismissed">Dismissed</option><option value="closed">Closed</option></select>' +
+      '<select id="moderationDetailPriority"><option value="low">Low</option><option value="medium">Medium</option><option value="high">High</option><option value="urgent">Urgent</option></select>' +
+    '</div>' +
+    '<label>Resolution Notes<textarea id="moderationDetailNotes" maxlength="4000">' + esc(text(selectedModeration.resolution_notes, "")) + '</textarea></label>' +
+    '<button class="btn" type="button" id="moderationDetailSaveBtn">Save Moderation Update</button>';
+  document.getElementById("moderationDetailStatus").value = String(selectedModeration.status || "open");
+  document.getElementById("moderationDetailPriority").value = String(selectedModeration.priority || "medium");
+  document.getElementById("moderationDetailSaveBtn").addEventListener("click", async function(){
+    try {
+      selectedModeration = await apiFetch("/platform/moderation/reports/" + encodeURIComponent(selectedModeration.id), {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          status: document.getElementById("moderationDetailStatus").value,
+          priority: document.getElementById("moderationDetailPriority").value,
+          resolution_notes: String(document.getElementById("moderationDetailNotes").value || "").trim() || null
+        })
+      });
+      showToast("Moderation report updated.");
+      await loadModerationReports();
+      renderModerationDetail();
+    } catch (err) {
+      reportUiError(err, "Unable to update moderation report.");
+    }
+  });
+}
+
+function viewModerationReport(reportId){
+  selectedModeration = (moderationRows || []).find(r => String(r.id) === String(reportId)) || null;
+  renderModerationDetail();
+}
+
+function renderDisputes(){
+  const host = document.getElementById("disputeList");
+  const tableBody = document.getElementById("disputeTableBody");
+  const count = document.getElementById("disputeCount");
+  const rows = Array.isArray(disputeRows) ? disputeRows : [];
+  count.textContent = rows.length + (rows.length === 1 ? " dispute" : " disputes");
+  const openCount = rows.filter(r => String(r.status || "") === "open").length;
+  const urgentCount = rows.filter(r => String(r.priority || "") === "urgent").length;
+  const waitingCustomerCount = rows.filter(r => String(r.status || "") === "waiting_customer").length;
+  const waitingCompanyCount = rows.filter(r => String(r.status || "") === "waiting_company").length;
+  const resolvedCount = rows.filter(r => String(r.status || "") === "resolved").length;
+  document.getElementById("disputeKpiGrid").innerHTML = [
+    metric("Open Disputes", String(openCount)),
+    metric("Urgent Disputes", String(urgentCount)),
+    metric("Waiting Customer", String(waitingCustomerCount)),
+    metric("Waiting Company", String(waitingCompanyCount)),
+    metric("Resolved", String(resolvedCount))
+  ].join("");
+  if(!rows.length){
+    host.innerHTML = '<div class="state">No disputes found.</div>';
+    tableBody.innerHTML = '<tr><td colspan="8">No disputes found.</td></tr>';
+    return;
+  }
+  host.innerHTML = rows.map(row =>
+    '<div class="list-row">' +
+      '<span><strong>Dispute #' + esc(row.id) + '</strong><div class="sub">' + esc(text(row.reason, "-")) + '</div></span>' +
+      '<strong><button class="btn secondary" type="button" data-dispute-view="' + esc(String(row.id)) + '">View</button></strong>' +
+    '</div>'
+  ).join("");
+  tableBody.innerHTML = rows.map(row =>
+    '<tr>' +
+      '<td>#' + esc(String(row.id)) + '</td>' +
+      '<td>' + esc(text(row.reason, "-")) + '</td>' +
+      '<td>' + esc(text(row.company_name, row.company_id ? ("Company #" + row.company_id) : "-")) + '</td>' +
+      '<td>' + esc(text(row.customer_id, "-")) + '</td>' +
+      '<td>' + esc(titleCase(row.priority || "medium")) + '</td>' +
+      '<td>' + esc(titleCase(row.status || "open")) + '</td>' +
+      '<td>' + esc(text(row.created_at, "-")) + '</td>' +
+      '<td><button class="btn secondary" type="button" data-dispute-view="' + esc(String(row.id)) + '">View</button></td>' +
+    '</tr>'
+  ).join("");
+}
+
+async function loadDisputes(){
+  const status = String(document.getElementById("disputeStatusFilter").value || "");
+  const priority = String(document.getElementById("disputePriorityFilter").value || "");
+  const q = String(document.getElementById("disputeSearchInput").value || "").trim();
+  const qs = new URLSearchParams();
+  if(status) qs.set("status", status);
+  if(priority) qs.set("priority", priority);
+  if(q) qs.set("q", q);
+  disputeRows = await apiFetch("/platform/disputes" + (qs.toString() ? ("?" + qs.toString()) : ""));
+  if(!Array.isArray(disputeRows)) disputeRows = [];
+  renderDisputes();
+}
+
+function renderDisputeDetail(){
+  const pill = document.getElementById("disputeDetailPill");
+  const host = document.getElementById("disputeDetail");
+  if(!selectedDispute){
+    pill.textContent = "None selected";
+    host.className = "state";
+    host.innerHTML = "Select a dispute.";
+    return;
+  }
+  pill.textContent = "Dispute #" + selectedDispute.id;
+  host.className = "list";
+  host.innerHTML =
+    listRow("Opened By Type", titleCase(selectedDispute.opened_by_type || "-")) +
+    listRow("Company", text(selectedDispute.company_name, selectedDispute.company_id ? ("Company #" + selectedDispute.company_id) : "-")) +
+    listRow("Customer", text(selectedDispute.customer_id)) +
+    listRow("Linked Marketplace Request", text(selectedDispute.marketplace_request_id)) +
+    listRow("Linked Support Ticket", text(selectedDispute.support_ticket_id)) +
+    listRow("Reason", text(selectedDispute.reason)) +
+    listRow("Details", text(selectedDispute.details)) +
+    listRow("Resolution", text(selectedDispute.resolution)) +
+    listRow("Resolved At", text(selectedDispute.resolved_at)) +
+    listRow("Resolved By", text(selectedDispute.resolved_by_username || selectedDispute.resolved_by)) +
+    '<div style="display:flex;gap:8px;flex-wrap:wrap;">' +
+      '<select id="disputeDetailStatus"><option value="open">Open</option><option value="reviewing">Reviewing</option><option value="waiting_customer">Waiting Customer</option><option value="waiting_company">Waiting Company</option><option value="resolved">Resolved</option><option value="closed">Closed</option></select>' +
+      '<select id="disputeDetailPriority"><option value="low">Low</option><option value="medium">Medium</option><option value="high">High</option><option value="urgent">Urgent</option></select>' +
+    '</div>' +
+    '<label>Resolution<input id="disputeDetailResolution" type="text" maxlength="2000" value="' + esc(text(selectedDispute.resolution, "")) + '"></label>' +
+    '<label>Resolution Notes<textarea id="disputeDetailResolutionNotes" maxlength="4000">' + esc(text(selectedDispute.resolution_notes, "")) + '</textarea></label>' +
+    '<button class="btn" type="button" id="disputeDetailSaveBtn">Save Dispute Update</button>';
+  document.getElementById("disputeDetailStatus").value = String(selectedDispute.status || "open");
+  document.getElementById("disputeDetailPriority").value = String(selectedDispute.priority || "medium");
+  document.getElementById("disputeDetailSaveBtn").addEventListener("click", async function(){
+    try {
+      selectedDispute = await apiFetch("/platform/disputes/" + encodeURIComponent(selectedDispute.id), {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          status: document.getElementById("disputeDetailStatus").value,
+          priority: document.getElementById("disputeDetailPriority").value,
+          resolution: String(document.getElementById("disputeDetailResolution").value || "").trim() || null,
+          resolution_notes: String(document.getElementById("disputeDetailResolutionNotes").value || "").trim() || null
+        })
+      });
+      showToast("Dispute updated.");
+      await loadDisputes();
+      renderDisputeDetail();
+    } catch (err) {
+      reportUiError(err, "Unable to update dispute.");
+    }
+  });
+}
+
+function viewDispute(disputeId){
+  selectedDispute = (disputeRows || []).find(r => String(r.id) === String(disputeId)) || null;
+  renderDisputeDetail();
 }
 
 async function viewSupportTicket(ticketId){
@@ -1807,6 +2611,7 @@ function renderSupportDetail(){
     return;
   }
   const ticket = selectedSupport.ticket || {};
+  const ticketRow = supportRows.find(row => String(row.id) === String(ticket.id));
   const messages = Array.isArray(selectedSupport.replies) && selectedSupport.replies.length
     ? selectedSupport.replies
     : (Array.isArray(selectedSupport.messages) ? selectedSupport.messages : []);
@@ -1814,19 +2619,22 @@ function renderSupportDetail(){
   pill.textContent = "Ticket #" + ticket.id;
   host.className = "list";
   host.innerHTML =
+    listRow("Company", text((ticketRow && ticketRow.company_name) || null, "Company #" + text(ticket.company_id, "-"))) +
     listRow("Company ID", text(ticket.company_id)) +
     listRow("Subject", text(ticket.subject)) +
     listRow("Status", titleCase(ticket.status || "open")) +
     listRow("Priority", titleCase(ticket.priority || "normal")) +
     listRow("Category", titleCase(ticket.category || "general")) +
     listRow("Assigned To", text(ticket.assigned_to_user_id)) +
+    listRow("Owner", text((ticketRow && ticketRow.created_by_username) || null, "User #" + text(ticket.created_by_user_id, "-"))) +
     listRow("Created", text(ticket.created_at)) +
     (attachments.length ? ('<div class="state">' + attachments.map(a => '<a href="' + esc(a.file_url || "#") + '" target="_blank" rel="noopener">' + esc(a.file_name || "attachment") + '</a>').join("<br>") + '</div>') : "") +
     '<div class="state">' + (messages.length ? messages.map(m =>
       '<div style="margin-bottom:10px;"><strong>' + esc(m.username || ("user#" + (m.user_id || m.sender_user_id || "-"))) + '</strong> · ' + esc(m.created_at || "") + '<br>' + esc(m.message || "") + (m.is_internal ? ' <em>(internal)</em>' : '') + '</div>'
     ).join("") : "No messages.") + '</div>' +
     '<div style="display:flex;gap:8px;flex-wrap:wrap;">' +
-      '<select id="supportDetailStatus"><option value="open">Open</option><option value="in_progress">In Progress</option><option value="waiting_customer">Waiting Customer</option><option value="resolved">Resolved</option><option value="closed">Closed</option><option value="pending">Pending</option></select>' +
+      '<select id="supportDetailStatus"><option value="open">Open</option><option value="in_progress">In Progress</option><option value="waiting_customer">Waiting Customer</option><option value="resolved">Resolved</option><option value="closed">Closed</option></select>' +
+      '<select id="supportDetailPriority"><option value="low">Low</option><option value="medium">Medium</option><option value="high">High</option><option value="urgent">Urgent</option></select>' +
       '<button class="btn" type="button" id="supportSetStatusBtn">Update Status</button>' +
     '</div>' +
     '<label>Reply<textarea id="supportReplyText"></textarea></label>' +
@@ -1835,12 +2643,19 @@ function renderSupportDetail(){
     '<button class="btn secondary" type="button" id="supportInternalBtn">Add Internal Note</button>';
   const statusSel = document.getElementById("supportDetailStatus");
   if(statusSel) statusSel.value = String(ticket.status || "open");
+  const prioritySel = document.getElementById("supportDetailPriority");
+  if(prioritySel) prioritySel.value = String(ticket.priority || "medium");
   document.getElementById("supportSetStatusBtn").addEventListener("click", async function(){
     try {
       await apiFetch("/platform/support/tickets/" + encodeURIComponent(ticket.id) + "/status", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: document.getElementById("supportDetailStatus").value })
+      });
+      await apiFetch("/platform/support/tickets/" + encodeURIComponent(ticket.id) + "/priority", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ priority: document.getElementById("supportDetailPriority").value })
       });
       showToast("Support ticket status updated.");
       await Promise.all([loadSupportTickets(), viewSupportTicket(ticket.id)]);
@@ -2273,13 +3088,21 @@ async function loadCompany(id){
 }
 
 async function loadData(){
-  const [overview, analytics, companyRows, billingOv, billingAnalytics, customerRows] = await Promise.all([
+  const [overview, analytics, companyRows, billingOv, billingAnalytics, customerRows, launchReadiness, foundingInvites, billingAudit, monitoring, backupStatus, storageReadiness, monitoringReadiness, backupsReadiness] = await Promise.all([
     apiFetch("/platform/overview"),
     apiFetch("/platform/analytics"),
     apiFetch("/platform/companies"),
     apiFetch("/platform/billing/overview").catch(() => null),
     apiFetch("/platform/billing/analytics").catch(() => null),
-    apiFetch("/platform/customers?limit=50&offset=0").catch(() => [])
+    apiFetch("/platform/customers?limit=50&offset=0").catch(() => []),
+    apiFetch("/platform/launch-readiness").catch(() => null),
+    apiFetch("/platform/founding-partner/invites?limit=50&offset=0").catch(() => []),
+    apiFetch("/platform/billing-lifecycle/audit").catch(() => null),
+    apiFetch("/platform/monitoring").catch(() => null),
+    apiFetch("/platform/backups/status").catch(() => null),
+    apiFetch("/platform/storage/readiness").catch(() => null),
+    apiFetch("/platform/monitoring/readiness").catch(() => null),
+    apiFetch("/platform/backups/readiness").catch(() => null)
   ]);
 
   overviewData = overview;
@@ -2287,6 +3110,14 @@ async function loadData(){
   companies = Array.isArray(companyRows) ? companyRows : [];
   billingOverviewData = billingOv && typeof billingOv === "object" ? billingOv : null;
   billingAnalyticsData = billingAnalytics && typeof billingAnalytics === "object" ? billingAnalytics : null;
+  launchReadinessData = launchReadiness && typeof launchReadiness === "object" ? launchReadiness : null;
+  foundingPartnerInvitesData = Array.isArray(foundingInvites) ? foundingInvites : [];
+  billingLifecycleAuditData = billingAudit && typeof billingAudit === "object" ? billingAudit : null;
+  monitoringData = monitoring && typeof monitoring === "object" ? monitoring : null;
+  backupStatusData = backupStatus && typeof backupStatus === "object" ? backupStatus : null;
+  storageReadinessData = storageReadiness && typeof storageReadiness === "object" ? storageReadiness : null;
+  monitoringReadinessData = monitoringReadiness && typeof monitoringReadiness === "object" ? monitoringReadiness : null;
+  backupReadinessData = backupsReadiness && typeof backupsReadiness === "object" ? backupsReadiness : null;
   platformCustomers = Array.isArray(customerRows) ? customerRows : [];
   renderOverview();
   renderOverviewPreview();
@@ -2295,6 +3126,11 @@ async function loadData(){
   renderCompanies();
   renderBillingSummary();
   renderBillingTable();
+  renderLaunchReadiness();
+  renderNotificationInviteReadiness();
+  renderBillingLifecycleAudit();
+  renderOperationsCenter();
+  renderFinalLaunchCenter();
   renderCustomers();
 }
 
@@ -2321,7 +3157,8 @@ async function loadCurrentSection(){
       await loadSettings();
     }
     if(currentSection === "verifications"){
-      await Promise.all([loadVerifications(), loadTrustKpis()]);
+      await Promise.all([loadVerifications(), loadTrustKpis(), loadVerificationCompanies()]);
+      renderVerificationDetail();
     }
     if(currentSection === "customers"){
       await loadCustomers();
@@ -2330,6 +3167,14 @@ async function loadCurrentSection(){
     if(currentSection === "support"){
       await loadSupportTickets();
       renderSupportDetail();
+    }
+    if(currentSection === "moderation"){
+      await loadModerationReports();
+      renderModerationDetail();
+    }
+    if(currentSection === "disputes"){
+      await loadDisputes();
+      renderDisputeDetail();
     }
     if(selectedCompanyId && ["companies", "billing"].includes(currentSection)){
       await loadCompany(selectedCompanyId);
@@ -2351,12 +3196,67 @@ function initPlatformEventBindings(){
     const top = e.target.closest("[data-top-action]");
     if(!top) return;
     const action = top.getAttribute("data-top-action");
-    if(action === "refresh") loadCurrentSection();
+    if(action === "refresh" || action === "refresh-platform") loadCurrentSection();
     else if(action === "nav-billing") navigateSection("billing");
     else if(action === "nav-customers") navigateSection("customers");
     else if(action === "nav-verifications") navigateSection("verifications");
     else if(action === "nav-support") navigateSection("support");
-    else if(action === "control") goControl();
+    else if(action === "nav-moderation") navigateSection("moderation");
+    else if(action === "nav-disputes") navigateSection("disputes");
+  });
+
+  const createInviteBtn = document.getElementById("createFoundingInviteBtn");
+  if(createInviteBtn){
+    createInviteBtn.addEventListener("click", async function(){
+      const emailInput = document.getElementById("foundingInviteEmail");
+      const invited_email = String(emailInput && emailInput.value || "").trim().toLowerCase();
+      if(!invited_email){
+        showToast("Enter an email to create an invite.", "error");
+        return;
+      }
+      try {
+        await apiFetch("/platform/founding-partner/invites", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ invited_email: invited_email, invite_type: "founding_partner" })
+        });
+        if(emailInput) emailInput.value = "";
+        showToast("Founding partner invite created.", "");
+        await loadData();
+      } catch(err) {
+        reportUiError(err, "Unable to create founding partner invite.");
+      }
+    });
+  }
+
+  document.getElementById("foundingInvitesList").addEventListener("click", function(e){
+    const btn = e.target.closest("[data-cancel-invite-id]");
+    if(btn){
+      const inviteId = Number(btn.getAttribute("data-cancel-invite-id"));
+      if(!inviteId) return;
+      apiFetch("/platform/founding-partner/invites/" + encodeURIComponent(inviteId) + "/cancel", {
+        method: "PATCH"
+      }).then(function(){
+        showToast("Invite canceled.", "");
+        return loadData();
+      }).catch(function(err){
+        reportUiError(err, "Unable to cancel invite.");
+      });
+      return;
+    }
+    const acceptBtn = e.target.closest("[data-accept-invite-id]");
+    if(acceptBtn){
+      const inviteId = Number(acceptBtn.getAttribute("data-accept-invite-id"));
+      if(!inviteId) return;
+      apiFetch("/platform/founding-partner/invites/" + encodeURIComponent(inviteId) + "/accept", {
+        method: "PATCH"
+      }).then(function(){
+        showToast("Invite accepted.", "");
+        return loadData();
+      }).catch(function(err){
+        reportUiError(err, "Unable to accept invite.");
+      });
+    }
   });
 
   document.getElementById("verificationsList").addEventListener("click", function(e){
@@ -2366,6 +3266,26 @@ function initPlatformEventBindings(){
     const action = btn.getAttribute("data-verification-action");
     if(!companyId || !action) return;
     moderateVerification(companyId, action);
+  });
+
+  document.getElementById("verificationSearchInput").addEventListener("input", function(){
+    loadVerificationCompanies().catch(err => reportUiError(err, "Unable to load verification companies."));
+  });
+  document.getElementById("verificationStatusFilter").addEventListener("change", function(){
+    loadVerificationCompanies().catch(err => reportUiError(err, "Unable to load verification companies."));
+  });
+  document.getElementById("verificationLicenseFilter").addEventListener("change", function(){
+    loadVerificationCompanies().catch(err => reportUiError(err, "Unable to load verification companies."));
+  });
+  document.getElementById("verificationInsuranceFilter").addEventListener("change", function(){
+    loadVerificationCompanies().catch(err => reportUiError(err, "Unable to load verification companies."));
+  });
+  document.getElementById("verificationCompaniesList").addEventListener("click", function(e){
+    const btn = e.target.closest("[data-verification-company-view]");
+    if(!btn) return;
+    const companyId = Number(btn.getAttribute("data-verification-company-view"));
+    if(!companyId) return;
+    viewVerificationCompany(companyId);
   });
 
   document.getElementById("reportsList").addEventListener("click", function(e){
@@ -2388,6 +3308,9 @@ function initPlatformEventBindings(){
   });
 
   document.getElementById("supportStatusFilter").addEventListener("change", function(){
+    loadSupportTickets();
+  });
+  document.getElementById("supportPriorityFilter").addEventListener("change", function(){
     loadSupportTickets();
   });
 
@@ -2427,6 +3350,48 @@ function initPlatformEventBindings(){
     if(!ticketId) return;
     viewSupportTicket(ticketId);
   });
+  document.getElementById("supportTableBody").addEventListener("click", function(e){
+    const btn = e.target.closest("[data-support-view]");
+    if(!btn) return;
+    const ticketId = Number(btn.getAttribute("data-support-view"));
+    if(!ticketId) return;
+    viewSupportTicket(ticketId);
+  });
+  document.getElementById("moderationList").addEventListener("click", function(e){
+    const btn = e.target.closest("[data-moderation-view]");
+    if(!btn) return;
+    const reportId = Number(btn.getAttribute("data-moderation-view"));
+    if(!reportId) return;
+    viewModerationReport(reportId);
+  });
+  document.getElementById("moderationTableBody").addEventListener("click", function(e){
+    const btn = e.target.closest("[data-moderation-view]");
+    if(!btn) return;
+    const reportId = Number(btn.getAttribute("data-moderation-view"));
+    if(!reportId) return;
+    viewModerationReport(reportId);
+  });
+  document.getElementById("moderationStatusFilter").addEventListener("change", function(){ loadModerationReports().catch(err => reportUiError(err, "Unable to load moderation reports.")); });
+  document.getElementById("moderationPriorityFilter").addEventListener("change", function(){ loadModerationReports().catch(err => reportUiError(err, "Unable to load moderation reports.")); });
+  document.getElementById("moderationTargetFilter").addEventListener("change", function(){ loadModerationReports().catch(err => reportUiError(err, "Unable to load moderation reports.")); });
+  document.getElementById("moderationSearchInput").addEventListener("input", function(){ loadModerationReports().catch(err => reportUiError(err, "Unable to load moderation reports.")); });
+  document.getElementById("disputeList").addEventListener("click", function(e){
+    const btn = e.target.closest("[data-dispute-view]");
+    if(!btn) return;
+    const disputeId = Number(btn.getAttribute("data-dispute-view"));
+    if(!disputeId) return;
+    viewDispute(disputeId);
+  });
+  document.getElementById("disputeTableBody").addEventListener("click", function(e){
+    const btn = e.target.closest("[data-dispute-view]");
+    if(!btn) return;
+    const disputeId = Number(btn.getAttribute("data-dispute-view"));
+    if(!disputeId) return;
+    viewDispute(disputeId);
+  });
+  document.getElementById("disputeStatusFilter").addEventListener("change", function(){ loadDisputes().catch(err => reportUiError(err, "Unable to load disputes.")); });
+  document.getElementById("disputePriorityFilter").addEventListener("change", function(){ loadDisputes().catch(err => reportUiError(err, "Unable to load disputes.")); });
+  document.getElementById("disputeSearchInput").addEventListener("input", function(){ loadDisputes().catch(err => reportUiError(err, "Unable to load disputes.")); });
 
   document.getElementById("searchInput").addEventListener("input", renderCompanies);
   document.getElementById("planFilter").addEventListener("change", renderCompanies);

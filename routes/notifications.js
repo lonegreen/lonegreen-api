@@ -47,6 +47,14 @@ const {
   getEstimate,
   formatTimelineItem
 } = require("../services/routeHelpers");
+const {
+  listNotificationsForUser,
+  markNotificationRead,
+  countUnreadNotifications,
+  notifyOfferReceived,
+  notifySupportTicketCreated,
+  notifyDisputeOpened
+} = require("../services/notificationService");
 const { sendSafeServerError } = require("../services/safeServerError");
 
 const router = express.Router();
@@ -69,9 +77,10 @@ async function markAllNotificationsRead(companyId, userId) {
   await ensureNotificationsSchema();
   return pool.query(`
     UPDATE notifications
-    SET is_read = TRUE
+    SET read_at = COALESCE(read_at, CURRENT_TIMESTAMP)
     WHERE company_id = $1
-      AND is_read = FALSE
+      AND read_at IS NULL
+      AND customer_id IS NULL
       AND (user_id IS NULL OR user_id = $2)
     RETURNING id
   `, [companyId, userId]);
@@ -81,11 +90,12 @@ async function markSingleNotificationRead(notificationId, companyId, userId) {
   await ensureNotificationsSchema();
   return pool.query(`
     UPDATE notifications
-    SET is_read = TRUE
+    SET read_at = COALESCE(read_at, CURRENT_TIMESTAMP)
     WHERE id = $1
       AND company_id = $2
+      AND customer_id IS NULL
       AND (user_id IS NULL OR user_id = $3)
-    RETURNING id, company_id, user_id, type, title, message, is_read, metadata, created_at
+    RETURNING id, company_id, user_id, customer_id, type, title, body, link_url, read_at, created_at
   `, [notificationId, companyId, userId]);
 }
 
@@ -404,20 +414,12 @@ router.get("/activity-log", auth, requireCompanyBillingForMutations, requireMini
 
 router.get("/notifications", auth, requireCompanyBillingForMutations, requireMinimumRole("manager"), async (req, res) => {
   try {
-    await ensureNotificationsSchema();
-    const result = await pool.query(`
-      SELECT id, company_id, user_id, type, title, message, is_read, metadata, created_at
-      FROM notifications
-      WHERE company_id = $1
-        AND (user_id IS NULL OR user_id = $2)
-      ORDER BY created_at DESC, id DESC
-      LIMIT 100
-    `, [req.user.company_id, req.user.id]);
-
-    res.json(result.rows.map((row) => ({
-      ...row,
-      metadata: safeJsonParse(row.metadata, {})
-    })));
+    const rows = await listNotificationsForUser({
+      userId: req.user.id,
+      companyId: req.user.company_id,
+      limit: 100
+    });
+    res.json(rows);
   } catch (err) {
     console.log("GET NOTIFICATIONS ERROR:", err);
     sendSafeServerError(res, err, "routes/notifications");
@@ -426,16 +428,11 @@ router.get("/notifications", auth, requireCompanyBillingForMutations, requireMin
 
 router.get("/notifications/unread-count", auth, requireCompanyBillingForMutations, requireMinimumRole("manager"), async (req, res) => {
   try {
-    await ensureNotificationsSchema();
-    const result = await pool.query(`
-      SELECT COUNT(*)::int AS c
-      FROM notifications
-      WHERE company_id = $1
-        AND is_read = FALSE
-        AND (user_id IS NULL OR user_id = $2)
-    `, [req.user.company_id, req.user.id]);
-
-    res.json({ unread_count: result.rows[0] ? result.rows[0].c : 0 });
+    const unread = await countUnreadNotifications({
+      userId: req.user.id,
+      companyId: req.user.company_id
+    });
+    res.json({ unread_count: unread });
   } catch (err) {
     console.log("GET NOTIFICATIONS UNREAD ERROR:", err);
     sendSafeServerError(res, err, "routes/notifications");
@@ -466,13 +463,14 @@ router.post("/notifications/read-all", auth, requireCompanyBillingForMutations, 
 router.put("/notifications/:id/read", auth, requireCompanyBillingForMutations, requireMinimumRole("manager"), async (req, res) => {
   try {
     const id = req.params.id;
-    const result = await markSingleNotificationRead(id, req.user.company_id, req.user.id);
-
-    if (result.rows.length === 0) {
+    const row = await markNotificationRead({
+      notificationId: id,
+      userId: req.user.id,
+      companyId: req.user.company_id
+    });
+    if (!row) {
       return res.status(404).json({ error: "Notification not found" });
     }
-
-    const row = result.rows[0];
 
     await logActivity({
       companyId: req.user.company_id,
@@ -486,10 +484,7 @@ router.put("/notifications/:id/read", auth, requireCompanyBillingForMutations, r
       }
     });
 
-    res.json({
-      ...row,
-      metadata: safeJsonParse(row.metadata, {})
-    });
+    res.json(row);
   } catch (err) {
     console.log("READ NOTIFICATION ERROR:", err);
     sendSafeServerError(res, err, "routes/notifications");
@@ -499,13 +494,14 @@ router.put("/notifications/:id/read", auth, requireCompanyBillingForMutations, r
 router.post("/notifications/:id/read", auth, requireCompanyBillingForMutations, requireMinimumRole("manager"), async (req, res) => {
   try {
     const id = req.params.id;
-    const result = await markSingleNotificationRead(id, req.user.company_id, req.user.id);
-
-    if (result.rows.length === 0) {
+    const row = await markNotificationRead({
+      notificationId: id,
+      userId: req.user.id,
+      companyId: req.user.company_id
+    });
+    if (!row) {
       return res.status(404).json({ error: "Notification not found" });
     }
-
-    const row = result.rows[0];
 
     await logActivity({
       companyId: req.user.company_id,
@@ -519,10 +515,7 @@ router.post("/notifications/:id/read", auth, requireCompanyBillingForMutations, 
       }
     });
 
-    res.json({
-      ...row,
-      metadata: safeJsonParse(row.metadata, {})
-    });
+    res.json(row);
   } catch (err) {
     console.log("READ NOTIFICATION (POST) ERROR:", err);
     sendSafeServerError(res, err, "routes/notifications");
@@ -554,14 +547,47 @@ router.post("/notifications/events", auth, requireCompanyBillingForMutations, re
 
     const metadata = parseNotificationMetadata(req.body?.metadata);
 
+    const mappedType = {
+      new_message: "marketplace",
+      new_review: "verification",
+      new_favorite: "system",
+      new_follow: "system",
+      company_verified: "verification"
+    }[type] || "system";
+
     const created = await createNotification({
       companyId: req.user.company_id,
       userId: targetUserId,
-      type,
+      type: mappedType,
       title,
-      message,
-      metadata
+      body: message,
+      linkUrl: metadata && typeof metadata.link_url === "string" ? metadata.link_url : null
     });
+    try {
+      if (type === "new_message") {
+        await notifyOfferReceived({
+          customerId: Number(metadata && metadata.customer_id),
+          requestId: Number(metadata && metadata.request_id),
+          companyName: String(metadata && metadata.company_name || "")
+        });
+      }
+      if (type === "new_follow") {
+        await notifySupportTicketCreated({
+          companyId: req.user.company_id,
+          customerId: Number(metadata && metadata.customer_id),
+          ticketId: Number(metadata && metadata.ticket_id),
+          subject: message
+        });
+      }
+      if (type === "new_review") {
+        await notifyDisputeOpened({
+          companyId: req.user.company_id,
+          customerId: Number(metadata && metadata.customer_id),
+          disputeId: Number(metadata && metadata.dispute_id),
+          reason: message
+        });
+      }
+    } catch (_) {}
 
     await logActivity({
       companyId: req.user.company_id,
@@ -579,6 +605,45 @@ router.post("/notifications/events", auth, requireCompanyBillingForMutations, re
   } catch (err) {
     console.log("CREATE NOTIFICATION EVENT ERROR:", err);
     sendSafeServerError(res, err, "routes/notifications");
+  }
+});
+
+router.get("/customer/notifications", auth.requireActiveCustomer, async (req, res) => {
+  try {
+    const customerId = Number(req.customer && req.customer.client_id);
+    if (!Number.isInteger(customerId) || customerId <= 0) {
+      return res.status(403).json({ error: "Forbidden" });
+    }
+    const rows = await listNotificationsForUser({
+      customerId,
+      limit: 100
+    });
+    const unread = await countUnreadNotifications({ customerId });
+    return res.json({
+      unread_count: unread,
+      notifications: rows
+    });
+  } catch (err) {
+    return sendSafeServerError(res, err, "CUSTOMER NOTIFICATIONS LIST ERROR");
+  }
+});
+
+router.patch("/customer/notifications/:id/read", auth.requireActiveCustomer, async (req, res) => {
+  try {
+    const customerId = Number(req.customer && req.customer.client_id);
+    if (!Number.isInteger(customerId) || customerId <= 0) {
+      return res.status(403).json({ error: "Forbidden" });
+    }
+    const row = await markNotificationRead({
+      notificationId: req.params.id,
+      customerId
+    });
+    if (!row) {
+      return res.status(404).json({ error: "Notification not found" });
+    }
+    return res.json(row);
+  } catch (err) {
+    return sendSafeServerError(res, err, "CUSTOMER NOTIFICATION READ ERROR");
   }
 });
 

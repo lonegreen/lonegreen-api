@@ -13,14 +13,20 @@
     }
 
     :root {
-      --bg: #f6f8f7;
-      --panel: #ffffff;
-      --text: var(--brand-black);
-      --muted: #667a70;
-      --border: #dfe9e3;
-      --brand-accent-soft: #fff1e8;
-      --shadow: 0 16px 40px rgba(16, 24, 40, 0.08);
-      --radius: 18px;
+      --shell-bg: var(--surface-page, #f5f5f5);
+      --shell-panel: var(--surface-card, #ffffff);
+      --shell-text: var(--text-primary, #111111);
+      --shell-muted: var(--text-muted, #646b73);
+      --shell-border: var(--border-default, #d9d9d9);
+      --shell-border-soft: var(--border-subtle, #ececec);
+      --shell-accent-soft: rgba(255, 90, 0, 0.12);
+      --shell-shadow: var(--shadow-md, 0 10px 28px rgba(17, 17, 17, 0.09));
+      --shell-radius: var(--radius-lg, 16px);
+      --shell-nav-bg: linear-gradient(180deg, #171717 0%, #222222 56%, #2b2b2b 100%);
+      --shell-nav-item: rgba(255, 255, 255, 0.06);
+      --shell-nav-item-hover: rgba(255, 255, 255, 0.12);
+      --shell-nav-item-active: rgba(255, 90, 0, 0.18);
+      --shell-transition: var(--motion-base, 180ms) var(--ease-standard, cubic-bezier(0.2, 0, 0, 1));
     }
 
     html,
@@ -28,9 +34,9 @@
       margin: 0;
       width: 100%;
       height: 100%;
-      font-family: Arial, sans-serif;
-      background: var(--bg);
-      color: var(--text);
+      font-family: var(--font-sans, Inter, Arial, sans-serif);
+      background: var(--shell-bg);
+      color: var(--shell-text);
       overflow: hidden;
     }
 
@@ -41,27 +47,28 @@
     .sidebar {
       width: 260px;
       height: 100vh;
-      padding: 22px 16px;
+      padding: 20px 14px 18px;
       overflow-y: auto;
       flex-shrink: 0;
       background:
         radial-gradient(circle at top left, rgba(255, 255, 255, 0.14), transparent 32%),
-        linear-gradient(180deg, #1b1b1b, #2b2b2b);
+        var(--shell-nav-bg);
       color: white;
-      border-right: 1px solid rgba(255, 255, 255, 0.12);
+      border-right: 1px solid rgba(255, 255, 255, 0.1);
+      box-shadow: inset -1px 0 0 rgba(255, 255, 255, 0.06);
     }
 
     .brand {
-      margin-bottom: 24px;
-      padding: 6px 6px 16px;
+      margin-bottom: 18px;
+      padding: 8px 8px 14px;
       border-bottom: 1px solid rgba(255, 255, 255, 0.12);
     }
 
     .brand h2 {
       margin: 0 0 6px;
-      font-size: 24px;
+      font-size: 23px;
       color: white !important;
-      letter-spacing: -0.04em;
+      letter-spacing: -0.03em;
     }
 
     .brand small {
@@ -73,40 +80,41 @@
 
     .section-title {
       font-size: 10px;
-      opacity: 0.62;
-      margin: 18px 10px 8px;
+      opacity: 0.68;
+      margin: 16px 10px 8px;
       text-transform: uppercase;
-      letter-spacing: 0.14em;
+      letter-spacing: 0.13em;
       font-weight: 800;
     }
 
     .sidebar button {
       width: 100%;
       margin-bottom: 7px;
-      padding: 11px 13px;
-      border-radius: 14px;
+      padding: 11px 12px;
+      border-radius: 12px;
       border: 1px solid transparent;
-      background: rgba(255, 255, 255, 0.065);
+      background: var(--shell-nav-item);
       color: white;
       cursor: pointer;
       text-align: left;
       font-size: 14px;
       font-weight: 700;
       box-shadow: none !important;
-      transition: background 0.16s ease, color 0.16s ease, border-color 0.16s ease;
+      transition: background var(--shell-transition), color var(--shell-transition), border-color var(--shell-transition);
     }
 
     .sidebar button:hover {
-      background: rgba(255, 255, 255, 0.12);
+      background: var(--shell-nav-item-hover);
       transform: none !important;
-      border-color: rgba(255, 255, 255, 0.10);
+      border-color: rgba(255, 255, 255, 0.14);
     }
 
     .sidebar button.active {
-      background: color-mix(in srgb, var(--brand-primary) 12%, var(--brand-white)) !important;
-      color: var(--brand-primary) !important;
+      background: var(--shell-nav-item-active) !important;
+      border-color: rgba(255, 90, 0, 0.52) !important;
+      color: #ffd9c2 !important;
       font-weight: 800;
-      box-shadow: 0 10px 26px rgba(0, 0, 0, 0.12) !important;
+      box-shadow: inset 0 0 0 1px rgba(255, 90, 0, 0.2), 0 8px 20px rgba(0, 0, 0, 0.2) !important;
     }
 
     .main {
@@ -115,31 +123,31 @@
       height: 100vh;
       display: flex;
       flex-direction: column;
-      background: var(--bg);
+      background: var(--shell-bg);
     }
 
     .topbar {
       flex-shrink: 0;
-      background: rgba(255, 255, 255, 0.94);
-      padding: 16px 22px;
+      background: rgba(255, 255, 255, 0.92);
+      padding: 14px 18px;
       display: flex;
       justify-content: space-between;
       align-items: center;
       gap: 16px;
-      border-bottom: 1px solid var(--border);
+      border-bottom: 1px solid var(--shell-border);
       z-index: 10;
-      backdrop-filter: blur(14px);
+      backdrop-filter: blur(10px);
     }
 
     .topbar h3 {
       margin: 0;
       font-size: 21px;
-      color: var(--brand-black);
+      color: var(--shell-text);
       letter-spacing: -0.03em;
     }
 
     .topbar small {
-      color: var(--muted);
+      color: var(--shell-muted);
       display: block;
       margin-top: 4px;
       font-size: 12px;
@@ -152,22 +160,47 @@
       flex-wrap: wrap;
       justify-content: flex-end;
     }
+    .notif-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      border: 1px solid var(--shell-border);
+      background: var(--shell-panel);
+      color: var(--shell-text);
+      border-radius: 999px;
+      padding: 7px 11px;
+      font-size: 12px;
+      font-weight: 800;
+      text-decoration: none;
+    }
+    .notif-count {
+      min-width: 18px;
+      height: 18px;
+      border-radius: 999px;
+      background: var(--interactive-primary, #FF5A00);
+      color: #fff;
+      font-size: 11px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 5px;
+    }
 
     .topbar button {
       padding: 10px 14px;
-      border-radius: 13px;
+      border-radius: 12px;
       border: 1px solid transparent;
-      background: var(--gradient-brand);
+      background: var(--interactive-primary, #FF5A00);
       color: white;
       font-weight: 800;
       cursor: pointer;
-      transition: transform 0.16s ease, box-shadow 0.16s ease, background 0.16s ease;
+      transition: transform var(--shell-transition), box-shadow var(--shell-transition), background var(--shell-transition);
     }
 
     .topbar button:hover {
-      background: var(--brand-primary-hover);
+      background: var(--interactive-primary-hover, #E64A00);
       transform: translateY(-1px);
-      box-shadow: 0 10px 24px rgba(230,74,0,0.16);
+      box-shadow: 0 8px 20px rgba(230, 74, 0, 0.22);
     }
 
     .user-menu {
@@ -178,14 +211,14 @@
       display: inline-flex;
       align-items: center;
       gap: 10px;
-      background: white !important;
-      color: var(--brand-primary) !important;
-      border: 1px solid #d2dfd6 !important;
+      background: var(--shell-panel) !important;
+      color: var(--shell-text) !important;
+      border: 1px solid var(--shell-border) !important;
       box-shadow: none !important;
     }
 
     .user-trigger:hover {
-      background: var(--brand-accent-soft) !important;
+      background: var(--shell-accent-soft) !important;
     }
 
     .user-avatar {
@@ -195,8 +228,8 @@
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      background: var(--brand-accent-soft);
-      color: var(--brand-primary);
+      background: rgba(255, 90, 0, 0.15);
+      color: var(--interactive-primary, #FF5A00);
       font-size: 12px;
       font-weight: 900;
     }
@@ -207,9 +240,9 @@
       top: calc(100% + 10px);
       min-width: 225px;
       background: white;
-      border: 1px solid var(--brand-border);
-      border-radius: 18px;
-      box-shadow: 0 18px 38px rgba(16, 24, 40, 0.12);
+      border: 1px solid var(--shell-border);
+      border-radius: 14px;
+      box-shadow: var(--shell-shadow);
       padding: 8px;
       display: none;
       z-index: 50;
@@ -225,19 +258,19 @@
       color: var(--brand-black) !important;
       box-shadow: none !important;
       text-align: left;
-      border-radius: 11px;
+      border-radius: 10px;
       border: none !important;
       padding: 10px 12px;
     }
 
     .dropdown button:hover {
-      background: #f2f7f4 !important;
+      background: #f6f6f6 !important;
       transform: none;
     }
 
     .dropdown-divider {
       height: 1px;
-      background: #e4ece7;
+      background: var(--shell-border-soft);
       margin: 6px 4px;
     }
 
@@ -245,19 +278,19 @@
       flex: 1;
       min-height: 0;
       overflow: hidden;
-      background: var(--bg);
+      background: var(--shell-bg);
       position: relative;
-      padding: 14px;
+      padding: 12px;
     }
 
     .frame-shell {
       width: 100%;
       height: 100%;
       overflow: hidden;
-      background: white;
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
+      background: var(--shell-panel);
+      border: 1px solid var(--shell-border);
+      border-radius: var(--shell-radius);
+      box-shadow: var(--shell-shadow);
       position: relative;
     }
 
@@ -266,7 +299,7 @@
       height: 100%;
       border: none;
       display: block;
-      background: #f7f8f7;
+      background: var(--shell-bg);
       opacity: 1 !important;
       visibility: visible !important;
       filter: none !important;
@@ -279,7 +312,7 @@
       display: none;
       align-items: center;
       justify-content: center;
-      background: rgba(247, 248, 247, 0.72);
+      background: rgba(245, 245, 245, 0.72);
       backdrop-filter: blur(3px);
       z-index: 5;
       pointer-events: none;
@@ -296,10 +329,10 @@
       gap: 10px;
       padding: 12px 16px;
       background: white;
-      border: 1px solid var(--border);
+      border: 1px solid var(--shell-border);
       border-radius: 999px;
-      box-shadow: 0 12px 28px rgba(16, 24, 40, 0.10);
-      color: var(--text);
+      box-shadow: var(--shell-shadow);
+      color: var(--shell-text);
       font-size: 13px;
       font-weight: 800;
     }
@@ -307,8 +340,8 @@
     .spinner {
       width: 16px;
       height: 16px;
-      border: 2px solid #d8e6de;
-      border-top-color: var(--brand-primary);
+      border: 2px solid #dfdfdf;
+      border-top-color: var(--interactive-primary, #FF5A00);
       border-radius: 999px;
       animation: spin 0.8s linear infinite;
     }
@@ -346,7 +379,7 @@
         width: 100%;
         height: auto;
         max-height: 42vh;
-        padding: 16px;
+        padding: 14px;
       }
 
       .brand {
@@ -375,7 +408,7 @@
       }
 
       .topbar button {
-        flex: 1;
+        flex: 1 1 48%;
       }
 
       .user-menu {
@@ -396,13 +429,13 @@
       .content {
         height: 78vh;
         min-height: 78vh;
-        padding: 10px;
+        padding: 8px;
       }
     }
   </style>
 </head>
 
-<body>
+<body class="control-shell">
   <script>
     (function () {
       const token = localStorage.getItem("token");
@@ -423,6 +456,13 @@
 
       if (role === "worker") {
         localStorage.setItem("currentPage", "worker.html");
+      } else if (role === "platform_owner") {
+        localStorage.setItem("currentPage", "platform.html#overview");
+      } else if (["owner", "admin", "manager"].includes(role)) {
+        const savedPage = String(localStorage.getItem("currentPage") || "");
+        if (!savedPage || savedPage === "worker.html" || savedPage.startsWith("platform.html")) {
+          localStorage.setItem("currentPage", "dashboard.html");
+        }
       }
     })();
   </script>
@@ -432,37 +472,34 @@
       <small id="sidebarCompany">Professional field service control</small>
     </div>
 
-    <div class="section-title">Main</div>
+    <div class="section-title" data-company-nav>Core</div>
     <button data-page="dashboard.html">Dashboard</button>
-    <button data-page="calendar.html">Calendar</button>
     <button data-page="jobs.html">Jobs</button>
-    <button data-page="marketplace-dashboard.html">Marketplace</button>
-    <button data-page="worker.html">Worker App</button>
-
-    <div class="section-title">Customers</div>
-    <button data-page="estimates.html?view=leads">Leads</button>
-    <button data-page="estimates.html?view=estimates">Estimates</button>
+    <button data-page="calendar.html">Calendar</button>
     <button data-page="clients.html">Clients</button>
-    <button data-page="subscriptions.html">Subscriptions</button>
-
-    <div class="section-title">Operations</div>
-    <button data-page="workers.html">Workers</button>
-    <button data-page="zip-manager.html">ZIP Groups</button>
-    <button data-page="users.html">Users</button>
-    <button data-page="health.html">System Health</button>
-
-    <div class="section-title">Finance</div>
+    <button data-page="estimates.html?view=estimates">Estimates</button>
     <button data-page="invoices.html">Invoices</button>
+    <button data-page="subscriptions.html">Subscriptions</button>
+    <button data-page="workers.html">Workers</button>
     <button data-page="analytics.html">Analytics</button>
 
-    <div class="section-title" data-support-nav>Support</div>
-    <button data-page="support.html" data-support-nav>Help &amp; Tickets</button>
+    <div class="section-title" data-company-nav>Marketplace</div>
+    <button data-page="marketplace-dashboard.html">Marketplace Dashboard</button>
+    <button data-page="marketplace-opportunities.html">Opportunities</button>
+    <button data-page="marketplace-offers.html">Offers</button>
+    <button data-page="messages.html">Messages</button>
+    <button data-page="company-public-profile.html">Public Profile</button>
+    <button data-page="company-services.html">Services</button>
+    <button data-page="company-service-areas.html">Service Areas</button>
 
-    <div class="section-title" data-legal-nav>Legal</div>
-    <button data-legal-page="/terms.html" data-legal-nav>Terms of Service</button>
-    <button data-legal-page="/privacy.html" data-legal-nav>Privacy Policy</button>
-    <button data-legal-page="/billing-policy.html" data-legal-nav>Billing Policy</button>
-    <button data-legal-page="/refund-policy.html" data-legal-nav>Refund Policy</button>
+    <div class="section-title" data-company-nav>Admin</div>
+    <button data-page="users.html">Users</button>
+    <button data-page="billing-plans.html">Billing</button>
+    <button data-page="settings.html">Settings</button>
+    <button data-page="support.html" data-support-nav>Support</button>
+
+    <div class="section-title" data-worker-nav>Worker</div>
+    <button data-page="worker.html" data-worker-nav>Worker App</button>
 
     <div class="section-title" data-platform-nav>Platform</div>
     <button data-page="platform.html#overview" data-platform-nav>Overview</button>
@@ -472,6 +509,7 @@
     <button data-page="platform.html#health" data-platform-nav>System Health</button>
     <button data-page="platform.html#activity" data-platform-nav>Activity Logs</button>
     <button data-page="platform.html#settings" data-platform-nav>Settings</button>
+    <button data-page="support.html" data-platform-nav data-support-nav>Support</button>
   </div>
 
   <div class="main">
@@ -482,11 +520,14 @@
       </div>
 
       <div class="actions">
-        <button data-page="clients.html">+ New Client</button>
-        <button data-page="estimates.html?view=leads">+ New Lead</button>
+        <a href="#" class="notif-link" id="notifBellLink" title="Notifications">
+          <span>🔔</span><span id="notifCount" class="notif-count">0</span>
+        </a>
+        <button class="fx-btn fx-btn--primary shell-quick-action" data-page="clients.html">+ New Client</button>
+        <button class="fx-btn fx-btn--primary shell-quick-action" data-page="estimates.html?view=leads">+ New Lead</button>
 
         <div class="user-menu">
-          <button type="button" class="user-trigger" id="userMenuButton">
+          <button type="button" class="fx-btn fx-btn--secondary user-trigger" id="userMenuButton">
             <span class="user-avatar" id="userAvatar">LG</span>
             <span id="userMenuLabel">Account</span>
             <span>▼</span>
@@ -522,6 +563,12 @@
     const allowedPages = [
       "dashboard.html",
       "marketplace-dashboard.html",
+      "marketplace-opportunities.html",
+      "marketplace-offers.html",
+      "messages.html",
+      "company-public-profile.html",
+      "company-services.html",
+      "company-service-areas.html",
       "clients.html",
       "client.html",
       "jobs.html",
@@ -538,7 +585,7 @@
       "settings.html",
       "analytics.html",
       "users.html",
-      "health.html",
+      "billing-plans.html",
       "platform.html",
       "platform.html#overview",
       "platform.html#companies",
@@ -555,6 +602,12 @@
     const workerBlockedPages = [
       "dashboard.html",
       "marketplace-dashboard.html",
+      "marketplace-opportunities.html",
+      "marketplace-offers.html",
+      "messages.html",
+      "company-public-profile.html",
+      "company-services.html",
+      "company-service-areas.html",
       "clients.html",
       "client.html",
       "estimates.html",
@@ -569,7 +622,7 @@
       "invoice.html",
       "settings.html",
       "users.html",
-      "health.html",
+      "billing-plans.html",
       "analytics.html",
       "platform.html",
       "platform.html#overview",
@@ -635,7 +688,7 @@
         return WORKER_ALLOWED_PAGE;
       }
 
-      if (cleanPage.startsWith("platform.html")) {
+      if (cleanPage === WORKER_ALLOWED_PAGE || cleanPage.startsWith("platform.html")) {
         return "dashboard.html";
       }
 
@@ -643,27 +696,49 @@
     }
 
     function applyWorkerRoleProtection() {
-      document.querySelectorAll(".section-title:not([data-platform-nav]):not([data-legal-nav]):not([data-support-nav])").forEach((item) => {
-        item.style.display = isPlatformOwnerUser() ? "none" : "";
+      const platformOwner = isPlatformOwnerUser();
+      const worker = isWorkerUser();
+
+      document.querySelectorAll("[data-company-nav]").forEach((item) => {
+        item.style.display = platformOwner || worker ? "none" : "";
+      });
+
+      document.querySelectorAll("[data-worker-nav]").forEach((item) => {
+        item.style.display = worker ? "" : "none";
+        if (item.tagName === "BUTTON") item.disabled = !worker;
+      });
+
+      document.querySelectorAll("[data-legal-nav]").forEach((item) => {
+        item.style.display = "none";
+        if (item.tagName === "BUTTON") item.disabled = true;
       });
 
       document.querySelectorAll("[data-platform-nav]").forEach((item) => {
-        const showPlatform = isPlatformOwnerUser();
-        item.style.display = showPlatform ? "" : "none";
-        if (item.tagName === "BUTTON") item.disabled = !showPlatform;
+        item.style.display = platformOwner ? "" : "none";
+        if (item.tagName === "BUTTON") item.disabled = !platformOwner;
       });
 
-      if (isPlatformOwnerUser()) {
+      document.querySelectorAll(".actions > button[data-page]").forEach((button) => {
+        button.style.display = platformOwner || worker ? "none" : "";
+        button.disabled = platformOwner || worker;
+      });
+
+      document.querySelectorAll("[data-user-action='settings']").forEach((button) => {
+        button.style.display = platformOwner || worker ? "none" : "";
+        button.disabled = platformOwner || worker;
+      });
+
+      if (platformOwner) {
         document.querySelectorAll("button[data-page]").forEach((button) => {
           const page = String(button.getAttribute("data-page") || "");
-          const isPlatformButton = page.startsWith("platform.html") || page === "support.html";
+          const isPlatformButton = button.hasAttribute("data-platform-nav") && (page.startsWith("platform.html") || page === "support.html");
           button.style.display = isPlatformButton ? "" : "none";
           button.disabled = !isPlatformButton;
         });
-        // Ensure the Support section title stays visible for platform_owner.
         document.querySelectorAll("[data-support-nav]").forEach((item) => {
-          item.style.display = "";
-          if (item.tagName === "BUTTON") item.disabled = false;
+          const isPlatformSupport = item.hasAttribute("data-platform-nav");
+          item.style.display = isPlatformSupport ? "" : "none";
+          if (item.tagName === "BUTTON") item.disabled = !isPlatformSupport;
         });
         const currentPlatformPage = localStorage.getItem("currentPage") || "";
         if (!currentPlatformPage.startsWith("platform.html") && currentPlatformPage !== "support.html") {
@@ -672,7 +747,7 @@
         return;
       }
 
-      if (!isWorkerUser()) {
+      if (!worker) {
         document.querySelectorAll("button[data-page='worker.html']").forEach((button) => {
           button.style.display = "none";
           button.disabled = true;
@@ -694,11 +769,6 @@
         }
       });
 
-      document.querySelectorAll("[data-user-action='settings']").forEach((button) => {
-        button.style.display = "none";
-        button.disabled = true;
-      });
-
       const savedPage = localStorage.getItem("currentPage");
 
       if (!savedPage || isWorkerBlockedPage(savedPage)) {
@@ -706,12 +776,22 @@
       }
     }
 
-    function logout() {
+    function clearLoginStorage() {
       localStorage.removeItem("token");
+      localStorage.removeItem("customerToken");
       localStorage.removeItem("user");
       localStorage.removeItem("currentPage");
       localStorage.removeItem("redirectAfterLogin");
+    }
+
+    function redirectToLogin() {
+      clearLoginStorage();
       window.location.href = "/login.html";
+    }
+
+    function logout() {
+      clearLoginStorage();
+      window.location.href = "/";
     }
 
     function requireSession() {
@@ -728,7 +808,7 @@
           role: user && user.role ? user.role : null,
           missingCompanyIdForNonPlatformOwner
         });
-        logout();
+        redirectToLogin();
         return false;
       }
 
@@ -821,7 +901,7 @@
       });
 
       if (res.status === 401) {
-        logout();
+        redirectToLogin();
         throw new Error("Unauthorized");
       }
 
@@ -856,6 +936,23 @@
       }
     }
 
+    async function refreshNotificationBell() {
+      const role = currentRole();
+      if (role === "worker" || role === "platform_owner") {
+        document.getElementById("notifBellLink").style.display = "none";
+        return;
+      }
+      try {
+        const res = await authFetch(API + "/notifications/unread-count");
+        if (!res.ok) {
+          return;
+        }
+        const data = await res.json();
+        const count = Number(data && data.unread_count) || 0;
+        document.getElementById("notifCount").textContent = String(count);
+      } catch (_) {}
+    }
+
     function initNavigation() {
       document.querySelectorAll("button[data-page]").forEach((button) => {
         button.addEventListener("click", (event) => {
@@ -870,6 +967,13 @@
           window.open(button.getAttribute("data-legal-page"), "_blank", "noopener");
         });
       });
+      const notifBellLink = document.getElementById("notifBellLink");
+      if (notifBellLink) {
+        notifBellLink.addEventListener("click", (event) => {
+          event.preventDefault();
+          loadPage("dashboard.html");
+        });
+      }
     }
 
     function initUserMenu() {
@@ -927,6 +1031,8 @@
       setActiveButton(savedPage);
 
       refreshSessionSummary();
+      refreshNotificationBell();
+      setInterval(refreshNotificationBell, 60000);
     });
 
     window.loadPage = loadPage;

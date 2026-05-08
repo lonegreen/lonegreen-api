@@ -1,4 +1,5 @@
 const express = require("express");
+const crypto = require("crypto");
 const pool = require("../db/pool");
 const auth = require("../middleware/auth");
 const { requirePlatformOwner } = auth;
@@ -11,6 +12,12 @@ const { createNotification, ensureNotificationsSchema } = require("../services/n
 const activityLogService = require("../services/activityLogService");
 const { listRecentErrorLogs } = require("../services/errorLogService");
 const { sendSafeServerError } = require("../services/safeServerError");
+const { getUploadReadiness, getStorageActivationStatus } = require("../services/uploadService");
+const { getHealthReadiness } = require("../services/productionReadiness");
+const { getMonitoringSnapshot, getMonitoringActivationReadiness } = require("../services/monitoringService");
+const { getBackupReadiness, validateBackupScheduleReadiness, validateBackupRetentionReadiness, validateRestoreDrillReadiness } = require("../services/backupService");
+const { refreshCompanyReputation } = require("../services/reputationService");
+const { notifyVerificationApproved, notifyBillingWarning } = require("../services/notificationService");
 
 const router = express.Router();
 const platformOnly = [auth, requirePlatformOwner];
@@ -51,6 +58,90 @@ function cleanCustomerStatus(value, fallback = "active") {
     return normalized;
   }
   return fallback;
+}
+
+function cleanVerificationStatus(value) {
+  const normalized = String(value || "").trim().toLowerCase();
+  if (["unverified", "pending", "verified", "rejected", "suspended"].includes(normalized)) {
+    return normalized;
+  }
+  return "";
+}
+
+function cleanLicenseOrInsuranceStatus(value) {
+  const normalized = String(value || "").trim().toLowerCase();
+  if (["unknown", "pending", "verified", "rejected", "expired"].includes(normalized)) {
+    return normalized;
+  }
+  return "";
+}
+
+function cleanIdentityStatus(value) {
+  const normalized = String(value || "").trim().toLowerCase();
+  if (["unknown", "pending", "verified", "rejected"].includes(normalized)) {
+    return normalized;
+  }
+  return "";
+}
+
+function cleanModerationStatus(value) {
+  const normalized = String(value || "").trim().toLowerCase();
+  if (["open", "reviewing", "action_taken", "dismissed", "closed"].includes(normalized)) {
+    return normalized;
+  }
+  return "";
+}
+
+function cleanModerationPriority(value) {
+  const normalized = String(value || "").trim().toLowerCase();
+  if (["low", "medium", "high", "urgent"].includes(normalized)) {
+    return normalized;
+  }
+  return "";
+}
+
+function cleanModerationTargetType(value) {
+  const normalized = String(value || "").trim().toLowerCase();
+  if (["company", "review", "message", "marketplace_request"].includes(normalized)) {
+    return normalized;
+  }
+  return "";
+}
+
+function cleanDisputeStatus(value) {
+  const normalized = String(value || "").trim().toLowerCase();
+  if (["open", "reviewing", "waiting_customer", "waiting_company", "resolved", "closed"].includes(normalized)) {
+    return normalized;
+  }
+  return "";
+}
+
+function cleanDisputePriority(value) {
+  const normalized = String(value || "").trim().toLowerCase();
+  if (["low", "medium", "high", "urgent"].includes(normalized)) {
+    return normalized;
+  }
+  return "";
+}
+
+function cleanInviteType(value) {
+  const normalized = String(value || "").trim().toLowerCase();
+  if (["founding_partner", "company_user", "referral"].includes(normalized)) {
+    return normalized;
+  }
+  return "";
+}
+
+function cleanInviteStatus(value) {
+  const normalized = String(value || "").trim().toLowerCase();
+  if (["pending", "accepted", "expired", "canceled"].includes(normalized)) {
+    return normalized;
+  }
+  return "";
+}
+
+function cleanEmail(value) {
+  return String(value || "").trim().toLowerCase();
 }
 
 function parseCustomerPagination(query) {
@@ -586,13 +677,303 @@ router.get("/platform/health", platformOnly, async (req, res) => {
       },
       queue: getQueueStatus(),
       scheduler: getSchedulerStatus(),
-      uploads: {
-        status: "configured",
-        storage: "local"
-      }
+      uploads: getUploadReadiness()
     });
   } catch (err) {
     sendSafeServerError(res, err, "PLATFORM HEALTH ERROR");
+  }
+});
+
+router.get("/platform/launch-readiness", platformOnly, async (req, res) => {
+  try {
+    const readiness = await getHealthReadiness();
+    return res.json({
+      ok: readiness && readiness.ok === true,
+      app: readiness && readiness.app ? readiness.app : { app: "FairLinx" },
+      billing: readiness && readiness.billing ? readiness.billing : { status: "needs_review" },
+      uploads: readiness && readiness.uploads ? readiness.uploads : { status: "needs_review" },
+      workflows: readiness && readiness.workflows ? readiness.workflows : { status: "needs_review" },
+      environment: readiness && readiness.environment ? readiness.environment : { status: "needs_review" },
+      operational: readiness && readiness.operational ? readiness.operational : {}
+    });
+  } catch (err) {
+    return sendSafeServerError(res, err, "PLATFORM LAUNCH READINESS ERROR");
+  }
+});
+
+router.get("/platform/monitoring", platformOnly, async (req, res) => {
+  try {
+    const snapshot = await getMonitoringSnapshot();
+    return res.json(snapshot);
+  } catch (err) {
+    return sendSafeServerError(res, err, "PLATFORM MONITORING ERROR");
+  }
+});
+
+router.get("/platform/backups/status", platformOnly, async (req, res) => {
+  try {
+    return res.json(getBackupReadiness());
+  } catch (err) {
+    return sendSafeServerError(res, err, "PLATFORM BACKUP STATUS ERROR");
+  }
+});
+
+router.get("/platform/storage/readiness", platformOnly, async (req, res) => {
+  try {
+    return res.json(getStorageActivationStatus());
+  } catch (err) {
+    return sendSafeServerError(res, err, "PLATFORM STORAGE READINESS ERROR");
+  }
+});
+
+router.get("/platform/monitoring/readiness", platformOnly, async (req, res) => {
+  try {
+    return res.json(getMonitoringActivationReadiness());
+  } catch (err) {
+    return sendSafeServerError(res, err, "PLATFORM MONITORING READINESS ERROR");
+  }
+});
+
+router.get("/platform/backups/readiness", platformOnly, async (req, res) => {
+  try {
+    const schedule = validateBackupScheduleReadiness();
+    const retention = validateBackupRetentionReadiness();
+    const restore = validateRestoreDrillReadiness();
+    return res.json({
+      status: [schedule, retention, restore].every((item) => item && item.status === "ok") ? "ready" : "needs_review",
+      schedule,
+      retention,
+      restore
+    });
+  } catch (err) {
+    return sendSafeServerError(res, err, "PLATFORM BACKUPS READINESS ERROR");
+  }
+});
+
+router.get("/platform/founding-partner/invites", platformOnly, async (req, res) => {
+  try {
+    const { limit, offset } = parsePagination(req.query);
+    const status = cleanInviteStatus(req.query && req.query.status);
+    const type = cleanInviteType(req.query && req.query.invite_type);
+    const q = String((req.query && req.query.q) || "").trim();
+    const params = [];
+    const conds = [];
+    if (status) {
+      params.push(status);
+      conds.push(`LOWER(status) = $${params.length}`);
+    }
+    if (type) {
+      params.push(type);
+      conds.push(`LOWER(invite_type) = $${params.length}`);
+    }
+    if (q) {
+      params.push(`%${q.toLowerCase()}%`);
+      conds.push(`LOWER(invited_email) LIKE $${params.length}`);
+    }
+    const where = conds.length ? `WHERE ${conds.join(" AND ")}` : "";
+    params.push(limit, offset);
+    const result = await pool.query(
+      `
+      SELECT
+        id,
+        company_id,
+        invited_email,
+        invited_by_user_id,
+        invite_type,
+        status,
+        token_hash,
+        created_at,
+        accepted_at
+      FROM company_invites
+      ${where}
+      ORDER BY created_at DESC, id DESC
+      LIMIT $${params.length - 1} OFFSET $${params.length}
+      `,
+      params
+    );
+    return res.json(result.rows.map((row) => ({
+      ...row,
+      token_hash_present: Boolean(row.token_hash),
+      token_hash: null
+    })));
+  } catch (err) {
+    return sendSafeServerError(res, err, "PLATFORM FOUNDING PARTNER INVITES LIST ERROR");
+  }
+});
+
+router.post("/platform/founding-partner/invites", platformOnly, async (req, res) => {
+  try {
+    const invitedEmail = cleanEmail(req.body && req.body.invited_email);
+    const inviteType = cleanInviteType(req.body && req.body.invite_type) || "founding_partner";
+    if (!invitedEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(invitedEmail)) {
+      return res.status(400).json({ error: "Valid invited_email is required" });
+    }
+    if (inviteType !== "founding_partner") {
+      return res.status(400).json({ error: "Only founding_partner invites are supported in this phase" });
+    }
+    const existing = await pool.query(
+      `
+      SELECT id
+      FROM company_invites
+      WHERE LOWER(invited_email) = LOWER($1)
+        AND invite_type = 'founding_partner'
+        AND status = 'pending'
+      LIMIT 1
+      `,
+      [invitedEmail]
+    );
+    if (existing.rows.length) {
+      return res.status(409).json({ error: "Pending invite already exists for this email" });
+    }
+    const rawToken = crypto.randomBytes(32).toString("hex");
+    const tokenHash = crypto.createHash("sha256").update(rawToken).digest("hex");
+    const inserted = await pool.query(
+      `
+      INSERT INTO company_invites (
+        company_id, invited_email, invited_by_user_id, invite_type, status, token_hash
+      )
+      VALUES (NULL, $1, $2, 'founding_partner', 'pending', $3)
+      RETURNING id, company_id, invited_email, invited_by_user_id, invite_type, status, created_at, accepted_at
+      `,
+      [invitedEmail, Number(req.user.id), tokenHash]
+    );
+    return res.status(201).json(inserted.rows[0]);
+  } catch (err) {
+    return sendSafeServerError(res, err, "PLATFORM FOUNDING PARTNER INVITE CREATE ERROR");
+  }
+});
+
+router.patch("/platform/founding-partner/invites/:id/cancel", platformOnly, async (req, res) => {
+  try {
+    const inviteId = Number(req.params.id);
+    if (!Number.isInteger(inviteId) || inviteId <= 0) {
+      return res.status(400).json({ error: "Invalid invite id" });
+    }
+    const result = await pool.query(
+      `
+      UPDATE company_invites
+      SET status = 'canceled'
+      WHERE id = $1
+        AND invite_type = 'founding_partner'
+        AND status = 'pending'
+      RETURNING id, company_id, invited_email, invited_by_user_id, invite_type, status, created_at, accepted_at
+      `,
+      [inviteId]
+    );
+    if (!result.rows.length) {
+      return res.status(404).json({ error: "Pending invite not found" });
+    }
+    return res.json(result.rows[0]);
+  } catch (err) {
+    return sendSafeServerError(res, err, "PLATFORM FOUNDING PARTNER INVITE CANCEL ERROR");
+  }
+});
+
+router.patch("/platform/founding-partner/invites/:id/accept", platformOnly, async (req, res) => {
+  try {
+    const inviteId = Number(req.params.id);
+    if (!Number.isInteger(inviteId) || inviteId <= 0) {
+      return res.status(400).json({ error: "Invalid invite id" });
+    }
+    const acceptedCompanyId = Number(req.body && req.body.accepted_company_id);
+    const acceptanceNotes = String(req.body && req.body.acceptance_notes || "").trim().slice(0, 2000);
+    const result = await pool.query(
+      `
+      UPDATE company_invites
+      SET
+        status = 'accepted',
+        accepted_at = CURRENT_TIMESTAMP,
+        accepted_by_platform_user_id = $2,
+        accepted_company_id = CASE WHEN $3::int > 0 THEN $3 ELSE accepted_company_id END,
+        acceptance_notes = CASE WHEN $4 = '' THEN acceptance_notes ELSE $4 END
+      WHERE id = $1
+        AND invite_type = 'founding_partner'
+        AND status = 'pending'
+      RETURNING id, company_id, invited_email, invited_by_user_id, invite_type, status, created_at, accepted_at
+      `,
+      [inviteId, Number(req.user.id), Number.isInteger(acceptedCompanyId) ? acceptedCompanyId : 0, acceptanceNotes]
+    );
+    if (!result.rows.length) {
+      return res.status(404).json({ error: "Pending invite not found" });
+    }
+    return res.json(result.rows[0]);
+  } catch (err) {
+    return sendSafeServerError(res, err, "PLATFORM FOUNDING PARTNER INVITE ACCEPT ERROR");
+  }
+});
+
+router.get("/platform/billing-lifecycle/audit", platformOnly, async (req, res) => {
+  try {
+    const summary = await pool.query(
+      `
+      SELECT
+        COALESCE(billing_status, 'unknown') AS billing_status,
+        COUNT(*)::int AS count
+      FROM companies
+      GROUP BY COALESCE(billing_status, 'unknown')
+      ORDER BY count DESC, billing_status ASC
+      `
+    );
+    const grace = await one(
+      `
+      SELECT
+        COUNT(*) FILTER (WHERE billing_grace_until IS NOT NULL AND billing_grace_until >= CURRENT_TIMESTAMP)::int AS in_grace,
+        COUNT(*) FILTER (WHERE billing_grace_until IS NOT NULL AND billing_grace_until < CURRENT_TIMESTAMP)::int AS grace_expired
+      FROM companies
+      `
+    );
+    const missingStripe = await one(
+      `
+      SELECT
+        COUNT(*) FILTER (WHERE COALESCE(NULLIF(TRIM(stripe_customer_id), ''), '') = '')::int AS missing_stripe_customer_id,
+        COUNT(*) FILTER (WHERE COALESCE(NULLIF(TRIM(stripe_subscription_id), ''), '') = '')::int AS missing_stripe_subscription_id
+      FROM companies
+      `
+    );
+    const statusCounts = summary.rows.reduce((acc, row) => {
+      acc[String(row.billing_status || "unknown")] = Number(row.count || 0);
+      return acc;
+    }, {});
+    const warnings = [];
+    if (Number(missingStripe.missing_stripe_customer_id || 0) > 0) {
+      warnings.push("Some companies are missing Stripe customer IDs.");
+    }
+    if (Number(missingStripe.missing_stripe_subscription_id || 0) > 0) {
+      warnings.push("Some companies are missing Stripe subscription IDs.");
+    }
+    if (Number(grace.grace_expired || 0) > 0) {
+      warnings.push("Some companies have expired grace periods.");
+    }
+    const payload = {
+      status_counts: statusCounts,
+      grace_period: {
+        in_grace: Number(grace.in_grace || 0),
+        grace_expired: Number(grace.grace_expired || 0)
+      },
+      risk_statuses: {
+        past_due: Number(statusCounts.past_due || 0),
+        unpaid: Number(statusCounts.unpaid || 0),
+        canceled: Number(statusCounts.canceled || statusCounts.cancelled || 0)
+      },
+      missing_stripe_fields: {
+        stripe_customer_id: Number(missingStripe.missing_stripe_customer_id || 0),
+        stripe_subscription_id: Number(missingStripe.missing_stripe_subscription_id || 0)
+      },
+      warnings
+    };
+    if (warnings.length) {
+      try {
+        await notifyBillingWarning({
+          companyId: Number(req.user.company_id),
+          warningMessage: warnings[0]
+        });
+      } catch (_) {
+        // read-only endpoint remains non-fatal
+      }
+    }
+    return res.json(payload);
+  } catch (err) {
+    return sendSafeServerError(res, err, "PLATFORM BILLING LIFECYCLE AUDIT ERROR");
   }
 });
 
@@ -866,9 +1247,10 @@ router.get("/platform/customers/:id", platformOnly, async (req, res) => {
         `
         SELECT COUNT(*)::int AS count
         FROM marketplace_requests
-        WHERE customer_client_id = $1
+        WHERE ($1::int IS NOT NULL AND customer_account_id = $1)
+           OR ($2::int IS NOT NULL AND client_id = $2)
         `,
-        [customer.client_id || 0]
+        [customer.id || null, customer.client_id || null]
       ),
       one(
         `
@@ -987,6 +1369,491 @@ router.patch("/platform/customers/:id/deactivate", platformOnly, async (req, res
     return res.json(result.rows[0]);
   } catch (err) {
     return sendSafeServerError(res, err, "PLATFORM CUSTOMER DEACTIVATE ERROR");
+  }
+});
+
+router.get("/platform/moderation/reports", platformOnly, async (req, res) => {
+  try {
+    const { limit, offset } = parsePagination(req.query);
+    const q = String((req.query && req.query.q) || "").trim();
+    const status = cleanModerationStatus(req.query && req.query.status);
+    const priority = cleanModerationPriority(req.query && req.query.priority);
+    const targetType = cleanModerationTargetType(req.query && req.query.target_type);
+
+    const params = [];
+    const conds = [];
+    if (q) {
+      params.push(`%${q}%`);
+      const idx = params.length;
+      conds.push(`(
+        CAST(r.id AS TEXT) ILIKE $${idx}
+        OR CAST(r.target_id AS TEXT) ILIKE $${idx}
+        OR COALESCE(c.name, '') ILIKE $${idx}
+        OR r.reason ILIKE $${idx}
+        OR COALESCE(r.details, '') ILIKE $${idx}
+      )`);
+    }
+    if (status) {
+      params.push(status);
+      conds.push(`LOWER(r.status) = $${params.length}`);
+    }
+    if (priority) {
+      params.push(priority);
+      conds.push(`LOWER(r.priority) = $${params.length}`);
+    }
+    if (targetType) {
+      params.push(targetType);
+      conds.push(`LOWER(r.target_type) = $${params.length}`);
+    }
+    const where = conds.length ? `WHERE ${conds.join(" AND ")}` : "";
+    params.push(limit, offset);
+
+    const result = await pool.query(
+      `
+      SELECT
+        r.id,
+        r.reporter_user_id,
+        r.reporter_customer_id,
+        r.company_id,
+        r.target_type,
+        r.target_id,
+        r.reason,
+        r.details,
+        r.status,
+        r.priority,
+        r.resolution_notes,
+        r.resolved_by,
+        r.resolved_at,
+        r.created_at,
+        r.updated_at,
+        c.name AS company_name,
+        resolver.username AS resolved_by_username
+      FROM abuse_reports r
+      LEFT JOIN companies c ON c.id = r.company_id
+      LEFT JOIN users resolver ON resolver.id = r.resolved_by
+      ${where}
+      ORDER BY r.created_at DESC, r.id DESC
+      LIMIT $${params.length - 1} OFFSET $${params.length}
+      `,
+      params
+    );
+
+    return res.json(result.rows);
+  } catch (err) {
+    return sendSafeServerError(res, err, "PLATFORM MODERATION REPORTS LIST ERROR");
+  }
+});
+
+router.patch("/platform/moderation/reports/:id", platformOnly, async (req, res) => {
+  try {
+    const reportId = Number(req.params.id);
+    if (!Number.isInteger(reportId) || reportId <= 0) {
+      return res.status(400).json({ error: "Invalid report id" });
+    }
+
+    const incomingStatus = req.body && Object.prototype.hasOwnProperty.call(req.body, "status")
+      ? cleanModerationStatus(req.body.status)
+      : null;
+    const incomingPriority = req.body && Object.prototype.hasOwnProperty.call(req.body, "priority")
+      ? cleanModerationPriority(req.body.priority)
+      : null;
+    const incomingResolutionNotes = req.body && Object.prototype.hasOwnProperty.call(req.body, "resolution_notes")
+      ? String(req.body.resolution_notes || "").trim().slice(0, 4000)
+      : null;
+
+    if (incomingStatus === "" || incomingPriority === "") {
+      return res.status(400).json({ error: "Invalid moderation field value" });
+    }
+
+    const updates = [];
+    const params = [];
+    if (incomingStatus !== null) {
+      params.push(incomingStatus);
+      updates.push(`status = $${params.length}`);
+      if (["action_taken", "dismissed", "closed"].includes(incomingStatus)) {
+        updates.push("resolved_at = CURRENT_TIMESTAMP");
+        params.push(req.user.id);
+        updates.push(`resolved_by = $${params.length}`);
+      } else {
+        updates.push("resolved_at = NULL");
+        updates.push("resolved_by = NULL");
+      }
+    }
+    if (incomingPriority !== null) {
+      params.push(incomingPriority);
+      updates.push(`priority = $${params.length}`);
+    }
+    if (incomingResolutionNotes !== null) {
+      params.push(incomingResolutionNotes || null);
+      updates.push(`resolution_notes = $${params.length}`);
+    }
+    if (!updates.length) {
+      return res.status(400).json({ error: "No moderation fields provided" });
+    }
+
+    params.push(reportId);
+    const result = await pool.query(
+      `
+      UPDATE abuse_reports
+      SET ${updates.join(", ")}, updated_at = CURRENT_TIMESTAMP
+      WHERE id = $${params.length}
+      RETURNING
+        id,
+        reporter_user_id,
+        reporter_customer_id,
+        company_id,
+        target_type,
+        target_id,
+        reason,
+        details,
+        status,
+        priority,
+        resolution_notes,
+        resolved_by,
+        resolved_at,
+        created_at,
+        updated_at
+      `,
+      params
+    );
+    if (!result.rows.length) {
+      return res.status(404).json({ error: "Report not found" });
+    }
+    return res.json(result.rows[0]);
+  } catch (err) {
+    return sendSafeServerError(res, err, "PLATFORM MODERATION REPORT UPDATE ERROR");
+  }
+});
+
+router.get("/platform/disputes", platformOnly, async (req, res) => {
+  try {
+    const { limit, offset } = parsePagination(req.query);
+    const q = String((req.query && req.query.q) || "").trim();
+    const status = cleanDisputeStatus(req.query && req.query.status);
+    const priority = cleanDisputePriority(req.query && req.query.priority);
+    const companyId = Number(req.query && req.query.company_id);
+    const customerId = Number(req.query && req.query.customer_id);
+    const params = [];
+    const conds = [];
+
+    if (q) {
+      params.push(`%${q}%`);
+      const idx = params.length;
+      conds.push(`(
+        CAST(d.id AS TEXT) ILIKE $${idx}
+        OR COALESCE(d.reason, '') ILIKE $${idx}
+        OR COALESCE(d.details, '') ILIKE $${idx}
+        OR COALESCE(c.name, '') ILIKE $${idx}
+      )`);
+    }
+    if (status) {
+      params.push(status);
+      conds.push(`LOWER(d.status) = $${params.length}`);
+    }
+    if (priority) {
+      params.push(priority);
+      conds.push(`LOWER(d.priority) = $${params.length}`);
+    }
+    if (Number.isInteger(companyId) && companyId > 0) {
+      params.push(companyId);
+      conds.push(`d.company_id = $${params.length}`);
+    }
+    if (Number.isInteger(customerId) && customerId > 0) {
+      params.push(customerId);
+      conds.push(`d.customer_id = $${params.length}`);
+    }
+    const where = conds.length ? `WHERE ${conds.join(" AND ")}` : "";
+    params.push(limit, offset);
+
+    const result = await pool.query(
+      `
+      SELECT
+        d.id,
+        d.marketplace_request_id,
+        d.support_ticket_id,
+        d.company_id,
+        d.customer_id,
+        d.opened_by_type,
+        d.opened_by_user_id,
+        d.opened_by_customer_id,
+        d.reason,
+        d.details,
+        d.status,
+        d.priority,
+        d.resolution,
+        d.resolution_notes,
+        d.resolved_by,
+        d.resolved_at,
+        d.created_at,
+        d.updated_at,
+        c.name AS company_name,
+        resolver.username AS resolved_by_username
+      FROM disputes d
+      LEFT JOIN companies c ON c.id = d.company_id
+      LEFT JOIN users resolver ON resolver.id = d.resolved_by
+      ${where}
+      ORDER BY d.created_at DESC, d.id DESC
+      LIMIT $${params.length - 1} OFFSET $${params.length}
+      `,
+      params
+    );
+    return res.json(result.rows);
+  } catch (err) {
+    return sendSafeServerError(res, err, "PLATFORM DISPUTES LIST ERROR");
+  }
+});
+
+router.patch("/platform/disputes/:id", platformOnly, async (req, res) => {
+  try {
+    const disputeId = Number(req.params.id);
+    if (!Number.isInteger(disputeId) || disputeId <= 0) {
+      return res.status(400).json({ error: "Invalid dispute id" });
+    }
+    const incomingStatus = req.body && Object.prototype.hasOwnProperty.call(req.body, "status")
+      ? cleanDisputeStatus(req.body.status)
+      : null;
+    const incomingPriority = req.body && Object.prototype.hasOwnProperty.call(req.body, "priority")
+      ? cleanDisputePriority(req.body.priority)
+      : null;
+    const incomingResolution = req.body && Object.prototype.hasOwnProperty.call(req.body, "resolution")
+      ? String(req.body.resolution || "").trim().slice(0, 2000)
+      : null;
+    const incomingResolutionNotes = req.body && Object.prototype.hasOwnProperty.call(req.body, "resolution_notes")
+      ? String(req.body.resolution_notes || "").trim().slice(0, 4000)
+      : null;
+
+    if (incomingStatus === "" || incomingPriority === "") {
+      return res.status(400).json({ error: "Invalid dispute field value" });
+    }
+
+    const updates = [];
+    const params = [];
+    if (incomingStatus !== null) {
+      params.push(incomingStatus);
+      updates.push(`status = $${params.length}`);
+      if (["resolved", "closed"].includes(incomingStatus)) {
+        updates.push("resolved_at = CURRENT_TIMESTAMP");
+        params.push(req.user.id);
+        updates.push(`resolved_by = $${params.length}`);
+      } else {
+        updates.push("resolved_at = NULL");
+        updates.push("resolved_by = NULL");
+      }
+    }
+    if (incomingPriority !== null) {
+      params.push(incomingPriority);
+      updates.push(`priority = $${params.length}`);
+    }
+    if (incomingResolution !== null) {
+      params.push(incomingResolution || null);
+      updates.push(`resolution = $${params.length}`);
+    }
+    if (incomingResolutionNotes !== null) {
+      params.push(incomingResolutionNotes || null);
+      updates.push(`resolution_notes = $${params.length}`);
+    }
+    if (!updates.length) {
+      return res.status(400).json({ error: "No dispute fields provided" });
+    }
+
+    params.push(disputeId);
+    const result = await pool.query(
+      `
+      UPDATE disputes
+      SET ${updates.join(", ")}, updated_at = CURRENT_TIMESTAMP
+      WHERE id = $${params.length}
+      RETURNING
+        id,
+        marketplace_request_id,
+        support_ticket_id,
+        company_id,
+        customer_id,
+        opened_by_type,
+        opened_by_user_id,
+        opened_by_customer_id,
+        reason,
+        details,
+        status,
+        priority,
+        resolution,
+        resolution_notes,
+        resolved_by,
+        resolved_at,
+        created_at,
+        updated_at
+      `,
+      params
+    );
+    if (!result.rows.length) {
+      return res.status(404).json({ error: "Dispute not found" });
+    }
+    return res.json(result.rows[0]);
+  } catch (err) {
+    return sendSafeServerError(res, err, "PLATFORM DISPUTE UPDATE ERROR");
+  }
+});
+
+router.get("/platform/verification/companies", platformOnly, async (req, res) => {
+  try {
+    const { limit, offset } = parsePagination(req.query);
+    const q = String((req.query && req.query.q) || "").trim();
+    const verificationStatus = cleanVerificationStatus(req.query && req.query.verification_status);
+    const licenseStatus = cleanLicenseOrInsuranceStatus(req.query && req.query.license_status);
+    const insuranceStatus = cleanLicenseOrInsuranceStatus(req.query && req.query.insurance_status);
+
+    const params = [];
+    const conds = [];
+    if (q) {
+      params.push(`%${q}%`);
+      const idx = params.length;
+      conds.push(`(c.name ILIKE $${idx} OR c.email ILIKE $${idx} OR c.phone ILIKE $${idx} OR CAST(c.id AS TEXT) ILIKE $${idx})`);
+    }
+    if (verificationStatus) {
+      params.push(verificationStatus);
+      conds.push(`LOWER(c.verification_status) = $${params.length}`);
+    }
+    if (licenseStatus) {
+      params.push(licenseStatus);
+      conds.push(`LOWER(c.license_status) = $${params.length}`);
+    }
+    if (insuranceStatus) {
+      params.push(insuranceStatus);
+      conds.push(`LOWER(c.insurance_status) = $${params.length}`);
+    }
+    const where = conds.length ? `WHERE ${conds.join(" AND ")}` : "";
+    params.push(limit, offset);
+
+    const result = await pool.query(
+      `
+      SELECT
+        c.id,
+        c.name,
+        c.email,
+        c.phone,
+        c.verification_status,
+        c.verified_at,
+        c.verified_by,
+        c.verification_notes,
+        c.license_status,
+        c.insurance_status,
+        c.identity_status,
+        c.created_at,
+        verifier.username AS verified_by_username
+      FROM companies c
+      LEFT JOIN users verifier ON verifier.id = c.verified_by
+      ${where}
+      ORDER BY c.created_at DESC NULLS LAST, c.id DESC
+      LIMIT $${params.length - 1} OFFSET $${params.length}
+      `,
+      params
+    );
+
+    return res.json(result.rows);
+  } catch (err) {
+    return sendSafeServerError(res, err, "PLATFORM VERIFICATION COMPANIES LIST ERROR");
+  }
+});
+
+router.patch("/platform/verification/companies/:id", platformOnly, async (req, res) => {
+  try {
+    const companyId = Number(req.params.id);
+    if (!Number.isInteger(companyId) || companyId <= 0) {
+      return res.status(400).json({ error: "Invalid company id" });
+    }
+
+    const incomingVerification = req.body && Object.prototype.hasOwnProperty.call(req.body, "verification_status")
+      ? cleanVerificationStatus(req.body.verification_status)
+      : null;
+    const incomingLicense = req.body && Object.prototype.hasOwnProperty.call(req.body, "license_status")
+      ? cleanLicenseOrInsuranceStatus(req.body.license_status)
+      : null;
+    const incomingInsurance = req.body && Object.prototype.hasOwnProperty.call(req.body, "insurance_status")
+      ? cleanLicenseOrInsuranceStatus(req.body.insurance_status)
+      : null;
+    const incomingIdentity = req.body && Object.prototype.hasOwnProperty.call(req.body, "identity_status")
+      ? cleanIdentityStatus(req.body.identity_status)
+      : null;
+    const incomingNotes = req.body && Object.prototype.hasOwnProperty.call(req.body, "verification_notes")
+      ? String(req.body.verification_notes || "").trim().slice(0, 4000)
+      : null;
+
+    if (incomingVerification === "" || incomingLicense === "" || incomingInsurance === "" || incomingIdentity === "") {
+      return res.status(400).json({ error: "Invalid verification field value" });
+    }
+
+    const updates = [];
+    const params = [];
+    if (incomingVerification !== null) {
+      params.push(incomingVerification);
+      updates.push(`verification_status = $${params.length}`);
+      if (incomingVerification === "verified") {
+        updates.push("verified_at = CURRENT_TIMESTAMP");
+        params.push(req.user.id);
+        updates.push(`verified_by = $${params.length}`);
+        updates.push("is_verified = TRUE");
+      } else {
+        updates.push("verified_at = NULL");
+        updates.push("verified_by = NULL");
+        updates.push("is_verified = FALSE");
+      }
+    }
+    if (incomingLicense !== null) {
+      params.push(incomingLicense);
+      updates.push(`license_status = $${params.length}`);
+    }
+    if (incomingInsurance !== null) {
+      params.push(incomingInsurance);
+      updates.push(`insurance_status = $${params.length}`);
+    }
+    if (incomingIdentity !== null) {
+      params.push(incomingIdentity);
+      updates.push(`identity_status = $${params.length}`);
+    }
+    if (incomingNotes !== null) {
+      params.push(incomingNotes || null);
+      updates.push(`verification_notes = $${params.length}`);
+    }
+
+    if (!updates.length) {
+      return res.status(400).json({ error: "No verification fields provided" });
+    }
+
+    params.push(companyId);
+    const result = await pool.query(
+      `
+      UPDATE companies
+      SET ${updates.join(", ")}, updated_at = CURRENT_TIMESTAMP
+      WHERE id = $${params.length}
+      RETURNING
+        id,
+        name,
+        email,
+        phone,
+        verification_status,
+        verified_at,
+        verified_by,
+        verification_notes,
+        license_status,
+        insurance_status,
+        identity_status
+      `,
+      params
+    );
+
+    if (!result.rows.length) {
+      return res.status(404).json({ error: "Company not found" });
+    }
+    if (incomingVerification === "verified") {
+      try {
+        await notifyVerificationApproved({ companyId });
+      } catch (_) {}
+      try {
+        await refreshCompanyReputation(companyId);
+      } catch (_) {}
+    }
+    return res.json(result.rows[0]);
+  } catch (err) {
+    return sendSafeServerError(res, err, "PLATFORM VERIFICATION COMPANY UPDATE ERROR");
   }
 });
 

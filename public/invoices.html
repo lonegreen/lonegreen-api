@@ -372,7 +372,7 @@
   <link rel="stylesheet" href="/ui-cleanup.css">
   <script src="/js/role-guard.js"></script>
 </head>
-<body>
+<body class="phase2-internal">
   <script>
 (function(){
   const token = localStorage.getItem("token");
@@ -399,27 +399,27 @@
 })();
 </script>
 <div class="page">
-  <div class="hero">
+  <div class="hero fx-section-head">
     <div>
       <h1>Invoices</h1>
       <p>Clear financial view of invoice status, net paid amounts, refunds, and remaining balances.</p>
     </div>
   </div>
 
-  <div class="panel toolbar">
+  <div class="panel toolbar fx-toolbar">
     <div class="filter-row">
-      <button type="button" class="filter-chip active" id="filter-all">All</button>
-      <button type="button" class="filter-chip" id="filter-unpaid">Unpaid</button>
-      <button type="button" class="filter-chip" id="filter-paid">Paid</button>
-      <button type="button" class="filter-chip" id="filter-overdue">Overdue</button>
+      <button type="button" class="filter-chip active fx-badge fx-badge--info" id="filter-all">All</button>
+      <button type="button" class="filter-chip fx-badge fx-badge--neutral" id="filter-unpaid">Unpaid</button>
+      <button type="button" class="filter-chip fx-badge fx-badge--neutral" id="filter-paid">Paid</button>
+      <button type="button" class="filter-chip fx-badge fx-badge--neutral" id="filter-overdue">Overdue</button>
     </div>
 
     <div class="summary">
-      <div class="panel summary-card"><div class="label">Invoices</div><div class="value" id="invoiceCount">0</div></div>
-      <div class="panel summary-card"><div class="label">Total</div><div class="value" id="totalAmount">$0</div></div>
-      <div class="panel summary-card"><div class="label">Net paid</div><div class="value" id="paidAmount">$0</div></div>
-      <div class="panel summary-card"><div class="label">Refunded</div><div class="value" id="refundedAmount">$0</div></div>
-      <div class="panel summary-card"><div class="label">Remaining</div><div class="value" id="remainingAmount">$0</div></div>
+      <div class="panel summary-card fx-stat"><div class="label fx-stat__label">Invoices</div><div class="value fx-stat__value" id="invoiceCount">0</div></div>
+      <div class="panel summary-card fx-stat"><div class="label fx-stat__label">Total</div><div class="value fx-stat__value" id="totalAmount">$0</div></div>
+      <div class="panel summary-card fx-stat"><div class="label fx-stat__label">Net paid</div><div class="value fx-stat__value" id="paidAmount">$0</div></div>
+      <div class="panel summary-card fx-stat"><div class="label fx-stat__label">Refunded</div><div class="value fx-stat__value" id="refundedAmount">$0</div></div>
+      <div class="panel summary-card fx-stat"><div class="label fx-stat__label">Remaining</div><div class="value fx-stat__value" id="remainingAmount">$0</div></div>
     </div>
   </div>
 
@@ -517,7 +517,10 @@ function formatDate(value){
 function badge(status){
   const safeStatus = String(status || "draft");
   const slug = safeStatus.replace(/[^a-z_]/g, "") || "draft";
-  return `<span class="badge status-${slug}">${escapeHtml(safeStatus.replace(/_/g, " "))}</span>`;
+  const tone = slug === "paid"
+    ? "fx-badge--success"
+    : (slug === "overdue" || slug === "cancelled" ? "fx-badge--danger" : (slug === "partially_paid" || slug === "unpaid" ? "fx-badge--warning" : "fx-badge--neutral"));
+  return `<span class="badge fx-badge ${tone} status-${slug}">${escapeHtml(safeStatus.replace(/_/g, " "))}</span>`;
 }
 
 function netPaidAmount(invoice){
@@ -601,12 +604,12 @@ function render(){
   const wrap = document.getElementById("list");
 
   if(!list.length){
-    wrap.innerHTML = `<div class="empty"><strong>No invoices yet</strong>Create an invoice from a client profile.</div>`;
+    wrap.innerHTML = `<div class="empty fx-empty"><strong class="fx-empty__title">No invoices yet</strong><span class="fx-empty__text">Create an invoice from a client profile.</span></div>`;
     return;
   }
 
   wrap.innerHTML = list.map(invoice => `
-    <div class="invoice-card">
+    <div class="invoice-card fx-card">
       <div class="card-top">
         <div>
           <h3 class="card-title">${escapeHtml(invoice.invoice_number || ("Invoice #" + invoice.id))}</h3>
@@ -617,17 +620,17 @@ function render(){
       </div>
 
       <div class="money-grid">
-        <div class="money-box"><div class="label">Total</div><strong>${escapeHtml(money(invoice.amount || 0))}</strong></div>
-        <div class="money-box"><div class="label">Net paid</div><strong>${escapeHtml(money(netPaidAmount(invoice)))}</strong></div>
-        <div class="money-box"><div class="label">Refunded</div><strong>${escapeHtml(money(refundedAmount(invoice)))}</strong></div>
-        <div class="money-box"><div class="label">Remaining</div><strong>${escapeHtml(money(remainingAmount(invoice)))}</strong></div>
+        <div class="money-box fx-stat"><div class="label fx-stat__label">Total</div><strong class="fx-stat__value">${escapeHtml(money(invoice.amount || 0))}</strong></div>
+        <div class="money-box fx-stat"><div class="label fx-stat__label">Net paid</div><strong class="fx-stat__value">${escapeHtml(money(netPaidAmount(invoice)))}</strong></div>
+        <div class="money-box fx-stat"><div class="label fx-stat__label">Refunded</div><strong class="fx-stat__value">${escapeHtml(money(refundedAmount(invoice)))}</strong></div>
+        <div class="money-box fx-stat"><div class="label fx-stat__label">Remaining</div><strong class="fx-stat__value">${escapeHtml(money(remainingAmount(invoice)))}</strong></div>
       </div>
 
       <div class="actions">
-        <button type="button" class="btn gray" data-invoice-action="edit" data-invoice-id="${Number(invoice.id)}">Edit</button>
-        ${invoice.status === "cancelled" ? "" : `<button type="button" class="btn red" data-invoice-action="void" data-invoice-id="${Number(invoice.id)}">Void / Cancel</button>`}
-        <button type="button" class="btn primary" data-invoice-action="open" data-invoice-id="${Number(invoice.id)}">Open Invoice</button>
-        ${canDeleteInvoices() ? `<button type="button" class="btn red" data-invoice-action="delete" data-invoice-id="${Number(invoice.id)}">Delete</button>` : ""}
+        <button type="button" class="btn gray fx-btn fx-btn--secondary" data-invoice-action="edit" data-invoice-id="${Number(invoice.id)}">Edit</button>
+        ${invoice.status === "cancelled" ? "" : `<button type="button" class="btn red fx-btn fx-btn--danger" data-invoice-action="void" data-invoice-id="${Number(invoice.id)}">Void / Cancel</button>`}
+        <button type="button" class="btn primary fx-btn fx-btn--primary" data-invoice-action="open" data-invoice-id="${Number(invoice.id)}">Open Invoice</button>
+        ${canDeleteInvoices() ? `<button type="button" class="btn red fx-btn fx-btn--danger" data-invoice-action="delete" data-invoice-id="${Number(invoice.id)}">Delete</button>` : ""}
       </div>
     </div>
   `).join("");
@@ -855,7 +858,7 @@ async function load(){
   } catch(err){
     AppUI.showToast("Unable to load invoices.", "error");
     document.getElementById("list").innerHTML =
-      `<div class="empty"><strong>Unable to load invoices</strong>${escapeHtml(err && err.message ? err.message : "Please refresh and try again.")}</div>`;
+      `<div class="empty fx-empty"><strong class="fx-empty__title">Unable to load invoices</strong><span class="fx-empty__text">${escapeHtml(err && err.message ? err.message : "Please refresh and try again.")}</span></div>`;
   } finally {
     AppUI.setLoading(false);
   }
@@ -907,13 +910,13 @@ document.addEventListener("DOMContentLoaded", function(){
 </script>
 
 <div id="invoiceEditModal" class="modal">
-  <div class="modal-box">
+  <div class="modal-box fx-card">
     <h3 id="invoiceEditTitle">Edit Invoice</h3>
 
     <div class="form-grid">
-      <div class="field">
+      <div class="field fx-field">
         <label for="edit_invoice_status">Status</label>
-        <select id="edit_invoice_status">
+        <select id="edit_invoice_status" class="fx-select">
           <option value="draft">Draft</option>
           <option value="unpaid">Unpaid</option>
           <option value="paid">Paid</option>
@@ -922,36 +925,36 @@ document.addEventListener("DOMContentLoaded", function(){
         </select>
       </div>
 
-      <div class="field">
+      <div class="field fx-field">
         <label for="edit_invoice_due_date">Due Date</label>
-        <input id="edit_invoice_due_date" type="date">
+        <input id="edit_invoice_due_date" class="fx-input" type="date">
       </div>
 
-      <div class="field wide">
+      <div class="field wide fx-field">
         <label>Line Items</label>
         <div id="invoiceLineItems" class="line-items-editor"></div>
       </div>
 
-      <div class="field wide">
+      <div class="field wide fx-field">
         <label for="edit_invoice_notes">Notes</label>
-        <textarea id="edit_invoice_notes" rows="4" placeholder="Invoice notes"></textarea>
+        <textarea id="edit_invoice_notes" class="fx-textarea" rows="4" placeholder="Invoice notes"></textarea>
       </div>
     </div>
 
     <div class="modal-actions">
-      <button type="button" class="btn primary" id="saveInvoiceEditBtn">Save</button>
-      <button type="button" class="btn gray" id="cancelInvoiceEditBtn">Cancel</button>
+      <button type="button" class="btn primary fx-btn fx-btn--primary" id="saveInvoiceEditBtn">Save</button>
+      <button type="button" class="btn gray fx-btn fx-btn--secondary" id="cancelInvoiceEditBtn">Cancel</button>
     </div>
   </div>
 </div>
 
 <div id="deleteInvoiceModal" class="modal">
-  <div class="modal-box">
+  <div class="modal-box fx-card">
     <h3>Delete Invoice</h3>
     <p>This will safely archive, cancel, deactivate, or delete only when safe.</p>
     <div class="modal-actions">
-      <button type="button" class="btn gray" id="cancelDeleteInvoiceBtn">Cancel</button>
-      <button type="button" class="btn red" id="confirmDeleteInvoiceBtn">Delete</button>
+      <button type="button" class="btn gray fx-btn fx-btn--secondary" id="cancelDeleteInvoiceBtn">Cancel</button>
+      <button type="button" class="btn red fx-btn fx-btn--danger" id="confirmDeleteInvoiceBtn">Delete</button>
     </div>
   </div>
 </div>

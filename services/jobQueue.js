@@ -5,6 +5,11 @@ const DEFAULT_MAX_QUEUE_SIZE = Number(process.env.JOB_QUEUE_MAX_SIZE || 500);
 const MAX_ATTEMPTS = Number(process.env.JOB_QUEUE_MAX_ATTEMPTS || 3);
 const BASE_BACKOFF_MS = Number(process.env.JOB_QUEUE_BASE_BACKOFF_MS || 1000);
 const UNKNOWN_HANDLER_RETRY_MS = Number(process.env.JOB_QUEUE_UNKNOWN_HANDLER_RETRY_MS || 15000);
+const MIN_DB_BACKOFF_MS = Number(process.env.JOB_QUEUE_DB_MIN_BACKOFF_MS || 5000);
+const MAX_DB_BACKOFF_MS = Number(process.env.JOB_QUEUE_DB_MAX_BACKOFF_MS || 60000);
+const DB_CIRCUIT_FAILURE_THRESHOLD = Number(process.env.JOB_QUEUE_DB_CIRCUIT_FAILURES || 5);
+const DB_CIRCUIT_COOLDOWN_MS = Number(process.env.JOB_QUEUE_DB_CIRCUIT_COOLDOWN_MS || 60000);
+const DB_ERROR_LOG_THROTTLE_MS = Number(process.env.JOB_QUEUE_DB_LOG_THROTTLE_MS || 10000);
 const WORKER_ID = `${process.pid}`;
 const IS_PRODUCTION = String(process.env.NODE_ENV || "").toLowerCase() === "production";
 
@@ -17,9 +22,97 @@ let processedCount = 0;
 let failedCount = 0;
 let pendingCount = 0;
 let schemaReady = false;
+let consecutiveDbFailures = 0;
+let dbCircuitOpenUntil = 0;
+let lastDbStormLogAt = 0;
+let lastPendingCountErrorLogAt = 0;
+let dbCircuitWarned = false;
 
 function safeMaxQueueSize() {
   return Number.isFinite(DEFAULT_MAX_QUEUE_SIZE) && DEFAULT_MAX_QUEUE_SIZE > 0 ? DEFAULT_MAX_QUEUE_SIZE : 500;
+}
+
+function classifyDbConnectivity(err) {
+  if (!err) {
+    return { kind: "unknown", retry_style: "connectivity" };
+  }
+  const code = err.code;
+  const msg = String(err.message || err).toLowerCase();
+  if (code === "ENOTFOUND") {
+    return { kind: "dns_enotfound", retry_style: "connectivity" };
+  }
+  if (code === "ECONNRESET" || code === "EPIPE" || code === "ECONNREFUSED") {
+    return { kind: "conn_reset", retry_style: "connectivity" };
+  }
+  if (code === "ETIMEDOUT" || code === "ESOCKETTIMEDOUT") {
+    return { kind: "timeout", retry_style: "connectivity" };
+  }
+  if (msg.includes("timeout") || msg.includes("timed out") || msg.includes("connection terminated")) {
+    return { kind: "timeout", retry_style: "connectivity" };
+  }
+  if (code === "28P01" || msg.includes("password authentication failed")) {
+    return { kind: "auth_password", retry_style: "auth" };
+  }
+  if (msg.includes("no pg_hba.conf entry")) {
+    return { kind: "auth_pg_hba", retry_style: "auth" };
+  }
+  if (code === "57P01") {
+    return { kind: "admin_shutdown", retry_style: "connectivity" };
+  }
+  return { kind: "other", retry_style: "connectivity" };
+}
+
+function computeDbBackoffMs(failureCount) {
+  const n = Math.max(1, Number(failureCount) || 1);
+  const cappedPow = Math.min(n - 1, 4);
+  const exp = MIN_DB_BACKOFF_MS * Math.pow(2, Math.max(0, cappedPow));
+  const jitter = Math.floor(Math.random() * MIN_DB_BACKOFF_MS * 0.15);
+  return Math.min(MAX_DB_BACKOFF_MS, Math.floor(exp + jitter));
+}
+
+function resetQueueDbHealth() {
+  consecutiveDbFailures = 0;
+  dbCircuitOpenUntil = 0;
+  dbCircuitWarned = false;
+}
+
+function registerDbFailure(err) {
+  const classified = classifyDbConnectivity(err);
+  consecutiveDbFailures += 1;
+  const backoffMs = computeDbBackoffMs(consecutiveDbFailures);
+  if (consecutiveDbFailures >= DB_CIRCUIT_FAILURE_THRESHOLD) {
+    dbCircuitOpenUntil = Date.now() + DB_CIRCUIT_COOLDOWN_MS;
+    if (!dbCircuitWarned) {
+      dbCircuitWarned = true;
+      logger.warn("JOB_QUEUE_DB_CIRCUIT_OPEN", {
+        failures: consecutiveDbFailures,
+        cooldown_ms: DB_CIRCUIT_COOLDOWN_MS,
+        resume_after_ms: Math.max(0, dbCircuitOpenUntil - Date.now()),
+        classified
+      });
+    }
+  }
+  const now = Date.now();
+  if (now - lastDbStormLogAt >= DB_ERROR_LOG_THROTTLE_MS) {
+    lastDbStormLogAt = now;
+    logger.warn("JOB_QUEUE_DB_UNAVAILABLE", {
+      failures: consecutiveDbFailures,
+      next_backoff_ms: backoffMs,
+      circuit_open_until: dbCircuitOpenUntil || null,
+      code: err && err.code ? err.code : undefined,
+      classified
+    });
+  }
+  return backoffMs;
+}
+
+function shouldDeferForDbCircuit() {
+  return Date.now() < dbCircuitOpenUntil;
+}
+
+function deferDelayForCircuit() {
+  const remaining = dbCircuitOpenUntil - Date.now();
+  return Math.min(MAX_DB_BACKOFF_MS, Math.max(MIN_DB_BACKOFF_MS, remaining + 50));
 }
 
 async function ensureQueueSchema() {
@@ -73,7 +166,15 @@ async function refreshPendingCount() {
     `);
     pendingCount = Number(result.rows[0] && result.rows[0].pending ? result.rows[0].pending : 0);
   } catch (err) {
-    logger.error("JOB_QUEUE_PENDING_COUNT_ERROR", err);
+    const now = Date.now();
+    if (now - lastPendingCountErrorLogAt >= DB_ERROR_LOG_THROTTLE_MS) {
+      lastPendingCountErrorLogAt = now;
+      logger.warn("JOB_QUEUE_PENDING_COUNT_ERROR", {
+        classified: classifyDbConnectivity(err),
+        code: err && err.code ? err.code : undefined,
+        error: err
+      });
+    }
   }
 }
 
@@ -84,10 +185,10 @@ function scheduleNext(delayMs = 0) {
   timer = setTimeout(() => {
     timer = null;
     processNext().catch((err) => {
-      logger.error("JOB_QUEUE_LOOP_ERROR", err);
       processing = false;
       currentJob = null;
-      scheduleNext(BASE_BACKOFF_MS);
+      const delay = registerDbFailure(err);
+      scheduleNext(delay);
     });
   }, Math.max(0, delayMs));
   if (typeof timer.unref === "function") {
@@ -209,37 +310,83 @@ async function processNext() {
   if (!running || processing) {
     return;
   }
+
+  if (shouldDeferForDbCircuit()) {
+    scheduleNext(deferDelayForCircuit());
+    return;
+  }
+
   processing = true;
+  let nextDelay = 0;
+
   try {
-    const job = await claimNextJob();
+    try {
+      await ensureQueueSchema();
+    } catch (err) {
+      nextDelay = registerDbFailure(err);
+      return;
+    }
+
+    let job;
+    try {
+      job = await claimNextJob();
+    } catch (err) {
+      nextDelay = registerDbFailure(err);
+      return;
+    }
+
+    resetQueueDbHealth();
+
     if (!job) {
       await refreshPendingCount();
-      scheduleNext(250);
+      nextDelay = 250;
       return;
     }
 
     currentJob = { id: job.id, type: job.type, attempts: Number(job.attempts || 0) };
     const handler = handlers.get(job.type);
     if (typeof handler !== "function") {
-      await requeueJobForUnknownHandler(job);
+      try {
+        await requeueJobForUnknownHandler(job);
+      } catch (err) {
+        nextDelay = registerDbFailure(err);
+        return;
+      }
       currentJob = null;
       await refreshPendingCount();
-      scheduleNext(1000);
+      nextDelay = 1000;
       return;
     }
 
     try {
       await handler(job.payload || {});
       processedCount += 1;
-      await completeJob(job.id);
+      try {
+        await completeJob(job.id);
+      } catch (err) {
+        nextDelay = registerDbFailure(err);
+        return;
+      }
     } catch (err) {
-      await failOrRetryJob(job, err);
+      try {
+        await failOrRetryJob(job, err);
+      } catch (dbErr) {
+        nextDelay = registerDbFailure(dbErr);
+        return;
+      }
     }
+    nextDelay = 0;
   } finally {
     processing = false;
     currentJob = null;
-    await refreshPendingCount();
-    scheduleNext(0);
+    try {
+      await refreshPendingCount();
+    } catch (_) {
+      /* refreshPendingCount logs throttled warnings internally */
+    }
+    if (running) {
+      scheduleNext(nextDelay);
+    }
   }
 }
 
@@ -339,7 +486,13 @@ function getQueueStatus() {
     started: running,
     current: currentJob,
     processed: processedCount,
-    failed: failedCount
+    failed: failedCount,
+    db_resilience: {
+      consecutive_db_failures: consecutiveDbFailures,
+      circuit_open_until: dbCircuitOpenUntil || null,
+      backoff_ms_min: MIN_DB_BACKOFF_MS,
+      backoff_ms_max: MAX_DB_BACKOFF_MS
+    }
   };
 }
 

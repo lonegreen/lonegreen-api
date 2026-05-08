@@ -25,6 +25,7 @@
 
   function clearSession() {
     localStorage.removeItem("token");
+    localStorage.removeItem("customerToken");
     localStorage.removeItem("user");
     localStorage.removeItem("currentPage");
   }
@@ -33,8 +34,13 @@
     window.top.location.href = "/login.html";
   }
 
+  function redirectToHome() {
+    window.top.location.href = "/";
+  }
+
   function redirectAfterLogin(user) {
     const role = normalizeRole(user && user.role);
+    localStorage.removeItem("currentPage");
 
     if (role === "worker") {
       localStorage.setItem("currentPage", "worker.html");
@@ -87,6 +93,7 @@
     normalizeRole,
     clearSession,
     redirectToLogin,
+    redirectToHome,
     redirectAfterLogin,
     requireAuth,
     isWorker,

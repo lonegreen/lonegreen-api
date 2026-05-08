@@ -329,7 +329,7 @@
   <link rel="stylesheet" href="/ui-cleanup.css">
   <script src="/js/role-guard.js"></script>
 </head>
-<body>
+<body class="phase2-internal">
   <script>
 (function(){
   const token = localStorage.getItem("token");
@@ -356,55 +356,55 @@
 })();
 </script>
 <div class="container">
-  <div class="top-bar">
+  <div class="top-bar fx-section-head">
     <div>
       <h1>Subscriptions</h1>
       <div class="muted">Pause/resume subscriptions, track billing history, and review upcoming visits at a glance.</div>
     </div>
-    <button type="button" class="btn add" id="subsBtnRefresh">Refresh</button>
+    <button type="button" class="btn add fx-btn fx-btn--primary" id="subsBtnRefresh">Refresh</button>
   </div>
 
-  <div id="earn" class="panel earn">Loading...</div>
+  <div id="earn" class="panel earn fx-stat">Loading...</div>
   <div id="list"></div>
 </div>
 
 <div id="subscriptionEditModal" class="modal">
-  <div class="modal-box">
+  <div class="modal-box fx-card">
     <h3>Edit Subscription</h3>
     <div class="form-grid">
-      <div class="field">
+      <div class="field fx-field">
         <label for="edit_service">Service</label>
-        <input id="edit_service" placeholder="Service">
+        <input id="edit_service" class="fx-input" placeholder="Service">
       </div>
-      <div class="field">
+      <div class="field fx-field">
         <label for="edit_frequency">Frequency</label>
-        <select id="edit_frequency">
+        <select id="edit_frequency" class="fx-select">
           <option value="weekly">Weekly</option>
           <option value="biweekly">Biweekly</option>
           <option value="monthly">Monthly</option>
         </select>
       </div>
-      <div class="field">
+      <div class="field fx-field">
         <label for="edit_start_date">Start Date</label>
-        <input id="edit_start_date" type="date">
+        <input id="edit_start_date" class="fx-input" type="date">
       </div>
-      <div class="field">
+      <div class="field fx-field">
         <label for="edit_next_date">Next Visit</label>
-        <input id="edit_next_date" type="date">
+        <input id="edit_next_date" class="fx-input" type="date">
       </div>
-      <div class="field">
+      <div class="field fx-field">
         <label for="edit_price">Price</label>
-        <input id="edit_price" type="number" min="0" step="0.01" placeholder="Price">
+        <input id="edit_price" class="fx-input" type="number" min="0" step="0.01" placeholder="Price">
       </div>
-      <div class="field">
+      <div class="field fx-field">
         <label for="edit_worker_id">Worker</label>
-        <select id="edit_worker_id">
+        <select id="edit_worker_id" class="fx-select">
           <option value="">Auto / unassigned</option>
         </select>
       </div>
-      <div class="field wide">
+      <div class="field wide fx-field">
         <label for="edit_status">Status</label>
-        <select id="edit_status">
+        <select id="edit_status" class="fx-select">
           <option value="draft">Draft</option>
           <option value="active">Active</option>
           <option value="paused">Paused</option>
@@ -415,19 +415,19 @@
       </div>
     </div>
     <div class="modal-actions">
-      <button type="button" class="btn add" id="subsBtnSaveEdit">Save</button>
-      <button type="button" class="btn soft" id="subsBtnCancelEdit">Cancel</button>
+      <button type="button" class="btn add fx-btn fx-btn--primary" id="subsBtnSaveEdit">Save</button>
+      <button type="button" class="btn soft fx-btn fx-btn--secondary" id="subsBtnCancelEdit">Cancel</button>
     </div>
   </div>
 </div>
 
 <div id="deleteSubscriptionModal" class="modal">
-  <div class="modal-box">
+  <div class="modal-box fx-card">
     <h3>Delete Subscription</h3>
     <p>This will safely archive, cancel, deactivate, or delete only when safe.</p>
     <div class="modal-actions">
-      <button type="button" class="btn soft" id="subsBtnCancelDelete">Cancel</button>
-      <button type="button" class="btn danger" id="subsBtnConfirmDelete">Delete</button>
+      <button type="button" class="btn soft fx-btn fx-btn--secondary" id="subsBtnCancelDelete">Cancel</button>
+      <button type="button" class="btn danger fx-btn fx-btn--danger" id="subsBtnConfirmDelete">Delete</button>
     </div>
   </div>
 </div>
@@ -536,9 +536,9 @@ function fillWorkerOptions(selectedWorkerId = ""){
 
 function detail(label, value){
   return `
-    <div class="detail-box">
-      <div class="detail-label">${escapeHtml(label)}</div>
-      <div class="detail-value">${escapeHtml(value || "-")}</div>
+    <div class="detail-box fx-stat">
+      <div class="detail-label fx-stat__label">${escapeHtml(label)}</div>
+      <div class="detail-value fx-stat__value">${escapeHtml(value || "-")}</div>
     </div>
   `;
 }
@@ -548,14 +548,14 @@ function renderSubscription(sub){
   const normalizedStatus = String(status || "").toLowerCase();
   const workerDisplay = sub.worker_name || (sub.worker_id ? "#" + sub.worker_id : "Auto / unassigned");
 
-  return `<div class="panel">
+  return `<div class="panel fx-card">
     <div class="row">
       <div>
         <div class="subscription-title"><b>${escapeHtml(sub.client_name || ("Client #" + (sub.client_id || "")))}</b></div>
         <div class="subscription-service">${escapeHtml(sub.service || "")}</div>
         <div class="muted">Worker: ${escapeHtml(workerDisplay)}</div>
       </div>
-      <div class="status ${statusColor(status)}">${escapeHtml(status)}</div>
+      <div class="status fx-badge ${statusColor(status)} ${normalizedStatus === "active" || normalizedStatus === "completed" ? "fx-badge--success" : (normalizedStatus === "paused" ? "fx-badge--warning" : (normalizedStatus === "cancelled" || normalizedStatus === "expired" ? "fx-badge--danger" : "fx-badge--neutral"))}">${escapeHtml(status)}</div>
     </div>
 
     <div class="details-grid">
@@ -574,15 +574,15 @@ function renderSubscription(sub){
     ${sub.pause_reason ? `<div class="muted" style="margin-top:10px;">Pause reason: ${escapeHtml(sub.pause_reason)}</div>` : ""}
     ${sub.cancel_reason ? `<div class="muted" style="margin-top:6px;">Cancel reason: ${escapeHtml(sub.cancel_reason)}</div>` : ""}
 
-    <div class="history"><span class="badge">MRR ${escapeHtml(formatMoney(sub.price || 0))}</span></div>
+    <div class="history"><span class="badge fx-badge fx-badge--info">MRR ${escapeHtml(formatMoney(sub.price || 0))}</span></div>
 
     <div class="row" style="margin-top:14px;">
-      <button type="button" class="btn edit" data-sub-action="edit" data-sub-id="${Number(sub.id)}">Edit</button>
-      ${normalizedStatus === "active" ? `<button type="button" class="btn pause" data-sub-action="set-status" data-sub-id="${Number(sub.id)}" data-status="paused">Pause</button>` : ""}
-      ${normalizedStatus === "paused" ? `<button type="button" class="btn activate" data-sub-action="set-status" data-sub-id="${Number(sub.id)}" data-status="active">Resume</button>` : ""}
-      ${normalizedStatus === "cancelled" ? "" : `<button type="button" class="btn danger" data-sub-action="set-status" data-sub-id="${Number(sub.id)}" data-status="cancelled">Cancel</button>`}
-      ${canBillSubscriptions() ? `<button type="button" class="btn edit" data-sub-action="mark-paid" data-sub-id="${Number(sub.id)}">Bill & Mark Paid</button>` : ""}
-      ${canDeleteSubscriptions() ? `<button type="button" class="btn danger" data-sub-action="delete" data-sub-id="${Number(sub.id)}">Delete</button>` : ""}
+      <button type="button" class="btn edit fx-btn fx-btn--secondary" data-sub-action="edit" data-sub-id="${Number(sub.id)}">Edit</button>
+      ${normalizedStatus === "active" ? `<button type="button" class="btn pause fx-btn fx-btn--ghost" data-sub-action="set-status" data-sub-id="${Number(sub.id)}" data-status="paused">Pause</button>` : ""}
+      ${normalizedStatus === "paused" ? `<button type="button" class="btn activate fx-btn fx-btn--primary" data-sub-action="set-status" data-sub-id="${Number(sub.id)}" data-status="active">Resume</button>` : ""}
+      ${normalizedStatus === "cancelled" ? "" : `<button type="button" class="btn danger fx-btn fx-btn--danger" data-sub-action="set-status" data-sub-id="${Number(sub.id)}" data-status="cancelled">Cancel</button>`}
+      ${canBillSubscriptions() ? `<button type="button" class="btn edit fx-btn fx-btn--secondary" data-sub-action="mark-paid" data-sub-id="${Number(sub.id)}">Bill & Mark Paid</button>` : ""}
+      ${canDeleteSubscriptions() ? `<button type="button" class="btn danger fx-btn fx-btn--danger" data-sub-action="delete" data-sub-id="${Number(sub.id)}">Delete</button>` : ""}
     </div>
   </div>`;
 }
@@ -739,7 +739,7 @@ async function confirmDeleteSubscription(button){
 
 function renderLoading(){
   document.getElementById("earn").textContent = "Loading subscription summary...";
-  document.getElementById("list").innerHTML = `<div class="panel empty"><strong>Loading subscriptions...</strong>Please wait while the latest subscription data is loaded.</div>`;
+  document.getElementById("list").innerHTML = `<div class="panel empty fx-empty"><strong class="fx-empty__title">Loading subscriptions...</strong><span class="fx-empty__text">Please wait while the latest subscription data is loaded.</span></div>`;
 }
 
 function renderData(){
@@ -757,7 +757,7 @@ function renderData(){
 
   document.getElementById("list").innerHTML = safeSubs.length
     ? safeSubs.map(renderSubscription).join("")
-    : `<div class="panel empty"><strong>No subscriptions found</strong>Create subscriptions from the client workflow when recurring work is approved.</div>`;
+    : `<div class="panel empty fx-empty"><strong class="fx-empty__title">No subscriptions found</strong><span class="fx-empty__text">Create subscriptions from the client workflow when recurring work is approved.</span></div>`;
 }
 
 async function load(){
@@ -791,7 +791,7 @@ async function load(){
     subscriptions = [];
     document.getElementById("earn").textContent = "Unable to load subscription summary.";
     document.getElementById("list").innerHTML =
-      `<div class="panel empty"><strong>Unable to load subscriptions</strong>${escapeHtml(err && err.message ? err.message : "Please refresh and try again.")}</div>`;
+      `<div class="panel empty fx-empty"><strong class="fx-empty__title">Unable to load subscriptions</strong><span class="fx-empty__text">${escapeHtml(err && err.message ? err.message : "Please refresh and try again.")}</span></div>`;
   } finally {
     isLoading = false;
   }

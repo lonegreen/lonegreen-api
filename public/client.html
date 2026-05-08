@@ -608,15 +608,15 @@
   }
 })();
 </script>
-<div class="page">
-  <div class="hero">
+<div class="page fx-layout-public">
+  <div class="hero fx-hero fx-section-head">
     <div>
       <h1>Client Profile</h1>
       <p>Central control for jobs, subscriptions, invoices, and client notes.</p>
     </div>
   </div>
 
-  <div id="clientInfo" class="panel client-panel">
+  <div id="clientInfo" class="panel client-panel fx-card">
     <div class="skeleton" style="width:240px;height:28px;margin-bottom:12px;"></div>
     <div class="skeleton" style="width:70%;height:16px;margin-bottom:16px;"></div>
     <div class="meta">
@@ -627,7 +627,7 @@
     </div>
   </div>
 
-  <div class="panel section" style="display:block;">
+  <div class="panel section fx-card" style="display:block;">
     <div class="section-head" style="margin-bottom:0;">
       <h2>Quick Actions</h2>
       <div class="section-copy">Keep everything inside the client record.</div>
@@ -656,7 +656,7 @@
     <button type="button" class="tab" id="notesTab">Notes</button>
   </div>
 
-  <div id="overviewSection" class="panel section active">
+  <div id="overviewSection" class="panel section active fx-card">
     <div class="section-head">
       <div>
         <h2>Overview</h2>
@@ -676,7 +676,7 @@
     </div>
   </div>
 
-  <div id="jobsSection" class="panel section">
+  <div id="jobsSection" class="panel section fx-card">
     <div class="section-head">
       <div>
         <h2>Jobs</h2>
@@ -687,7 +687,7 @@
     <div id="jobsList" class="list"></div>
   </div>
 
-  <div id="subsSection" class="panel section">
+  <div id="subsSection" class="panel section fx-card">
     <div class="section-head">
       <div>
         <h2>Subscriptions</h2>
@@ -698,7 +698,7 @@
     <div id="subsList" class="list"></div>
   </div>
 
-  <div id="invoicesSection" class="panel section">
+  <div id="invoicesSection" class="panel section fx-card">
     <div class="section-head">
       <div>
         <h2>Invoices</h2>
@@ -710,7 +710,7 @@
     <div id="invoicesList" class="list"></div>
   </div>
 
-  <div id="notesSection" class="panel section">
+  <div id="notesSection" class="panel section fx-card">
     <div class="section-head">
       <div>
         <h2>Notes</h2>
@@ -904,7 +904,7 @@ function formatDate(value){
 
 function badge(status){
   const safeStatus = String(status || "draft").replace(/[^a-z_]/g, "");
-  return `<span class="badge status-${escapeHtml(safeStatus)}">${escapeHtml(status || "draft")}</span>`;
+  return `<span class="badge fx-badge status-${escapeHtml(safeStatus)}">${escapeHtml(status || "draft")}</span>`;
 }
 
 function escapeHtml(value){
@@ -1166,7 +1166,7 @@ function renderTimeline(){
   const items = buildTimelineItems();
 
   if(!items.length){
-    wrap.innerHTML = `<div class="empty"><strong>No timeline activity yet.</strong>Jobs, active subscriptions, and invoices will appear here after they are created.</div>`;
+    wrap.innerHTML = `<div class="empty fx-empty"><strong>No timeline activity yet.</strong>Jobs, active subscriptions, and invoices will appear here after they are created.</div>`;
     return;
   }
 
@@ -1242,7 +1242,7 @@ function renderEstimates(){
   ];
 
   if(!items.length){
-    wrap.innerHTML = `<div class="empty"><strong>No linked estimates</strong>No leads or estimates are connected to this client record yet.</div>`;
+    wrap.innerHTML = `<div class="empty fx-empty"><strong>No linked estimates</strong>No leads or estimates are connected to this client record yet.</div>`;
     return;
   }
 
@@ -1599,12 +1599,12 @@ function renderLoadError(message){
     </div>
   `;
   document.getElementById("overviewSummary").innerHTML = "";
-  document.getElementById("timelineList").innerHTML = `<div class="empty">No profile data loaded.</div>`;
-  document.getElementById("estimatesList").innerHTML = `<div class="empty">No estimate data loaded.</div>`;
-  document.getElementById("jobsList").innerHTML = `<div class="empty">No job data loaded.</div>`;
-  document.getElementById("subsList").innerHTML = `<div class="empty">No subscription data loaded.</div>`;
+  document.getElementById("timelineList").innerHTML = `<div class="empty fx-empty">No profile data loaded.</div>`;
+  document.getElementById("estimatesList").innerHTML = `<div class="empty fx-empty">No estimate data loaded.</div>`;
+  document.getElementById("jobsList").innerHTML = `<div class="empty fx-empty">No job data loaded.</div>`;
+  document.getElementById("subsList").innerHTML = `<div class="empty fx-empty">No subscription data loaded.</div>`;
   document.getElementById("invoiceSummary").innerHTML = "";
-  document.getElementById("invoicesList").innerHTML = `<div class="empty">No invoice data loaded.</div>`;
+  document.getElementById("invoicesList").innerHTML = `<div class="empty fx-empty">No invoice data loaded.</div>`;
 }
 
 async function load(){

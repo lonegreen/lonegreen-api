@@ -10,11 +10,11 @@
   <link rel="stylesheet" href="/ui-cleanup.css">
   <style>
     * { box-sizing: border-box; }
-    body { margin: 0; font-family: Inter, Arial, sans-serif; color: var(--brand-black); background: radial-gradient(circle at top left, rgba(31,92,58,.08), transparent 28%), linear-gradient(180deg,var(--brand-bg) 0%,#f7f7f7 210px,#f3f3f3 100%); padding: 22px; }
+    body { margin: 0; font-family: Inter, Arial, sans-serif; color: var(--brand-black); background: radial-gradient(circle at top left, rgba(255,90,0,.1), transparent 28%), linear-gradient(180deg,var(--brand-bg) 0%,#f7f7f7 210px,#f3f3f3 100%); padding: 22px; }
     .page { width: min(1240px,100%); margin: 0 auto; display: grid; gap: 16px; }
     .hero { display:flex; justify-content:space-between; align-items:flex-end; gap:12px; flex-wrap:wrap; }
     .hero h1 { margin:0 0 6px; color:var(--brand-primary); font-size:32px; letter-spacing:-.02em; }
-    .hero p { margin:0; color:#60786e; line-height:1.5; }
+    .hero p { margin:0; color:#5f646d; line-height:1.5; }
     .customer-nav { display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; }
     .customer-nav a { border:1px solid var(--brand-border); background:#fff; color:var(--brand-primary); border-radius:999px; padding:8px 12px; font-size:13px; font-weight:800; text-decoration:none; }
     .seo-links { display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; }
@@ -28,13 +28,42 @@
     .btn.secondary { background:var(--brand-bg); color:var(--brand-primary); border:1px solid var(--brand-border); }
     .btn:disabled { opacity:.62; cursor:not-allowed; transform:none; box-shadow:none; }
     .panel { background:rgba(255,255,255,.96); border:1px solid var(--brand-border); border-radius:16px; box-shadow:0 18px 38px rgba(16,24,40,.06); padding:16px; display:grid; gap:12px; }
+    .sticky-filters {
+      position: sticky;
+      top: 10px;
+      z-index: 20;
+      backdrop-filter: blur(6px);
+    }
+    .category-nav {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .category-chip {
+      border: 1px solid #dce9e2;
+      background: #fff;
+      color: var(--brand-primary);
+      border-radius: 999px;
+      padding: 8px 12px;
+      font-size: 12px;
+      font-weight: 800;
+      cursor: pointer;
+      transition: .15s ease;
+    }
+    .category-chip:hover { border-color: var(--brand-primary); transform: translateY(-1px); }
+    .category-chip.active {
+      background: #fff3e8;
+      border-color: var(--brand-primary);
+      color: var(--brand-primary);
+      box-shadow: inset 0 0 0 1px rgba(255,90,0,.12);
+    }
     .filters-grid { display:grid; grid-template-columns:2fr 1fr 1fr auto; gap:10px; align-items:end; }
     .field { display:grid; gap:6px; min-width:0; }
-    .field label { font-size:12px; font-weight:800; text-transform:uppercase; letter-spacing:.04em; color:#4f6a5f; }
+    .field label { font-size:12px; font-weight:800; text-transform:uppercase; letter-spacing:.04em; color:#49505a; }
     input, select { width:100%; border:1px solid #d6e3db; border-radius:11px; background:#fff; color:var(--brand-black); padding:10px 12px; font:inherit; outline:none; }
-    input:focus, select:focus { border-color:#a8cab8; box-shadow:0 0 0 2px rgba(31,92,58,.12); }
-    .status-line { min-height:18px; color:#60786e; font-size:13px; font-weight:700; }
-    .status-line.error { color:#b42318; } .status-line.ok { color:#166534; }
+    input:focus, select:focus { border-color:rgba(255,90,0,.42); box-shadow:0 0 0 2px rgba(255,90,0,.12); }
+    .status-line { min-height:18px; color:#5f646d; font-size:13px; font-weight:700; }
+    .status-line.error { color:#b42318; } .status-line.ok { color:var(--brand-primary-hover); }
     .results-head { display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; }
     .results-head h2 { margin:0; color:var(--brand-primary); font-size:22px; }
     .pill { display:inline-flex; align-items:center; justify-content:center; border-radius:999px; padding:6px 10px; font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:.04em; background:var(--brand-bg); color:var(--brand-primary); }
@@ -46,8 +75,25 @@
     .logo { background:#f5faf7; object-fit:cover; }
     .logo-fallback { background:var(--brand-bg); color:var(--brand-primary); display:grid; place-items:center; font-weight:900; }
     .company-name { margin:0; color:var(--brand-black); font-size:16px; font-weight:900; overflow-wrap:anywhere; }
-    .rating { margin:2px 0 0; color:#637b71; font-size:12px; }
+    .rating { margin:2px 0 0; color:#5f646d; font-size:12px; }
+    .trust-row { display:flex; align-items:center; gap:6px; flex-wrap:wrap; margin-top:4px; }
+    .trust-pill {
+      border-radius: 999px;
+      padding: 4px 8px;
+      font-size: 10px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: .03em;
+      border: 1px solid #dce9e2;
+      background: #f6faf8;
+      color: #2f4f43;
+      white-space: nowrap;
+    }
+    .trust-pill.verified { background:#fff3e8; border-color:#ffd5bf; color:var(--brand-primary-hover); }
+    .trust-pill.info { background:#eef4ff; border-color:#d7e3ff; color:#1f4ea3; }
+    .trust-pill.warn { background:#fff8e8; border-color:#f3ddb1; color:#8a5a00; }
     .badge { border-radius:999px; padding:4px 9px; font-size:10px; font-weight:900; text-transform:uppercase; letter-spacing:.03em; background:var(--brand-bg); color:var(--brand-primary); white-space:nowrap; }
+    .badge.verified { background:#fff3e8; color:var(--brand-primary-hover); border:1px solid #ffd5bf; }
     .summary { margin:0; color:#5c756b; font-size:13px; line-height:1.5; min-height:40px; }
     .meta-group { display:grid; gap:7px; }
     .meta-label { font-size:11px; color:#678075; text-transform:uppercase; letter-spacing:.04em; font-weight:800; margin:0; }
@@ -55,62 +101,114 @@
     .chip { border:1px solid #dce9e2; border-radius:999px; padding:4px 8px; font-size:11px; color:#2f4f43; background:var(--brand-bg); font-weight:700; }
     .chip.muted { border-style:dashed; color:#6d857b; }
     .actions { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+    .trust-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 6px;
+    }
+    .trust-item {
+      border: 1px solid #dce9e2;
+      border-radius: 10px;
+      background: #fbfdfc;
+      padding: 7px 8px;
+      display: grid;
+      gap: 2px;
+    }
+    .trust-item span {
+      font-size: 10px;
+      color: #678075;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+      font-weight: 800;
+    }
+    .trust-item strong {
+      font-size: 12px;
+      color: #1f3b31;
+      font-weight: 800;
+    }
     .actions .btn { width:100%; padding:9px 10px; font-size:13px; }
     .profile-link { display:inline-flex; width:100%; justify-content:center; align-items:center; border-radius:11px; border:1px solid var(--brand-border); background:var(--brand-bg); color:var(--brand-primary); text-decoration:none; padding:10px 12px; font-size:13px; font-weight:800; }
     .profile-link:hover { transform:translateY(-1px); border-color:var(--brand-primary); }
     .empty { border:1px dashed #d5e3db; border-radius:12px; background:var(--brand-bg); padding:16px; color:#657d73; font-size:13px; line-height:1.5; text-align:center; }
+    .empty-actions {
+      margin-top: 10px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 8px;
+    }
+    .empty-actions a, .empty-actions button {
+      border: 1px solid var(--brand-border);
+      background: #fff;
+      color: var(--brand-primary);
+      border-radius: 999px;
+      padding: 8px 12px;
+      font-size: 12px;
+      font-weight: 800;
+      text-decoration: none;
+      cursor: pointer;
+    }
     .empty strong { display:block; margin-bottom:5px; color:var(--brand-black); }
     @media (max-width:1140px){ .cards{grid-template-columns:repeat(2,minmax(0,1fr));} .filters-grid{grid-template-columns:1fr 1fr;} }
-    @media (max-width:760px){ body{padding:14px;} .hero h1{font-size:28px;} .hero-actions{width:100%;display:grid;grid-template-columns:1fr;} .hero-actions .btn,.cards,.filters-grid,.actions{grid-template-columns:1fr;width:100%;} }
+    @media (max-width:760px){ body{padding:14px;} .hero h1{font-size:28px;} .hero-actions{width:100%;display:grid;grid-template-columns:1fr;} .hero-actions .btn,.cards,.filters-grid,.actions,.trust-grid{grid-template-columns:1fr;width:100%;} .sticky-filters{top:6px;} }
   </style>
 </head>
 <body>
-  <main class="page">
-    <header class="hero">
+  <main class="page fx-layout-public">
+    <header class="hero fx-hero fx-section-head">
       <div>
         <h1>Discover Companies</h1>
-        <p>Find verified providers by service, city, and coverage area.</p>
+        <p>Find verified providers, open a company profile, then request service when you are ready.</p>
         <div class="seo-links">
           <a href="/service-area.html?service=lawn-care&city=Richmond&state=TX">View Lawn Care in Richmond</a>
           <a href="/service-area.html?service=landscaping&city=Sugar+Land&state=TX">Browse Landscaping in Sugar Land</a>
           <a href="/service-area.html?service=pressure-washing&city=Katy&state=TX">Pressure Washing near Katy</a>
         </div>
         <p class="trust-link"><a href="/trust.html">Learn how FairLinx trust badges work</a></p>
-        <nav class="customer-nav">
-          <a href="/customer-dashboard.html">Dashboard</a>
-          <a href="/marketplace.html">Marketplace</a>
-          <a href="/discover.html">Discover</a>
-          <a href="/messages.html">Messages</a>
-          <a href="/customer-profile.html">Profile</a>
-          <a href="#" id="customerLogoutLink">Logout</a>
-        </nav>
+        <nav class="customer-nav" id="sessionNav" aria-label="Customer navigation"></nav>
       </div>
-      <div class="hero-actions">
-        <button id="refreshBtn" type="button" class="btn secondary">Refresh</button>
+      <div class="hero-actions fx-cta-row">
+        <button id="refreshBtn" type="button" class="btn secondary fx-btn fx-btn--secondary">Refresh</button>
       </div>
     </header>
-    <section class="panel">
-      <div class="filters-grid">
-        <div class="field">
-          <label for="searchInput">Search</label>
-          <input id="searchInput" type="text" placeholder="Company, service, or keyword">
-        </div>
-        <div class="field">
-          <label for="categoryFilter">Category</label>
-          <select id="categoryFilter"><option value="">All categories</option></select>
-        </div>
-        <div class="field">
-          <label for="locationFilter">City or Zip</label>
-          <input id="locationFilter" type="text" placeholder="e.g. Austin or 78701">
-        </div>
-        <button id="clearFiltersBtn" type="button" class="btn secondary">Clear Filters</button>
+    <section class="panel fx-card">
+      <div class="list-head">
+        <h2>Browse by Category</h2>
+        <span class="pill fx-badge fx-badge--neutral">Category-first</span>
       </div>
-      <div id="statusLine" class="status-line" role="status" aria-live="polite"></div>
+      <div id="categoryNav" class="category-nav"></div>
     </section>
-    <section class="panel">
+    <section class="panel sticky-filters fx-toolbar">
+      <div class="filters-grid">
+        <div class="field fx-field">
+          <label for="searchInput">Search</label>
+          <input id="searchInput" class="fx-input" type="text" placeholder="Company, service, or keyword">
+        </div>
+        <div class="field fx-field">
+          <label for="categoryFilter">Category</label>
+          <select id="categoryFilter" class="fx-select"><option value="">All categories</option></select>
+        </div>
+        <div class="field fx-field">
+          <label for="locationFilter">City or Zip</label>
+          <input id="locationFilter" class="fx-input" type="text" placeholder="e.g. Austin or 78701">
+        </div>
+        <div class="field fx-field">
+          <label for="sortFilter">Sort</label>
+          <select id="sortFilter" class="fx-select">
+            <option value="closest_match">Closest Match</option>
+            <option value="best_rated">Best Rated</option>
+            <option value="most_reviewed">Most Reviewed</option>
+            <option value="fastest_response">Fastest Response</option>
+          </select>
+        </div>
+        <button id="clearFiltersBtn" type="button" class="btn secondary fx-btn fx-btn--secondary">Clear Filters</button>
+      </div>
+      <div id="statusLine" class="status-line fx-alert" role="status" aria-live="polite"></div>
+    </section>
+    <section class="panel fx-card">
       <div class="results-head">
         <h2>Public Companies</h2>
-        <span id="resultsCount" class="pill">0 Results</span>
+        <span id="resultsCount" class="pill fx-badge fx-badge--info">0 Results</span>
       </div>
       <div id="cards" class="cards"></div>
     </section>
@@ -120,18 +218,27 @@
     (function() {
       const FAVORITES_KEY = "discover:favorites";
       const FOLLOWS_KEY = "discover:follows";
-      const state = { companies: [], filtered: [], favorites: new Set(), follows: new Set(), filters: { search: "", category: "", location: "" } };
+      const TOP_CATEGORIES = ["Cleaning","Plumbing","HVAC","Electrical","Landscaping","Moving","Repairs","Pressure Washing"];
+      const state = {
+        companies: [],
+        filtered: [],
+        favorites: new Set(),
+        follows: new Set(),
+        filters: { search: "", category: "", location: "", sort: "closest_match", topCategory: "" }
+      };
       const els = {
         refreshBtn: document.getElementById("refreshBtn"),
         searchInput: document.getElementById("searchInput"),
         categoryFilter: document.getElementById("categoryFilter"),
         locationFilter: document.getElementById("locationFilter"),
+        sortFilter: document.getElementById("sortFilter"),
+        categoryNav: document.getElementById("categoryNav"),
         clearFiltersBtn: document.getElementById("clearFiltersBtn"),
         statusLine: document.getElementById("statusLine"),
         resultsCount: document.getElementById("resultsCount"),
-        cards: document.getElementById("cards")
+        cards: document.getElementById("cards"),
+        sessionNav: document.getElementById("sessionNav")
       };
-      const customerLogoutLink = document.getElementById("customerLogoutLink");
       function esc(v){ return String(v==null?"":v).replace(/[&<>"']/g,function(c){return({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"})[c];});}
       function txt(v,f){ return (v===null||v===undefined||v==="")?(f||""):String(v); }
       function isSafeHttpUrl(value){
@@ -151,40 +258,168 @@
       function parseSet(k){ try{ const p=JSON.parse(localStorage.getItem(k)||"[]"); return new Set(Array.isArray(p)?p.map(String):[]);}catch(_){return new Set();}}
       function persistSet(k,s){ localStorage.setItem(k,JSON.stringify(Array.from(s))); }
       function companyId(c){ return String(c.id||c.public_slug||c.name||""); }
+      function hasCustomerSession(){ return Boolean(localStorage.getItem("customerToken")); }
+      function getAnyAuthToken(){ return String(localStorage.getItem("customerToken") || localStorage.getItem("token") || "").trim(); }
+      async function submitCompanyReport(companyId){
+        const token = getAnyAuthToken();
+        if(!token){
+          alert("Please log in as a customer or company user to submit a report.");
+          return;
+        }
+        const reason = String(window.prompt("Report reason (required):", "misleading profile") || "").trim();
+        if(reason.length < 3){
+          alert("A short reason is required.");
+          return;
+        }
+        const details = String(window.prompt("Additional details (optional):", "") || "").trim();
+        const res = await fetch("/companies/" + encodeURIComponent(String(companyId || "")) + "/report", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
+          body: JSON.stringify({ reason: reason, details: details })
+        });
+        const payload = await res.json().catch(function(){ return {}; });
+        if(!res.ok) throw new Error(payload.error || "Unable to submit report.");
+        alert("Report submitted. Thank you for helping keep FairLinx safe.");
+      }
+      function renderSessionNav(){
+        if(hasCustomerSession()){
+          els.sessionNav.innerHTML = [
+            '<a href="/customer-dashboard.html">Dashboard</a>',
+            '<a href="/marketplace.html">Marketplace</a>',
+            '<a href="/discover.html">Discover</a>',
+            '<a href="/messages.html">Messages</a>',
+            '<a href="/customer-profile.html">Profile</a>',
+            '<a href="#" data-customer-logout="true">Logout</a>'
+          ].join("");
+          return;
+        }
+        els.sessionNav.innerHTML = [
+          '<a href="/index.html">Home</a>',
+          '<a href="/discover.html">Find Services</a>',
+          '<a href="/customer-login-v2.html">Customer Login</a>',
+          '<a href="/customer-signup.html">Request Service</a>'
+        ].join("");
+      }
       function getRating(c){ const a=Number(c.rating_avg||c.average_rating||c.rating||0); const n=Number(c.rating_count||c.reviews_count||c.review_count||0); if(a>0&&n>0)return a.toFixed(1)+" ("+n+" reviews)"; if(n>0)return n+" reviews"; return "No ratings yet"; }
+      function getRatingDetail(c){
+        const a=Number(c.rating_avg||c.average_rating||c.rating||0);
+        const n=Number(c.rating_count||c.reviews_count||c.review_count||0);
+        if(a>0&&n>0) return { average:a.toFixed(1), count:n };
+        return { average:"-", count:n>0?n:0 };
+      }
       function getServices(c){ const s=Array.isArray(c.services)?c.services:[]; if(s.length)return s; return (Array.isArray(c.marketplace_services)?c.marketplace_services:[]).map(function(x){return txt(x.display_name||(x.category&&x.category.name)||x.custom_name,"");}).filter(Boolean); }
       function getAreas(c){ const a=Array.isArray(c.service_areas)?c.service_areas:[]; if(a.length)return a; return (Array.isArray(c.marketplace_service_areas)?c.marketplace_service_areas:[]).map(function(x){return [x.city,x.state,x.zip_code].filter(Boolean).join(", ").replace(/, ([A-Z]{2}),/,", $1 ");}).filter(Boolean); }
       function getAvail(c){ const b=Array.isArray(c.business_hours)?c.business_hours:[]; if(b.length)return b.slice(0,2); const map=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"]; return (Array.isArray(c.availability)?c.availability:[]).slice(0,2).map(function(s){const d=map[Number(s.day_of_week)]||"Day"; return s.is_closed?d+": Closed":d+": "+txt(s.start_time,"--:--")+"-"+txt(s.end_time,"--:--");}); }
+      function getCompletedJobs(c){ return Number(c.completed_jobs||c.completedJobs||c.jobs_completed||0); }
+      function getReputationScore(c){
+        var score = Number(c && c.reputation_score != null ? c.reputation_score : 0);
+        if(!Number.isFinite(score) || score <= 0) return "Neutral";
+        return score.toFixed(2);
+      }
+      function getResponsePreview(c){
+        const trust=c&&c.trust?c.trust:{};
+        const mins=Number(c.response_time_minutes||trust.response_time_minutes||0);
+        if(mins>0) return "~"+mins+" min";
+        const hours=Number(c.response_time_hours||trust.response_time_hours||0);
+        if(hours>0) return "~"+hours+" hr";
+        return "Not published";
+      }
+      function responseSortValue(c){
+        const trust=c&&c.trust?c.trust:{};
+        const mins=Number(c.response_time_minutes||trust.response_time_minutes||0);
+        if(mins>0) return mins;
+        const hours=Number(c.response_time_hours||trust.response_time_hours||0);
+        if(hours>0) return hours*60;
+        return Number.MAX_SAFE_INTEGER;
+      }
+      function renderTopCategories(){
+        const chips = ['<button type="button" class="category-chip'+(state.filters.topCategory?'':' active')+'" data-top-category="">All</button>'].concat(
+          TOP_CATEGORIES.map(function(name){
+            const active = state.filters.topCategory===name ? " active" : "";
+            return '<button type="button" class="category-chip'+active+'" data-top-category="'+esc(name)+'">'+esc(name)+'</button>';
+          })
+        );
+        els.categoryNav.innerHTML = chips.join("");
+      }
       function populateCategory(){ const set=new Set(); state.companies.forEach(function(c){ getServices(c).forEach(function(s){ if(s)set.add(String(s)); }); }); const opts=Array.from(set).sort(); els.categoryFilter.innerHTML='<option value="">All categories</option>'+opts.map(function(o){const sel=state.filters.category===o?" selected":""; return '<option value="'+esc(o)+'"'+sel+">"+esc(o)+"</option>";}).join(""); }
       function applyFilters(){
         const s=state.filters.search.trim().toLowerCase(), cat=state.filters.category.trim().toLowerCase(), loc=state.filters.location.trim().toLowerCase();
         state.filtered=state.companies.filter(function(c){
           const services=getServices(c), areas=getAreas(c);
+          const topCat = state.filters.topCategory.trim().toLowerCase();
           const hay=[c.name,c.public_description,c.contact&&c.contact.address,services.join(" "),areas.join(" ")].join(" ").toLowerCase();
           const catPass=!cat||services.some(function(x){return String(x).toLowerCase()===cat;});
+          const topCatPass=!topCat||services.some(function(x){return String(x).toLowerCase().indexOf(topCat)!==-1;});
           const locPass=!loc||areas.join(" ").toLowerCase().indexOf(loc)!==-1;
           const searchPass=!s||hay.indexOf(s)!==-1;
-          return catPass&&locPass&&searchPass;
+          return catPass&&topCatPass&&locPass&&searchPass;
+        });
+        const sortBy = state.filters.sort;
+        state.filtered.sort(function(a,b){
+          const ar=Number(a.rating_avg||a.average_rating||a.rating||0);
+          const br=Number(b.rating_avg||b.average_rating||b.rating||0);
+          const ac=Number(a.rating_count||a.reviews_count||a.review_count||0);
+          const bc=Number(b.rating_count||b.reviews_count||b.review_count||0);
+          if(sortBy==="best_rated"){ if(br!==ar) return br-ar; return bc-ac; }
+          if(sortBy==="most_reviewed"){ if(bc!==ac) return bc-ac; return br-ar; }
+          if(sortBy==="fastest_response"){ return responseSortValue(a)-responseSortValue(b); }
+          const aScore = (ar*10) + ac + (a.is_verified?2:0);
+          const bScore = (br*10) + bc + (b.is_verified?2:0);
+          return bScore-aScore;
         });
       }
       function render(){
         els.resultsCount.textContent=state.filtered.length+(state.filtered.length===1?" Result":" Results");
-        if(!state.filtered.length){ els.cards.innerHTML='<div class="empty" style="grid-column:1 / -1;"><strong>No companies found</strong>Try a broader search, different category, or another city/zip.</div>'; return; }
+        if(!state.filtered.length){
+          els.cards.innerHTML='<div class="empty fx-empty" style="grid-column:1 / -1;"><strong class="fx-empty__title">No companies found</strong><span class="fx-empty__text">Try a broader search, another category, or request service directly.</span>'+
+            '<div class="empty-actions">'+
+            '<button type="button" id="emptyClearFilters" class="fx-btn fx-btn--secondary">Broaden Search</button>'+
+            '<button type="button" id="emptyBrowseCategories" class="fx-btn fx-btn--secondary">Browse Categories</button>'+
+            '<a href="/marketplace.html" class="fx-btn fx-btn--primary">Request Service Instead</a>'+
+            "</div></div>";
+          return;
+        }
         els.cards.innerHTML=state.filtered.map(function(c){
           const id=companyId(c), initials=txt(c.name,"C").slice(0,2).toUpperCase(), fav=state.favorites.has(id), fol=state.follows.has(id);
           const services=getServices(c).slice(0,4), areas=getAreas(c).slice(0,3), avail=getAvail(c).slice(0,2);
-          const href=c.public_slug?"/company-public-profile.html?slug="+encodeURIComponent(c.public_slug):"#";
+          const responsePreview=getResponsePreview(c);
+          const rating=getRatingDetail(c);
+          const completedJobs = getCompletedJobs(c);
+          const areaPreview = areas.length ? areas[0] : "No area listed";
+          const href=c.public_slug?"/company-profile.html?slug="+encodeURIComponent(c.public_slug):"#";
           const logoUrl = isSafeHttpUrl(c.logo_url) ? String(c.logo_url).trim() : "";
-          return '<article class="card">'+
+          const trust = c && c.trust ? c.trust : {};
+          const isVerified = trust.verification_status === "verified";
+          const isLicensed = trust.license_status === "verified";
+          const isInsured = trust.insurance_status === "verified";
+          const requestUrl = c.public_slug?"/marketplace.html?company="+encodeURIComponent(c.public_slug):"/marketplace.html";
+          return '<article class="card fx-card">'+
             '<div class="card-top"><div class="company-head">'+
               (logoUrl?'<img class="logo" src="'+esc(logoUrl)+'" alt="'+esc(txt(c.name,"Company"))+' logo">':'<div class="logo-fallback" aria-hidden="true">'+esc(initials)+"</div>")+
-              '<div><h3 class="company-name">'+esc(txt(c.name,"Company"))+'</h3><p class="rating">Rating: '+esc(getRating(c))+'</p></div></div>'+(c.is_verified?'<span class="badge">Verified</span>':"")+
+              '<div><h3 class="company-name">'+esc(txt(c.name,"Company"))+'</h3><p class="rating">Rating: '+esc(getRating(c))+'</p>'+
+              '<div class="trust-row">'+
+              (isVerified?'<span class="trust-pill verified fx-badge fx-badge--success">Verified</span>':'<span class="trust-pill warn fx-badge fx-badge--warning">Verification Pending</span>')+
+              (isLicensed?'<span class="trust-pill info fx-badge fx-badge--info">Licensed</span>':'')+
+              (isInsured?'<span class="trust-pill info fx-badge fx-badge--info">Insured</span>':'')+
+              '<span class="trust-pill info fx-badge fx-badge--info">Reviews: '+esc(String(rating.count))+'</span>'+
+              '<span class="trust-pill fx-badge fx-badge--neutral">Response: '+esc(responsePreview)+'</span>'+
+              "</div></div></div>"+
+              (isVerified?'<span class="badge verified fx-badge fx-badge--success">Verified</span>':'')+
             '</div><p class="summary">'+esc(txt(c.public_description,"No public company description available."))+'</p>'+
-            '<div class="meta-group"><p class="meta-label">Services</p><div class="chip-row">'+(services.length?services.map(function(v){return '<span class="chip">'+esc(v)+"</span>";}).join(""):'<span class="chip muted">No services listed</span>')+'</div></div>'+
+            '<div class="trust-grid">'+
+              '<article class="trust-item fx-stat"><span class="fx-stat__label">Rating</span><strong class="fx-stat__value">'+esc(rating.average)+"/5</strong></article>"+
+              '<article class="trust-item fx-stat"><span class="fx-stat__label">Reviews</span><strong class="fx-stat__value">'+esc(String(rating.count))+'</strong></article>'+
+              '<article class="trust-item fx-stat"><span class="fx-stat__label">Response</span><strong class="fx-stat__value">'+esc(responsePreview)+'</strong></article>'+
+              '<article class="trust-item fx-stat"><span class="fx-stat__label">Completed Jobs</span><strong class="fx-stat__value">'+esc(completedJobs>0?String(completedJobs):"Not published")+'</strong></article>'+
+              '<article class="trust-item fx-stat"><span class="fx-stat__label">Reputation</span><strong class="fx-stat__value">'+esc(getReputationScore(c))+'</strong></article>'+
+            "</div>"+
+            '<div class="meta-group"><p class="meta-label">Primary Services</p><div class="chip-row">'+(services.length?services.map(function(v){return '<span class="chip">'+esc(v)+"</span>";}).join(""):'<span class="chip muted">No services listed</span>')+'</div></div>'+
             '<div class="meta-group"><p class="meta-label">Service Areas</p><div class="chip-row">'+(areas.length?areas.map(function(v){return '<span class="chip">'+esc(v)+"</span>";}).join(""):'<span class="chip muted">No service areas listed</span>')+'</div></div>'+
+            '<div class="meta-group"><p class="meta-label">Area Preview</p><div class="chip-row"><span class="chip">'+esc(areaPreview)+'</span></div></div>'+
             '<div class="meta-group"><p class="meta-label">Availability Preview</p><div class="chip-row">'+(avail.length?avail.map(function(v){return '<span class="chip">'+esc(v)+"</span>";}).join(""):'<span class="chip muted">No availability published</span>')+'</div></div>'+
-            '<div class="actions"><button class="btn secondary" type="button" data-favorite-id="'+esc(id)+'">'+(fav?"Favorited":"Favorite")+'</button><button class="btn secondary" type="button" data-follow-id="'+esc(id)+'">'+(fol?"Following":"Follow")+'</button></div>'+
-            '<a class="profile-link" href="'+esc(href)+'"'+(c.public_slug?"":' aria-disabled="true"')+'>View Company Profile</a>'+
+            '<div class="actions"><button class="btn secondary fx-btn fx-btn--secondary" type="button" data-favorite-id="'+esc(id)+'">'+(fav?"Saved":"Save/Favorite")+'</button><a class="profile-link fx-btn fx-btn--primary" href="'+esc(requestUrl)+'">Request Service</a></div>'+
+            '<button class="btn secondary fx-btn fx-btn--secondary" type="button" data-report-company-id="'+esc(String(c.id||""))+'">Report Company</button>'+
+            '<a class="profile-link fx-btn fx-btn--secondary" href="'+esc(href)+'"'+(c.public_slug?"":' aria-disabled="true"')+'>View Profile</a>'+
           "</article>";
         }).join("");
       }
@@ -196,7 +431,7 @@
           const payload=await res.json().catch(function(){return [];});
           if(!res.ok) throw new Error(payload.error||"Unable to load companies.");
           state.companies=toArray(payload);
-          populateCategory(); applyFilters(); render();
+          populateCategory(); renderTopCategories(); applyFilters(); render();
           setStatus("Companies loaded.","ok");
         }catch(err){
           state.companies=[]; state.filtered=[]; render();
@@ -208,27 +443,60 @@
         els.searchInput.addEventListener("input",function(){ state.filters.search=els.searchInput.value; applyFilters(); render(); });
         els.categoryFilter.addEventListener("change",function(){ state.filters.category=els.categoryFilter.value; applyFilters(); render(); });
         els.locationFilter.addEventListener("input",function(){ state.filters.location=els.locationFilter.value; applyFilters(); render(); });
+        els.sortFilter.addEventListener("change", function(){ state.filters.sort=els.sortFilter.value; applyFilters(); render(); });
+        els.categoryNav.addEventListener("click", function(e){
+          const chip=e.target.closest("[data-top-category]");
+          if(!chip) return;
+          state.filters.topCategory=chip.getAttribute("data-top-category")||"";
+          renderTopCategories();
+          applyFilters();
+          render();
+        });
         els.clearFiltersBtn.addEventListener("click",function(){
-          state.filters.search=""; state.filters.category=""; state.filters.location="";
-          els.searchInput.value=""; els.categoryFilter.value=""; els.locationFilter.value="";
+          state.filters.search=""; state.filters.category=""; state.filters.location=""; state.filters.topCategory=""; state.filters.sort="closest_match";
+          els.searchInput.value=""; els.categoryFilter.value=""; els.locationFilter.value=""; els.sortFilter.value="closest_match";
+          renderTopCategories();
           applyFilters(); render();
         });
         els.cards.addEventListener("click",function(e){
           const favBtn=e.target.closest("[data-favorite-id]"), folBtn=e.target.closest("[data-follow-id]");
           if(favBtn){ const id=favBtn.getAttribute("data-favorite-id"); if(state.favorites.has(id))state.favorites.delete(id); else state.favorites.add(id); persistSet(FAVORITES_KEY,state.favorites); render(); }
           if(folBtn){ const id=folBtn.getAttribute("data-follow-id"); if(state.follows.has(id))state.follows.delete(id); else state.follows.add(id); persistSet(FOLLOWS_KEY,state.follows); render(); }
+          const reportBtn=e.target.closest("[data-report-company-id]");
+          if(reportBtn){
+            const companyId = reportBtn.getAttribute("data-report-company-id");
+            submitCompanyReport(companyId).catch(function(err){ alert(err && err.message ? err.message : "Unable to submit report."); });
+          }
+          if(e.target.closest("#emptyClearFilters")){
+            state.filters.search=""; state.filters.category=""; state.filters.location=""; state.filters.topCategory=""; state.filters.sort="closest_match";
+            els.searchInput.value=""; els.categoryFilter.value=""; els.locationFilter.value=""; els.sortFilter.value="closest_match";
+            renderTopCategories();
+            applyFilters();
+            render();
+          }
+          if(e.target.closest("#emptyBrowseCategories")){
+            state.filters.topCategory="";
+            renderTopCategories();
+            applyFilters();
+            render();
+            window.scrollTo({ top: 0, behavior: "smooth" });
+          }
+        });
+        els.sessionNav.addEventListener("click", function(event){
+          if(!event.target.closest("[data-customer-logout]")) return;
+          event.preventDefault();
+          localStorage.removeItem("customerToken");
+          localStorage.removeItem("customer");
+          renderSessionNav();
+          window.location.href = "/customer-login-v2.html";
         });
       }
       function init(){
         state.favorites=parseSet(FAVORITES_KEY);
         state.follows=parseSet(FOLLOWS_KEY);
+        renderSessionNav();
+        renderTopCategories();
         bind();
-        customerLogoutLink.addEventListener("click", function(event){
-          event.preventDefault();
-          localStorage.removeItem("customerToken");
-          localStorage.removeItem("customer");
-          window.location.href = "/customer-login-v2.html";
-        });
         render();
         loadCompanies();
       }

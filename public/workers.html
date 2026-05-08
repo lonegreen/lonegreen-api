@@ -317,7 +317,7 @@
   <link rel="stylesheet" href="/ui-cleanup.css">
   <script src="/js/role-guard.js"></script>
 </head>
-<body>
+<body class="phase2-internal">
   <script>
 (function(){
   const token = localStorage.getItem("token");
@@ -344,51 +344,51 @@
 })();
 </script>
 <div class="page">
-  <div class="hero">
+  <div class="hero fx-section-head">
     <div>
       <h1>Workers</h1>
       <p>Manage your active field team, daily load, and completion performance.</p>
     </div>
-    <button type="button" class="btn primary" id="workersBtnAdd">Add Worker</button>
+    <button type="button" class="btn primary fx-btn fx-btn--primary" id="workersBtnAdd">Add Worker</button>
   </div>
 
   <div class="summary">
-    <div class="panel summary-card"><div class="label">Total Workers</div><div class="value" id="totalCount">0</div></div>
-    <div class="panel summary-card"><div class="label">Active</div><div class="value" id="activeCount">0</div></div>
-    <div class="panel summary-card"><div class="label">Assigned Jobs</div><div class="value" id="assignedCount">0</div></div>
-    <div class="panel summary-card"><div class="label">Completed Jobs</div><div class="value" id="completedCount">0</div></div>
+    <div class="panel summary-card fx-stat"><div class="label fx-stat__label">Total Workers</div><div class="value fx-stat__value" id="totalCount">0</div></div>
+    <div class="panel summary-card fx-stat"><div class="label fx-stat__label">Active</div><div class="value fx-stat__value" id="activeCount">0</div></div>
+    <div class="panel summary-card fx-stat"><div class="label fx-stat__label">Assigned Jobs</div><div class="value fx-stat__value" id="assignedCount">0</div></div>
+    <div class="panel summary-card fx-stat"><div class="label fx-stat__label">Completed Jobs</div><div class="value fx-stat__value" id="completedCount">0</div></div>
   </div>
 
-  <div class="panel toolbar">
-    <input id="search" placeholder="Search workers by name or phone">
-    <button type="button" class="btn blue" id="workersBtnRefresh">Refresh</button>
+  <div class="panel toolbar fx-toolbar">
+    <input id="search" class="fx-input" placeholder="Search workers by name or phone">
+    <button type="button" class="btn blue fx-btn fx-btn--secondary" id="workersBtnRefresh">Refresh</button>
   </div>
 
   <div id="list" class="grid"></div>
 </div>
 
 <div id="workerModal" class="modal">
-  <div class="modal-box">
+  <div class="modal-box fx-card">
     <h3 id="modalTitle">Add Worker</h3>
     <div class="form-grid">
-      <input id="worker_name" placeholder="Worker name">
-      <input id="worker_phone" placeholder="Phone">
+      <input id="worker_name" class="fx-input" placeholder="Worker name">
+      <input id="worker_phone" class="fx-input" placeholder="Phone">
       <label class="check-row"><input id="worker_active" type="checkbox" checked> Active worker</label>
     </div>
     <div class="modal-actions">
-      <button type="button" class="btn primary" id="workersBtnSave">Save</button>
-      <button type="button" class="btn gray" id="workersBtnCancelModal">Cancel</button>
+      <button type="button" class="btn primary fx-btn fx-btn--primary" id="workersBtnSave">Save</button>
+      <button type="button" class="btn gray fx-btn fx-btn--secondary" id="workersBtnCancelModal">Cancel</button>
     </div>
   </div>
 </div>
 
 <div id="deleteWorkerModal" class="modal">
-  <div class="modal-box">
+  <div class="modal-box fx-card">
     <h3>Delete Worker</h3>
     <p>This will safely archive, cancel, deactivate, or delete only when safe.</p>
     <div class="modal-actions">
-      <button type="button" class="btn gray" id="workersBtnCancelDelete">Cancel</button>
-      <button type="button" class="btn red" id="workersBtnConfirmDelete">Delete</button>
+      <button type="button" class="btn gray fx-btn fx-btn--secondary" id="workersBtnCancelDelete">Cancel</button>
+      <button type="button" class="btn red fx-btn fx-btn--danger" id="workersBtnConfirmDelete">Delete</button>
     </div>
   </div>
 </div>
@@ -487,7 +487,7 @@ function render(){
   const items = filteredWorkers();
 
   if(!items.length){
-    list.innerHTML = `<div class="empty"><strong>No workers found</strong>Add a worker or adjust your search.</div>`;
+    list.innerHTML = `<div class="empty fx-empty"><strong class="fx-empty__title">No workers found</strong><span class="fx-empty__text">Add a worker or adjust your search.</span></div>`;
     return;
   }
 
@@ -495,13 +495,13 @@ function render(){
     const active = worker.active !== false;
 
     return `
-      <div class="panel card">
+      <div class="panel card fx-card">
         <div class="top">
           <div>
             <h3 class="title">${escapeHtml(worker.name || "Worker")}</h3>
             <div class="sub">${escapeHtml(worker.phone || "No phone on file")}</div>
           </div>
-          <span class="badge ${active ? "active" : "inactive"}">${active ? "active" : "inactive"}</span>
+          <span class="badge fx-badge ${active ? "active fx-badge--success" : "inactive fx-badge--danger"}">${active ? "active" : "inactive"}</span>
         </div>
 
         <div class="meta">
@@ -510,9 +510,9 @@ function render(){
         </div>
 
         <div class="actions">
-          <button type="button" class="btn blue" data-workers-action="edit" data-worker-id="${Number(worker.id)}">Edit</button>
-          <button type="button" class="btn orange" data-workers-action="toggle" data-worker-id="${Number(worker.id)}">${active ? "Deactivate" : "Activate"}</button>
-          ${canDeleteWorkers() ? `<button type="button" class="btn red" data-workers-action="delete" data-worker-id="${Number(worker.id)}">Delete</button>` : ""}
+          <button type="button" class="btn blue fx-btn fx-btn--secondary" data-workers-action="edit" data-worker-id="${Number(worker.id)}">Edit</button>
+          <button type="button" class="btn orange fx-btn fx-btn--ghost" data-workers-action="toggle" data-worker-id="${Number(worker.id)}">${active ? "Deactivate" : "Activate"}</button>
+          ${canDeleteWorkers() ? `<button type="button" class="btn red fx-btn fx-btn--danger" data-workers-action="delete" data-worker-id="${Number(worker.id)}">Delete</button>` : ""}
         </div>
       </div>
     `;
@@ -636,7 +636,7 @@ async function confirmDeleteWorker(button){
 
 async function load(){
   const list = document.getElementById("list");
-  list.innerHTML = `<div class="empty"><strong>Loading workers...</strong>Please wait while the field team is loaded.</div>`;
+  list.innerHTML = `<div class="empty fx-empty"><strong class="fx-empty__title">Loading workers...</strong><span class="fx-empty__text">Please wait while the field team is loaded.</span></div>`;
 
   try {
     const res = await apiFetch(API + "/ops/workers");
@@ -651,7 +651,7 @@ async function load(){
   } catch(err){
     workers = [];
     renderSummary();
-    list.innerHTML = `<div class="empty"><strong>Unable to load workers</strong>${escapeHtml(err && err.message ? err.message : "Please refresh and try again.")}</div>`;
+    list.innerHTML = `<div class="empty fx-empty"><strong class="fx-empty__title">Unable to load workers</strong><span class="fx-empty__text">${escapeHtml(err && err.message ? err.message : "Please refresh and try again.")}</span></div>`;
   }
 }
 

@@ -1,0 +1,95 @@
+:root {
+  /* Semantic aliases for system consumption */
+  --fx-color-primary: var(--interactive-primary, #FF5A00);
+  --fx-color-primary-hover: var(--interactive-primary-hover, #E64A00);
+  --fx-color-primary-light: var(--interactive-primary-light, #FF8A33);
+  --fx-color-text: var(--text-primary, #111111);
+  --fx-color-text-secondary: var(--text-secondary, #2b2b2b);
+  --fx-color-muted: var(--text-muted, #646b73);
+  --fx-color-inverse: var(--text-inverse, #ffffff);
+  --fx-color-bg: var(--surface-page, #F5F5F5);
+  --fx-color-surface: var(--surface-card, #FFFFFF);
+  --fx-color-surface-soft: var(--surface-soft, #fafafa);
+  --fx-color-border: var(--border-default, #D9D9D9);
+  --fx-color-border-strong: var(--border-strong, #c9c9c9);
+  --fx-color-border-subtle: var(--border-subtle, #ececec);
+
+  --fx-font-sans: var(--font-sans, Inter, Arial, sans-serif);
+  --fx-text-xs: var(--font-size-xs, 12px);
+  --fx-text-sm: var(--font-size-sm, 14px);
+  --fx-text-md: var(--font-size-md, 16px);
+  --fx-text-lg: var(--font-size-lg, 18px);
+  --fx-text-xl: var(--font-size-xl, 20px);
+  --fx-text-2xl: var(--font-size-2xl, 24px);
+  --fx-text-3xl: var(--font-size-3xl, 32px);
+  --fx-line-tight: var(--line-height-tight, 1.2);
+  --fx-line-normal: var(--line-height-normal, 1.45);
+  --fx-line-relaxed: var(--line-height-relaxed, 1.65);
+
+  --fx-space-1: var(--space-1, 4px);
+  --fx-space-2: var(--space-2, 8px);
+  --fx-space-3: var(--space-3, 12px);
+  --fx-space-4: var(--space-4, 16px);
+  --fx-space-5: var(--space-5, 20px);
+  --fx-space-6: var(--space-6, 24px);
+  --fx-space-7: var(--space-7, 28px);
+  --fx-space-8: var(--space-8, 32px);
+  --fx-space-9: var(--space-9, 40px);
+  --fx-space-10: var(--space-10, 48px);
+
+  --fx-radius-sm: var(--radius-sm, 8px);
+  --fx-radius-md: var(--radius-md, 12px);
+  --fx-radius-lg: var(--radius-lg, 16px);
+  --fx-radius-xl: var(--radius-xl, 20px);
+  --fx-radius-round: var(--radius-round, 999px);
+
+  --fx-shadow-sm: var(--shadow-sm, 0 4px 12px rgba(17, 17, 17, 0.06));
+  --fx-shadow-md: var(--shadow-md, 0 10px 28px rgba(17, 17, 17, 0.09));
+  --fx-shadow-lg: var(--shadow-lg, 0 18px 42px rgba(17, 17, 17, 0.12));
+
+  --fx-ease: var(--ease-standard, cubic-bezier(0.2, 0, 0, 1));
+  --fx-motion-fast: var(--motion-fast, 120ms);
+  --fx-motion-base: var(--motion-base, 180ms);
+  --fx-motion-slow: var(--motion-slow, 280ms);
+
+  --fx-state-success-bg: var(--state-success-bg, #edf8f0);
+  --fx-state-success-fg: var(--state-success-fg, #1f7a46);
+  --fx-state-success-border: var(--state-success-border, #cde7d7);
+  --fx-state-warning-bg: var(--state-warning-bg, #fff7ea);
+  --fx-state-warning-fg: var(--state-warning-fg, #a15f0a);
+  --fx-state-warning-border: var(--state-warning-border, #f2d6aa);
+  --fx-state-danger-bg: var(--state-danger-bg, #fff2f3);
+  --fx-state-danger-fg: var(--state-danger-fg, #b93836);
+  --fx-state-danger-border: var(--state-danger-border, #f1cbcf);
+  --fx-state-info-bg: var(--state-info-bg, #eef4ff);
+  --fx-state-info-fg: var(--state-info-fg, #2e4f8f);
+  --fx-state-info-border: var(--state-info-border, #d2def5);
+
+  /* Component composition tokens */
+  --fx-control-height: 40px;
+  --fx-control-height-sm: 34px;
+  --fx-control-height-lg: 46px;
+  --fx-outline-ring: var(--focus-ring, 0 0 0 4px rgba(255, 90, 0, 0.16));
+  --fx-divider: var(--fx-color-border-subtle);
+}
+
+html,
+body {
+  font-family: var(--fx-font-sans);
+  color: var(--fx-color-text);
+  background: var(--fx-color-bg);
+}
+
+.fx-h1,
+.fx-h2,
+.fx-h3 {
+  margin: 0;
+  color: var(--fx-color-text);
+  letter-spacing: var(--letter-spacing-heading, -0.02em);
+}
+
+.fx-h1 { font-size: clamp(var(--fx-text-2xl), 2.4vw, var(--fx-text-3xl)); line-height: var(--fx-line-tight); }
+.fx-h2 { font-size: clamp(var(--fx-text-xl), 1.9vw, var(--fx-text-2xl)); line-height: var(--fx-line-tight); }
+.fx-h3 { font-size: var(--fx-text-lg); line-height: var(--fx-line-tight); }
+.fx-body { font-size: var(--fx-text-md); line-height: var(--fx-line-relaxed); color: var(--fx-color-text-secondary); }
+.fx-caption { font-size: var(--fx-text-sm); line-height: var(--fx-line-normal); color: var(--fx-color-muted); }
