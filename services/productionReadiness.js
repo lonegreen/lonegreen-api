@@ -99,9 +99,11 @@ async function getHealthReadiness() {
   const environmentReady = environment.production
     ? environment.status === "ready"
     : environment.status !== "critical_missing";
+  const uploadsReady = uploads.status !== "error";
   const ok = database.status === "ok"
     && migrations.status === "current"
-    && environmentReady;
+    && environmentReady
+    && uploadsReady;
 
   return {
     ok,

@@ -52,10 +52,17 @@ const { sendSafeServerError } = require("../services/safeServerError");
 const { enqueueEmailTask } = require("../services/backgroundTasks");
 const { buildSubscriptionReminderPayload } = require("../services/emailService");
 const logger = require("../services/logger");
+// Subscription mark-paid paths run inside a single transaction (BEGIN/COMMIT on a
+// pool.connect() client) and therefore inline the canonical equivalent of
+// createPaymentRecord: lock invoice FOR UPDATE -> assertPaymentWithinRemaining ->
+// INSERT INTO payments -> appendPaymentLedgerEntry, all atomically. The
+// createPaymentRecord helper is re-exported here for callers that record a
+// subscription payment WITHOUT an existing transaction (it opens its own).
 const {
   appendPaymentLedgerEntry,
   assertPaymentWithinRemaining,
-  getNetPaidForInvoice
+  getNetPaidForInvoice,
+  createPaymentRecord
 } = require("../services/financialIntegrityService");
 
 const router = express.Router();

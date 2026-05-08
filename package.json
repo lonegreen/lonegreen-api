@@ -12,7 +12,8 @@
     "restore:db": "node scripts/restore-db.js",
     "isolation:repair": "node scripts/repair-company-isolation.js",
     "integrity:audit": "node scripts/integrity-audit.js",
-    "smoke:test": "node scripts/smoke-test.js"
+    "smoke:test": "node scripts/smoke-test.js",
+    "verify:r2-launch": "node scripts/verify-r2-launch-fix.js"
   },
   "keywords": [],
   "author": "",

@@ -47,6 +47,7 @@ const favoritesRoutes = require("./routes/favorites");
 const followsRoutes = require("./routes/follows");
 const messagesRoutes = require("./routes/messages");
 const marketplaceRoutes = require("./routes/marketplace");
+const supportRoutes = require("./routes/support");
 const { handleStripeWebhookRequest } = require("./routes/stripeWebhook");
 const { isStripeCheckoutConfigured } = require("./services/stripeService");
 const launchRoutes = require("./routes/launch");
@@ -57,6 +58,7 @@ const { startSubscriptionEngine } = require("./services/subscriptionEngine");
 const { startQueue, stopQueue, getQueueStatus } = require("./services/jobQueue");
 const { startScheduler, stopScheduler, getSchedulerStatus } = require("./services/schedulerService");
 const { getHealthReadiness } = require("./services/productionReadiness");
+const { getR2ImgSrcOrigin } = require("./services/r2CspOrigin");
 const logger = require("./services/logger");
 const { logErrorEntry } = require("./services/errorLogService");
 
@@ -67,6 +69,13 @@ let hasLoggedCanonicalRouteNotice = false;
 let lastHealthWarningAt = 0;
 
 app.disable("x-powered-by");
+
+/* CSP img-src: preserve defaults; add Cloudflare R2 public origin when R2_PUBLIC_BASE_URL is set */
+const imgSrcDirectives = ["'self'", "data:", "blob:"];
+const r2ImgSrcOrigin = getR2ImgSrcOrigin();
+if (r2ImgSrcOrigin) {
+  imgSrcDirectives.push(r2ImgSrcOrigin);
+}
 
 /* Middleware */
 app.use(helmet({
@@ -81,7 +90,7 @@ app.use(helmet({
       "default-src": ["'self'"],
       "script-src": ["'self'", "'unsafe-inline'", "https://js.stripe.com", "https://accounts.google.com"],
       "style-src": ["'self'", "'unsafe-inline'", "https://accounts.google.com"],
-      "img-src": ["'self'", "data:", "blob:"],
+      "img-src": imgSrcDirectives,
       "connect-src": ["'self'", "https://api.stripe.com", "https://accounts.google.com"],
       "frame-src": ["'self'", "https://js.stripe.com", "https://hooks.stripe.com", "https://accounts.google.com"],
       "object-src": ["'none'"]
@@ -299,6 +308,7 @@ app.use("/", favoritesRoutes);
 app.use("/", followsRoutes);
 app.use("/", messagesRoutes);
 app.use("/", marketplaceRoutes);
+app.use("/", supportRoutes);
 app.use("/", launchRoutes);
 
 /* Setup DB route */

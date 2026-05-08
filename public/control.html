@@ -454,6 +454,9 @@
     <button data-page="invoices.html">Invoices</button>
     <button data-page="analytics.html">Analytics</button>
 
+    <div class="section-title" data-support-nav>Support</div>
+    <button data-page="support.html" data-support-nav>Help &amp; Tickets</button>
+
     <div class="section-title" data-legal-nav>Legal</div>
     <button data-legal-page="/terms.html" data-legal-nav>Terms of Service</button>
     <button data-legal-page="/privacy.html" data-legal-nav>Privacy Policy</button>
@@ -541,7 +544,8 @@
       "platform.html#users",
       "platform.html#health",
       "platform.html#activity",
-      "platform.html#settings"
+      "platform.html#settings",
+      "support.html"
     ];
 
     const WORKER_ALLOWED_PAGE = "worker.html";
@@ -571,7 +575,8 @@
       "platform.html#users",
       "platform.html#health",
       "platform.html#activity",
-      "platform.html#settings"
+      "platform.html#settings",
+      "support.html"
     ];
 
     function getUser() {
@@ -619,6 +624,7 @@
       const cleanPage = String(page || "").replace(/^\/+/, "");
 
       if (isPlatformOwnerUser()) {
+        if (cleanPage === "support.html") return "support.html";
         return cleanPage.startsWith("platform.html") ? cleanPage : "platform.html#overview";
       }
 
@@ -634,7 +640,7 @@
     }
 
     function applyWorkerRoleProtection() {
-      document.querySelectorAll(".section-title:not([data-platform-nav]):not([data-legal-nav])").forEach((item) => {
+      document.querySelectorAll(".section-title:not([data-platform-nav]):not([data-legal-nav]):not([data-support-nav])").forEach((item) => {
         item.style.display = isPlatformOwnerUser() ? "none" : "";
       });
 
@@ -646,12 +652,18 @@
 
       if (isPlatformOwnerUser()) {
         document.querySelectorAll("button[data-page]").forEach((button) => {
-          const isPlatformButton = String(button.getAttribute("data-page") || "").startsWith("platform.html");
+          const page = String(button.getAttribute("data-page") || "");
+          const isPlatformButton = page.startsWith("platform.html") || page === "support.html";
           button.style.display = isPlatformButton ? "" : "none";
           button.disabled = !isPlatformButton;
         });
+        // Ensure the Support section title stays visible for platform_owner.
+        document.querySelectorAll("[data-support-nav]").forEach((item) => {
+          item.style.display = "";
+          if (item.tagName === "BUTTON") item.disabled = false;
+        });
         const currentPlatformPage = localStorage.getItem("currentPage") || "";
-        if (!currentPlatformPage.startsWith("platform.html")) {
+        if (!currentPlatformPage.startsWith("platform.html") && currentPlatformPage !== "support.html") {
           localStorage.setItem("currentPage", "platform.html#overview");
         }
         return;

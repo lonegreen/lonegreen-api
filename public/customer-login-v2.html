@@ -219,9 +219,52 @@
           <span>FairLinx</span>
         </div>
 
-        <form id="customerLoginForm">
+        <!-- Primary: Email + One-Time Code (OTP) -->
+        <form id="otpRequestForm" data-view="otp-request">
           <div class="auth-header">
             <h2>Customer Login</h2>
+            <p>Enter your email and we will send you a one-time sign-in code.</p>
+          </div>
+
+          <div class="field">
+            <label for="otpEmail">Email</label>
+            <input id="otpEmail" type="email" autocomplete="email" required>
+          </div>
+
+          <button id="otpRequestBtn" class="btn" type="submit">Email me a sign-in code</button>
+
+          <div class="row" style="margin-top:18px">
+            <a class="link" href="#" id="showPasswordView">Sign in with password instead</a>
+            <a class="link" href="/customer-signup.html">Create account</a>
+          </div>
+        </form>
+
+        <!-- Step 2: OTP code entry (shown after a code has been requested) -->
+        <form id="otpVerifyForm" data-view="otp-verify" style="display:none">
+          <div class="auth-header">
+            <h2>Enter your code</h2>
+            <p>We sent a 6-digit code to <strong id="otpVerifyEmailLabel"></strong>. It expires in 10 minutes.</p>
+          </div>
+
+          <div class="field">
+            <label for="otpCode">6-digit code</label>
+            <input id="otpCode" type="text" inputmode="numeric" autocomplete="one-time-code"
+                   pattern="[0-9]{6}" minlength="6" maxlength="6" required
+                   style="letter-spacing:6px;text-align:center;font-size:20px">
+          </div>
+
+          <button id="otpVerifyBtn" class="btn" type="submit">Verify and sign in</button>
+
+          <div class="row" style="margin-top:18px">
+            <a class="link" href="#" id="otpResendLink">Resend code</a>
+            <a class="link" href="#" id="otpUseDifferentEmail">Use a different email</a>
+          </div>
+        </form>
+
+        <!-- Backward compatible: Email + Password (legacy login, still supported) -->
+        <form id="customerLoginForm" data-view="password" style="display:none">
+          <div class="auth-header">
+            <h2>Sign in with password</h2>
             <p>Use the email and password connected to your customer portal account.</p>
           </div>
 
@@ -241,8 +284,13 @@
           </div>
 
           <button id="submitBtn" class="btn" type="submit">Log In</button>
-          <div id="status" class="status" role="status" aria-live="polite"></div>
+
+          <div class="row" style="margin-top:18px">
+            <a class="link" href="#" id="showOtpView">Email me a sign-in code instead</a>
+          </div>
         </form>
+
+        <div id="status" class="status" role="status" aria-live="polite"></div>
       </div>
     </section>
   </main>
@@ -250,16 +298,126 @@
   <script src="/js/api.js"></script>
   <script>
     const API_BASE = (window.AppAPI && window.AppAPI.base) || window.location.origin;
-    const form = document.getElementById("customerLoginForm");
-    const statusBox = document.getElementById("status");
-    const submitBtn = document.getElementById("submitBtn");
+
+    const otpRequestForm = document.getElementById("otpRequestForm");
+    const otpVerifyForm  = document.getElementById("otpVerifyForm");
+    const passwordForm   = document.getElementById("customerLoginForm");
+    const statusBox      = document.getElementById("status");
+
+    const otpEmailInput   = document.getElementById("otpEmail");
+    const otpCodeInput    = document.getElementById("otpCode");
+    const otpEmailLabel   = document.getElementById("otpVerifyEmailLabel");
+    const otpRequestBtn   = document.getElementById("otpRequestBtn");
+    const otpVerifyBtn    = document.getElementById("otpVerifyBtn");
+    const submitBtn       = document.getElementById("submitBtn");
+
+    let pendingOtpEmail = "";
 
     function setStatus(message, type) {
       statusBox.textContent = message || "";
       statusBox.className = "status" + (type ? " " + type : "");
     }
 
-    form.addEventListener("submit", async event => {
+    function showView(view) {
+      otpRequestForm.style.display = view === "otp-request" ? "" : "none";
+      otpVerifyForm.style.display  = view === "otp-verify"  ? "" : "none";
+      passwordForm.style.display   = view === "password"    ? "" : "none";
+      setStatus("", "");
+    }
+
+    document.getElementById("showPasswordView").addEventListener("click", e => {
+      e.preventDefault();
+      showView("password");
+    });
+    document.getElementById("showOtpView").addEventListener("click", e => {
+      e.preventDefault();
+      showView("otp-request");
+    });
+    document.getElementById("otpUseDifferentEmail").addEventListener("click", e => {
+      e.preventDefault();
+      pendingOtpEmail = "";
+      otpCodeInput.value = "";
+      showView("otp-request");
+    });
+
+    document.getElementById("otpResendLink").addEventListener("click", async e => {
+      e.preventDefault();
+      if (!pendingOtpEmail) return;
+      await requestOtp(pendingOtpEmail, { resend: true });
+    });
+
+    async function requestOtp(email, opts) {
+      opts = opts || {};
+      otpRequestBtn.disabled = true;
+      setStatus(opts.resend ? "Resending code..." : "Sending sign-in code...", "");
+      try {
+        const res = await fetch(API_BASE + "/auth/customer-otp/request", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email })
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.error || data.message || "Could not send code.");
+        pendingOtpEmail = email;
+        otpEmailLabel.textContent = email;
+        showView("otp-verify");
+        setStatus(data.message || "Check your inbox for a 6-digit code.", "success");
+        setTimeout(() => otpCodeInput.focus(), 60);
+      } catch (err) {
+        setStatus(err.message || "Could not send code.", "error");
+      } finally {
+        otpRequestBtn.disabled = false;
+      }
+    }
+
+    otpRequestForm.addEventListener("submit", async event => {
+      event.preventDefault();
+      const email = otpEmailInput.value.trim();
+      if (!email) {
+        setStatus("Email is required.", "error");
+        return;
+      }
+      await requestOtp(email);
+    });
+
+    otpVerifyForm.addEventListener("submit", async event => {
+      event.preventDefault();
+      const code = otpCodeInput.value.trim();
+      if (!pendingOtpEmail) {
+        setStatus("Request a new code to sign in.", "error");
+        showView("otp-request");
+        return;
+      }
+      if (!/^\d{6}$/.test(code)) {
+        setStatus("Enter the 6-digit code from your email.", "error");
+        return;
+      }
+
+      otpVerifyBtn.disabled = true;
+      setStatus("Verifying code...", "");
+      try {
+        const res = await fetch(API_BASE + "/auth/customer-otp/verify", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: pendingOtpEmail, code })
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.error || data.message || "Invalid or expired code.");
+
+        if (data.token) localStorage.setItem("customerToken", data.token);
+        if (data.customer || data.profile) {
+          localStorage.setItem("customer", JSON.stringify(data.customer || data.profile));
+        }
+        setStatus("Signed in. Opening your portal...", "success");
+        window.location.href = "/customer-profile.html";
+      } catch (err) {
+        setStatus(err.message || "Invalid or expired code.", "error");
+      } finally {
+        otpVerifyBtn.disabled = false;
+      }
+    });
+
+    passwordForm.addEventListener("submit", async event => {
       event.preventDefault();
       setStatus("", "");
 

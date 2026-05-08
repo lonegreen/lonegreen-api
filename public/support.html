@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Support</title>
+  <link rel="stylesheet" href="/css/brand.css">
+  <link rel="stylesheet" href="/app-shell.css">
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background:
+        radial-gradient(circle at top left, rgba(31, 92, 58, 0.08), transparent 28%),
+        linear-gradient(180deg, #edf5f0 0%, #f7f9f8 180px, #f4f7f5 100%);
+      padding: 22px;
+      color: var(--brand-black);
+    }
+    .page { max-width: 1240px; margin: 0 auto; }
+    .hero {
+      display: flex; justify-content: space-between; gap: 16px; align-items: flex-end;
+      padding: 22px; margin-bottom: 18px; background: rgba(255,255,255,0.96);
+      border: 1px solid var(--brand-border); border-radius: 20px;
+      box-shadow: 0 18px 42px rgba(16,24,40,0.06); flex-wrap: wrap;
+    }
+    h1 { margin: 0 0 6px; font-size: 28px; color: var(--brand-primary); letter-spacing: -0.03em; }
+    h2 { margin: 0 0 14px; color: var(--brand-black); font-size: 18px; letter-spacing: -0.02em; }
+    p.lead { margin: 0; color: #667d73; line-height: 1.5; max-width: 720px; }
+    .grid { display: grid; grid-template-columns: 380px 1fr; gap: 18px; align-items: start; }
+    .panel {
+      padding: 18px; background: rgba(255,255,255,0.96);
+      border: 1px solid var(--brand-border); border-radius: 18px;
+      box-shadow: 0 18px 42px rgba(16,24,40,0.06); min-width: 0;
+    }
+    label { display: grid; gap: 6px; font-weight: 700; color: #315548; font-size: 13px; margin-bottom: 12px; }
+    input, select, textarea {
+      width: 100%; padding: 11px 12px; border-radius: 10px;
+      border: 1px solid #d6e1da; background: white; color: var(--brand-black);
+      font-size: 14px; outline: none; transition: 0.15s;
+    }
+    input:focus, select:focus, textarea:focus {
+      border-color: #2c8b55; box-shadow: 0 0 0 3px rgba(44,139,85,0.12);
+    }
+    textarea { min-height: 100px; resize: vertical; font-family: inherit; }
+    .btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 10px 14px; border: none; border-radius: 10px;
+      background: var(--brand-primary); color: white; cursor: pointer;
+      font-weight: 700; font-size: 13px; transition: 0.15s;
+    }
+    .btn:hover { filter: brightness(1.05); }
+    .btn:disabled { opacity: 0.55; cursor: not-allowed; }
+    .btn.ghost { background: white; color: #315548; border: 1px solid #d6e1da; }
+    .btn.danger { background: #b42318; }
+    .btn.subtle { background: #eef4ef; color: #315548; }
+    .row { display: flex; gap: 8px; flex-wrap: wrap; }
+    .filter-bar { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
+    .filter-bar select { width: auto; padding: 8px 10px; }
+    .ticket-list { display: grid; gap: 8px; max-height: 60vh; overflow: auto; }
+    .ticket-item {
+      padding: 12px 14px; border-radius: 12px; border: 1px solid #e1ece5;
+      background: white; cursor: pointer; transition: 0.12s;
+    }
+    .ticket-item:hover { border-color: #2c8b55; box-shadow: 0 4px 14px rgba(31,92,58,0.08); }
+    .ticket-item.active { border-color: #2c8b55; background: #f3faf5; }
+    .ticket-meta { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; font-size: 11px; color: #6b7c73; }
+    .pill {
+      display: inline-block; padding: 2px 8px; border-radius: 999px;
+      font-size: 11px; font-weight: 700; letter-spacing: 0.02em; text-transform: uppercase;
+    }
+    .pill.status-open    { background: #e6f4ec; color: #1f6f42; }
+    .pill.status-pending { background: #fff4d6; color: #8a6300; }
+    .pill.status-resolved{ background: #e8eefc; color: #2050b4; }
+    .pill.status-closed  { background: #ececec; color: #4a4a4a; }
+    .pill.priority-low    { background: #eef4ef; color: #4a6357; }
+    .pill.priority-normal { background: #e6f4ec; color: #1f6f42; }
+    .pill.priority-high   { background: #ffe9d6; color: #9a4a00; }
+    .pill.priority-urgent { background: #fde0de; color: #b42318; }
+    .ticket-title { font-weight: 700; color: #1c2c25; margin: 4px 0; }
+    .empty { padding: 18px; text-align: center; color: #91a39a; font-size: 13px; }
+    .thread { display: grid; gap: 10px; max-height: 50vh; overflow: auto; padding: 4px; }
+    .msg {
+      padding: 10px 12px; border-radius: 12px; border: 1px solid #e1ece5;
+      background: white; font-size: 14px; color: #1c2c25; line-height: 1.5;
+      white-space: pre-wrap; word-break: break-word;
+    }
+    .msg.platform { border-color: #c8d6f3; background: #f5f8ff; }
+    .msg-head { font-size: 11px; color: #6b7c73; margin-bottom: 6px; display: flex; gap: 6px; align-items: center; }
+    .msg-head strong { color: #1c2c25; }
+    .toolbar { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; align-items: center; }
+    .toolbar .meta { font-size: 12px; color: #6b7c73; }
+    #status { min-height: 18px; font-size: 13px; color: #5f6e66; margin-top: 6px; }
+    #status.error { color: #b42318; font-weight: 700; }
+    #status.success { color: #027a48; font-weight: 700; }
+    .platform-badge {
+      display: inline-block; padding: 3px 10px; border-radius: 999px;
+      background: #2050b4; color: white; font-size: 11px; font-weight: 800;
+      letter-spacing: 0.04em; text-transform: uppercase; margin-left: 8px;
+    }
+    @media (max-width: 980px) {
+      .grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="hero">
+      <div>
+        <h1>Support<span id="platformBadge" class="platform-badge" style="display:none">Platform Owner</span></h1>
+        <p class="lead" id="leadCopy">Open a ticket if something is not working, or browse your existing conversations with the FairLinx team.</p>
+      </div>
+      <div class="row">
+        <button class="btn ghost" id="refreshBtn" type="button">Refresh</button>
+      </div>
+    </div>
+
+    <div class="grid">
+      <!-- LEFT: list + create form -->
+      <div class="panel">
+        <h2 id="listHeading">Your tickets</h2>
+
+        <div class="filter-bar">
+          <select id="filterStatus">
+            <option value="">All statuses</option>
+            <option value="open">Open</option>
+            <option value="pending">Pending</option>
+            <option value="resolved">Resolved</option>
+            <option value="closed">Closed</option>
+          </select>
+        </div>
+
+        <div id="ticketList" class="ticket-list" aria-live="polite">
+          <div class="empty">Loading tickets...</div>
+        </div>
+
+        <hr style="margin:18px 0;border:0;border-top:1px solid #e1ece5">
+
+        <h2 id="createHeading">Open a new ticket</h2>
+        <form id="createForm">
+          <label>Subject
+            <input id="newSubject" type="text" maxlength="200" required>
+          </label>
+          <label>Category
+            <select id="newCategory">
+              <option value="general">General</option>
+              <option value="billing">Billing</option>
+              <option value="bug">Bug</option>
+              <option value="feature_request">Feature request</option>
+              <option value="account">Account</option>
+              <option value="marketplace">Marketplace</option>
+            </select>
+          </label>
+          <label>Priority
+            <select id="newPriority">
+              <option value="low">Low</option>
+              <option value="normal" selected>Normal</option>
+              <option value="high">High</option>
+              <option value="urgent">Urgent</option>
+            </select>
+          </label>
+          <label>Message
+            <textarea id="newMessage" maxlength="5000" required placeholder="Describe what is happening, what you expected, and any steps to reproduce."></textarea>
+          </label>
+          <button class="btn" id="createBtn" type="submit">Open ticket</button>
+        </form>
+        <div id="status" role="status" aria-live="polite"></div>
+      </div>
+
+      <!-- RIGHT: detail / thread -->
+      <div class="panel" id="detailPanel">
+        <div class="empty">Select a ticket on the left to view the conversation.</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API = window.location.origin;
+
+    function getUser() {
+      try { return JSON.parse(localStorage.getItem("user") || "null"); }
+      catch { return null; }
+    }
+    function getToken() { return localStorage.getItem("token"); }
+
+    const user = getUser();
+    const isPlatform = user && String(user.role || "").toLowerCase() === "platform_owner";
+
+    if (isPlatform) {
+      document.getElementById("platformBadge").style.display = "";
+      document.getElementById("leadCopy").textContent =
+        "Browse and respond to support tickets across every company. Assign tickets to platform owners and update status as they progress.";
+      document.getElementById("listHeading").textContent = "All company tickets";
+      document.getElementById("createHeading").textContent = "Open ticket on behalf (rare)";
+      // Platform_owner does not own a company_id; hide create form (they reply, not create).
+      document.getElementById("createForm").style.display = "none";
+      document.querySelector("#detailPanel .empty").textContent =
+        "Select a ticket on the left to read its full thread.";
+    }
+
+    const $ = id => document.getElementById(id);
+    const statusEl = $("status");
+
+    function setStatus(message, type) {
+      statusEl.textContent = message || "";
+      statusEl.className = type ? type : "";
+    }
+
+    function escapeHtml(s) {
+      return String(s == null ? "" : s)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    }
+
+    function fmtDate(value) {
+      if (!value) return "";
+      const d = new Date(value);
+      if (Number.isNaN(d.getTime())) return "";
+      return d.toLocaleString();
+    }
+
+    async function api(path, opts) {
+      const init = Object.assign({ headers: {} }, opts || {});
+      init.headers["Authorization"] = "Bearer " + (getToken() || "");
+      if (init.body && !init.headers["Content-Type"]) {
+        init.headers["Content-Type"] = "application/json";
+      }
+      const res = await fetch(API + path, init);
+      let data = null;
+      try { data = await res.json(); } catch { data = null; }
+      if (!res.ok) {
+        const err = new Error((data && (data.error || data.message)) || ("Request failed: " + res.status));
+        err.status = res.status;
+        throw err;
+      }
+      return data;
+    }
+
+    let currentTickets = [];
+    let activeTicketId = null;
+
+    function listEndpoint() {
+      const status = $("filterStatus").value;
+      const base = isPlatform ? "/platform/support/tickets" : "/support/tickets";
+      const q = status ? ("?status=" + encodeURIComponent(status)) : "";
+      return base + q;
+    }
+
+    async function loadTickets() {
+      const listEl = $("ticketList");
+      listEl.innerHTML = '<div class="empty">Loading tickets...</div>';
+      try {
+        const tickets = await api(listEndpoint());
+        currentTickets = Array.isArray(tickets) ? tickets : [];
+        renderTickets();
+      } catch (err) {
+        listEl.innerHTML = '<div class="empty">' + escapeHtml(err.message) + '</div>';
+      }
+    }
+
+    function renderTickets() {
+      const listEl = $("ticketList");
+      if (!currentTickets.length) {
+        listEl.innerHTML = '<div class="empty">No tickets yet.</div>';
+        return;
+      }
+      listEl.innerHTML = currentTickets.map(t => {
+        const isActive = String(t.id) === String(activeTicketId);
+        const subject = escapeHtml(t.subject || "(no subject)");
+        const status = escapeHtml(t.status || "open");
+        const priority = escapeHtml(t.priority || "normal");
+        const category = escapeHtml(t.category || "general");
+        const meta = [
+          fmtDate(t.created_at),
+          (t.message_count || 0) + " msg",
+          t.company_name ? escapeHtml(t.company_name) : ""
+        ].filter(Boolean).join(" · ");
+        return (
+          '<div class="ticket-item' + (isActive ? " active" : "") +
+          '" data-id="' + t.id + '" role="button" tabindex="0">' +
+          '<div class="ticket-meta">' +
+          '<span class="pill status-' + status + '">' + status + '</span>' +
+          '<span class="pill priority-' + priority + '">' + priority + '</span>' +
+          '<span>' + category + '</span>' +
+          '</div>' +
+          '<div class="ticket-title">' + subject + '</div>' +
+          '<div class="ticket-meta">' + meta + '</div>' +
+          '</div>'
+        );
+      }).join("");
+
+      listEl.querySelectorAll(".ticket-item").forEach(el => {
+        el.addEventListener("click", () => openTicket(el.getAttribute("data-id")));
+        el.addEventListener("keydown", e => {
+          if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openTicket(el.getAttribute("data-id")); }
+        });
+      });
+    }
+
+    function statusActions(ticket) {
+      if (isPlatform) {
+        return (
+          '<select id="statusSelect" style="width:auto;padding:8px 10px">' +
+          ["open", "pending", "resolved", "closed"].map(s =>
+            '<option value="' + s + '"' + (ticket.status === s ? " selected" : "") + '>' + s + '</option>'
+          ).join("") +
+          '</select>' +
+          '<button class="btn" id="setStatusBtn" type="button">Update status</button>'
+        );
+      }
+      // Company manager+: open <-> closed
+      if (ticket.status === "closed") {
+        return '<button class="btn" id="reopenBtn" type="button">Reopen ticket</button>';
+      }
+      return '<button class="btn ghost" id="closeBtn" type="button">Close ticket</button>';
+    }
+
+    function assignControls(ticket) {
+      if (!isPlatform) return "";
+      const current = ticket.assigned_to_user_id == null ? "" : String(ticket.assigned_to_user_id);
+      return (
+        '<input id="assignInput" type="number" min="1" placeholder="platform_owner user id" ' +
+        'value="' + escapeHtml(current) + '" style="width:220px;display:inline-block">' +
+        '<button class="btn ghost" id="assignBtn" type="button">Assign</button>'
+      );
+    }
+
+    async function openTicket(id) {
+      activeTicketId = id;
+      renderTickets();
+      const detailEl = $("detailPanel");
+      detailEl.innerHTML = '<div class="empty">Loading conversation...</div>';
+      try {
+        const data = await api("/support/tickets/" + encodeURIComponent(id));
+        renderTicketDetail(data);
+      } catch (err) {
+        detailEl.innerHTML = '<div class="empty">' + escapeHtml(err.message) + '</div>';
+      }
+    }
+
+    function renderTicketDetail(data) {
+      const t = data.ticket || {};
+      const messages = data.messages || [];
+      const detailEl = $("detailPanel");
+      const subject = escapeHtml(t.subject || "(no subject)");
+      const status = escapeHtml(t.status || "open");
+      const priority = escapeHtml(t.priority || "normal");
+      const category = escapeHtml(t.category || "general");
+
+      const head = (
+        '<h2 style="margin-bottom:6px">' + subject + '</h2>' +
+        '<div class="ticket-meta" style="margin-bottom:12px">' +
+        '<span class="pill status-' + status + '">' + status + '</span>' +
+        '<span class="pill priority-' + priority + '">' + priority + '</span>' +
+        '<span>' + category + '</span>' +
+        '<span>opened ' + fmtDate(t.created_at) + '</span>' +
+        (t.assigned_to_user_id ? '<span>assigned to user #' + t.assigned_to_user_id + '</span>' : '') +
+        '</div>'
+      );
+
+      const thread = messages.map(m => {
+        const role = String(m.sender_role || "");
+        const cls = role === "platform_owner" ? "msg platform" : "msg";
+        return (
+          '<div class="' + cls + '">' +
+          '<div class="msg-head">' +
+          '<strong>' + escapeHtml(m.sender_username || ("user #" + (m.sender_user_id || "—"))) + '</strong>' +
+          ' · ' + escapeHtml(role || "user") + ' · ' + fmtDate(m.created_at) +
+          '</div>' +
+          '<div>' + escapeHtml(m.message || "") + '</div>' +
+          '</div>'
+        );
+      }).join("");
+
+      const replyDisabled = t.status === "closed" ? "disabled" : "";
+      const replyHint = t.status === "closed"
+        ? '<div class="empty" style="text-align:left">Ticket is closed. Reopen it before replying.</div>'
+        : '';
+
+      detailEl.innerHTML = (
+        head +
+        '<div class="toolbar">' +
+        statusActions(t) +
+        assignControls(t) +
+        '</div>' +
+        '<div class="thread" id="thread">' + (thread || '<div class="empty">No messages yet.</div>') + '</div>' +
+        '<hr style="margin:14px 0;border:0;border-top:1px solid #e1ece5">' +
+        replyHint +
+        '<label>Reply<textarea id="replyText" maxlength="5000" ' + replyDisabled + '></textarea></label>' +
+        '<button class="btn" id="replyBtn" type="button" ' + replyDisabled + '>Send reply</button>'
+      );
+
+      const replyBtn = $("replyBtn");
+      if (replyBtn) replyBtn.addEventListener("click", () => sendReply(t.id));
+
+      const closeBtn = $("closeBtn");
+      if (closeBtn) closeBtn.addEventListener("click", () => updateCompanyStatus(t.id, "closed"));
+      const reopenBtn = $("reopenBtn");
+      if (reopenBtn) reopenBtn.addEventListener("click", () => updateCompanyStatus(t.id, "open"));
+
+      const setStatusBtn = $("setStatusBtn");
+      if (setStatusBtn) setStatusBtn.addEventListener("click", () => updatePlatformStatus(t.id));
+      const assignBtn = $("assignBtn");
+      if (assignBtn) assignBtn.addEventListener("click", () => updateAssignee(t.id));
+    }
+
+    async function sendReply(id) {
+      const text = $("replyText").value.trim();
+      if (!text) { setStatus("Reply message is required.", "error"); return; }
+      setStatus("Sending reply...", "");
+      try {
+        await api("/support/tickets/" + encodeURIComponent(id) + "/messages", {
+          method: "POST",
+          body: JSON.stringify({ message: text })
+        });
+        setStatus("Reply sent.", "success");
+        await Promise.all([loadTickets(), openTicket(id)]);
+      } catch (err) {
+        setStatus(err.message || "Could not send reply.", "error");
+      }
+    }
+
+    async function updateCompanyStatus(id, status) {
+      setStatus("Updating status...", "");
+      try {
+        await api("/support/tickets/" + encodeURIComponent(id) + "/status", {
+          method: "PATCH",
+          body: JSON.stringify({ status })
+        });
+        setStatus("Status updated.", "success");
+        await Promise.all([loadTickets(), openTicket(id)]);
+      } catch (err) {
+        setStatus(err.message || "Could not update status.", "error");
+      }
+    }
+
+    async function updatePlatformStatus(id) {
+      const status = $("statusSelect").value;
+      setStatus("Updating status...", "");
+      try {
+        await api("/platform/support/tickets/" + encodeURIComponent(id) + "/status", {
+          method: "PATCH",
+          body: JSON.stringify({ status })
+        });
+        setStatus("Status updated.", "success");
+        await Promise.all([loadTickets(), openTicket(id)]);
+      } catch (err) {
+        setStatus(err.message || "Could not update status.", "error");
+      }
+    }
+
+    async function updateAssignee(id) {
+      const raw = $("assignInput").value.trim();
+      const body = raw === "" ? { assigned_to_user_id: null } : { assigned_to_user_id: Number(raw) };
+      setStatus("Updating assignee...", "");
+      try {
+        await api("/platform/support/tickets/" + encodeURIComponent(id) + "/assign", {
+          method: "PATCH",
+          body: JSON.stringify(body)
+        });
+        setStatus("Assignee updated.", "success");
+        await Promise.all([loadTickets(), openTicket(id)]);
+      } catch (err) {
+        setStatus(err.message || "Could not update assignee.", "error");
+      }
+    }
+
+    document.getElementById("createForm").addEventListener("submit", async event => {
+      event.preventDefault();
+      const subject = $("newSubject").value.trim();
+      const message = $("newMessage").value.trim();
+      const category = $("newCategory").value;
+      const priority = $("newPriority").value;
+      if (!subject || !message) {
+        setStatus("Subject and message are required.", "error");
+        return;
+      }
+      const btn = $("createBtn");
+      btn.disabled = true;
+      setStatus("Opening ticket...", "");
+      try {
+        const created = await api("/support/tickets", {
+          method: "POST",
+          body: JSON.stringify({ subject, message, category, priority })
+        });
+        $("newSubject").value = "";
+        $("newMessage").value = "";
+        $("newCategory").value = "general";
+        $("newPriority").value = "normal";
+        setStatus("Ticket opened.", "success");
+        await loadTickets();
+        if (created && created.id) await openTicket(created.id);
+      } catch (err) {
+        setStatus(err.message || "Could not create ticket.", "error");
+      } finally {
+        btn.disabled = false;
+      }
+    });
+
+    document.getElementById("filterStatus").addEventListener("change", loadTickets);
+    document.getElementById("refreshBtn").addEventListener("click", loadTickets);
+
+    loadTickets();
+  </script>
+</body>
+</html>

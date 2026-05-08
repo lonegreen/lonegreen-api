@@ -318,6 +318,28 @@ async function sendPasswordResetVerificationEmail({ to, code, username }) {
   return sendOperationalEmailSafe({ to, subject, html, text }, { kind: "password_reset" });
 }
 
+/**
+ * Sends a one-time login code to a customer email. The plaintext code is only
+ * ever transmitted via this email; the database stores a bcrypt hash. Delivered
+ * via sendOperationalEmailSafe so the request flow never throws on transient
+ * SMTP failure (the request endpoint also returns the same generic response in
+ * either case to avoid email enumeration).
+ */
+async function sendCustomerLoginOtpEmail({ to, code }) {
+  const subject = "Your FairLinx sign-in code";
+  const html = `
+    <div style="font-family:system-ui,sans-serif;max-width:560px">
+      <h2>Sign in to FairLinx</h2>
+      <p>Use this one-time code to finish signing in:</p>
+      <p style="font-size:26px;letter-spacing:4px;font-weight:800;margin:14px 0">${escHtml(code)}</p>
+      <p>This code expires in 10 minutes and can only be used once.</p>
+      <p style="color:#6a756d;font-size:13px">If you did not try to sign in, you can safely ignore this email.</p>
+    </div>
+  `;
+  const text = `Your FairLinx sign-in code (expires in 10 minutes, single-use): ${code}`;
+  return sendOperationalEmailSafe({ to, subject, html, text }, { kind: "customer_login_otp" });
+}
+
 module.exports = {
   getEmailReadiness,
   isEmailConfigured,
@@ -329,6 +351,7 @@ module.exports = {
   sendPaymentReminderEmail,
   sendSubscriptionReminderEmail,
   sendPasswordResetVerificationEmail,
+  sendCustomerLoginOtpEmail,
   pickInvoiceRecipient,
   buildInvoiceSentPayload,
   buildPaymentReceiptPayload,

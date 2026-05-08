@@ -7,7 +7,10 @@ const pool = require("../db/pool");
 const { SECRET } = require("../config/env");
 const { LEGAL_TERMS_VERSION, LEGAL_PRIVACY_VERSION } = require("../config/legal");
 const auth = require("../middleware/auth");
-const { sendPasswordResetVerificationEmail } = require("../services/emailService");
+const {
+  sendPasswordResetVerificationEmail,
+  sendCustomerLoginOtpEmail
+} = require("../services/emailService");
 const logger = require("../services/logger");
 const { sendSafeServerError } = require("../services/safeServerError");
 
@@ -37,6 +40,44 @@ const passwordResetSubmitLimiter = rateLimit({
   legacyHeaders: false,
   message: { error: "Too many password reset attempts, please try again later" }
 });
+
+/* Customer email-OTP login (additive; coexists with /auth/customer-login email+password). */
+const customerOtpRequestLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Too many sign-in code requests, please try again later" }
+});
+
+const customerOtpVerifyLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Too many sign-in attempts, please try again later" }
+});
+
+/* OTP policy. Keep these here (not env) so all environments enforce the same. */
+const CUSTOMER_OTP_TTL_MINUTES = 10;
+const CUSTOMER_OTP_MAX_ATTEMPTS = 5;
+const CUSTOMER_OTP_RESEND_THROTTLE_SECONDS = 60;
+
+function generateOtpCode() {
+  /* 6-digit code, uniformly random across [0, 999999] using crypto.randomInt. */
+  return String(crypto.randomInt(0, 1000000)).padStart(6, "0");
+}
+
+async function hashOtpCode(code) {
+  return bcrypt.hash(String(code), 10);
+}
+
+function isExpiredIso(value) {
+  if (!value) return true;
+  const ts = new Date(value).getTime();
+  if (!Number.isFinite(ts)) return true;
+  return ts <= Date.now();
+}
 
 function buildToken(user) {
   const role = normalizeRole(user.role);
@@ -1072,6 +1113,231 @@ router.post("/customer-login", authAttemptLimiter, async (req, res) => {
     });
   } catch (err) {
     sendSafeServerError(res, err, "CUSTOMER LOGIN ERROR");
+  }
+});
+
+/* ============================================================
+ * Customer email-OTP login (additive flow).
+ *
+ *   POST /auth/customer-otp/request  body: { email }
+ *   POST /auth/customer-otp/verify   body: { email, code }
+ *
+ * Coexists with POST /auth/customer-login (email + password).
+ * Both endpoints issue the same customer JWT via buildCustomerToken,
+ * so downstream auth, tenant scoping (customer_account_id ->
+ * customer_account_clients), and customer portal routes are unchanged.
+ * ============================================================ */
+
+router.post("/customer-otp/request", customerOtpRequestLimiter, async (req, res) => {
+  /* Always return the same generic response regardless of whether the email
+   * is registered, to prevent account enumeration via this endpoint. */
+  const genericResponse = {
+    success: true,
+    message: "If an account with that email exists, a sign-in code has been sent."
+  };
+
+  try {
+    const email = cleanEmail(req.body && req.body.email);
+    if (!email) {
+      return res.status(400).json({ error: "Email is required" });
+    }
+
+    const accountResult = await pool.query(
+      `
+      SELECT id, email, customer_otp_last_sent_at
+      FROM customer_accounts
+      WHERE LOWER(email) = LOWER($1)
+      LIMIT 1
+      `,
+      [email]
+    );
+    const account = accountResult.rows[0];
+
+    if (!account) {
+      /* Do not leak account existence; mimic timing of the success path roughly
+       * by performing a discardable bcrypt hash (cheap deterrent against
+       * trivial timing oracles, not a strong defense — relies on per-IP rate
+       * limiter above). */
+      try { await bcrypt.hash(generateOtpCode(), 10); } catch (_) { /* ignore */ }
+      return res.json(genericResponse);
+    }
+
+    /* Per-account resend throttle (in addition to per-IP rate limiter). */
+    if (account.customer_otp_last_sent_at) {
+      const lastMs = new Date(account.customer_otp_last_sent_at).getTime();
+      if (Number.isFinite(lastMs)
+        && Date.now() - lastMs < CUSTOMER_OTP_RESEND_THROTTLE_SECONDS * 1000) {
+        return res.json(genericResponse);
+      }
+    }
+
+    const code = generateOtpCode();
+    const codeHash = await hashOtpCode(code);
+    const expiresAt = new Date(Date.now() + CUSTOMER_OTP_TTL_MINUTES * 60 * 1000);
+
+    await pool.query(
+      `
+      UPDATE customer_accounts
+      SET customer_otp_hash = $2,
+          customer_otp_expires_at = $3,
+          customer_otp_attempts = 0,
+          customer_otp_last_sent_at = CURRENT_TIMESTAMP,
+          updated_at = CURRENT_TIMESTAMP
+      WHERE id = $1
+      `,
+      [account.id, codeHash, expiresAt.toISOString()]
+    );
+
+    /* sendCustomerLoginOtpEmail is "safe" — never throws; transient SMTP issues
+     * still produce the same generic response so we don't leak anything to the
+     * caller. The OTP is logged-in dev only via the email service's own logger. */
+    await sendCustomerLoginOtpEmail({ to: account.email, code });
+
+    await logCustomerResetActivity({
+      accountId: account.id,
+      action: "customer_otp_requested",
+      details: { delivery: "customer_email" }
+    });
+
+    return res.json(genericResponse);
+  } catch (err) {
+    /* Do not surface internal failures to the caller in a way that distinguishes
+     * "account exists" vs "account does not exist". Log + return the generic
+     * response so the UX still tells the user to check their inbox. */
+    logger.error("CUSTOMER_OTP_REQUEST_ERROR", { error: err && err.message });
+    return res.json(genericResponse);
+  }
+});
+
+router.post("/customer-otp/verify", customerOtpVerifyLimiter, async (req, res) => {
+  try {
+    const email = cleanEmail(req.body && req.body.email);
+    const code = String((req.body && req.body.code) || "").trim();
+
+    if (!email || !code) {
+      return res.status(400).json({ error: "Email and code are required" });
+    }
+    if (!/^\d{4,8}$/.test(code)) {
+      return res.status(400).json({ error: "Invalid code format" });
+    }
+
+    const accountResult = await pool.query(
+      `
+      SELECT
+        ca.id,
+        ca.client_id,
+        ca.email,
+        ca.first_name,
+        ca.last_name,
+        ca.phone,
+        ca.is_verified,
+        ca.created_at,
+        ca.customer_otp_hash,
+        ca.customer_otp_expires_at,
+        ca.customer_otp_attempts,
+        c.company_id
+      FROM customer_accounts ca
+      LEFT JOIN clients c ON c.id = ca.client_id
+      WHERE LOWER(ca.email) = LOWER($1)
+      LIMIT 1
+      `,
+      [email]
+    );
+    const account = accountResult.rows[0];
+
+    if (!account || !account.customer_otp_hash || !account.customer_otp_expires_at) {
+      return res.status(401).json({ error: "Invalid or expired code" });
+    }
+    if (isExpiredIso(account.customer_otp_expires_at)) {
+      /* Clear the stale code so a new one must be requested. */
+      await pool.query(
+        `
+        UPDATE customer_accounts
+        SET customer_otp_hash = NULL,
+            customer_otp_expires_at = NULL,
+            customer_otp_attempts = 0,
+            updated_at = CURRENT_TIMESTAMP
+        WHERE id = $1
+        `,
+        [account.id]
+      );
+      return res.status(401).json({ error: "Invalid or expired code" });
+    }
+    if (Number(account.customer_otp_attempts || 0) >= CUSTOMER_OTP_MAX_ATTEMPTS) {
+      /* Too many failures on this code: invalidate to force a fresh request. */
+      await pool.query(
+        `
+        UPDATE customer_accounts
+        SET customer_otp_hash = NULL,
+            customer_otp_expires_at = NULL,
+            customer_otp_attempts = 0,
+            updated_at = CURRENT_TIMESTAMP
+        WHERE id = $1
+        `,
+        [account.id]
+      );
+      await logCustomerResetActivity({
+        accountId: account.id,
+        action: "customer_otp_invalidated",
+        details: { reason: "max_attempts" }
+      });
+      return res.status(401).json({ error: "Invalid or expired code" });
+    }
+
+    const matches = await bcrypt.compare(code, String(account.customer_otp_hash || ""));
+    if (!matches) {
+      await pool.query(
+        `
+        UPDATE customer_accounts
+        SET customer_otp_attempts = COALESCE(customer_otp_attempts, 0) + 1,
+            updated_at = CURRENT_TIMESTAMP
+        WHERE id = $1
+        `,
+        [account.id]
+      );
+      return res.status(401).json({ error: "Invalid or expired code" });
+    }
+
+    /* Single-use: clear OTP fields atomically before issuing a session token. */
+    await pool.query(
+      `
+      UPDATE customer_accounts
+      SET customer_otp_hash = NULL,
+          customer_otp_expires_at = NULL,
+          customer_otp_attempts = 0,
+          customer_email_verified = TRUE,
+          is_verified = TRUE,
+          updated_at = CURRENT_TIMESTAMP
+      WHERE id = $1
+      `,
+      [account.id]
+    );
+
+    await logCustomerResetActivity({
+      accountId: account.id,
+      action: "customer_otp_verified",
+      details: { login_method: "email_otp" }
+    });
+
+    const token = buildCustomerToken(account);
+
+    return res.json({
+      token,
+      customer: {
+        id: account.id,
+        customer_account_id: account.id,
+        email: account.email,
+        first_name: account.first_name,
+        last_name: account.last_name,
+        phone: account.phone,
+        role: "customer",
+        client_id: account.client_id || null,
+        company_id: account.company_id || null,
+        login_method: "email_otp"
+      }
+    });
+  } catch (err) {
+    sendSafeServerError(res, err, "CUSTOMER OTP VERIFY ERROR");
   }
 });
 
