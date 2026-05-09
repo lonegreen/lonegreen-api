@@ -54,6 +54,17 @@ const { sendSafeServerError } = require("../services/safeServerError");
 
 const router = express.Router();
 
+function normalizeQuotedPrice(value) {
+  if (value === undefined || value === null || value === "") {
+    return 0;
+  }
+  const n = typeof value === "number" ? value : Number(String(value).replace(/,/g, ""));
+  if (!Number.isFinite(n)) {
+    return 0;
+  }
+  return Number(n.toFixed(2));
+}
+
 async function resolveCompanyWorkerId(companyId, workerId) {
   if (workerId === undefined || workerId === null || String(workerId).trim() === "") {
     return { ok: true, workerId: null };
@@ -117,7 +128,7 @@ router.post("/workflow/leads", auth, requireCompanyBillingForMutations, requireM
       zip || "",
       service,
       visit_date,
-      quoted_price || 0,
+      normalizeQuotedPrice(quoted_price),
       notes || "",
       normalizeLeadStatus(status),
       req.user.company_id
@@ -158,7 +169,9 @@ router.put("/workflow/leads/:id", auth, requireCompanyBillingForMutations, requi
       zip: req.body.zip || current.zip || "",
       service: req.body.service || current.service || "",
       visit_date: req.body.visit_date || current.visit_date,
-      quoted_price: req.body.quoted_price !== undefined ? req.body.quoted_price : current.quoted_price,
+      quoted_price: req.body.quoted_price !== undefined
+        ? normalizeQuotedPrice(req.body.quoted_price)
+        : current.quoted_price,
       notes: req.body.notes !== undefined ? req.body.notes : current.notes,
       status: normalizeLeadStatus(req.body.status || current.status)
     };
@@ -188,7 +201,7 @@ router.put("/workflow/leads/:id", auth, requireCompanyBillingForMutations, requi
       payload.zip,
       payload.service,
       payload.visit_date,
-      payload.quoted_price || 0,
+      normalizeQuotedPrice(payload.quoted_price),
       payload.notes || "",
       payload.status,
       req.params.id,
@@ -269,7 +282,7 @@ router.post("/workflow/leads/:id/convert-to-estimate", auth, requireCompanyBilli
       lead.zip || "",
       lead.service,
       "draft",
-      lead.quoted_price || 0,
+      normalizeQuotedPrice(lead.quoted_price),
       lead.visit_date,
       lead.notes || "",
       req.user.company_id,
@@ -585,7 +598,11 @@ router.post("/workflow/leads/:id/convert-to-job", auth, requireCompanyBillingFor
       req.body.end_time || "09:00",
       status,
       workerLookup.workerId,
-      req.body.price || lead.quoted_price || 0,
+      normalizeQuotedPrice(
+        req.body.price !== undefined && req.body.price !== null && req.body.price !== ""
+          ? req.body.price
+          : lead.quoted_price
+      ),
       req.user.company_id,
       normalizePaymentStatus(req.body.payment_status, "one_time_job"),
       req.body.internal_notes || lead.notes || "",

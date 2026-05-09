@@ -117,6 +117,15 @@ function parsePagination(query) {
   return { limit, offset };
 }
 
+/** Deterministic numeric binding for subscriptions.price (avoids ambiguous NULL/undefined param types). */
+function normalizeSubscriptionPrice(raw) {
+  const n = Number(raw);
+  if (!Number.isFinite(n)) {
+    return 0;
+  }
+  return Math.round(n * 100) / 100;
+}
+
 function lockDeprecatedLegacyMutations(req, res, next) {
   const method = req.method;
   const path = req.path;
@@ -212,17 +221,18 @@ router.post("/subscriptions", auth, billingLifecycleAuditOnlyMiddleware, require
       return res.status(400).json({ error: "Worker not found in this company" });
     }
 
+    const safePrice = normalizeSubscriptionPrice(price);
     const subResult = await pool.query(`
       INSERT INTO subscriptions 
       (client_id, service, frequency, next_date, price, worker_id, status, company_id, start_date, next_billing_date)
-      VALUES ($1,$2,$3,$4,$5,$6,'active',$7,$8,$9)
+      VALUES ($1::integer,$2::text,$3::text,$4::date,$5::numeric,$6::integer,'active',$7::integer,$8::date,$9::date)
       RETURNING *
     `, [
       client_id,
       service,
       frequency,
       next_date,
-      price || 0,
+      safePrice,
       workerLookup.workerId,
       company_id,
       next_date,
@@ -1098,17 +1108,18 @@ router.post("/ops/subscriptions", auth, billingLifecycleAuditOnlyMiddleware, req
       return res.status(400).json({ error: "Worker not found in this company" });
     }
 
+    const safePrice = normalizeSubscriptionPrice(price);
     const result = await pool.query(`
       INSERT INTO subscriptions
       (client_id, service, frequency, next_date, price, worker_id, status, company_id, start_date, next_billing_date)
-      VALUES ($1,$2,$3,$4,$5,$6,'active',$7,$8,$9)
+      VALUES ($1::integer,$2::text,$3::text,$4::date,$5::numeric,$6::integer,'active',$7::integer,$8::date,$9::date)
       RETURNING *
     `, [
       client_id,
       service,
       frequency,
       next_date,
-      price || 0,
+      safePrice,
       workerLookup.workerId,
       company_id,
       next_date,

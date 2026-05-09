@@ -12,6 +12,15 @@ const LIMIT_COLUMN_BY_RESOURCE = {
 /** Table names allowed in COUNT queries; must stay in sync with LIMIT_COLUMN_BY_RESOURCE keys. */
 const ALLOWED_PLAN_LIMIT_TABLE_NAMES = new Set(Object.keys(LIMIT_COLUMN_BY_RESOURCE));
 
+/** Matches starter-tier defaults in billingService PLAN_LIMITS when DB rows are absent. */
+const FALLBACK_LIMIT_BY_COLUMN = {
+  max_users: 2,
+  max_clients: 50,
+  max_jobs: 100,
+  max_invoices: 100,
+  max_workers: 2
+};
+
 function formatResourceLabel(resourceKey) {
   return String(resourceKey || "")
     .replace(/_/g, " ")
@@ -64,14 +73,39 @@ function enforcePlanLimits(resourceKey) {
       }
 
       const plan = planResult.rows[0];
-      const hasPlan = Number.isInteger(Number(plan.plan_id));
-      if (!hasPlan) {
-        return next();
+      let planLimit = Number(plan.plan_limit);
+      const hasAssignedPlan = Number.isInteger(Number(plan.plan_id));
+      const limitsLookValid = Number.isFinite(planLimit) && planLimit >= 0;
+
+      if (!hasAssignedPlan || !limitsLookValid) {
+        let resolved = null;
+        try {
+          const fallback = await pool.query(
+            `
+            SELECT p.${limitColumn} AS plan_limit
+            FROM subscription_plans p
+            WHERE p.active = TRUE
+            ORDER BY p.monthly_price ASC NULLS LAST, p.id ASC
+            LIMIT 1
+            `
+          );
+          const raw = fallback.rows[0] && fallback.rows[0].plan_limit;
+          const num = Number(raw);
+          if (Number.isFinite(num) && num >= 0) {
+            resolved = num;
+          }
+        } catch (_) {
+          /* schema compatibility: fall through to static defaults */
+        }
+        planLimit = resolved != null ? resolved : FALLBACK_LIMIT_BY_COLUMN[limitColumn];
       }
 
-      const planLimit = Number(plan.plan_limit);
       if (!Number.isFinite(planLimit) || planLimit < 0) {
-        return next();
+        return res.status(503).json({
+          error: "Plan limits unavailable for this company",
+          code: "PLAN_LIMIT_CONFIG_UNAVAILABLE",
+          resource: normalizedKey
+        });
       }
 
       const usageResult = await pool.query(

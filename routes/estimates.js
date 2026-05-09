@@ -401,33 +401,74 @@ router.delete("/workflow/estimates/:id", auth, requireCompanyBillingForMutations
 });
 
 router.post("/workflow/estimates/:id/convert-to-client", auth, requireCompanyBillingForMutations, requireMinimumRole("manager"), async (req, res) => {
+  const dbClient = await pool.connect();
   try {
     await ensureWorkflowSchema();
-    const estimate = await getEstimate(req.user.company_id, req.params.id);
+    await dbClient.query("BEGIN");
+
+    const estimateResult = await dbClient.query(
+      `
+      SELECT *
+      FROM estimates
+      WHERE id = $1 AND company_id = $2 AND record_type = 'estimate'
+      LIMIT 1
+      FOR UPDATE
+      `,
+      [req.params.id, req.user.company_id]
+    );
+    const estimate = estimateResult.rows[0] || null;
 
     if (!estimate) {
+      await dbClient.query("ROLLBACK");
       return res.status(404).json({ error: "Estimate not found" });
     }
 
-    let client = estimate.client_id ? await getClientById(req.user.company_id, estimate.client_id) : null;
-    if (!client) {
-      client = await createClientFromContact(req.user.company_id, {
-        name: estimate.customer_name,
-        phone: estimate.phone,
-        address: estimate.address,
-        zip: estimate.zip,
-        notes: estimate.notes
-      });
+    let client = null;
+    if (estimate.client_id) {
+      const existingClient = await dbClient.query(
+        `
+        SELECT *
+        FROM clients
+        WHERE id = $1 AND company_id = $2
+        LIMIT 1
+        `,
+        [estimate.client_id, req.user.company_id]
+      );
+      client = existingClient.rows[0] || null;
     }
 
-    const result = await pool.query(`
+    if (!client) {
+      const inserted = await dbClient.query(
+        `
+        INSERT INTO clients (name, phone, address, zip, notes, company_id)
+        VALUES ($1,$2,$3,$4,$5,$6)
+        RETURNING *
+        `,
+        [
+          estimate.customer_name || "New Client",
+          estimate.phone || "",
+          estimate.address || "",
+          estimate.zip || "",
+          estimate.notes || "",
+          req.user.company_id
+        ]
+      );
+      client = inserted.rows[0];
+    }
+
+    const result = await dbClient.query(
+      `
       UPDATE estimates
       SET client_id = $1,
           converted_client_id = $1,
           converted_at = COALESCE(converted_at, CURRENT_TIMESTAMP)
       WHERE id = $2 AND company_id = $3 AND record_type = 'estimate'
       RETURNING *
-    `, [client.id, estimate.id, req.user.company_id]);
+      `,
+      [client.id, estimate.id, req.user.company_id]
+    );
+
+    await dbClient.query("COMMIT");
 
     await logActivity({
       companyId: req.user.company_id,
@@ -444,8 +485,13 @@ router.post("/workflow/estimates/:id/convert-to-client", auth, requireCompanyBil
 
     res.json({ client, estimate: result.rows[0] });
   } catch (err) {
+    try {
+      await dbClient.query("ROLLBACK");
+    } catch (_) {}
     console.log("ESTIMATE TO CLIENT ERROR:", err);
     sendSafeServerError(res, err, "routes/estimates");
+  } finally {
+    dbClient.release();
   }
 });
 router.post("/workflow/estimates/:id/convert-to-job", auth, requireCompanyBillingForMutations, requireMinimumRole("manager"), async (req, res) => {

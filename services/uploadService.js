@@ -4,6 +4,7 @@ const crypto = require("crypto");
 const multer = require("multer");
 const logger = require("./logger");
 const pool = require("../db/pool");
+const { NODE_ENV } = require("../config/env");
 
 const UPLOAD_DIR = path.join(__dirname, "..", "public", "uploads");
 const LOCAL_PUBLIC_URL_PREFIX = "/uploads/";
@@ -117,12 +118,29 @@ function isS3Configured() {
   return s3MissingEnvKeys().length === 0;
 }
 
+function productionUploadMisconfiguredError(driverLabel, missingKeys) {
+  const err = new Error(
+    `Production upload storage: ${driverLabel} driver selected but configuration is incomplete` +
+    (missingKeys && missingKeys.length ? `: missing ${missingKeys.join(", ")}` : "")
+  );
+  err.code = "UPLOAD_DRIVER_MISCONFIGURED_PRODUCTION";
+  err.statusCode = 503;
+  return err;
+}
+
 function getEffectiveUploadStorageDriver() {
   const driver = getUploadStorageDriver();
+  const prod = String(NODE_ENV || "").toLowerCase() === "production";
   if (driver === "r2" && !isR2Configured()) {
+    if (prod) {
+      throw productionUploadMisconfiguredError("R2", r2MissingEnvKeys());
+    }
     return "local";
   }
   if (driver === "s3" && !isS3Configured()) {
+    if (prod) {
+      throw productionUploadMisconfiguredError("S3", s3MissingEnvKeys());
+    }
     return "local";
   }
   return driver;
@@ -388,7 +406,23 @@ function getUploadReadiness() {
   ].filter(Boolean);
 
   const driver = getUploadStorageDriver();
-  const effectiveDriver = getEffectiveUploadStorageDriver();
+  let effectiveDriver = "local";
+  try {
+    effectiveDriver = getEffectiveUploadStorageDriver();
+  } catch (err) {
+    return {
+      status: "error",
+      storage: driver,
+      effective_storage: null,
+      external_storage_enabled: driver !== "local",
+      error_code: err && err.code ? err.code : "UPLOAD_DRIVER_ERROR",
+      message: err && err.message ? err.message : String(err),
+      upload_dir: UPLOAD_DIR,
+      max_file_size_mb: Math.round(MAX_FILE_SIZE / 1024 / 1024),
+      allowed_extensions: Array.from(ALLOWED_EXTENSIONS),
+      ephemeral_storage_warning: driver === "local" && nodeEnv === "production"
+    };
+  }
   const externalEnabled = driver !== "local";
   const r2Configured = driver === "r2" ? isR2Configured() : null;
   const r2Missing = driver === "r2" ? r2MissingEnvKeys() : [];

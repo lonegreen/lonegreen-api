@@ -126,6 +126,12 @@ const BILLING_LIFECYCLE_AUTOMATION = booleanEnv(
   NODE_ENV === "production"
 );
 
+if (NODE_ENV === "production" && !BILLING_LIFECYCLE_AUTOMATION) {
+  throw new Error(
+    "BILLING_LIFECYCLE_AUTOMATION must be true in production (billing lifecycle scheduler automation)."
+  );
+}
+
 function isStripeTestSecretKey(value) {
   return /^(sk|rk)_test_/.test(String(value || "").trim());
 }

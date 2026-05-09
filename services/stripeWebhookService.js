@@ -238,6 +238,50 @@ async function resolveCompanyId(metadataCompanyId, clientReferenceId, stripeCust
     .map((value) => parseInt(String(value || ""), 10))
     .filter((value) => Number.isFinite(value));
 
+  if (customerId) {
+    const authResult = await pool.query(
+      `
+      SELECT id
+      FROM companies
+      WHERE stripe_customer_id = $1
+      LIMIT 1
+      `,
+      [customerId]
+    );
+
+    if (authResult.rows[0]) {
+      const authoritativeId = authResult.rows[0].id;
+      const metaPid = parseInt(String(metadataCompanyId || ""), 10);
+      const refPid = parseInt(String(clientReferenceId || ""), 10);
+      if (Number.isFinite(metaPid) && metaPid !== authoritativeId) {
+        logger.warn("Stripe webhook: metadata company_id conflicts with stripe_customer_id mapping", {
+          authoritative_company_id: authoritativeId,
+          metadata_company_id: metaPid,
+          stripe_customer_id: customerId
+        });
+        return {
+          companyId: null,
+          method: null
+        };
+      }
+      if (Number.isFinite(refPid) && refPid !== authoritativeId) {
+        logger.warn("Stripe webhook: client_reference_id conflicts with stripe_customer_id mapping", {
+          authoritative_company_id: authoritativeId,
+          client_reference_id: refPid,
+          stripe_customer_id: customerId
+        });
+        return {
+          companyId: null,
+          method: null
+        };
+      }
+      return {
+        companyId: authoritativeId,
+        method: "stripe_customer_id"
+      };
+    }
+  }
+
   for (const pid of [...new Set(candidates)]) {
     const r = await pool.query(
       `
@@ -249,44 +293,30 @@ async function resolveCompanyId(metadataCompanyId, clientReferenceId, stripeCust
       [pid]
     );
 
-    if (r.rows.length) {
-      const row = r.rows[0];
-      if (
-        customerId
-        && row.stripe_customer_id
-        && row.stripe_customer_id !== customerId
-      ) {
-        console.warn(
-          "Stripe webhook: candidate company_id does not match stored stripe_customer_id; using customer lookup",
-          { companyId: pid }
-        );
-      } else {
-        return {
-          companyId: pid,
-          method: pid === parseInt(String(metadataCompanyId || ""), 10)
-            ? "metadata.company_id"
-            : "client_reference_id"
-        };
-      }
+    if (!r.rows.length) {
+      continue;
     }
-  }
 
-  if (customerId) {
-    const r = await pool.query(
-      `
-      SELECT id
-      FROM companies
-      WHERE stripe_customer_id = $1
-      LIMIT 1
-      `,
-      [customerId]
-    );
-    if (r.rows[0]) {
+    const row = r.rows[0];
+
+    if (customerId) {
+      if (row.stripe_customer_id && row.stripe_customer_id !== customerId) {
+        continue;
+      }
       return {
-        companyId: r.rows[0].id,
-        method: "stripe_customer_id"
+        companyId: pid,
+        method: pid === parseInt(String(metadataCompanyId || ""), 10)
+          ? "metadata.company_id"
+          : "client_reference_id"
       };
     }
+
+    return {
+      companyId: pid,
+      method: pid === parseInt(String(metadataCompanyId || ""), 10)
+        ? "metadata.company_id"
+        : "client_reference_id"
+    };
   }
 
   return {

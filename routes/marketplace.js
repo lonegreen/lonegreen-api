@@ -185,12 +185,9 @@ async function canCompanyMatchRequest(companyId, requestRow) {
     WHERE c.id = $1
       AND c.is_public = TRUE
       AND c.platform_suspended_at IS NULL
+      AND c.billing_status IN ('trialing', 'active')
       AND (
-        c.billing_status IS NULL
-        OR c.billing_status IN ('trialing', 'active')
-      )
-      AND (
-        ($3 <> '' AND csa.zip_code = $3)
+        ($3 <> '' AND LEFT(REGEXP_REPLACE(COALESCE(csa.zip_code, ''), '[^0-9]', '', 'g'), 5) = $3)
         OR ($4 <> '' AND LOWER(csa.city) = $4)
         OR ($5 <> '' AND UPPER(csa.state) = $5)
       )
@@ -289,12 +286,13 @@ router.get("/marketplace/opportunities", companyAuth, requireMinimumRole("manage
           WHERE c.id = $1
             AND c.is_public = TRUE
             AND c.platform_suspended_at IS NULL
+            AND c.billing_status IN ('trialing', 'active')
             AND (
-              c.billing_status IS NULL
-              OR c.billing_status IN ('trialing', 'active')
-            )
-            AND (
-              (mr.zip_code <> '' AND csa.zip_code = mr.zip_code)
+              (
+                mr.zip_code <> ''
+                AND LEFT(REGEXP_REPLACE(COALESCE(csa.zip_code, ''), '[^0-9]', '', 'g'), 5)
+                  = LEFT(REGEXP_REPLACE(COALESCE(mr.zip_code, ''), '[^0-9]', '', 'g'), 5)
+              )
               OR (mr.city <> '' AND LOWER(csa.city) = LOWER(mr.city))
               OR (mr.state <> '' AND UPPER(csa.state) = UPPER(mr.state))
             )
@@ -614,7 +612,7 @@ router.get("/marketplace/requests/:id/matches", customerAuth, async (req, res) =
         COALESCE(fol.follows_count, 0)::int AS follows_count,
         MAX(
           CASE
-            WHEN $2 <> '' AND csa.zip_code = $2 THEN 1.0
+            WHEN $2 <> '' AND LEFT(REGEXP_REPLACE(COALESCE(csa.zip_code, ''), '[^0-9]', '', 'g'), 5) = $2 THEN 1.0
             WHEN $3 <> '' AND LOWER(csa.city) = $3 THEN 0.65
             WHEN $4 <> '' AND UPPER(csa.state) = $4 THEN 0.35
             ELSE 0
@@ -628,13 +626,13 @@ router.get("/marketplace/requests/:id/matches", customerAuth, async (req, res) =
           (COALESCE(comp.completion_rate, 0)) * 10 +
           (MAX(
             CASE
-              WHEN $2 <> '' AND csa.zip_code = $2 THEN 1.0
+              WHEN $2 <> '' AND LEFT(REGEXP_REPLACE(COALESCE(csa.zip_code, ''), '[^0-9]', '', 'g'), 5) = $2 THEN 1.0
               WHEN $3 <> '' AND LOWER(csa.city) = $3 THEN 0.65
               WHEN $4 <> '' AND UPPER(csa.state) = $4 THEN 0.35
               ELSE 0
             END
           )) * 18 +
-          (CASE WHEN c.billing_status IN ('active', 'trialing') OR c.billing_status IS NULL THEN 1 ELSE 0 END) * 6 +
+          (CASE WHEN c.billing_status IN ('active', 'trialing') THEN 1 ELSE 0 END) * 6 +
           (CASE WHEN c.is_verified = TRUE THEN 1 ELSE 0 END) * 6 +
           (LEAST(1, LN(1 + COALESCE(fav.favorites_count, 0)) / LN(51))) * 4 +
           (LEAST(1, LN(1 + COALESCE(fol.follows_count, 0)) / LN(51))) * 3
@@ -700,12 +698,9 @@ router.get("/marketplace/requests/:id/matches", customerAuth, async (req, res) =
         ON fol.company_id = c.id
       WHERE c.is_public = TRUE
         AND c.platform_suspended_at IS NULL
+        AND c.billing_status IN ('trialing', 'active')
         AND (
-          c.billing_status IS NULL
-          OR c.billing_status IN ('trialing', 'active')
-        )
-        AND (
-          ($2 <> '' AND csa.zip_code = $2)
+          ($2 <> '' AND LEFT(REGEXP_REPLACE(COALESCE(csa.zip_code, ''), '[^0-9]', '', 'g'), 5) = $2)
           OR ($3 <> '' AND LOWER(csa.city) = $3)
           OR ($4 <> '' AND UPPER(csa.state) = $4)
         )

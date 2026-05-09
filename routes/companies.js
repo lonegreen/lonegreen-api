@@ -5,7 +5,15 @@ const { SECRET } = require("../config/env");
 const pool = require("../db/pool");
 const auth = require("../middleware/auth");
 const requireCompanyBillingForMutations = require("../middleware/requireCompanyBillingForMutations");
-const { requireMinimumRole, requirePlatformOwner, getBearerToken, classifyTokenBoundary, normalizeRole, verifyActiveCustomerBearerToken } = auth;
+const {
+  requireMinimumRole,
+  requirePlatformOwner,
+  getBearerToken,
+  classifyTokenBoundary,
+  normalizeRole,
+  verifyActiveCustomerBearerToken,
+  validateStaffTokenAgainstDatabase
+} = auth;
 const { sendSafeServerError } = require("../services/safeServerError");
 const { sendOperationalEmailSafe } = require("../services/emailService");
 const { refreshCompanyReputation } = require("../services/reputationService");
@@ -273,14 +281,20 @@ function toMinutes(timeText) {
   return Number(parts[0]) * 60 + Number(parts[1]);
 }
 
-function canReadCompanyPrivateMetadata(req, targetCompanyId) {
+async function canReadCompanyPrivateMetadata(req, targetCompanyId) {
   try {
     const token = getBearerToken(req && req.headers && req.headers.authorization);
     if (!token) return false;
     const decoded = jwt.verify(token, SECRET);
     const boundary = classifyTokenBoundary(decoded);
     if (boundary.type !== "staff") return false;
-    const role = normalizeRole(decoded && decoded.role);
+    const role = boundary.role || normalizeRole(decoded && decoded.role);
+    if (!role) return false;
+    try {
+      await validateStaffTokenAgainstDatabase(decoded, role);
+    } catch {
+      return false;
+    }
     if (role === "platform_owner") return true;
     if (role !== "admin" && role !== "owner") return false;
 
@@ -289,7 +303,7 @@ function canReadCompanyPrivateMetadata(req, targetCompanyId) {
     if (!Number.isInteger(decodedCompanyId) || decodedCompanyId <= 0) return false;
     if (!Number.isInteger(requestedCompanyId) || requestedCompanyId <= 0) return false;
     return decodedCompanyId === requestedCompanyId;
-  } catch (_) {
+  } catch {
     return false;
   }
 }
@@ -315,7 +329,7 @@ async function resolveReportActor(req) {
     return null;
   }
   const userId = Number(decoded && decoded.id);
-  const role = normalizeRole(decoded && decoded.role);
+  const role = boundary.role || normalizeRole(decoded && decoded.role);
   const companyId = Number(decoded && decoded.company_id);
   if (!Number.isInteger(userId) || userId <= 0) {
     return null;
@@ -324,6 +338,11 @@ async function resolveReportActor(req) {
     return null;
   }
   if (role !== "platform_owner" && (!Number.isInteger(companyId) || companyId <= 0)) {
+    return null;
+  }
+  try {
+    await validateStaffTokenAgainstDatabase(decoded, role);
+  } catch {
     return null;
   }
   return {
@@ -422,7 +441,13 @@ router.get("/companies/public", async (req, res) => {
             (CASE WHEN c.is_verified = TRUE THEN 1 ELSE 0 END) * 7 +
             (LEAST(1, LN(1 + COALESCE(fav.favorites_count, 0)) / LN(51))) * 6 +
             (LEAST(1, LN(1 + COALESCE(fol.follows_count, 0)) / LN(51))) * 6
-          )::numeric(10,4) AS ranking_score
+          )::numeric(10,4) AS ranking_score,
+          (
+            LEAST(
+              100,
+              GREATEST(0, COALESCE(rev.average_rating, 0) * 20)
+            )
+          )::numeric AS reputation_score
         FROM companies c
         LEFT JOIN (
           SELECT
@@ -542,7 +567,12 @@ router.get("/companies/public/search", async (req, res) => {
         0::numeric AS verified_bonus,
         0::numeric AS ranking_score
         ,
-        COALESCE(c.reputation_score, 0)::numeric AS reputation_score
+        (
+          LEAST(
+            100,
+            GREATEST(0, COALESCE(rev.average_rating, 0) * 20)
+          )
+        )::numeric AS reputation_score
       FROM companies c
       LEFT JOIN (
         SELECT
@@ -654,9 +684,20 @@ router.get("/companies/public/:slug", async (req, res) => {
         END AS license_expired,
         phone,
         email,
-        address
-        ,
-        reputation_score
+        address,
+        (
+          LEAST(
+            100,
+            GREATEST(
+              0,
+              COALESCE((
+                SELECT AVG(rating)::numeric
+                FROM company_reviews
+                WHERE company_id = companies.id
+              ), 0) * 20
+            )
+          )
+        )::numeric AS reputation_score
       FROM companies
       WHERE is_public = TRUE
         AND LOWER(public_slug) = LOWER($1)
@@ -1174,7 +1215,7 @@ router.get("/companies/:id/service-areas", async (req, res) => {
       return res.status(400).json({ error: "Invalid company id" });
     }
 
-    const canReadPrivate = canReadCompanyPrivateMetadata(req, companyId);
+    const canReadPrivate = await canReadCompanyPrivateMetadata(req, companyId);
     const result = await pool.query(
       `
       SELECT
@@ -1296,7 +1337,7 @@ router.get("/companies/:id/availability", async (req, res) => {
       return res.status(400).json({ error: "Invalid company id" });
     }
 
-    const canReadPrivate = canReadCompanyPrivateMetadata(req, companyId);
+    const canReadPrivate = await canReadCompanyPrivateMetadata(req, companyId);
     const result = await pool.query(
       `
       SELECT

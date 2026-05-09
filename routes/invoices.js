@@ -405,72 +405,38 @@ router.post("/workflow/invoices", auth, requireCompanyBillingForMutations, enfor
       });
     }
 
-    const invoiceNumber = await nextInvoiceNumber(companyId);
-
-
+    const dbClient = await pool.connect();
     let invoice;
     try {
-      invoice = await pool.query(`
-
-
+      await dbClient.query("BEGIN");
+      const invoiceNumber = await nextInvoiceNumber(companyId, dbClient);
+      try {
+        invoice = await dbClient.query(`
       INSERT INTO invoices
-
-
       (company_id, client_id, job_id, estimate_id, source_subscription_id, source_type, invoice_number, status, issued_date, due_date, subtotal, amount, notes, line_items)
-
-
       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,CURRENT_DATE,$9,$10,$11,$12,$13::jsonb)
-
-
       RETURNING *
-
-
       `, [
-
-
       companyId,
-
-
       client_id,
-
-
       job_id || null,
-
-
       estimate_id || null,
-
-
       source_subscription_id || null,
-
-
       sourceType,
-
-
       invoiceNumber,
-
-
       normalizeInvoiceStatus(status || "unpaid"),
-
-
       due_date || null,
-
-
       normalizedInvoice.subtotal,
-
-
       normalizedInvoice.total,
-
-
       notes || "",
-
-
       JSON.stringify(normalizedInvoice.line_items)
-
-
       ]);
-    } catch (insertErr) {
-      if (insertErr && insertErr.code === "23505" && Number(job_id) > 0) {
-        const existingJobInvoice = await pool.query(`
+      } catch (insertErr) {
+        try {
+          await dbClient.query("ROLLBACK");
+        } catch (_) {}
+        if (insertErr && insertErr.code === "23505" && Number(job_id) > 0) {
+          const existingJobInvoice = await pool.query(`
           SELECT id
           FROM invoices
           WHERE job_id = $1
@@ -479,96 +445,17 @@ router.post("/workflow/invoices", auth, requireCompanyBillingForMutations, enfor
           ORDER BY id DESC
           LIMIT 1
         `, [job_id, companyId]);
-        if (existingJobInvoice.rows.length > 0) {
-          const existingInvoice = await hydrateInvoice(companyId, existingJobInvoice.rows[0].id);
-          return res.json(existingInvoice || existingJobInvoice.rows[0]);
+          if (existingJobInvoice.rows.length > 0) {
+            const existingInvoice = await hydrateInvoice(companyId, existingJobInvoice.rows[0].id);
+            return res.json(existingInvoice || existingJobInvoice.rows[0]);
+          }
         }
-      }
-      throw insertErr;
-    }
-
-
-
-
-
-    const hydratedInvoice = await hydrateInvoice(companyId, invoice.rows[0].id);
-
-
-
-
-
-    if (hydratedInvoice && ["unpaid", "overdue"].includes(hydratedInvoice.status)) {
-
-
-      await createFinancialNotification({
-
-
-        companyId,
-
-
-        type: hydratedInvoice.status === "overdue" ? "alert_overdue_invoice" : "alert_unpaid_invoice",
-
-
-        title: hydratedInvoice.status === "overdue" ? "Overdue invoice" : "Unpaid invoice",
-
-
-        message: `${hydratedInvoice.client_name || "Client"} invoice ${hydratedInvoice.invoice_number || `#${hydratedInvoice.id}`} is ${hydratedInvoice.status}.`
-
-
-      });
-
-
-    }
-
-
-
-
-
-    await logActivity({
-
-
-      companyId,
-
-
-      userId: req.user.id,
-
-
-      action: "invoice_created",
-
-
-      entityType: "invoice",
-
-
-      entityId: invoice.rows[0].id,
-
-
-      details: {
-
-
-        client_id,
-
-
-        invoice_number: invoice.rows[0].invoice_number,
-
-
-        job_id: job_id || null,
-
-
-        source_subscription_id: source_subscription_id || null,
-
-
-        amount: normalizedInvoice.total,
-
-
-        status: hydratedInvoice ? hydratedInvoice.status : invoice.rows[0].status
-
-
+        throw insertErr;
       }
 
+      const financials = await recalculateInvoiceFinancials(companyId, invoice.rows[0].id, dbClient);
 
-    });
-
-    await appendPaymentLedgerEntrySafe(null, {
+      await appendPaymentLedgerEntrySafe(dbClient, {
       company_id: companyId,
       event_type: "invoice_created",
       invoice_id: invoice.rows[0].id,
@@ -576,9 +463,46 @@ router.post("/workflow/invoices", auth, requireCompanyBillingForMutations, enfor
       metadata: {
         invoice_number: invoice.rows[0].invoice_number,
         subtotal: normalizedInvoice.subtotal,
-        status: hydratedInvoice ? hydratedInvoice.status : invoice.rows[0].status
+        status: financials ? financials.status : invoice.rows[0].status
       },
       created_by: req.user.id
+    });
+
+      await dbClient.query("COMMIT");
+    } catch (txnErr) {
+      try {
+        await dbClient.query("ROLLBACK");
+      } catch (_) {}
+      throw txnErr;
+    } finally {
+      dbClient.release();
+    }
+
+    const hydratedInvoice = await hydrateInvoice(companyId, invoice.rows[0].id);
+
+    if (hydratedInvoice && ["unpaid", "overdue"].includes(hydratedInvoice.status)) {
+      await createFinancialNotification({
+        companyId,
+        type: hydratedInvoice.status === "overdue" ? "alert_overdue_invoice" : "alert_unpaid_invoice",
+        title: hydratedInvoice.status === "overdue" ? "Overdue invoice" : "Unpaid invoice",
+        message: `${hydratedInvoice.client_name || "Client"} invoice ${hydratedInvoice.invoice_number || `#${hydratedInvoice.id}`} is ${hydratedInvoice.status}.`
+      });
+    }
+
+    await logActivity({
+      companyId,
+      userId: req.user.id,
+      action: "invoice_created",
+      entityType: "invoice",
+      entityId: invoice.rows[0].id,
+      details: {
+        client_id,
+        invoice_number: invoice.rows[0].invoice_number,
+        job_id: job_id || null,
+        source_subscription_id: source_subscription_id || null,
+        amount: normalizedInvoice.total,
+        status: hydratedInvoice ? hydratedInvoice.status : invoice.rows[0].status
+      }
     });
 
     try {

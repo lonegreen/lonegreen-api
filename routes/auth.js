@@ -336,9 +336,13 @@ router.post("/signup", async (req, res) => {
     const company = await pool.query(
       `
       INSERT INTO companies
-      (name, phone, email, address, service_area, business_hours)
+      (name, phone, email, address, service_area, business_hours, plan_id, billing_status)
       VALUES
-      ($1, $2, $3, $4, $5, $6)
+      (
+        $1, $2, $3, $4, $5, $6,
+        (SELECT id FROM subscription_plans WHERE slug = 'starter' AND active IS NOT FALSE ORDER BY id ASC LIMIT 1),
+        'trialing'
+      )
       RETURNING id, name
       `,
       [

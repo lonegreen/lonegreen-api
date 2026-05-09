@@ -4,6 +4,7 @@ const fs = require("fs");
 const path = require("path");
 const { getMigrationStatus } = require("../db/setup");
 const {
+  NODE_ENV,
   getProductionEnvReadiness,
   STRIPE_WEBHOOK_SECRET,
   BILLING_LIFECYCLE_AUTOMATION,
@@ -308,6 +309,9 @@ async function getHealthReadiness() {
   const backupRestore = validateRestoreDrillReadiness();
   const launchDocs = docsPresenceReadiness();
   const launchBlockers = [];
+  if (String(NODE_ENV).toLowerCase() === "production" && !BILLING_LIFECYCLE_AUTOMATION) {
+    launchBlockers.push("billing_lifecycle_automation");
+  }
   if (storageActivation.status !== "ready") launchBlockers.push("storage_activation");
   if (monitoringActivation.status !== "ready") launchBlockers.push("monitoring_activation");
   if (backupSchedule.status !== "ok" || backupRetention.status !== "ok" || backupRestore.status !== "ok") {
@@ -368,8 +372,33 @@ async function getHealthReadiness() {
   };
 }
 
+/**
+ * Strip infrastructure and operational detail from readiness for unauthenticated HTTP probes.
+ * Preserves fields relied on by scripts/smoke-test.js (`ok`, `database.status`, `migrations.status`).
+ */
+function sanitizeHealthReadinessForPublic(fullReadiness) {
+  const database = fullReadiness.database || {};
+  const migrations = fullReadiness.migrations || {};
+  const workflows = fullReadiness.workflows || {};
+  return {
+    ok: Boolean(fullReadiness.ok),
+    app: fullReadiness.app || "FairLinx",
+    database: {
+      status: database.status || "unknown"
+    },
+    migrations: {
+      status: migrations.status || "unknown"
+    },
+    workflows: {
+      status: workflows.status || "unknown"
+    },
+    time: new Date().toISOString()
+  };
+}
+
 module.exports = {
   getHealthReadiness,
+  sanitizeHealthReadinessForPublic,
   getDatabaseReadiness,
   getBillingReadiness,
   getStripeReadiness,

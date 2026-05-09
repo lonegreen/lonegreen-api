@@ -59,7 +59,10 @@ const pool = require("./db/pool");
 const { startSubscriptionEngine } = require("./services/subscriptionEngine");
 const { startQueue, stopQueue, getQueueStatus } = require("./services/jobQueue");
 const { startScheduler, stopScheduler, getSchedulerStatus } = require("./services/schedulerService");
-const { getHealthReadiness } = require("./services/productionReadiness");
+const {
+  getHealthReadiness,
+  sanitizeHealthReadinessForPublic
+} = require("./services/productionReadiness");
 const { getR2ImgSrcOrigin } = require("./services/r2CspOrigin");
 const logger = require("./services/logger");
 const { logErrorEntry } = require("./services/errorLogService");
@@ -90,6 +93,8 @@ app.use(helmet({
     useDefaults: true,
     directives: {
       "default-src": ["'self'"],
+      "base-uri": ["'self'"],
+      "form-action": ["'self'"],
       "script-src": ["'self'", "'unsafe-inline'", "https://js.stripe.com", "https://accounts.google.com"],
       "style-src": ["'self'", "'unsafe-inline'", "https://accounts.google.com"],
       "img-src": imgSrcDirectives,
@@ -143,11 +148,6 @@ app.get("/health/live", healthLimiter, (req, res) => {
   res.json({
     ok: true,
     app: "FairLinx",
-    process: {
-      status: "ok",
-      uptime_seconds: Math.round(process.uptime()),
-      pid: process.pid
-    },
     time: new Date().toISOString()
   });
 });
@@ -165,12 +165,7 @@ app.get("/health", healthLimiter, async (req, res) => {
       });
     }
 
-    res.status(readiness.ok ? 200 : 503).json({
-      ...readiness,
-      env: NODE_ENV,
-      port: PORT,
-      time: new Date().toISOString()
-    });
+    res.status(readiness.ok ? 200 : 503).json(sanitizeHealthReadinessForPublic(readiness));
   } catch (err) {
     logger.error("HEALTH CHECK ERROR", err);
     res.status(503).json({
@@ -187,17 +182,7 @@ app.get("/health/ready", healthLimiter, async (req, res) => {
   try {
     res.setHeader("Cache-Control", "no-store");
     const readiness = await getHealthReadiness();
-    res.status(readiness.ok ? 200 : 503).json({
-      ok: readiness.ok,
-      app: readiness.app,
-      process: readiness.process,
-      database: readiness.database,
-      migrations: readiness.migrations,
-      environment: readiness.environment,
-      queue: readiness.queue,
-      scheduler: readiness.scheduler,
-      time: new Date().toISOString()
-    });
+    res.status(readiness.ok ? 200 : 503).json(sanitizeHealthReadinessForPublic(readiness));
   } catch (err) {
     logger.error("HEALTH_READY_CHECK_ERROR", err);
     res.status(503).json({
@@ -209,14 +194,9 @@ app.get("/health/ready", healthLimiter, async (req, res) => {
   }
 });
 
+/* Canonical Stripe webhook URL (configure Dashboard to POST here). */
 app.post(
   "/billing/stripe/webhook",
-  express.raw({ type: "application/json" }),
-  handleStripeWebhookRequest
-);
-
-app.post(
-  "/billing/webhook",
   express.raw({ type: "application/json" }),
   handleStripeWebhookRequest
 );
@@ -427,9 +407,7 @@ process.on("uncaughtException", (err) => {
 process.on("unhandledRejection", (reason) => {
   const err = reason instanceof Error ? reason : new Error(String(reason));
   logger.error("UNHANDLED_REJECTION", err);
-  logger.warn("UNHANDLED_REJECTION_ALERT", {
-    message: "Unhandled promise rejection logged; process continues (no shutdown)."
-  });
+  gracefulShutdown("UNHANDLED_REJECTION").catch(() => process.exit(1));
 });
 
 (async () => {

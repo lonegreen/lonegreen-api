@@ -147,6 +147,7 @@ async function runSubscriptionProcessing() {
 }
 
 async function runBillingLifecycleAutomation() {
+  /* Production requires BILLING_LIFECYCLE_AUTOMATION=true (enforced at startup via config/env.js). */
   if (!BILLING_LIFECYCLE_AUTOMATION) {
     logger.info("Scheduler billing_lifecycle: disabled by BILLING_LIFECYCLE_AUTOMATION");
     return;
