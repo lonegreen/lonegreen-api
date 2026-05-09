@@ -1078,6 +1078,7 @@ router.get("/ops/subscriptions", auth, billingLifecycleAuditOnlyMiddleware, requ
 });
 
 router.post("/ops/subscriptions", auth, billingLifecycleAuditOnlyMiddleware, requireCompanyBillingForMutations, requireMinimumRole("admin"), async (req, res) => {
+  const txClient = await pool.connect();
   try {
     await ensureOperationsSchema();
     const company_id = requireTenantCompanyId(req, res);
@@ -1109,12 +1110,13 @@ router.post("/ops/subscriptions", auth, billingLifecycleAuditOnlyMiddleware, req
       return res.status(400).json({ error: "Worker not found in this company" });
     }
 
+    await txClient.query("BEGIN");
     const safePrice = normalizeSubscriptionPrice(price);
     const boundPrice = Number(safePrice);
-    const result = await pool.query(`
+    const result = await txClient.query(`
       INSERT INTO subscriptions
       (client_id, service, frequency, next_date, price, worker_id, status, company_id, start_date, next_billing_date)
-      VALUES ($1::integer,$2::text,$3::text,$4::date,$5,$6::integer,'active',$7::integer,$8::date,$9::date)
+      VALUES ($1::integer,$2::text,$3::text,$4::date,$5::numeric,$6::integer,'active',$7::integer,$8::date,$9::date)
       RETURNING *
     `, [
       client_id,
@@ -1133,7 +1135,7 @@ router.post("/ops/subscriptions", auth, billingLifecycleAuditOnlyMiddleware, req
     const visitDates = buildUpcomingSubscriptionDates(next_date, frequency);
 
     for (const visitDate of visitDates) {
-      const existingJob = await pool.query(`
+      const existingJob = await txClient.query(`
         SELECT id
         FROM jobs
         WHERE source_subscription_id = $1
@@ -1144,18 +1146,18 @@ router.post("/ops/subscriptions", auth, billingLifecycleAuditOnlyMiddleware, req
       `, [createdSubscription.id, visitDate, company_id]);
 
       if (existingJob.rows.length === 0) {
-        await pool.query(`
+        await txClient.query(`
           INSERT INTO jobs
           (client_id, service, type, date, start_time, end_time, status, worker_id, price, company_id, source_subscription_id, payment_status)
-          SELECT $1,$2,'subscription_visit',$3,'08:00','09:00','scheduled',$4,0,$5,$6,'included'
-          WHERE $5 IS NOT NULL
+          SELECT $1::integer,$2::text,'subscription_visit',$3::date,'08:00','09:00','scheduled',$4::integer,0,$5::integer,$6::integer,'included'
+          WHERE $5::integer IS NOT NULL
             AND NOT EXISTS (
               SELECT 1
               FROM jobs
-              WHERE source_subscription_id = $6
-                AND date = $3
+              WHERE source_subscription_id = $6::integer
+                AND date = $3::date
                 AND type = 'subscription_visit'
-                AND company_id = $5
+                AND company_id = $5::integer
             )
         `, [
           client_id,
@@ -1168,7 +1170,9 @@ router.post("/ops/subscriptions", auth, billingLifecycleAuditOnlyMiddleware, req
       }
     }
 
-    await logActivity({
+    await txClient.query("COMMIT");
+
+    logActivity({
       companyId: company_id,
       userId: req.user.id,
       action: "subscription_created",
@@ -1180,12 +1184,19 @@ router.post("/ops/subscriptions", auth, billingLifecycleAuditOnlyMiddleware, req
         frequency,
         price: Number(createdSubscription.price || 0)
       }
+    }).catch((activityErr) => {
+      console.log("OPS CREATE SUBSCRIPTION ACTIVITY LOG ERROR:", activityErr);
     });
 
-    res.json(createdSubscription);
+    res.status(201).json(createdSubscription);
   } catch (err) {
+    try {
+      await txClient.query("ROLLBACK");
+    } catch (_) {}
     console.log("OPS CREATE SUBSCRIPTION ERROR:", err);
     sendSafeServerError(res, err, "routes/subscriptions");
+  } finally {
+    txClient.release();
   }
 });
 

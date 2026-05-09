@@ -535,11 +535,11 @@ router.post("/workflow/leads/:id/convert-to-client", auth, requireCompanyBilling
 });
 
 router.post("/workflow/leads/:id/convert-to-job", auth, requireCompanyBillingForMutations, requireMinimumRole("manager"), async (req, res) => {
-  const client = await pool.connect();
+  const txClient = await pool.connect();
   try {
     await ensureWorkflowSchema();
-    await client.query("BEGIN");
-    const leadResult = await client.query(`
+    await txClient.query("BEGIN");
+    const leadResult = await txClient.query(`
       SELECT *
       FROM estimates
       WHERE id = $1 AND company_id = $2 AND record_type = 'lead'
@@ -549,17 +549,17 @@ router.post("/workflow/leads/:id/convert-to-job", auth, requireCompanyBillingFor
     const lead = leadResult.rows[0] || null;
 
     if (!lead) {
-      await client.query("ROLLBACK");
+      await txClient.query("ROLLBACK");
       return res.status(404).json({ error: "Lead not found" });
     }
 
     if (lead.converted_job_id) {
-      const existingJob = await client.query(
+      const existingJob = await txClient.query(
         `SELECT * FROM jobs WHERE id = $1 AND company_id = $2 LIMIT 1`,
         [lead.converted_job_id, req.user.company_id]
       );
       if (existingJob.rows.length > 0) {
-        await client.query("COMMIT");
+        await txClient.query("COMMIT");
         const existingClient = existingJob.rows[0].client_id
           ? await getClientById(req.user.company_id, existingJob.rows[0].client_id)
           : null;
@@ -567,9 +567,9 @@ router.post("/workflow/leads/:id/convert-to-job", auth, requireCompanyBillingFor
       }
     }
 
-    let client = lead.client_id ? await getClientById(req.user.company_id, lead.client_id) : null;
-    if (!client) {
-      client = await createClientFromContact(req.user.company_id, {
+    let leadClient = lead.client_id ? await getClientById(req.user.company_id, lead.client_id) : null;
+    if (!leadClient) {
+      leadClient = await createClientFromContact(req.user.company_id, {
         name: lead.customer_name,
         phone: lead.phone,
         address: lead.address,
@@ -581,17 +581,17 @@ router.post("/workflow/leads/:id/convert-to-job", auth, requireCompanyBillingFor
     const status = normalizeJobStatus(req.body.status || "scheduled");
     const workerLookup = await resolveCompanyWorkerId(req.user.company_id, req.body.worker_id);
     if (!workerLookup.ok) {
-      await client.query("ROLLBACK");
+      await txClient.query("ROLLBACK");
       return res.status(400).json({ error: "Worker not found in this company" });
     }
 
-    const job = await client.query(`
+    const job = await txClient.query(`
       INSERT INTO jobs
       (client_id, service, type, date, start_time, end_time, status, worker_id, price, company_id, payment_status, internal_notes, status_reason, estimate_id)
       VALUES ($1,$2,'one_time_job',$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,NULL)
       RETURNING *
     `, [
-      client.id,
+      leadClient.id,
       req.body.service || lead.service,
       req.body.date || lead.visit_date,
       req.body.start_time || "08:00",
@@ -609,7 +609,7 @@ router.post("/workflow/leads/:id/convert-to-job", auth, requireCompanyBillingFor
       req.body.status_reason || ""
     ]);
 
-    await client.query(`
+    await txClient.query(`
       UPDATE estimates
       SET client_id = $1,
           converted_client_id = $1,
@@ -617,8 +617,8 @@ router.post("/workflow/leads/:id/convert-to-job", auth, requireCompanyBillingFor
           status = 'converted',
           converted_at = CURRENT_TIMESTAMP
       WHERE id = $3 AND company_id = $4 AND record_type = 'lead'
-    `, [client.id, job.rows[0].id, lead.id, req.user.company_id]);
-    await client.query("COMMIT");
+    `, [leadClient.id, job.rows[0].id, lead.id, req.user.company_id]);
+    await txClient.query("COMMIT");
 
     await logActivity({
       companyId: req.user.company_id,
@@ -629,20 +629,20 @@ router.post("/workflow/leads/:id/convert-to-job", auth, requireCompanyBillingFor
       details: {
         source_lead_id: lead.id,
         job_id: job.rows[0].id,
-        client_id: client.id,
+        client_id: leadClient.id,
         service: job.rows[0].service
       }
     });
 
-    res.json({ client, job: job.rows[0] });
+    res.json({ client: leadClient, job: job.rows[0] });
   } catch (err) {
     try {
-      await client.query("ROLLBACK");
+      await txClient.query("ROLLBACK");
     } catch (_) {}
     console.log("LEAD TO JOB ERROR:", err);
     sendSafeServerError(res, err, "routes/leads");
   } finally {
-    client.release();
+    txClient.release();
   }
 });
 

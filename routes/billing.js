@@ -95,7 +95,7 @@ function resolveCheckoutPlanInput(raw) {
   if (!normalized) return checkoutPlanFromInternalPlan("starter");
   const direct = normalizeCheckoutPlan(normalized);
   if (direct) return direct;
-  if (["starter", "pro", "enterprise"].includes(normalized)) {
+  if (["starter", "pro", "growth", "enterprise"].includes(normalized)) {
     return checkoutPlanFromInternalPlan(normalized);
   }
   return null;

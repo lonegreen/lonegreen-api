@@ -13,12 +13,12 @@ const {
   PUBLIC_APP_URL
 } = require("../config/env");
 
-const CHECKOUT_PLANS = new Set(["basic", "pro", "business"]);
+const CHECKOUT_PLANS = new Set(["starter", "pro", "growth"]);
 const BILLING_CYCLES = new Set(["monthly", "yearly"]);
 const INTERNAL_PLAN_BY_CHECKOUT_PLAN = {
-  basic: "starter",
+  starter: "starter",
   pro: "pro",
-  business: "enterprise"
+  growth: "enterprise"
 };
 
 let stripeClient = null;
@@ -55,20 +55,22 @@ function isStripePortalConfigured() {
 
 function normalizeCheckoutPlan(raw) {
   const value = String(raw || "").trim().toLowerCase();
+  if (value === "basic") return "starter";
+  if (value === "business" || value === "enterprise") return "growth";
   return CHECKOUT_PLANS.has(value) ? value : null;
 }
 
 function priceIdForCheckoutPlan(plan, billingCycle = "monthly") {
   const cycle = normalizeCheckoutBillingCycle(billingCycle);
   const monthly = {
-    basic: STRIPE_PRICE_BASIC,
+    starter: STRIPE_PRICE_BASIC,
     pro: STRIPE_PRICE_PRO,
-    business: STRIPE_PRICE_BUSINESS
+    growth: STRIPE_PRICE_BUSINESS
   };
   const yearly = {
-    basic: STRIPE_PRICE_BASIC_YEARLY,
+    starter: STRIPE_PRICE_BASIC_YEARLY,
     pro: STRIPE_PRICE_PRO_YEARLY,
-    business: STRIPE_PRICE_BUSINESS_YEARLY
+    growth: STRIPE_PRICE_BUSINESS_YEARLY
   };
 
   const map = cycle === "yearly" ? yearly : monthly;
@@ -80,12 +82,12 @@ function checkoutPlanAndCycleFromPriceId(priceId) {
   if (!id) return { checkoutPlan: null, billing_cycle: null };
 
   const pairs = [
-    ["basic", "monthly", STRIPE_PRICE_BASIC],
+    ["starter", "monthly", STRIPE_PRICE_BASIC],
     ["pro", "monthly", STRIPE_PRICE_PRO],
-    ["business", "monthly", STRIPE_PRICE_BUSINESS],
-    ["basic", "yearly", STRIPE_PRICE_BASIC_YEARLY],
+    ["growth", "monthly", STRIPE_PRICE_BUSINESS],
+    ["starter", "yearly", STRIPE_PRICE_BASIC_YEARLY],
     ["pro", "yearly", STRIPE_PRICE_PRO_YEARLY],
-    ["business", "yearly", STRIPE_PRICE_BUSINESS_YEARLY]
+    ["growth", "yearly", STRIPE_PRICE_BUSINESS_YEARLY]
   ];
 
   for (const [checkoutPlan, billingCycle, configuredPriceId] of pairs) {
@@ -119,14 +121,14 @@ function internalPlanForCheckoutPlan(plan) {
 
 function checkoutPlanFromInternalPlan(internalPlan) {
   const value = String(internalPlan || "").trim().toLowerCase();
-  if (value === "starter") return "basic";
+  if (value === "starter") return "starter";
   if (value === "pro") return "pro";
-  if (value === "enterprise") return "business";
+  if (value === "enterprise" || value === "growth") return "growth";
   return null;
 }
 
 /**
- * Checkout plan slugs (basic / pro / business) align with marketing tiers.
+ * Checkout plan slugs align with subscription_plans.slug: starter / pro / growth.
  * Internal company.plan remains starter / pro / enterprise until lifecycle sync (later group).
  */
 function resolveCheckoutOrigin(req) {
@@ -290,7 +292,7 @@ async function createCheckoutSessionForCompany({
   const plan = normalizeCheckoutPlan(checkoutPlan);
 
   if (!plan) {
-    const err = new Error("Invalid plan. Use basic, pro, or business.");
+    const err = new Error("Invalid plan. Use starter, pro, or growth.");
     err.code = "INVALID_PLAN";
     throw err;
   }
@@ -482,7 +484,7 @@ async function changeStripeSubscriptionPlan({
   const plan = normalizeCheckoutPlan(checkoutPlan);
 
   if (!plan) {
-    const err = new Error("Invalid plan. Use basic, pro, or business.");
+    const err = new Error("Invalid plan. Use starter, pro, or growth.");
     err.code = "INVALID_PLAN";
     throw err;
   }

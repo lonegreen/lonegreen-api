@@ -1048,40 +1048,6 @@ router.put("/workflow/jobs/:id", auth, requireCompanyBillingForMutations, requir
   try {
     await ensureWorkflowSchema();
 
-    const clientCheck = await pool.query(
-      `
-      SELECT id
-      FROM clients
-      WHERE id = $1 AND company_id = $2
-      LIMIT 1
-    `,
-      [req.body.client_id, req.user.company_id]
-    );
-
-    if (clientCheck.rows.length === 0) {
-      return res.status(400).json({
-        error: "Client not found in this company"
-      });
-    }
-
-    if (req.body.worker_id) {
-      const workerCheck = await pool.query(
-        `
-        SELECT id
-        FROM workers
-        WHERE id = $1 AND company_id = $2
-        LIMIT 1
-      `,
-        [req.body.worker_id, req.user.company_id]
-      );
-
-      if (workerCheck.rows.length === 0) {
-        return res.status(400).json({
-          error: "Worker not found in this company"
-        });
-      }
-    }
-
     const beforeJob = await pool.query(
       `SELECT * FROM jobs WHERE id = $1 AND company_id = $2 LIMIT 1`,
       [req.params.id, req.user.company_id]
@@ -1091,8 +1057,47 @@ router.put("/workflow/jobs/:id", auth, requireCompanyBillingForMutations, requir
       return res.status(404).json({ error: "Job not found" });
     }
 
-    const nextStatus = normalizeJobStatus(req.body.status || beforeJob.rows[0].status);
-    const transitionErr = assertJobStatusTransition(beforeJob.rows[0].status, nextStatus);
+    const currentJob = beforeJob.rows[0];
+    const nextClientId = req.body.client_id !== undefined ? req.body.client_id : currentJob.client_id;
+    const nextWorkerId = req.body.worker_id !== undefined ? req.body.worker_id : currentJob.worker_id;
+    const nextType = req.body.type || currentJob.type || "one_time_job";
+
+    const clientCheck = await pool.query(
+      `
+      SELECT id
+      FROM clients
+      WHERE id = $1 AND company_id = $2
+      LIMIT 1
+    `,
+      [nextClientId, req.user.company_id]
+    );
+
+    if (clientCheck.rows.length === 0) {
+      return res.status(400).json({
+        error: "Client not found in this company"
+      });
+    }
+
+    if (nextWorkerId) {
+      const workerCheck = await pool.query(
+        `
+        SELECT id
+        FROM workers
+        WHERE id = $1 AND company_id = $2
+        LIMIT 1
+      `,
+        [nextWorkerId, req.user.company_id]
+      );
+
+      if (workerCheck.rows.length === 0) {
+        return res.status(400).json({
+          error: "Worker not found in this company"
+        });
+      }
+    }
+
+    const nextStatus = normalizeJobStatus(req.body.status || currentJob.status);
+    const transitionErr = assertJobStatusTransition(currentJob.status, nextStatus);
     if (transitionErr) {
       return res.status(transitionErr.statusCode || 400).json({ error: transitionErr.message, code: transitionErr.code });
     }
@@ -1117,22 +1122,24 @@ router.put("/workflow/jobs/:id", auth, requireCompanyBillingForMutations, requir
       RETURNING *
     `,
       [
-        req.body.client_id,
-        req.body.service,
-        req.body.type || "one_time_job",
-        req.body.date,
-        req.body.start_time || "08:00",
-        req.body.end_time || "09:00",
+        nextClientId,
+        req.body.service !== undefined ? req.body.service : currentJob.service,
+        nextType,
+        req.body.date !== undefined ? req.body.date : currentJob.date,
+        req.body.start_time !== undefined ? req.body.start_time : currentJob.start_time,
+        req.body.end_time !== undefined ? req.body.end_time : currentJob.end_time,
         nextStatus,
-        req.body.worker_id || null,
-        req.body.type === "subscription_visit" ? 0 : req.body.price || 0,
+        nextWorkerId || null,
+        nextType === "subscription_visit"
+          ? 0
+          : (req.body.price !== undefined ? req.body.price : currentJob.price),
         normalizePaymentStatus(
-          req.body.payment_status,
-          req.body.type || "one_time_job"
+          req.body.payment_status !== undefined ? req.body.payment_status : currentJob.payment_status,
+          nextType
         ),
-        req.body.internal_notes || "",
-        req.body.status_reason || "",
-        req.body.estimate_id || null,
+        req.body.internal_notes !== undefined ? req.body.internal_notes : currentJob.internal_notes,
+        req.body.status_reason !== undefined ? req.body.status_reason : currentJob.status_reason,
+        req.body.estimate_id !== undefined ? req.body.estimate_id : currentJob.estimate_id,
         req.params.id,
         req.user.company_id
       ]

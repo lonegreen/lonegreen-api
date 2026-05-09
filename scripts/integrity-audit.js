@@ -503,12 +503,14 @@ const checks = [
   },
   {
     id: "customer_accounts_client_missing_company",
-    title: "customer_accounts linked to a client with NULL company_id",
+    title: "company-scoped customer account links with NULL company_id",
     sql: `
-      SELECT ca.id, ca.client_id, c.company_id
+      SELECT ca.id, ca.client_id, c.company_id, cacl.company_id AS scoped_company_id
       FROM customer_accounts ca
       INNER JOIN clients c ON c.id = ca.client_id
+      INNER JOIN customer_account_clients cacl ON cacl.customer_account_id = ca.id
       WHERE c.company_id IS NULL
+        AND cacl.company_id IS NOT NULL
       ORDER BY ca.id
       LIMIT 100
     `
