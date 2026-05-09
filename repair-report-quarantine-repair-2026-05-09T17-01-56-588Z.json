@@ -1,0 +1,313 @@
+{
+  "started_at": "2026-05-09T17:01:56.588Z",
+  "repair_run_id": "quarantine-repair-2026-05-09T17-01-56-588Z",
+  "apply": false,
+  "stages": [],
+  "stopped_reason": "dry_run_ok_no_apply_flag",
+  "quarantine_company": {
+    "id": 31,
+    "name": "Quarantine - Legacy Unassigned Records"
+  },
+  "discovered": {
+    "tables": [
+      "abuse_reports",
+      "activity_log",
+      "clients",
+      "company_availability",
+      "company_invites",
+      "company_reports",
+      "company_reviews",
+      "company_service_areas",
+      "company_services",
+      "company_subscriptions",
+      "conversations",
+      "customer_account_clients",
+      "customer_company_follows",
+      "customer_favorites",
+      "disputes",
+      "error_logs",
+      "estimates",
+      "invoice_counters",
+      "invoices",
+      "job_photos",
+      "jobs",
+      "marketplace_offers",
+      "notifications",
+      "payment_ledger",
+      "payments",
+      "platform_company_audit",
+      "refunds",
+      "reputation_score_audits",
+      "stripe_events",
+      "subscription_billings",
+      "subscriptions",
+      "support_tickets",
+      "trust_moderation_events",
+      "users",
+      "worker_zip_groups",
+      "workers",
+      "zip_codes",
+      "zip_groups"
+    ],
+    "stale_ids": [
+      1,
+      4,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23,
+      24,
+      25,
+      26,
+      27
+    ]
+  },
+  "approved_allowlist": [
+    1,
+    4,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23,
+    24,
+    25,
+    26,
+    27
+  ],
+  "dry_run": {
+    "mode": "no_mutations",
+    "quarantine_target_id": 31,
+    "stale_id_count_verified": 22,
+    "allowlist_matches_discovery": true,
+    "rows_impact": {
+      "byTable": {
+        "activity_log": 317,
+        "clients": 37,
+        "estimates": 53,
+        "invoice_counters": 13,
+        "invoices": 22,
+        "jobs": 209,
+        "notifications": 38,
+        "payments": 16,
+        "subscription_billings": 4,
+        "subscriptions": 20,
+        "zip_codes": 6,
+        "zip_groups": 6
+      },
+      "byStaleId": {
+        "1": {
+          "activity_log": 67,
+          "clients": 14,
+          "estimates": 9,
+          "invoice_counters": 1,
+          "invoices": 6,
+          "jobs": 139,
+          "notifications": 16,
+          "payments": 3,
+          "subscriptions": 12
+        },
+        "4": {
+          "activity_log": 2,
+          "clients": 1,
+          "jobs": 5,
+          "subscriptions": 1
+        },
+        "6": {
+          "activity_log": 2,
+          "clients": 1
+        },
+        "7": {
+          "activity_log": 6,
+          "clients": 1,
+          "estimates": 2,
+          "invoice_counters": 1,
+          "invoices": 1,
+          "jobs": 1
+        },
+        "8": {
+          "activity_log": 3,
+          "clients": 1,
+          "invoice_counters": 1,
+          "invoices": 1,
+          "jobs": 1
+        },
+        "9": {
+          "activity_log": 6,
+          "clients": 1,
+          "estimates": 2,
+          "invoice_counters": 1,
+          "invoices": 1,
+          "jobs": 1
+        },
+        "10": {
+          "activity_log": 3,
+          "clients": 1,
+          "invoice_counters": 1,
+          "invoices": 1,
+          "jobs": 1,
+          "notifications": 1
+        },
+        "11": {
+          "activity_log": 8,
+          "clients": 1,
+          "estimates": 2,
+          "invoice_counters": 1,
+          "invoices": 1,
+          "jobs": 1,
+          "notifications": 1,
+          "payments": 1
+        },
+        "12": {
+          "activity_log": 8,
+          "clients": 1,
+          "estimates": 2,
+          "invoice_counters": 1,
+          "invoices": 1,
+          "jobs": 1,
+          "notifications": 1,
+          "payments": 1
+        },
+        "13": {
+          "activity_log": 14,
+          "clients": 1,
+          "estimates": 2,
+          "invoice_counters": 1,
+          "invoices": 1,
+          "jobs": 1,
+          "notifications": 5,
+          "payments": 1
+        },
+        "14": {
+          "activity_log": 4,
+          "clients": 2,
+          "estimates": 1,
+          "invoice_counters": 1,
+          "invoices": 1,
+          "jobs": 4,
+          "notifications": 3,
+          "subscriptions": 1
+        },
+        "17": {
+          "activity_log": 1
+        },
+        "18": {
+          "activity_log": 1
+        },
+        "19": {
+          "activity_log": 1
+        },
+        "20": {
+          "activity_log": 29,
+          "clients": 2,
+          "estimates": 5,
+          "jobs": 9,
+          "notifications": 2,
+          "subscriptions": 1,
+          "zip_codes": 1,
+          "zip_groups": 1
+        },
+        "21": {
+          "activity_log": 29,
+          "clients": 2,
+          "estimates": 5,
+          "jobs": 9,
+          "notifications": 2,
+          "subscriptions": 1,
+          "zip_codes": 1,
+          "zip_groups": 1
+        },
+        "22": {
+          "activity_log": 33,
+          "clients": 2,
+          "estimates": 6,
+          "invoice_counters": 1,
+          "invoices": 2,
+          "jobs": 9,
+          "notifications": 2,
+          "payments": 3,
+          "subscription_billings": 1,
+          "subscriptions": 1,
+          "zip_codes": 1,
+          "zip_groups": 1
+        },
+        "23": {
+          "activity_log": 30,
+          "clients": 2,
+          "estimates": 5,
+          "invoice_counters": 1,
+          "invoices": 2,
+          "jobs": 9,
+          "notifications": 1,
+          "payments": 1,
+          "subscription_billings": 1,
+          "subscriptions": 1,
+          "zip_codes": 1,
+          "zip_groups": 1
+        },
+        "24": {
+          "activity_log": 33,
+          "clients": 2,
+          "estimates": 6,
+          "invoice_counters": 1,
+          "invoices": 2,
+          "jobs": 9,
+          "notifications": 2,
+          "payments": 3,
+          "subscription_billings": 1,
+          "subscriptions": 1,
+          "zip_codes": 1,
+          "zip_groups": 1
+        },
+        "25": {
+          "activity_log": 33,
+          "clients": 2,
+          "estimates": 6,
+          "invoice_counters": 1,
+          "invoices": 2,
+          "jobs": 9,
+          "notifications": 2,
+          "payments": 3,
+          "subscription_billings": 1,
+          "subscriptions": 1,
+          "zip_codes": 1,
+          "zip_groups": 1
+        },
+        "26": {
+          "activity_log": 2
+        },
+        "27": {
+          "activity_log": 2
+        }
+      },
+      "totalRowsWouldChange": 741
+    }
+  },
+  "summary": {
+    "would_update_total_rows": 741,
+    "tables_with_updates": 12
+  }
+}

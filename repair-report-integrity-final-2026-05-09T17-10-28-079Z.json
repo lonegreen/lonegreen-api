@@ -1,0 +1,122 @@
+{
+  "repair_run_id": "integrity-final-2026-05-09T17-10-28-079Z",
+  "apply": true,
+  "decisions": {
+    "job_1000": {
+      "action": "DELETE",
+      "reason": "Job has no client/company and no invoice/photo/payment links — remove orphan row"
+    },
+    "client_122_customer_account_1": {
+      "action": "UPDATE_clients_company_id_31",
+      "reason": "clients.company_id NULL with linked customer_accounts row — assign quarantine tenant #31"
+    }
+  },
+  "snapshots": [
+    {
+      "table": "jobs",
+      "category": "pre_delete_orphan_job",
+      "row_id": 1000
+    },
+    {
+      "table": "clients",
+      "category": "pre_fix_null_company_client",
+      "row_id": 122
+    },
+    {
+      "table": "customer_accounts",
+      "category": "pre_fix_null_company_client",
+      "row_id": 1
+    }
+  ],
+  "mutations": [
+    {
+      "table": "jobs",
+      "action": "DELETE",
+      "id": 1000,
+      "rows": 1
+    },
+    {
+      "table": "clients",
+      "action": "UPDATE_company_id",
+      "rows": 1,
+      "client_id": 122
+    }
+  ],
+  "verification": {
+    "integrity_audit_strict_exit_code": 0,
+    "integrity_audit_stdout_tail": "◇ injected env (0) from .env // tip: ⌘ custom filepath { path: '/custom/path/.env' }\n◇ injected env (0) from .env // tip: ⌘ suppress logs { quiet: true }\n◇ injected env (0) from .env // tip: ◈ encrypted .env [www.dotenvx.com]\n[2026-05-09T17:10:29.235Z] INFO: Database configuration loaded {\n  host: 'ep-wandering-union-ajgb2fvi-pooler.c-3.us-east-2.aws.neon.tech',\n  dns_safe_log: true,\n  ssl: true,\n  ssl_reject_unauthorized: false,\n  pool_max: 20,\n  env: 'development'\n}\nFairLinx DB integrity audit (read-only)\nStarted: 2026-05-09T17:10:29.236Z\n\n[OK] Jobs referencing a missing client row (0 rows)\n\n[OK] Jobs where job.company_id differs from linked client.company_id (0 rows)\n\n[OK] Jobs where job.company_id differs from assigned worker.company_id (0 rows)\n\n[OK] Jobs with NULL company_id (0 rows)\n\n[OK] Company clients with NULL company_id (0 rows)\n\n[OK] Workers referencing a missing company (0 rows)\n\n[OK] Users (non–platform_owner) referencing a missing company (0 rows)\n\n[OK] Users where user.company_id differs from linked worker.company_id (0 rows)\n\n[OK] Worker ZIP group links where link.company_id differs from worker.company_id (0 rows)\n\n[OK] Worker ZIP group links where link.company_id differs from zip_group.company_id (0 rows)\n\n[OK] ZIP codes where zip_code.company_id differs from zip_group.company_id (0 rows)\n\n[OK] Invoices referencing a missing client (0 rows)\n\n[OK] Invoices with job_id set but job row missing (0 rows)\n\n[OK] Invoices where invoice.company_id differs from linked job.company_id (0 rows)\n\n[OK] Invoices where invoice.company_id differs from linked client.company_id (0 rows)\n\n[OK] Payments referencing a missing invoice (0 rows)\n\n[OK] Payments where payment.company_id differs from invoice.company_id (0 rows)\n\n[OK] Subscription visit jobs with missing or invalid source_subscription_id (0 rows)\n\n[OK] Subscription visits where job.company_id differs from subscription.company_id (0 rows)\n\n[OK] Duplicate subscription visits for the same company/subscription/date/type (0 rows)\n\n[OK] Subscriptions where subscription.company_id differs from assigned worker.company_id (0 rows)\n\n[OK] subscription_billings rows referencing a missing subscription (0 rows)\n\n[OK] Invoices with negative amount or subtotal (0 rows)\n\n[OK] Invoices where line item total differs from invoice amount (0 rows)\n\n[OK] Payments with non-positive amount (0 rows)\n\n[OK] Refunds with non-positive amount (0 rows)\n\n[OK] Refund totals exceeding original payment amount (0 rows)\n\n[OK] Invoices where net payments exceed invoice total (0 rows)\n\n[OK] Paid invoices with remaining balance (0 rows)\n\n[OK] Open invoices with zero remaining balance (0 rows)\n\n[OK] customer_accounts referencing a missing clients row (0 rows)\n\n[OK] customer_accounts linked to a client with NULL company_id (0 rows)\n\n[OK] job_photos rows referencing a missing job for the same company (0 rows)\n\n[OK] Duplicate pending/retry/running queue jobs with identical type and payload (0 rows)\n\n---\nTotal flagged rows (sum of counts): 0\nFinished: 2026-05-09T17:10:31.074Z\n",
+    "fk_preflight_exit_code": 0,
+    "fk_preflight_stdout": "◇ injected env (0) from .env // tip: ⌘ multiple files { path: ['.env.local', '.env'] }\n◇ injected env (0) from .env // tip: ⌘ multiple files { path: ['.env.local', '.env'] }\n◇ injected env (0) from .env // tip: ⌘ multiple files { path: ['.env.local', '.env'] }\n[2026-05-09T17:10:31.156Z] INFO: Database configuration loaded {\n  host: 'ep-wandering-union-ajgb2fvi-pooler.c-3.us-east-2.aws.neon.tech',\n  dns_safe_log: true,\n  ssl: true,\n  ssl_reject_unauthorized: false,\n  pool_max: 20,\n  env: 'development'\n}\nFairLinx FK preflight audit (read-only)\nStarted: 2026-05-09T17:10:31.158Z\n\n[OK] users.company_id -> companies.id missing: 0\n[OK] clients.company_id -> companies.id missing: 0\n[OK] jobs.company_id -> companies.id missing: 0\n[OK] jobs.client_id -> clients.id missing: 0\n[OK] jobs.worker_id -> workers.id missing: 0\n[OK] estimates.company_id -> companies.id missing: 0\n[OK] estimates.client_id -> clients.id missing: 0\n[OK] invoices.company_id -> companies.id missing: 0\n[OK] invoices.client_id -> clients.id missing: 0\n[OK] invoices.job_id -> jobs.id missing: 0\n[OK] payments.invoice_id -> invoices.id missing: 0\n[OK] subscriptions.company_id -> companies.id missing: 0\n[OK] subscriptions.client_id -> clients.id missing: 0\n[OK] subscriptions.worker_id -> workers.id missing: 0\n\nTotal orphan/missing-reference rows: 0\nFinished: 2026-05-09T17:10:32.315Z\n"
+  },
+  "investigation": {
+    "job": {
+      "id": 1000,
+      "client_id": null,
+      "service": null,
+      "date": "2026-05-26T05:00:00.000Z",
+      "status": "scheduled",
+      "created_at": "2026-05-09T06:03:02.999Z",
+      "assigned_to": null,
+      "start_time": "08:00:00",
+      "end_time": "09:00:00",
+      "name": null,
+      "phone": null,
+      "address": null,
+      "zip": null,
+      "type": "subscription_visit",
+      "price": "0",
+      "worker_id": null,
+      "company_id": null,
+      "payment_status": "included",
+      "source_subscription_id": 14,
+      "status_reason": null,
+      "internal_notes": null,
+      "estimate_id": null,
+      "marketplace_request_id": null,
+      "marketplace_offer_id": null
+    },
+    "client": {
+      "id": 122,
+      "name": "montaser azar",
+      "phone": "8324513479",
+      "address": "",
+      "created_at": "2026-05-06T23:36:19.869Z",
+      "zip": "",
+      "notes": "",
+      "subscription_type": null,
+      "price": null,
+      "company_id": null,
+      "archived": false,
+      "email": "montaserakazar@gmail.com"
+    },
+    "customer_account": {
+      "id": 1,
+      "client_id": 122,
+      "email": "montaserakazar@gmail.com",
+      "password_hash": "$2b$10$CSEaQuew28REikpY89HnLueC9Y/XUVWTu5X9vmRnivTwRd6Nr9ehu",
+      "first_name": "montaser",
+      "last_name": "azar",
+      "phone": "8324513479",
+      "is_verified": false,
+      "reset_token": null,
+      "reset_token_expires": null,
+      "created_at": "2026-05-06T18:36:20.093Z",
+      "updated_at": "2026-05-06T18:36:20.093Z",
+      "reset_token_hash": null,
+      "address": null,
+      "customer_email_verified": false,
+      "customer_otp_hash": null,
+      "customer_otp_expires_at": null,
+      "customer_otp_attempts": 0,
+      "customer_otp_last_sent_at": null,
+      "status": "active",
+      "suspended_at": null,
+      "suspended_reason": null,
+      "deactivated_at": null
+    },
+    "invoice_count": 0,
+    "photo_count": 0,
+    "payment_via_invoice_count": 0
+  },
+  "transaction": "COMMIT"
+}
