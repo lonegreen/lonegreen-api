@@ -18,6 +18,7 @@ const { getMonitoringSnapshot, getMonitoringActivationReadiness } = require("../
 const { getBackupReadiness, validateBackupScheduleReadiness, validateBackupRetentionReadiness, validateRestoreDrillReadiness } = require("../services/backupService");
 const { refreshCompanyReputation } = require("../services/reputationService");
 const { notifyVerificationApproved, notifyBillingWarning } = require("../services/notificationService");
+const growthFoundationService = require("../services/growthFoundationService");
 
 const router = express.Router();
 const platformOnly = [auth, requirePlatformOwner];
@@ -657,6 +658,15 @@ router.get("/platform/analytics", platformOnly, async (req, res) => {
     });
   } catch (err) {
     sendSafeServerError(res, err, "PLATFORM ANALYTICS ERROR");
+  }
+});
+
+router.get("/platform/metrics/foundation", platformOnly, async (req, res) => {
+  try {
+    const payload = await growthFoundationService.getPlatformFoundationMetrics();
+    res.json(payload);
+  } catch (err) {
+    sendSafeServerError(res, err, "PLATFORM METRICS FOUNDATION ERROR");
   }
 });
 

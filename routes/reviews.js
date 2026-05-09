@@ -4,6 +4,7 @@ const pool = require("../db/pool");
 const { requireActiveCustomer } = require("../middleware/auth");
 const { validateReviewContent } = require("../middleware/abuseGuards");
 const { sendSafeServerError } = require("../services/safeServerError");
+const activityLogService = require("../services/activityLogService");
 const { sendOperationalEmailSafe } = require("../services/emailService");
 const {
   resolveCustomerAccountId,
@@ -93,6 +94,22 @@ router.post("/reviews", customerAuth, validateReviewContent, async (req, res) =>
     }
 
     const review = inserted.rows[0];
+    try {
+      await activityLogService.logActivity({
+        companyId: job.company_id,
+        userId: null,
+        action: "review_created",
+        entityType: "company_review",
+        entityId: review.id,
+        details: {
+          job_id: job.id,
+          client_id: job.client_id,
+          rating
+        }
+      });
+    } catch (logErr) {
+      console.log("REVIEW FOUNDATION LOG ERROR:", logErr && logErr.message);
+    }
     const companyResult = await pool.query(
       "SELECT id, name, email FROM companies WHERE id = $1 LIMIT 1",
       [job.company_id]

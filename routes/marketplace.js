@@ -14,6 +14,8 @@ const {
 } = require("../middleware/rateLimits");
 const { validateMarketplaceContent } = require("../middleware/abuseGuards");
 const { sendSafeServerError } = require("../services/safeServerError");
+const activityLogService = require("../services/activityLogService");
+const growthFoundationService = require("../services/growthFoundationService");
 const {
   resolveCustomerAccountId,
   loadPortalScopes,
@@ -417,6 +419,21 @@ router.post("/marketplace/requests", customerAuth, marketplaceCustomerRequestCre
       ]
     );
 
+    try {
+      await growthFoundationService.logPlatformEvent({
+        userId: null,
+        action: "marketplace_request_created",
+        entityType: "marketplace_request",
+        entityId: created.rows[0].id,
+        details: {
+          client_id: req.customer.client_id,
+          category_id: categoryId
+        }
+      });
+    } catch (logErr) {
+      console.log("MARKETPLACE REQUEST FOUNDATION LOG ERROR:", logErr && logErr.message);
+    }
+
     return res.status(201).json(withModerationFlag(created.rows[0], res));
   } catch (err) {
     return sendSafeServerError(res, err, "MARKETPLACE REQUEST CREATE ERROR");
@@ -798,6 +815,22 @@ router.post("/marketplace/requests/:id/offers", companyAuth, requireCompanyBilli
       [requestId, companyId, price, message, estimatedStartDate]
     );
 
+    try {
+      await activityLogService.logActivity({
+        companyId,
+        userId: req.user && req.user.id,
+        action: "marketplace_offer_created",
+        entityType: "marketplace_offer",
+        entityId: created.rows[0].id,
+        details: {
+          request_id: requestId,
+          price
+        }
+      });
+    } catch (logErr) {
+      console.log("MARKETPLACE OFFER FOUNDATION LOG ERROR:", logErr && logErr.message);
+    }
+
     return res.status(201).json(withModerationFlag(created.rows[0], res));
   } catch (err) {
     return sendSafeServerError(res, err, "MARKETPLACE OFFER CREATE ERROR");
@@ -920,6 +953,22 @@ router.post("/marketplace/offers/:id/accept", customerAuth, marketplaceOfferAcce
     );
 
     await client.query("COMMIT");
+
+    try {
+      await activityLogService.logActivity({
+        companyId: selectedOffer.company_id,
+        userId: null,
+        action: "marketplace_offer_accepted",
+        entityType: "marketplace_offer",
+        entityId: selectedOffer.id,
+        details: {
+          request_id: requestId,
+          price: selectedOffer.price
+        }
+      });
+    } catch (logErr) {
+      console.log("MARKETPLACE ACCEPT FOUNDATION LOG ERROR:", logErr && logErr.message);
+    }
 
     return res.json({
       request_id: requestId,

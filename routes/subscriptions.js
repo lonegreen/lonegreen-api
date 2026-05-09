@@ -65,6 +65,9 @@ const {
   getNetPaidForInvoice,
   createPaymentRecord
 } = require("../services/financialIntegrityService");
+const {
+  createSubscriptionBillingInvoiceInTransaction
+} = require("../services/subscriptionEngine");
 
 const router = express.Router();
 const DEPRECATED_ENDPOINT_ERROR = { error: "Deprecated endpoint. Use canonical API route." };
@@ -1302,76 +1305,106 @@ router.put("/ops/subscriptions/:id/status", auth, billingLifecycleAuditOnlyMiddl
       return res.status(400).json({ error: "Invalid status" });
     }
 
-    const before = await pool.query(`
-      SELECT id, status, pause_reason, cancel_reason
-      FROM subscriptions
-      WHERE id = $1 AND company_id = $2
-      LIMIT 1
-    `, [req.params.id, company_id]);
+    const tx = await pool.connect();
+    let beforeRow = null;
+    let current = null;
+    try {
+      await tx.query("BEGIN");
+      const before = await tx.query(`
+        SELECT id, status, pause_reason, cancel_reason
+        FROM subscriptions
+        WHERE id = $1 AND company_id = $2
+        LIMIT 1
+        FOR UPDATE
+      `, [req.params.id, company_id]);
 
-    if (before.rows.length === 0) {
-      return res.status(404).json({ error: "Subscription not found" });
-    }
+      if (before.rows.length === 0) {
+        await tx.query("ROLLBACK");
+        return res.status(404).json({ error: "Subscription not found" });
+      }
+      beforeRow = before.rows[0];
 
-    const result = await pool.query(`
-      UPDATE subscriptions
-      SET
-        status = $1,
-        pause_reason = CASE WHEN $1 = 'paused' THEN $2 ELSE pause_reason END,
-        cancel_reason = CASE WHEN $1 = 'cancelled' THEN $3 ELSE cancel_reason END
-      WHERE id = $4 AND company_id = $5
-      RETURNING *
-    `, [
-      status,
-      pause_reason || "",
-      cancel_reason || "",
-      req.params.id,
-      company_id
-    ]);
+      const result = await tx.query(`
+        UPDATE subscriptions
+        SET
+          status = $1,
+          pause_reason = CASE WHEN $1 = 'paused' THEN $2 ELSE pause_reason END,
+          cancel_reason = CASE WHEN $1 = 'cancelled' THEN $3 ELSE cancel_reason END
+        WHERE id = $4 AND company_id = $5
+        RETURNING *
+      `, [
+        status,
+        pause_reason || "",
+        cancel_reason || "",
+        req.params.id,
+        company_id
+      ]);
 
-    if (result.rows.length === 0) {
-      return res.status(404).json({ error: "Subscription not found" });
-    }
+      if (result.rows.length === 0) {
+        await tx.query("ROLLBACK");
+        return res.status(404).json({ error: "Subscription not found" });
+      }
 
-    const current = result.rows[0];
-    if (status === "active" && current.next_date) {
-      const visitDates = buildUpcomingSubscriptionDates(current.next_date, current.frequency || "weekly");
-
-      for (const visitDate of visitDates) {
-        const exists = await pool.query(`
-          SELECT id FROM jobs
+      current = result.rows[0];
+      if (["paused", "cancelled"].includes(status)) {
+        await tx.query(`
+          UPDATE jobs
+          SET status = 'cancelled',
+              status_reason = COALESCE(NULLIF(status_reason, ''), 'Subscription status changed; visit cancelled.')
           WHERE source_subscription_id = $1
             AND company_id = $2
             AND type = 'subscription_visit'
-            AND date = $3
-        `, [current.id, company_id, visitDate]);
+            AND status = 'scheduled'
+            AND date >= CURRENT_DATE
+        `, [current.id, company_id]);
+      }
 
-        if (exists.rows.length === 0) {
-          await pool.query(`
-            INSERT INTO jobs
-            (client_id, service, type, date, start_time, end_time, status, worker_id, price, company_id, source_subscription_id, payment_status)
-            SELECT $1,$2,'subscription_visit',$3,'08:00','09:00','scheduled',$4,0,$5,$6,'included'
-            WHERE $5 IS NOT NULL
-              AND NOT EXISTS (
-                SELECT 1
-                FROM jobs
-                WHERE source_subscription_id = $6
-                  AND date = $3
-                  AND type = 'subscription_visit'
-                  AND company_id = $5
-              )
-          `, [
-            current.client_id,
-            current.service,
-            visitDate,
-            current.worker_id || null,
-            company_id,
-            current.id
-          ]);
+      if (status === "active" && current.next_date) {
+        const visitDates = buildUpcomingSubscriptionDates(current.next_date, current.frequency || "weekly");
+
+        for (const visitDate of visitDates) {
+          const exists = await tx.query(`
+            SELECT id FROM jobs
+            WHERE source_subscription_id = $1
+              AND company_id = $2
+              AND type = 'subscription_visit'
+              AND date = $3
+          `, [current.id, company_id, visitDate]);
+
+          if (exists.rows.length === 0) {
+            await tx.query(`
+              INSERT INTO jobs
+              (client_id, service, type, date, start_time, end_time, status, worker_id, price, company_id, source_subscription_id, payment_status)
+              SELECT $1,$2,'subscription_visit',$3,'08:00','09:00','scheduled',$4,0,$5,$6,'included'
+              WHERE $5 IS NOT NULL
+                AND NOT EXISTS (
+                  SELECT 1
+                  FROM jobs
+                  WHERE source_subscription_id = $6
+                    AND date = $3
+                    AND type = 'subscription_visit'
+                    AND company_id = $5
+                )
+            `, [
+              current.client_id,
+              current.service,
+              visitDate,
+              current.worker_id || null,
+              company_id,
+              current.id
+            ]);
+          }
         }
       }
 
+      await tx.query("COMMIT");
+    } catch (transactionErr) {
+      await tx.query("ROLLBACK").catch(() => {});
+      throw transactionErr;
+    } finally {
+      tx.release();
     }
+
     await logChange({
       companyId: company_id,
       userId: req.user.id,
@@ -1379,21 +1412,21 @@ router.put("/ops/subscriptions/:id/status", auth, billingLifecycleAuditOnlyMiddl
       entityType: "subscription",
       entityId: Number(req.params.id),
       before: {
-        status: before.rows[0].status,
-        pause_reason: before.rows[0].pause_reason,
-        cancel_reason: before.rows[0].cancel_reason
+        status: beforeRow.status,
+        pause_reason: beforeRow.pause_reason,
+        cancel_reason: beforeRow.cancel_reason
       },
       after: {
-        status: result.rows[0].status,
-        pause_reason: result.rows[0].pause_reason,
-        cancel_reason: result.rows[0].cancel_reason
+        status: current.status,
+        pause_reason: current.pause_reason,
+        cancel_reason: current.cancel_reason
       },
       metadata: {
         requested_status: status
       }
     });
 
-    res.json(result.rows[0]);
+    res.json(current);
   } catch (err) {
     console.log("OPS SUBSCRIPTION STATUS ERROR:", err);
     sendSafeServerError(res, err, "routes/subscriptions");
@@ -1409,71 +1442,27 @@ router.put("/ops/subscriptions/:id/mark-paid", auth, billingLifecycleAuditOnlyMi
     const tx = await pool.connect();
     let invoiceId = null;
     let billingMonth = "";
+    let invoiceTotal = 0;
+    let billingDate = "";
 
     try {
       await tx.query("BEGIN");
-      const subscriptionResult = await tx.query(`
-        SELECT
-          subscriptions.*,
-          clients.name AS client_name
-        FROM subscriptions
-        LEFT JOIN clients ON clients.id = subscriptions.client_id AND clients.company_id = subscriptions.company_id
-        WHERE subscriptions.id = $1 AND subscriptions.company_id = $2
-        FOR UPDATE
-        LIMIT 1
-      `, [subscriptionId, companyId]);
-
-      if (subscriptionResult.rows.length === 0) {
+      const billingResult = await createSubscriptionBillingInvoiceInTransaction(tx, {
+        companyId,
+        subscriptionId,
+        notes,
+        status: "generated",
+        createdBy: req.user.id,
+        source: "ops_subscription_mark_paid"
+      });
+      if (billingResult && billingResult.skipped) {
         await tx.query("ROLLBACK");
-        return res.status(404).json({ error: "Subscription not found" });
+        return res.status(400).json({ error: "Only active subscriptions can be billed" });
       }
-
-      const subscription = subscriptionResult.rows[0];
-      const invoiceTotal = Number(subscription.price || 0);
-      if (!Number.isFinite(invoiceTotal) || invoiceTotal < 0) {
-        await tx.query("ROLLBACK");
-        return res.status(400).json({ error: "Subscription price cannot be negative" });
-      }
-
-      const billingDate = normalizeDateOnly(subscription.next_billing_date || subscription.next_date || new Date().toISOString());
-      billingMonth = billingDate.slice(0, 7);
-
-      const existingBilling = await tx.query(`
-        SELECT *
-        FROM subscription_billings
-        WHERE subscription_id = $1
-          AND company_id = $2
-          AND billing_month = $3
-        ORDER BY id DESC
-        LIMIT 1
-      `, [subscriptionId, companyId, billingMonth]);
-
-      invoiceId = existingBilling.rows[0] && existingBilling.rows[0].invoice_id ? existingBilling.rows[0].invoice_id : null;
-
-      if (!invoiceId) {
-        const invoiceNumber = await nextInvoiceNumber(companyId, tx);
-        const invoiceInsert = await tx.query(`
-          INSERT INTO invoices
-          (company_id, client_id, source_subscription_id, source_type, invoice_number, status, issued_date, due_date, subtotal, amount, notes, line_items)
-          VALUES ($1,$2,$3,'subscription',$4,'unpaid',$5,$5,$6,$6,$7,$8::jsonb)
-          RETURNING *
-        `, [
-          companyId,
-          subscription.client_id,
-          subscriptionId,
-          invoiceNumber,
-          billingDate,
-          invoiceTotal,
-          notes || "",
-          JSON.stringify([{
-            description: subscription.service || "Subscription billing",
-            quantity: 1,
-            price: invoiceTotal,
-            amount: invoiceTotal
-          }])
-        ]);
-        invoiceId = invoiceInsert.rows[0].id;
-      }
+      invoiceId = billingResult.invoice_id;
+      billingMonth = billingResult.billing_month;
+      billingDate = billingResult.billing_date;
+      invoiceTotal = Number(billingResult.amount || 0);
 
       const alreadyPaid = await getNetPaidForInvoice(tx, companyId, invoiceId);
       const paymentAmount = Number(Math.max(invoiceTotal - alreadyPaid, 0).toFixed(2));
@@ -1542,27 +1531,6 @@ router.put("/ops/subscriptions/:id/mark-paid", auth, billingLifecycleAuditOnlyMi
         companyId
       ]);
 
-      const nextBillingDate = (() => {
-        const current = new Date(`${billingDate}T00:00:00Z`);
-        if (subscription.frequency === "weekly") {
-          current.setUTCDate(current.getUTCDate() + 7);
-        } else if (subscription.frequency === "biweekly") {
-          current.setUTCDate(current.getUTCDate() + 14);
-        } else {
-          current.setUTCMonth(current.getUTCMonth() + 1);
-        }
-        return current.toISOString().split("T")[0];
-      })();
-
-      await tx.query(`
-        UPDATE subscriptions
-        SET
-          last_billed_month = $1,
-          last_billed_at = $2,
-          last_billed_date = $2,
-          next_billing_date = $3
-        WHERE id = $4 AND company_id = $5
-      `, [billingMonth, billingDate, nextBillingDate, subscriptionId, companyId]);
       await tx.query("COMMIT");
     } catch (transactionErr) {
       await tx.query("ROLLBACK");

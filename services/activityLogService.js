@@ -8,7 +8,7 @@ async function ensureActivityLogSchema() {
       await pool.query(`
         CREATE TABLE IF NOT EXISTS activity_log (
           id SERIAL PRIMARY KEY,
-          company_id INTEGER NOT NULL,
+          company_id INTEGER,
           user_id INTEGER,
           action TEXT NOT NULL,
           entity_type TEXT,
@@ -33,7 +33,7 @@ async function logActivity({ companyId, userId, action, entityType, entityId = n
     INSERT INTO activity_log (company_id, user_id, action, entity_type, entity_id, details)
     VALUES ($1,$2,$3,$4,$5,$6::jsonb)
   `, [
-    companyId,
+    companyId === undefined || companyId === null ? null : companyId,
     userId || null,
     action,
     entityType || null,

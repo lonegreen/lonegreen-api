@@ -1,5 +1,12 @@
 ﻿const pool = require("../db/pool");
 const logger = require("./logger");
+const {
+  nextInvoiceNumber,
+  normalizeLineItems
+} = require("./invoiceService");
+const {
+  appendPaymentLedgerEntrySafe
+} = require("./financialIntegrityService");
 
 const SUBSCRIPTION_ENGINE_LOCK_KEY_1 = 742011;
 const SUBSCRIPTION_ENGINE_LOCK_KEY_2 = 202602;
@@ -35,10 +42,302 @@ function advanceSubscriptionDate(date, frequency) {
   date.setMonth(date.getMonth() + 1);
 }
 
-async function processSubscriptions() {
+function dateOnly(value) {
+  if (!value) return new Date().toISOString().split("T")[0];
+  if (value instanceof Date) return value.toISOString().split("T")[0];
+  return String(value).split("T")[0];
+}
+
+function billingMonthForDate(value) {
+  return dateOnly(value).slice(0, 7);
+}
+
+function advanceBillingDate(dateText, frequency) {
+  const billingDate = dateOnly(dateText);
+  const currentMonth = billingMonthForDate(billingDate);
+  const current = new Date(`${billingDate}T00:00:00Z`);
+
+  do {
+    advanceSubscriptionDate(current, frequency);
+  } while (current.toISOString().slice(0, 7) === currentMonth);
+
+  return current.toISOString().split("T")[0];
+}
+
+async function findExistingSubscriptionInvoice(db, companyId, subscriptionId, billingMonth) {
+  const monthStart = `${billingMonth}-01`;
+  const monthEndDate = new Date(`${monthStart}T00:00:00Z`);
+  monthEndDate.setUTCMonth(monthEndDate.getUTCMonth() + 1);
+  const monthEnd = monthEndDate.toISOString().split("T")[0];
+
+  const result = await db.query(
+    `
+    SELECT id
+    FROM invoices
+    WHERE company_id = $1
+      AND source_subscription_id = $2
+      AND status <> 'cancelled'
+      AND COALESCE(due_date, issued_date, created_at::date) >= $3::date
+      AND COALESCE(due_date, issued_date, created_at::date) < $4::date
+    ORDER BY id ASC
+    LIMIT 1
+    FOR UPDATE
+    `,
+    [companyId, subscriptionId, monthStart, monthEnd]
+  );
+
+  return result.rows[0] ? Number(result.rows[0].id) : null;
+}
+
+async function createSubscriptionBillingInvoiceInTransaction(db, {
+  companyId,
+  subscriptionId,
+  billingDate,
+  notes = "",
+  status = "generated",
+  createdBy = null,
+  source = "subscription_scheduler"
+}) {
+  const subResult = await db.query(
+    `
+    SELECT *
+    FROM subscriptions
+    WHERE id = $1
+      AND company_id = $2
+    LIMIT 1
+    FOR UPDATE
+    `,
+    [subscriptionId, companyId]
+  );
+
+  if (!subResult.rows.length) {
+    const err = new Error("Subscription not found");
+    err.code = "SUBSCRIPTION_NOT_FOUND";
+    err.statusCode = 404;
+    throw err;
+  }
+
+  const subscription = subResult.rows[0];
+  const subscriptionStatus = String(subscription.status || "").trim().toLowerCase();
+  if (subscriptionStatus !== "active") {
+    return {
+      skipped: true,
+      reason: "subscription_not_active",
+      subscription
+    };
+  }
+
+  const resolvedBillingDate = dateOnly(
+    billingDate
+    || subscription.next_billing_date
+    || subscription.next_date
+    || new Date()
+  );
+  const billingMonth = billingMonthForDate(resolvedBillingDate);
+  const amount = Number(subscription.price || 0);
+
+  if (!Number.isFinite(amount) || amount < 0) {
+    const err = new Error("Subscription price cannot be negative");
+    err.code = "SUBSCRIPTION_PRICE_INVALID";
+    err.statusCode = 400;
+    throw err;
+  }
+
+  const existingBilling = await db.query(
+    `
+    SELECT *
+    FROM subscription_billings
+    WHERE company_id = $1
+      AND subscription_id = $2
+      AND billing_month = $3
+    LIMIT 1
+    FOR UPDATE
+    `,
+    [companyId, subscriptionId, billingMonth]
+  );
+
+  let billingRow = existingBilling.rows[0] || null;
+  let invoiceId = billingRow && billingRow.invoice_id ? Number(billingRow.invoice_id) : null;
+  let createdInvoice = false;
+  let createdBilling = false;
+
+  if (!invoiceId) {
+    invoiceId = await findExistingSubscriptionInvoice(db, companyId, subscriptionId, billingMonth);
+  }
+
+  if (!billingRow) {
+    const insertedBilling = await db.query(
+      `
+      INSERT INTO subscription_billings
+        (subscription_id, invoice_id, billing_month, billing_date, amount, status, notes, company_id)
+      VALUES
+        ($1, $2, $3, $4, $5, $6, $7, $8)
+      ON CONFLICT (company_id, subscription_id, billing_month)
+      DO NOTHING
+      RETURNING *
+      `,
+      [
+        subscriptionId,
+        invoiceId,
+        billingMonth,
+        resolvedBillingDate,
+        amount,
+        status,
+        notes || "",
+        companyId
+      ]
+    );
+
+    if (!insertedBilling.rows.length) {
+      const concurrentBilling = await db.query(
+        `
+        SELECT *
+        FROM subscription_billings
+        WHERE company_id = $1
+          AND subscription_id = $2
+          AND billing_month = $3
+        LIMIT 1
+        FOR UPDATE
+        `,
+        [companyId, subscriptionId, billingMonth]
+      );
+      billingRow = concurrentBilling.rows[0] || null;
+      invoiceId = billingRow && billingRow.invoice_id ? Number(billingRow.invoice_id) : invoiceId;
+    } else {
+      billingRow = insertedBilling.rows[0];
+      createdBilling = true;
+    }
+  }
+
+  if (!invoiceId) {
+    const invoiceNumber = await nextInvoiceNumber(companyId, db);
+    const description = `${subscription.service || "Subscription billing"} - ${billingMonth}`;
+    const normalizedInvoice = normalizeLineItems([], amount, description);
+
+    const invoiceInsert = await db.query(
+      `
+      INSERT INTO invoices
+        (company_id, client_id, source_subscription_id, source_type, invoice_number, status, issued_date, due_date, subtotal, amount, notes, line_items)
+      VALUES
+        ($1, $2, $3, 'subscription', $4, 'unpaid', $5, $5, $6, $7, $8, $9::jsonb)
+      RETURNING *
+      `,
+      [
+        companyId,
+        subscription.client_id,
+        subscriptionId,
+        invoiceNumber,
+        resolvedBillingDate,
+        normalizedInvoice.subtotal,
+        normalizedInvoice.total,
+        notes || `Subscription billing for ${subscription.service || "service"} (${billingMonth})`,
+        JSON.stringify(normalizedInvoice.line_items)
+      ]
+    );
+
+    invoiceId = Number(invoiceInsert.rows[0].id);
+    createdInvoice = true;
+
+    await appendPaymentLedgerEntrySafe(db, {
+      company_id: companyId,
+      event_type: "invoice_created",
+      invoice_id: invoiceId,
+      amount: normalizedInvoice.total,
+      metadata: {
+        source,
+        subscription_id: Number(subscriptionId),
+        billing_month: billingMonth
+      },
+      created_by: createdBy
+    });
+  }
+
+  const billingStatus = status === "paid" ? "paid" : (billingRow && billingRow.status === "paid" ? "paid" : status);
+  const updatedBilling = await db.query(
+    `
+    UPDATE subscription_billings
+    SET
+      invoice_id = COALESCE(invoice_id, $4),
+      amount = $5,
+      status = $6,
+      notes = CASE
+        WHEN COALESCE(NULLIF($7, ''), '') = '' THEN notes
+        ELSE $7
+      END,
+      billing_date = $8
+    WHERE company_id = $1
+      AND subscription_id = $2
+      AND billing_month = $3
+    RETURNING *
+    `,
+    [
+      companyId,
+      subscriptionId,
+      billingMonth,
+      invoiceId,
+      amount,
+      billingStatus,
+      notes || "",
+      resolvedBillingDate
+    ]
+  );
+
+  const nextBillingDate = advanceBillingDate(resolvedBillingDate, subscription.frequency);
+  const updatedSub = await db.query(
+    `
+    UPDATE subscriptions
+    SET
+      last_billed_month = $1,
+      last_billed_at = $2,
+      last_billed_date = $2,
+      next_billing_date = CASE
+        WHEN next_billing_date IS NULL OR next_billing_date <= $2::date THEN $3::date
+        ELSE next_billing_date
+      END
+    WHERE id = $4
+      AND company_id = $5
+    RETURNING *
+    `,
+    [billingMonth, resolvedBillingDate, nextBillingDate, subscriptionId, companyId]
+  );
+
+  return {
+    skipped: false,
+    subscription: updatedSub.rows[0] || subscription,
+    billing: updatedBilling.rows[0] || billingRow,
+    invoice_id: invoiceId,
+    billing_month: billingMonth,
+    billing_date: resolvedBillingDate,
+    amount,
+    created_invoice: createdInvoice,
+    created_billing: createdBilling,
+    next_billing_date: nextBillingDate
+  };
+}
+
+async function createSubscriptionBillingInvoice(options) {
+  const db = await pool.connect();
+  try {
+    await db.query("BEGIN");
+    const result = await createSubscriptionBillingInvoiceInTransaction(db, options);
+    await db.query("COMMIT");
+    return result;
+  } catch (err) {
+    await db.query("ROLLBACK").catch(() => {});
+    throw err;
+  } finally {
+    db.release();
+  }
+}
+
+async function processSubscriptions(options = {}) {
   const client = await pool.connect();
   let lockAcquired = false;
   const startedAt = Date.now();
+  const onlySubscriptionId = Number(options && options.subscriptionId);
+  const onlyCompanyId = Number(options && options.companyId);
+  const scopedSubscriptionId = Number.isInteger(onlySubscriptionId) && onlySubscriptionId > 0 ? onlySubscriptionId : null;
+  const scopedCompanyId = Number.isInteger(onlyCompanyId) && onlyCompanyId > 0 ? onlyCompanyId : null;
 
   try {
     const lockResult = await client.query(
@@ -68,7 +367,9 @@ async function processSubscriptions() {
       WHERE status = 'active'
         AND company_id IS NOT NULL
         AND client_id IS NOT NULL
-    `);
+        AND ($1::int IS NULL OR id = $1::int)
+        AND ($2::int IS NULL OR company_id = $2::int)
+    `, [scopedSubscriptionId, scopedCompanyId]);
 
     const limitDate = new Date();
     limitDate.setDate(limitDate.getDate() + 30);
@@ -76,9 +377,10 @@ async function processSubscriptions() {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    for (const subscription of subs.rows) {
-      if (!subscription.next_date) continue;
+    let billingGenerated = 0;
+    let billingSkipped = 0;
 
+    for (const subscription of subs.rows) {
       // Defense-in-depth: even after the SELECT-side filter, refuse to act on
       // any subscription row whose company_id failed to resolve to a positive
       // integer. Without a resolved tenant we cannot insert a tenant-scoped
@@ -103,12 +405,56 @@ async function processSubscriptions() {
         continue;
       }
 
+      const rawBillingDate = subscription.next_billing_date || subscription.next_date;
+      const dueBillingDate = rawBillingDate ? dateOnly(rawBillingDate) : null;
+      if (dueBillingDate && dueBillingDate <= today.toISOString().split("T")[0]) {
+        try {
+          const billingResult = await createSubscriptionBillingInvoice({
+            companyId: subscriptionCompanyId,
+            subscriptionId: Number(subscription.id),
+            billingDate: dueBillingDate,
+            status: "generated",
+            source: "subscription_scheduler"
+          });
+          if (billingResult && billingResult.created_invoice) {
+            billingGenerated += 1;
+            logger.info("SUBSCRIPTION_BILLING_INVOICE_CREATED", {
+              company_id: subscriptionCompanyId,
+              subscription_id: Number(subscription.id),
+              invoice_id: billingResult.invoice_id,
+              billing_month: billingResult.billing_month
+            });
+          } else {
+            billingSkipped += 1;
+          }
+        } catch (billingErr) {
+          if (billingErr && billingErr.code === "23505") {
+            billingSkipped += 1;
+            logger.warn("SUBSCRIPTION_BILLING_DUPLICATE_SKIPPED", {
+              company_id: subscriptionCompanyId,
+              subscription_id: Number(subscription.id),
+              error: billingErr.message
+            });
+          } else {
+            throw billingErr;
+          }
+        }
+      }
+
+      if (!subscription.next_date) continue;
+
       let currentDate = new Date(subscription.next_date);
       currentDate.setHours(0, 0, 0, 0);
 
       while (currentDate < today) {
         advanceSubscriptionDate(currentDate, subscription.frequency);
       }
+
+      const nextDateCandidate = new Date(currentDate);
+      while (nextDateCandidate <= today) {
+        advanceSubscriptionDate(nextDateCandidate, subscription.frequency);
+      }
+      const nextDateAfterToday = nextDateCandidate.toISOString().split("T")[0];
 
       while (currentDate <= limitDate) {
         const dateStr = currentDate.toISOString().split("T")[0];
@@ -162,13 +508,24 @@ async function processSubscriptions() {
 
         advanceSubscriptionDate(currentDate, subscription.frequency);
       }
+
+      await client.query(`
+        UPDATE subscriptions
+        SET next_date = $1::date
+        WHERE id = $2
+          AND company_id = $3
+          AND status = 'active'
+          AND next_date < $1::date
+      `, [nextDateAfterToday, subscription.id, subscriptionCompanyId]);
     }
 
     logger.info("SUBSCRIPTION_ENGINE_RUN_COMPLETED", {
       processed: subs.rows.length,
+      billing_generated: billingGenerated,
+      billing_skipped: billingSkipped,
       duration_ms: Date.now() - startedAt
     });
-    return { skipped: false, processed: subs.rows.length };
+    return { skipped: false, processed: subs.rows.length, billing_generated: billingGenerated, billing_skipped: billingSkipped };
   } catch (err) {
     if (err && err.code === "23505") {
       logger.warn("Subscription engine duplicate insert skipped by database uniqueness guard", {
@@ -208,5 +565,8 @@ function startSubscriptionEngine(intervalMs = 60 * 60 * 1000) {
 
 module.exports = {
   processSubscriptions,
-  startSubscriptionEngine
+  startSubscriptionEngine,
+  createSubscriptionBillingInvoice,
+  createSubscriptionBillingInvoiceInTransaction,
+  advanceBillingDate
 };

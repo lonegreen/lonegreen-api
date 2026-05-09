@@ -756,6 +756,18 @@ router.post("/estimates", auth, requireCompanyBillingForMutations, requireMinimu
       company_id
     ]);
 
+    await logActivity({
+      companyId: company_id,
+      userId: req.user.id,
+      action: "estimate_created",
+      entityType: "estimate",
+      entityId: result.rows[0].id,
+      details: {
+        client_id: client_id || null,
+        status: result.rows[0].status || null
+      }
+    });
+
     res.json(result.rows[0]);
   } catch (err) {
     console.log("ADD ESTIMATE ERROR:", err);
@@ -886,6 +898,19 @@ router.put("/estimates/:id", auth, requireCompanyBillingForMutations, requireMin
       metadata: {}
     });
 
+    const prevStatus = normalizeEstimateStatus(before.rows[0].status);
+    const nextStatus = normalizeEstimateStatus(result.rows[0].status);
+    if (nextStatus === "approved" && prevStatus !== "approved") {
+      await logActivity({
+        companyId: company_id,
+        userId: req.user.id,
+        action: "estimate_approved",
+        entityType: "estimate",
+        entityId: Number(id),
+        details: { from_status: prevStatus }
+      });
+    }
+
     res.json(result.rows[0]);
   } catch (err) {
     console.log("UPDATE ESTIMATE ERROR:", err);
@@ -936,6 +961,31 @@ router.put("/estimates/:id/status", auth, requireCompanyBillingForMutations, req
 
     if (result.rows.length === 0) {
       return res.status(404).json({ error: "Estimate not found" });
+    }
+
+    await logActivity({
+      companyId: company_id,
+      userId: req.user.id,
+      action: "estimate_status_changed",
+      entityType: "estimate",
+      entityId: Number(id),
+      details: {
+        from_status: current.rows[0].status,
+        to_status: result.rows[0].status
+      }
+    });
+
+    const prevStatus = normalizeEstimateStatus(current.rows[0].status);
+    const nextStatus = normalizeEstimateStatus(result.rows[0].status);
+    if (nextStatus === "approved" && prevStatus !== "approved") {
+      await logActivity({
+        companyId: company_id,
+        userId: req.user.id,
+        action: "estimate_approved",
+        entityType: "estimate",
+        entityId: Number(id),
+        details: { from_status: prevStatus }
+      });
     }
 
     res.json(result.rows[0]);

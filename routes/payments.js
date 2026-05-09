@@ -306,6 +306,19 @@ router.post("/workflow/invoices/:id/payments", auth, requireCompanyBillingForMut
 
     });
 
+    await logActivity({
+      companyId: req.user.company_id,
+      userId: req.user.id,
+      action: "invoice_paid",
+      entityType: "invoice",
+      entityId: Number(req.params.id),
+      details: {
+        payment_id: paymentRow.id,
+        amount,
+        client_id: invoice.client_id || null
+      }
+    });
+
     try {
       const mailPayload = buildPaymentReceiptPayload({
         invoice: updatedInvoice,

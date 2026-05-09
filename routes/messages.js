@@ -11,6 +11,7 @@ const {
 } = require("../middleware/auth");
 const { validateMessageContent } = require("../middleware/abuseGuards");
 const { sendSafeServerError } = require("../services/safeServerError");
+const activityLogService = require("../services/activityLogService");
 const { sendOperationalEmailSafe } = require("../services/emailService");
 const {
   resolveCustomerAccountId,
@@ -483,6 +484,25 @@ router.post("/conversations/:id/messages", participantAuth, validateMessageConte
             </div>
           `
         }, { kind: "new_message" });
+      }
+    }
+
+    if (recipient && recipient.company_id) {
+      try {
+        await activityLogService.logActivity({
+          companyId: recipient.company_id,
+          userId: senderType === "company" ? req.participant.user_id : null,
+          action: "message_sent",
+          entityType: "message",
+          entityId: insertedMessage.id,
+          details: {
+            conversation_id: conversationId,
+            sender_type: senderType,
+            client_id: recipient.client_id || null
+          }
+        });
+      } catch (logErr) {
+        console.log("MESSAGE FOUNDATION LOG ERROR:", logErr && logErr.message);
       }
     }
 

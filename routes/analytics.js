@@ -7,6 +7,9 @@ const { requireMinimumRole } = auth;
 
 const router = express.Router();
 const ownerAdmin = [auth, requireMinimumRole("admin")];
+const growthFoundationAccess = [auth, requireMinimumRole("manager")];
+
+const growthFoundationService = require("../services/growthFoundationService");
 
 function num(value) {
   return Number(value || 0);
@@ -915,6 +918,31 @@ router.get("/analytics/pro", ownerAdmin, async (req, res) => {
     });
   } catch (err) {
     sendSafeServerError(res, err, "ANALYTICS PRO ERROR");
+  }
+});
+
+router.get("/analytics/growth-foundation", growthFoundationAccess, async (req, res) => {
+  try {
+    const companyId = req.user && req.user.company_id;
+    if (!companyId) {
+      return res.status(403).json({ error: "Forbidden" });
+    }
+
+    const [company_metrics, worker_metrics, customer_metrics] = await Promise.all([
+      growthFoundationService.getCompanyMetrics(companyId),
+      growthFoundationService.getWorkerMetrics(companyId),
+      growthFoundationService.getCustomerMetrics(companyId)
+    ]);
+
+    res.json({
+      company_id: companyId,
+      generated_at: new Date().toISOString(),
+      company_metrics,
+      worker_metrics,
+      customer_metrics
+    });
+  } catch (err) {
+    sendSafeServerError(res, err, "ANALYTICS GROWTH FOUNDATION ERROR");
   }
 });
 

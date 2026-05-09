@@ -657,6 +657,25 @@ router.put("/jobs/:id/status", auth, requireCompanyBillingForMutations, requireM
       ]
     );
 
+    if (result.rows.length > 0) {
+      const row = result.rows[0];
+      if (
+        normalizeJobStatus(row.status) === "completed" &&
+        normalizeJobStatus(currentJob.status) !== "completed"
+      ) {
+        await logActivity({
+          companyId: company_id,
+          userId: req.user.id,
+          action: "job_completed",
+          entityType: "job",
+          entityId: Number(id),
+          details: {
+            worker_id: row.worker_id || null
+          }
+        });
+      }
+    }
+
     res.json(result.rows[0]);
   } catch (err) {
     console.log("UPDATE JOB STATUS ERROR:", err);
@@ -1308,6 +1327,22 @@ router.put("/workflow/jobs/:id/status", auth, requireCompanyBillingForMutations,
         payment_status: updated.rows[0].payment_status
       }
     });
+
+    if (
+      normalizeJobStatus(updated.rows[0].status) === "completed" &&
+      normalizeJobStatus(job.status) !== "completed"
+    ) {
+      await logActivity({
+        companyId: req.user.company_id,
+        userId: req.user.id,
+        action: "job_completed",
+        entityType: "job",
+        entityId: Number(req.params.id),
+        details: {
+          worker_id: updated.rows[0].worker_id || null
+        }
+      });
+    }
 
     res.json(updated.rows[0]);
   } catch (err) {
