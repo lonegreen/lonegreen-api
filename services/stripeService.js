@@ -4,13 +4,14 @@ const {
   NODE_ENV,
   ALLOWED_ORIGINS,
   STRIPE_SECRET_KEY,
-  STRIPE_PRICE_BASIC,
+  STRIPE_PRICE_STARTER,
   STRIPE_PRICE_PRO,
-  STRIPE_PRICE_BUSINESS,
-  STRIPE_PRICE_BASIC_YEARLY,
+  STRIPE_PRICE_GROWTH,
+  STRIPE_PRICE_STARTER_YEARLY,
   STRIPE_PRICE_PRO_YEARLY,
-  STRIPE_PRICE_BUSINESS_YEARLY,
-  PUBLIC_APP_URL
+  STRIPE_PRICE_GROWTH_YEARLY,
+  PUBLIC_APP_URL,
+  getStripeCheckoutEnvReadiness
 } = require("../config/env");
 
 const CHECKOUT_PLANS = new Set(["starter", "pro", "growth"]);
@@ -41,12 +42,11 @@ function normalizeCheckoutBillingCycle(cycle) {
 }
 
 function isStripeCheckoutConfigured() {
-  return Boolean(
-    STRIPE_SECRET_KEY
-    && STRIPE_PRICE_BASIC
-    && STRIPE_PRICE_PRO
-    && STRIPE_PRICE_BUSINESS
-  );
+  return getStripeCheckoutReadiness().status === "configured";
+}
+
+function getStripeCheckoutReadiness() {
+  return getStripeCheckoutEnvReadiness();
 }
 
 function isStripePortalConfigured() {
@@ -63,14 +63,14 @@ function normalizeCheckoutPlan(raw) {
 function priceIdForCheckoutPlan(plan, billingCycle = "monthly") {
   const cycle = normalizeCheckoutBillingCycle(billingCycle);
   const monthly = {
-    starter: STRIPE_PRICE_BASIC,
+    starter: STRIPE_PRICE_STARTER,
     pro: STRIPE_PRICE_PRO,
-    growth: STRIPE_PRICE_BUSINESS
+    growth: STRIPE_PRICE_GROWTH
   };
   const yearly = {
-    starter: STRIPE_PRICE_BASIC_YEARLY,
+    starter: STRIPE_PRICE_STARTER_YEARLY,
     pro: STRIPE_PRICE_PRO_YEARLY,
-    growth: STRIPE_PRICE_BUSINESS_YEARLY
+    growth: STRIPE_PRICE_GROWTH_YEARLY
   };
 
   const map = cycle === "yearly" ? yearly : monthly;
@@ -82,12 +82,12 @@ function checkoutPlanAndCycleFromPriceId(priceId) {
   if (!id) return { checkoutPlan: null, billing_cycle: null };
 
   const pairs = [
-    ["starter", "monthly", STRIPE_PRICE_BASIC],
+    ["starter", "monthly", STRIPE_PRICE_STARTER],
     ["pro", "monthly", STRIPE_PRICE_PRO],
-    ["growth", "monthly", STRIPE_PRICE_BUSINESS],
-    ["starter", "yearly", STRIPE_PRICE_BASIC_YEARLY],
+    ["growth", "monthly", STRIPE_PRICE_GROWTH],
+    ["starter", "yearly", STRIPE_PRICE_STARTER_YEARLY],
     ["pro", "yearly", STRIPE_PRICE_PRO_YEARLY],
-    ["growth", "yearly", STRIPE_PRICE_BUSINESS_YEARLY]
+    ["growth", "yearly", STRIPE_PRICE_GROWTH_YEARLY]
   ];
 
   for (const [checkoutPlan, billingCycle, configuredPriceId] of pairs) {
@@ -109,9 +109,9 @@ function idempotencyKey(parts) {
 
 function yearlyPricesConfigured() {
   return Boolean(
-    STRIPE_PRICE_BASIC_YEARLY
+    STRIPE_PRICE_STARTER_YEARLY
     && STRIPE_PRICE_PRO_YEARLY
-    && STRIPE_PRICE_BUSINESS_YEARLY
+    && STRIPE_PRICE_GROWTH_YEARLY
   );
 }
 
@@ -277,6 +277,35 @@ async function getOrCreateStripeCustomerId(companyId) {
   return getOrCreateStripeCustomer(companyId);
 }
 
+async function assertCheckoutPriceUsable(stripe, priceId, plan) {
+  try {
+    const price = await stripe.prices.retrieve(priceId);
+    if (!price || price.deleted || price.active === false) {
+      const err = new Error(`Stripe Price ID for ${plan} is inactive or unavailable.`);
+      err.code = "STRIPE_PRICE_INVALID";
+      err.statusCode = 400;
+      throw err;
+    }
+    if (!price.recurring) {
+      const err = new Error(`Stripe Price ID for ${plan} is not a recurring subscription price.`);
+      err.code = "STRIPE_PRICE_INVALID";
+      err.statusCode = 400;
+      throw err;
+    }
+  } catch (err) {
+    if (err && err.code === "STRIPE_PRICE_INVALID") {
+      throw err;
+    }
+    if (err && err.type === "StripeInvalidRequestError") {
+      const wrapped = new Error(`Stripe Price ID for ${plan} is invalid or not accessible: ${err.message}`);
+      wrapped.code = "STRIPE_PRICE_INVALID";
+      wrapped.statusCode = 400;
+      throw wrapped;
+    }
+    throw err;
+  }
+}
+
 async function createCheckoutSessionForCompany({
   companyId,
   checkoutPlan,
@@ -284,8 +313,19 @@ async function createCheckoutSessionForCompany({
   req
 }) {
   if (!isStripeCheckoutConfigured()) {
-    const err = new Error("Stripe Checkout is not fully configured. Set STRIPE_SECRET_KEY and STRIPE_PRICE_BASIC, STRIPE_PRICE_PRO, STRIPE_PRICE_BUSINESS.");
+    const readiness = getStripeCheckoutReadiness();
+    const detail = readiness.missing.length
+      ? ` Missing: ${readiness.missing.join(", ")}.`
+      : readiness.invalid.length
+        ? ` Invalid: ${readiness.invalid.join("; ")}.`
+        : "";
+    const err = new Error(`Stripe Checkout is not fully configured.${detail}`);
     err.code = "STRIPE_NOT_CONFIGURED";
+    err.statusCode = 503;
+    err.details = {
+      missing: readiness.missing,
+      invalid: readiness.invalid
+    };
     throw err;
   }
 
@@ -303,7 +343,7 @@ async function createCheckoutSessionForCompany({
   if (!priceId) {
     const err = new Error(
       billingCycle === "yearly"
-        ? "Stripe yearly Price ID is not configured for this plan. Set STRIPE_PRICE_BASIC_YEARLY, STRIPE_PRICE_PRO_YEARLY, STRIPE_PRICE_BUSINESS_YEARLY."
+        ? "Stripe yearly Price ID is not configured for this plan. Set STRIPE_PRICE_STARTER_YEARLY, STRIPE_PRICE_PRO_YEARLY, STRIPE_PRICE_GROWTH_YEARLY."
         : "Stripe Price ID is not configured for this plan."
     );
     err.code = billingCycle === "yearly" ? "STRIPE_YEARLY_PRICE_MISSING" : "STRIPE_PRICE_MISSING";
@@ -317,6 +357,8 @@ async function createCheckoutSessionForCompany({
     err.code = "STRIPE_NOT_CONFIGURED";
     throw err;
   }
+
+  await assertCheckoutPriceUsable(stripe, priceId, plan);
 
   const customerId = await getOrCreateStripeCustomerId(companyId);
 
@@ -736,6 +778,7 @@ async function createPortalSessionForCompany({
 module.exports = {
   getStripe,
   isStripeCheckoutConfigured,
+  getStripeCheckoutReadiness,
   isStripePortalConfigured,
   yearlyPricesConfigured,
   normalizeCheckoutPlan,

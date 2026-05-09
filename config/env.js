@@ -113,12 +113,24 @@ function integerEnv(name, fallback) {
 }
 
 const STRIPE_SECRET_KEY = optionalEnv("STRIPE_SECRET_KEY");
-const STRIPE_PRICE_BASIC = optionalEnv("STRIPE_PRICE_BASIC");
+const RAW_STRIPE_PRICE_STARTER = optionalEnv("STRIPE_PRICE_STARTER");
+const RAW_STRIPE_PRICE_BASIC = optionalEnv("STRIPE_PRICE_BASIC");
 const STRIPE_PRICE_PRO = optionalEnv("STRIPE_PRICE_PRO");
-const STRIPE_PRICE_BUSINESS = optionalEnv("STRIPE_PRICE_BUSINESS");
-const STRIPE_PRICE_BASIC_YEARLY = optionalEnv("STRIPE_PRICE_BASIC_YEARLY");
+const RAW_STRIPE_PRICE_GROWTH = optionalEnv("STRIPE_PRICE_GROWTH");
+const RAW_STRIPE_PRICE_BUSINESS = optionalEnv("STRIPE_PRICE_BUSINESS");
+const RAW_STRIPE_PRICE_STARTER_YEARLY = optionalEnv("STRIPE_PRICE_STARTER_YEARLY");
+const RAW_STRIPE_PRICE_BASIC_YEARLY = optionalEnv("STRIPE_PRICE_BASIC_YEARLY");
 const STRIPE_PRICE_PRO_YEARLY = optionalEnv("STRIPE_PRICE_PRO_YEARLY");
-const STRIPE_PRICE_BUSINESS_YEARLY = optionalEnv("STRIPE_PRICE_BUSINESS_YEARLY");
+const RAW_STRIPE_PRICE_GROWTH_YEARLY = optionalEnv("STRIPE_PRICE_GROWTH_YEARLY");
+const RAW_STRIPE_PRICE_BUSINESS_YEARLY = optionalEnv("STRIPE_PRICE_BUSINESS_YEARLY");
+const STRIPE_PRICE_STARTER = RAW_STRIPE_PRICE_STARTER || RAW_STRIPE_PRICE_BASIC;
+const STRIPE_PRICE_BASIC = RAW_STRIPE_PRICE_BASIC || RAW_STRIPE_PRICE_STARTER;
+const STRIPE_PRICE_GROWTH = RAW_STRIPE_PRICE_GROWTH || RAW_STRIPE_PRICE_BUSINESS;
+const STRIPE_PRICE_BUSINESS = RAW_STRIPE_PRICE_BUSINESS || RAW_STRIPE_PRICE_GROWTH;
+const STRIPE_PRICE_STARTER_YEARLY = RAW_STRIPE_PRICE_STARTER_YEARLY || RAW_STRIPE_PRICE_BASIC_YEARLY;
+const STRIPE_PRICE_BASIC_YEARLY = RAW_STRIPE_PRICE_BASIC_YEARLY || RAW_STRIPE_PRICE_STARTER_YEARLY;
+const STRIPE_PRICE_GROWTH_YEARLY = RAW_STRIPE_PRICE_GROWTH_YEARLY || RAW_STRIPE_PRICE_BUSINESS_YEARLY;
+const STRIPE_PRICE_BUSINESS_YEARLY = RAW_STRIPE_PRICE_BUSINESS_YEARLY || RAW_STRIPE_PRICE_GROWTH_YEARLY;
 const STRIPE_WEBHOOK_SECRET = optionalEnv("STRIPE_WEBHOOK_SECRET");
 const BILLING_GRACE_PERIOD_DAYS = Math.max(0, integerEnv("BILLING_GRACE_PERIOD_DAYS", 7));
 const BILLING_LIFECYCLE_AUTOMATION = booleanEnv(
@@ -138,6 +150,14 @@ function isStripeTestSecretKey(value) {
 
 function isStripeLiveSecretKey(value) {
   return /^(sk|rk)_live_/.test(String(value || "").trim());
+}
+
+function isStripeSecretKeyShape(value) {
+  return /^(sk|rk)_(test|live)_/.test(String(value || "").trim());
+}
+
+function isStripePriceIdShape(value) {
+  return /^price_[A-Za-z0-9_]+$/.test(String(value || "").trim());
 }
 
 function isPlaceholderSecret(value) {
@@ -163,14 +183,14 @@ if (NODE_ENV === "production") {
 //   when STRIPE_SECRET_KEY is configured.
 function validateStripePriceIdsConfig() {
   const monthly = [
-    ["STRIPE_PRICE_BASIC", STRIPE_PRICE_BASIC],
+    ["STRIPE_PRICE_STARTER", STRIPE_PRICE_STARTER],
     ["STRIPE_PRICE_PRO", STRIPE_PRICE_PRO],
-    ["STRIPE_PRICE_BUSINESS", STRIPE_PRICE_BUSINESS]
+    ["STRIPE_PRICE_GROWTH", STRIPE_PRICE_GROWTH]
   ];
   const yearly = [
-    ["STRIPE_PRICE_BASIC_YEARLY", STRIPE_PRICE_BASIC_YEARLY],
+    ["STRIPE_PRICE_STARTER_YEARLY", STRIPE_PRICE_STARTER_YEARLY],
     ["STRIPE_PRICE_PRO_YEARLY", STRIPE_PRICE_PRO_YEARLY],
-    ["STRIPE_PRICE_BUSINESS_YEARLY", STRIPE_PRICE_BUSINESS_YEARLY]
+    ["STRIPE_PRICE_GROWTH_YEARLY", STRIPE_PRICE_GROWTH_YEARLY]
   ];
   const all = monthly.concat(yearly);
 
@@ -180,7 +200,7 @@ function validateStripePriceIdsConfig() {
       const names = missingMonthly.map(([name]) => name).join(", ");
       throw new Error(
         "Stripe price IDs missing in production: " + names + ". " +
-        "Each plan tier (basic, pro, business) must map to a distinct Stripe price."
+        "Each plan tier (starter, pro, growth) must map to a distinct Stripe price."
       );
     }
   }
@@ -217,6 +237,40 @@ function validateStripePriceIdsConfig() {
 
 validateStripePriceIdsConfig();
 
+function getStripeCheckoutEnvReadiness() {
+  const required = [
+    ["STRIPE_SECRET_KEY", STRIPE_SECRET_KEY],
+    ["STRIPE_PRICE_STARTER (or STRIPE_PRICE_BASIC)", STRIPE_PRICE_STARTER],
+    ["STRIPE_PRICE_PRO", STRIPE_PRICE_PRO],
+    ["STRIPE_PRICE_GROWTH (or STRIPE_PRICE_BUSINESS)", STRIPE_PRICE_GROWTH]
+  ];
+  const missing = required
+    .filter(([, value]) => !String(value || "").trim())
+    .map(([name]) => name);
+  const invalid = [];
+
+  if (STRIPE_SECRET_KEY && !isStripeSecretKeyShape(STRIPE_SECRET_KEY)) {
+    invalid.push("STRIPE_SECRET_KEY must start with sk_test_, rk_test_, sk_live_, or rk_live_");
+  }
+
+  for (const [name, value] of required.slice(1)) {
+    if (value && !isStripePriceIdShape(value)) {
+      invalid.push(`${name} must be a Stripe Price ID starting with price_`);
+    }
+  }
+
+  return {
+    status: missing.length || invalid.length ? "not_configured" : "configured",
+    missing,
+    invalid,
+    price_aliases: {
+      starter: RAW_STRIPE_PRICE_STARTER ? "STRIPE_PRICE_STARTER" : (RAW_STRIPE_PRICE_BASIC ? "STRIPE_PRICE_BASIC" : null),
+      pro: STRIPE_PRICE_PRO ? "STRIPE_PRICE_PRO" : null,
+      growth: RAW_STRIPE_PRICE_GROWTH ? "STRIPE_PRICE_GROWTH" : (RAW_STRIPE_PRICE_BUSINESS ? "STRIPE_PRICE_BUSINESS" : null)
+    }
+  };
+}
+
 /**
  * Legacy setInterval subscription poll. Off in production unless explicitly true.
  * Non-production defaults to true for faster local feedback (set SUBSCRIPTION_INTERVAL_ENGINE=false to disable).
@@ -235,9 +289,7 @@ function getProductionEnvReadiness() {
   const requiredForLaunch = [
     "STRIPE_SECRET_KEY",
     "STRIPE_WEBHOOK_SECRET",
-    "STRIPE_PRICE_BASIC",
     "STRIPE_PRICE_PRO",
-    "STRIPE_PRICE_BUSINESS",
     "EMAIL_USER",
     "EMAIL_PASS",
     "ALLOWED_ORIGINS",
@@ -248,6 +300,12 @@ function getProductionEnvReadiness() {
 
   const missingCritical = critical.filter(name => !hasEnv(name));
   const missingRequired = requiredForLaunch.filter(name => !hasEnv(name));
+  if (!STRIPE_PRICE_STARTER) {
+    missingRequired.push("STRIPE_PRICE_STARTER (or STRIPE_PRICE_BASIC)");
+  }
+  if (!STRIPE_PRICE_GROWTH) {
+    missingRequired.push("STRIPE_PRICE_GROWTH (or STRIPE_PRICE_BUSINESS)");
+  }
   const missingRecommended = recommended.filter(name => !hasEnv(name));
   const warnings = [];
 
@@ -276,12 +334,12 @@ function getProductionEnvReadiness() {
   }
 
   const pricePairs = [
-    ["STRIPE_PRICE_BASIC", STRIPE_PRICE_BASIC],
+    ["STRIPE_PRICE_STARTER", STRIPE_PRICE_STARTER],
     ["STRIPE_PRICE_PRO", STRIPE_PRICE_PRO],
-    ["STRIPE_PRICE_BUSINESS", STRIPE_PRICE_BUSINESS],
-    ["STRIPE_PRICE_BASIC_YEARLY", STRIPE_PRICE_BASIC_YEARLY],
+    ["STRIPE_PRICE_GROWTH", STRIPE_PRICE_GROWTH],
+    ["STRIPE_PRICE_STARTER_YEARLY", STRIPE_PRICE_STARTER_YEARLY],
     ["STRIPE_PRICE_PRO_YEARLY", STRIPE_PRICE_PRO_YEARLY],
-    ["STRIPE_PRICE_BUSINESS_YEARLY", STRIPE_PRICE_BUSINESS_YEARLY]
+    ["STRIPE_PRICE_GROWTH_YEARLY", STRIPE_PRICE_GROWTH_YEARLY]
   ];
   const seenPrices = new Map();
   for (const [name, value] of pricePairs) {
@@ -319,18 +377,23 @@ module.exports = {
   ALLOW_SEED_ADMIN,
   ALLOWED_ORIGINS,
   STRIPE_SECRET_KEY,
+  STRIPE_PRICE_STARTER,
   STRIPE_PRICE_BASIC,
   STRIPE_PRICE_PRO,
+  STRIPE_PRICE_GROWTH,
   STRIPE_PRICE_BUSINESS,
+  STRIPE_PRICE_STARTER_YEARLY,
   STRIPE_PRICE_BASIC_YEARLY,
   STRIPE_PRICE_PRO_YEARLY,
+  STRIPE_PRICE_GROWTH_YEARLY,
   STRIPE_PRICE_BUSINESS_YEARLY,
   PUBLIC_APP_URL,
   STRIPE_WEBHOOK_SECRET,
   BILLING_GRACE_PERIOD_DAYS,
   BILLING_LIFECYCLE_AUTOMATION,
   SUBSCRIPTION_INTERVAL_ENGINE,
-  getProductionEnvReadiness
+  getProductionEnvReadiness,
+  getStripeCheckoutEnvReadiness
   ,
   PORT
 };

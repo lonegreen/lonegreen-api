@@ -74,6 +74,8 @@ function normalizePhone(value) {
   return String(value || "").replace(/\D/g, "");
 }
 
+const ELIGIBLE_MARKETPLACE_BILLING_STATUSES = ["trial", "trialing", "active"];
+
 function safeTime(value, fallback) {
   const raw = cleanText(value);
   if (/^([01]\d|2[0-3]):([0-5]\d)$/.test(raw)) {
@@ -185,7 +187,7 @@ async function canCompanyMatchRequest(companyId, requestRow) {
     WHERE c.id = $1
       AND c.is_public = TRUE
       AND c.platform_suspended_at IS NULL
-      AND c.billing_status IN ('trialing', 'active')
+      AND c.billing_status = ANY($6::text[])
       AND (
         ($3 <> '' AND LEFT(REGEXP_REPLACE(COALESCE(csa.zip_code, ''), '[^0-9]', '', 'g'), 5) = $3)
         OR ($4 <> '' AND LOWER(csa.city) = $4)
@@ -193,7 +195,7 @@ async function canCompanyMatchRequest(companyId, requestRow) {
       )
     LIMIT 1
     `,
-    [companyId, requestRow.category_id, requestZip, requestCity, requestState]
+    [companyId, requestRow.category_id, requestZip, requestCity, requestState, ELIGIBLE_MARKETPLACE_BILLING_STATUSES]
   );
 
   return result.rows.length > 0;
@@ -286,7 +288,7 @@ router.get("/marketplace/opportunities", companyAuth, requireMinimumRole("manage
           WHERE c.id = $1
             AND c.is_public = TRUE
             AND c.platform_suspended_at IS NULL
-            AND c.billing_status IN ('trialing', 'active')
+            AND c.billing_status = ANY($4::text[])
             AND (
               (
                 mr.zip_code <> ''
@@ -300,7 +302,7 @@ router.get("/marketplace/opportunities", companyAuth, requireMinimumRole("manage
       ORDER BY mr.created_at DESC, mr.id DESC
       LIMIT $2 OFFSET $3
       `,
-      [companyId, limit, offset]
+      [companyId, limit, offset, ELIGIBLE_MARKETPLACE_BILLING_STATUSES]
     );
 
     return res.json(result.rows);
@@ -698,7 +700,7 @@ router.get("/marketplace/requests/:id/matches", customerAuth, async (req, res) =
         ON fol.company_id = c.id
       WHERE c.is_public = TRUE
         AND c.platform_suspended_at IS NULL
-        AND c.billing_status IN ('trialing', 'active')
+        AND c.billing_status = ANY($7::text[])
         AND (
           ($2 <> '' AND LEFT(REGEXP_REPLACE(COALESCE(csa.zip_code, ''), '[^0-9]', '', 'g'), 5) = $2)
           OR ($3 <> '' AND LOWER(csa.city) = $3)
@@ -731,7 +733,7 @@ router.get("/marketplace/requests/:id/matches", customerAuth, async (req, res) =
       ORDER BY ranking_score DESC, c.id ASC
       LIMIT $5 OFFSET $6
       `,
-      [request.category_id, requestZip, requestCity, requestState, limit, offset]
+      [request.category_id, requestZip, requestCity, requestState, limit, offset, ELIGIBLE_MARKETPLACE_BILLING_STATUSES]
     );
 
     return res.json({

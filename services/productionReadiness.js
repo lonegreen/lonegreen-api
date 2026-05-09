@@ -10,7 +10,13 @@ const {
   BILLING_LIFECYCLE_AUTOMATION,
   SUBSCRIPTION_INTERVAL_ENGINE
 } = require("../config/env");
-const { isStripeCheckoutConfigured, isStripePortalConfigured } = require("./stripeService");
+const {
+  isStripeCheckoutConfigured,
+  isStripePortalConfigured,
+  getStripeCheckoutReadiness,
+  getStripe,
+  priceIdForCheckoutPlan
+} = require("./stripeService");
 const { getEmailReadiness } = require("./emailService");
 const { getQueueStatus } = require("./jobQueue");
 const { getSchedulerStatus } = require("./schedulerService");
@@ -100,10 +106,56 @@ async function getBillingReadiness() {
   }
 }
 
-function getStripeReadiness() {
+async function getStripeProviderReadiness(checkout) {
+  if (!checkout || checkout.status !== "configured") {
+    return {
+      status: "skipped",
+      reason: "checkout_not_configured"
+    };
+  }
+
+  const stripe = getStripe();
+  if (!stripe) {
+    return {
+      status: "error",
+      error: "Stripe client is not configured"
+    };
+  }
+
+  try {
+    await Promise.all(["starter", "pro", "growth"].map(async (plan) => {
+      const priceId = priceIdForCheckoutPlan(plan, "monthly");
+      const price = await stripe.prices.retrieve(priceId);
+      if (!price || price.deleted || price.active === false || !price.recurring) {
+        throw Object.assign(new Error(`Stripe Price for ${plan} is inactive or not recurring`), {
+          code: "STRIPE_PRICE_NOT_USABLE"
+        });
+      }
+    }));
+    return {
+      status: "ok"
+    };
+  } catch (err) {
+    return {
+      status: "error",
+      code: err && (err.code || err.type) ? (err.code || err.type) : "STRIPE_PROVIDER_READINESS_ERROR",
+      error: err && err.message ? err.message : "Stripe provider readiness check failed"
+    };
+  }
+}
+
+async function getStripeReadiness() {
+  const checkout = getStripeCheckoutReadiness();
+  const provider = await getStripeProviderReadiness(checkout);
+  const providerOk = provider.status === "ok" || provider.status === "skipped";
   return {
-    status: isStripeCheckoutConfigured() && STRIPE_WEBHOOK_SECRET ? "configured" : "not_configured",
+    status: isStripeCheckoutConfigured() && STRIPE_WEBHOOK_SECRET && providerOk ? "configured" : "not_configured",
     checkout_configured: isStripeCheckoutConfigured(),
+    checkout_status: checkout.status,
+    missing_checkout_config: checkout.missing,
+    invalid_checkout_config: checkout.invalid,
+    checkout_price_aliases: checkout.price_aliases,
+    provider,
     webhook_secret_configured: Boolean(STRIPE_WEBHOOK_SECRET),
     portal_configured: isStripePortalConfigured()
   };
@@ -295,7 +347,7 @@ async function getHealthReadiness() {
   ]);
 
   const processStatus = getProcessReadiness();
-  const stripe = getStripeReadiness();
+  const stripe = await getStripeReadiness();
   const environment = getProductionEnvReadiness();
   const email = getEmailReadiness();
   const uploads = getUploadReadiness();
@@ -380,6 +432,7 @@ function sanitizeHealthReadinessForPublic(fullReadiness) {
   const database = fullReadiness.database || {};
   const migrations = fullReadiness.migrations || {};
   const workflows = fullReadiness.workflows || {};
+  const stripe = fullReadiness.stripe || {};
   return {
     ok: Boolean(fullReadiness.ok),
     app: fullReadiness.app || "FairLinx",
@@ -391,6 +444,22 @@ function sanitizeHealthReadinessForPublic(fullReadiness) {
     },
     workflows: {
       status: workflows.status || "unknown"
+    },
+    stripe: {
+      status: stripe.status || "unknown",
+      checkout_configured: Boolean(stripe.checkout_configured),
+      checkout_status: stripe.checkout_status || "unknown",
+      webhook_secret_configured: Boolean(stripe.webhook_secret_configured),
+      portal_configured: Boolean(stripe.portal_configured),
+      missing_checkout_config: Array.isArray(stripe.missing_checkout_config) ? stripe.missing_checkout_config : [],
+      invalid_checkout_config: Array.isArray(stripe.invalid_checkout_config) ? stripe.invalid_checkout_config : [],
+      provider: stripe.provider && typeof stripe.provider === "object"
+        ? {
+          status: stripe.provider.status || "unknown",
+          code: stripe.provider.code || undefined,
+          error: stripe.provider.error || undefined
+        }
+        : { status: "unknown" }
     },
     time: new Date().toISOString()
   };

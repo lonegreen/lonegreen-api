@@ -576,13 +576,16 @@ async function handleStripeCheckoutSession(req, res) {
     if (err && err.code === "STRIPE_NOT_CONFIGURED") {
       return res.status(503).json({
         error: err.message || "Stripe is not configured",
+        code: "STRIPE_NOT_CONFIGURED",
+        details: err.details || null,
         warning_mode: true
       });
     }
 
-    if (err && err.code === "STRIPE_PRICE_MISSING") {
-      return res.status(500).json({
+    if (err && (err.code === "STRIPE_PRICE_MISSING" || err.code === "STRIPE_PRICE_INVALID")) {
+      return res.status(err.statusCode || 400).json({
         error: err.message || "Stripe price is not configured",
+        code: err.code,
         warning_mode: true
       });
     }
@@ -597,6 +600,14 @@ async function handleStripeCheckoutSession(req, res) {
     if (err && err.code === "CHECKOUT_ORIGIN") {
       return res.status(503).json({
         error: err.message || "Checkout redirect URL could not be determined",
+        warning_mode: true
+      });
+    }
+
+    if (err && (err.type === "StripeAuthenticationError" || err.type === "StripePermissionError")) {
+      return res.status(503).json({
+        error: "Stripe Checkout is not usable with the configured API key. Verify STRIPE_SECRET_KEY permissions and mode.",
+        code: "STRIPE_PROVIDER_CONFIG_ERROR",
         warning_mode: true
       });
     }

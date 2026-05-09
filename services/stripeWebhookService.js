@@ -2,12 +2,12 @@ const pool = require("../db/pool");
 const logger = require("./logger");
 const {
   STRIPE_WEBHOOK_SECRET,
-  STRIPE_PRICE_BASIC,
+  STRIPE_PRICE_STARTER,
   STRIPE_PRICE_PRO,
-  STRIPE_PRICE_BUSINESS,
-  STRIPE_PRICE_BASIC_YEARLY,
+  STRIPE_PRICE_GROWTH,
+  STRIPE_PRICE_STARTER_YEARLY,
   STRIPE_PRICE_PRO_YEARLY,
-  STRIPE_PRICE_BUSINESS_YEARLY,
+  STRIPE_PRICE_GROWTH_YEARLY,
   BILLING_GRACE_PERIOD_DAYS
 } = require("../config/env");
 const { getStripe } = require("./stripeService");
@@ -39,12 +39,12 @@ function stripeCustomerId(obj) {
 function internalPlanFromStripePriceId(priceId) {
   const id = String(priceId || "").trim();
   if (!id) return null;
-  if (STRIPE_PRICE_BASIC && id === STRIPE_PRICE_BASIC.trim()) return "starter";
+  if (STRIPE_PRICE_STARTER && id === STRIPE_PRICE_STARTER.trim()) return "starter";
   if (STRIPE_PRICE_PRO && id === STRIPE_PRICE_PRO.trim()) return "pro";
-  if (STRIPE_PRICE_BUSINESS && id === STRIPE_PRICE_BUSINESS.trim()) return "enterprise";
-  if (STRIPE_PRICE_BASIC_YEARLY && id === STRIPE_PRICE_BASIC_YEARLY.trim()) return "starter";
+  if (STRIPE_PRICE_GROWTH && id === STRIPE_PRICE_GROWTH.trim()) return "enterprise";
+  if (STRIPE_PRICE_STARTER_YEARLY && id === STRIPE_PRICE_STARTER_YEARLY.trim()) return "starter";
   if (STRIPE_PRICE_PRO_YEARLY && id === STRIPE_PRICE_PRO_YEARLY.trim()) return "pro";
-  if (STRIPE_PRICE_BUSINESS_YEARLY && id === STRIPE_PRICE_BUSINESS_YEARLY.trim()) return "enterprise";
+  if (STRIPE_PRICE_GROWTH_YEARLY && id === STRIPE_PRICE_GROWTH_YEARLY.trim()) return "enterprise";
   logger.warn("stripeWebhook.unknownPriceId", {
     priceId: id,
     helper: "internalPlanFromStripePriceId"
@@ -63,12 +63,12 @@ function internalPlanFromCheckoutPlanKey(key) {
 function checkoutPlanKeyFromStripePriceId(priceId) {
   const id = String(priceId || "").trim();
   if (!id) return null;
-  if (STRIPE_PRICE_BASIC && id === STRIPE_PRICE_BASIC.trim()) return "basic";
+  if (STRIPE_PRICE_STARTER && id === STRIPE_PRICE_STARTER.trim()) return "basic";
   if (STRIPE_PRICE_PRO && id === STRIPE_PRICE_PRO.trim()) return "pro";
-  if (STRIPE_PRICE_BUSINESS && id === STRIPE_PRICE_BUSINESS.trim()) return "business";
-  if (STRIPE_PRICE_BASIC_YEARLY && id === STRIPE_PRICE_BASIC_YEARLY.trim()) return "basic";
+  if (STRIPE_PRICE_GROWTH && id === STRIPE_PRICE_GROWTH.trim()) return "business";
+  if (STRIPE_PRICE_STARTER_YEARLY && id === STRIPE_PRICE_STARTER_YEARLY.trim()) return "basic";
   if (STRIPE_PRICE_PRO_YEARLY && id === STRIPE_PRICE_PRO_YEARLY.trim()) return "pro";
-  if (STRIPE_PRICE_BUSINESS_YEARLY && id === STRIPE_PRICE_BUSINESS_YEARLY.trim()) return "business";
+  if (STRIPE_PRICE_GROWTH_YEARLY && id === STRIPE_PRICE_GROWTH_YEARLY.trim()) return "business";
   logger.warn("stripeWebhook.unknownPriceId", {
     priceId: id,
     helper: "checkoutPlanKeyFromStripePriceId"

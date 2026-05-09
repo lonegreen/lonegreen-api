@@ -177,6 +177,37 @@ async function refreshPendingCount() {
   }
 }
 
+async function recoverFailedJobsWithRegisteredHandlers() {
+  const registeredTypes = Array.from(handlers.keys());
+  if (!registeredTypes.length) {
+    return;
+  }
+
+  const recovered = await pool.query(`
+    UPDATE background_jobs
+    SET
+      status = 'retry',
+      attempts = 0,
+      run_at = CURRENT_TIMESTAMP,
+      locked_at = NULL,
+      locked_by = NULL,
+      dead_letter_at = NULL,
+      updated_at = CURRENT_TIMESTAMP,
+      last_error = NULL
+    WHERE status = 'failed'
+      AND type = ANY($1::text[])
+      AND last_error ILIKE '%No registered handler for job type%'
+    RETURNING id, type
+  `, [registeredTypes]);
+
+  for (const row of recovered.rows) {
+    logger.warn("JOB_QUEUE_RECOVERED_REGISTERED_HANDLER_JOB", {
+      id: row.id,
+      type: row.type
+    });
+  }
+}
+
 function scheduleNext(delayMs = 0) {
   if (!running || timer) {
     return;
@@ -385,10 +416,11 @@ async function enqueueJob(type, payload, handler) {
   if (!type || typeof type !== "string") {
     throw new Error("Queue job type is required");
   }
-  if (typeof handler !== "function") {
-    throw new Error("Queue job handler is required");
+  if (handler !== undefined) {
+    registerJobHandler(type, handler);
+  } else if (!handlers.has(type)) {
+    throw new Error(`Queue job handler is required for type '${type}'`);
   }
-  handlers.set(type, handler);
   await ensureQueueSchema();
 
   const pendingResult = await pool.query(`
@@ -415,11 +447,22 @@ async function enqueueJob(type, payload, handler) {
   };
 }
 
+function registerJobHandler(type, handler) {
+  if (!type || typeof type !== "string") {
+    throw new Error("Queue job type is required");
+  }
+  if (typeof handler !== "function") {
+    throw new Error("Queue job handler is required");
+  }
+  handlers.set(type, handler);
+}
+
 async function startQueue() {
   if (running) {
     return getQueueStatus();
   }
   await ensureQueueSchema();
+  await recoverFailedJobsWithRegisteredHandlers();
   running = true;
   await refreshPendingCount();
   scheduleNext(0);
@@ -489,6 +532,7 @@ function getQueueStatus() {
 
 module.exports = {
   enqueueJob,
+  registerJobHandler,
   startQueue,
   stopQueue,
   waitForQueueIdle,
