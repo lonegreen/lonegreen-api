@@ -130,52 +130,12 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 
-app.post(
-  "/billing/stripe/webhook",
-  express.raw({ type: "application/json" }),
-  handleStripeWebhookRequest
-);
-
-app.post(
-  "/billing/webhook",
-  express.raw({ type: "application/json" }),
-  handleStripeWebhookRequest
-);
-
-app.use(express.json({
-  limit: "2mb"
-}));
-
-app.use(express.urlencoded({
-  extended: true
-}));
-
-app.use(express.static(
-  path.join(__dirname, "public")
-));
-
-const apiLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 300,
-  standardHeaders: true,
-  legacyHeaders: false,
-  message: { error: "Too many requests, please try again later" }
-});
 const healthLimiter = rateLimit({
   windowMs: 60 * 1000,
   max: 120,
   standardHeaders: true,
   legacyHeaders: false
 });
-const maintenanceLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 20,
-  standardHeaders: true,
-  legacyHeaders: false,
-  message: { error: "Too many maintenance requests, please try again later" }
-});
-
-app.use(apiLimiter);
 
 /* Health */
 app.get("/health/live", healthLimiter, (req, res) => {
@@ -248,6 +208,47 @@ app.get("/health/ready", healthLimiter, async (req, res) => {
     });
   }
 });
+
+app.post(
+  "/billing/stripe/webhook",
+  express.raw({ type: "application/json" }),
+  handleStripeWebhookRequest
+);
+
+app.post(
+  "/billing/webhook",
+  express.raw({ type: "application/json" }),
+  handleStripeWebhookRequest
+);
+
+app.use(express.json({
+  limit: "2mb"
+}));
+
+app.use(express.urlencoded({
+  extended: true
+}));
+
+app.use(express.static(
+  path.join(__dirname, "public")
+));
+
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 300,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Too many requests, please try again later" }
+});
+const maintenanceLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Too many maintenance requests, please try again later" }
+});
+
+app.use(apiLimiter);
 
 app.get("/queue/status", auth, requireMinimumRole("admin"), (req, res) => {
   res.json(getQueueStatus());
