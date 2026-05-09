@@ -3,279 +3,965 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Billing Plans</title>
-  <link rel="stylesheet" href="/css/brand.css">
+  <title>Billing & Subscription Center</title>
 
+  <link rel="stylesheet" href="/css/brand.css">
   <link rel="stylesheet" href="/app-shell.css">
   <link rel="stylesheet" href="/ui-cleanup.css">
+
   <style>
+    :root {
+      --fx-primary: var(--brand-primary, #f35b04);
+      --fx-primary-dark: var(--brand-primary-hover, #c84700);
+      --fx-black: var(--brand-black, #111827);
+      --fx-muted: #667085;
+      --fx-soft: #f7faf9;
+      --fx-border: var(--brand-border, #e5e7eb);
+      --fx-green: #16a34a;
+      --fx-amber: #d97706;
+      --fx-red: #dc2626;
+      --fx-blue: #2563eb;
+      --fx-shadow: 0 20px 44px rgba(15, 23, 42, 0.08);
+      --fx-shadow-soft: 0 12px 28px rgba(15, 23, 42, 0.06);
+      --fx-radius: 20px;
+    }
+
     * { box-sizing: border-box; }
+
+    html { min-height: 100%; }
+
     body {
       margin: 0;
-      font-family: Arial, sans-serif;
+      min-height: 100%;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
       background:
-        radial-gradient(circle at top left, rgba(255, 90, 0, 0.08), transparent 28%),
-        linear-gradient(180deg, #f5f5f5 0%, #f6f8f7 210px, #f4f6f8 100%);
-      color: var(--brand-black);
-      padding: 22px;
+        radial-gradient(circle at top left, rgba(243, 91, 4, 0.10), transparent 28%),
+        radial-gradient(circle at 78% 8%, rgba(22, 163, 74, 0.08), transparent 24%),
+        linear-gradient(180deg, #ffffff 0%, #f7f9fb 42%, #f5f7f9 100%);
+      color: var(--fx-black);
     }
-    .page {
-      max-width: 1200px;
-      margin: 0 auto;
+
+    button, input, select { font: inherit; }
+
+    .shell {
       display: grid;
+      grid-template-columns: 232px minmax(0, 1fr);
+      min-height: 100vh;
+    }
+
+    .sidebar {
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      border-right: 1px solid rgba(229, 231, 235, 0.88);
+      background: rgba(255, 255, 255, 0.78);
+      backdrop-filter: blur(18px);
+      padding: 22px 14px;
+      display: flex;
+      flex-direction: column;
       gap: 18px;
     }
-    .hero {
+
+    .brand-mark {
       display: flex;
-      justify-content: space-between;
-      gap: 14px;
-      align-items: flex-end;
-      flex-wrap: wrap;
+      align-items: center;
+      gap: 10px;
+      padding: 4px 8px 14px;
+      color: var(--fx-primary);
+      font-size: 22px;
+      font-weight: 900;
+      letter-spacing: -0.04em;
     }
-    .hero h1 {
-      margin: 0 0 6px;
-      font-size: 32px;
-      color: var(--brand-primary);
-      letter-spacing: -0.03em;
+
+    .brand-logo {
+      width: 28px;
+      height: 28px;
+      border-radius: 9px;
+      background:
+        radial-gradient(circle at 30% 30%, #ff9556 0 24%, transparent 26%),
+        linear-gradient(135deg, var(--fx-primary), #ff7a1a);
+      box-shadow: 0 12px 22px rgba(243, 91, 4, 0.23);
     }
-    .hero p {
-      margin: 0;
-      color: #60786e;
-      line-height: 1.5;
+
+    .nav-group {
+      display: grid;
+      gap: 5px;
     }
-    .panel {
-      background: rgba(255, 255, 255, 0.96);
-      border: 1px solid var(--brand-border);
-      border-radius: 18px;
-      box-shadow: 0 18px 38px rgba(16, 24, 40, 0.06);
-      padding: 18px;
+
+    .nav-label {
+      color: #98a2b3;
+      font-size: 11px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      padding: 12px 10px 6px;
     }
-    .head-row {
+
+    .nav-item {
       display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      gap: 12px;
-      flex-wrap: wrap;
-      margin-bottom: 14px;
+      align-items: center;
+      gap: 10px;
+      min-height: 42px;
+      padding: 10px 12px;
+      border-radius: 12px;
+      color: #344054;
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 800;
+      transition: background .16s ease, color .16s ease, transform .16s ease;
     }
-    .head-row h2 {
-      margin: 0 0 4px;
-      color: var(--brand-primary);
-      font-size: 20px;
+
+    .nav-item:hover {
+      background: rgba(243, 91, 4, 0.07);
+      color: var(--fx-primary);
+      transform: translateX(1px);
     }
-    .head-row p {
-      margin: 0;
-      color: #678075;
-      font-size: 13px;
+
+    .nav-item.active {
+      background: rgba(243, 91, 4, 0.12);
+      color: var(--fx-primary);
     }
-    .pill {
+
+    .nav-ico {
+      width: 18px;
+      height: 18px;
       display: inline-flex;
       align-items: center;
       justify-content: center;
+      flex: 0 0 auto;
+    }
+
+    .sidebar-card {
+      margin-top: auto;
+      border: 1px solid var(--fx-border);
+      background: #fff;
+      border-radius: 16px;
+      padding: 14px;
+      box-shadow: var(--fx-shadow-soft);
+    }
+
+    .sidebar-card strong {
+      display: block;
+      font-size: 13px;
+      margin-bottom: 5px;
+    }
+
+    .sidebar-card p {
+      margin: 0 0 12px;
+      font-size: 12px;
+      color: var(--fx-muted);
+      line-height: 1.45;
+    }
+
+    .account-chip {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      border: 1px solid var(--fx-border);
+      background: #fff;
+      border-radius: 16px;
+      padding: 10px;
+    }
+
+    .avatar {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #111827, #667085);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 900;
+      font-size: 12px;
+      flex: 0 0 auto;
+    }
+
+    .account-chip b,
+    .account-chip span {
+      display: block;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 138px;
+    }
+
+    .account-chip b { font-size: 13px; }
+    .account-chip span { color: var(--fx-muted); font-size: 11px; margin-top: 2px; }
+
+    .main {
+      min-width: 0;
+      padding: 34px 30px 28px;
+    }
+
+    .page {
+      max-width: 1280px;
+      margin: 0 auto;
+      display: grid;
+      gap: 22px;
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--fx-primary);
+      background: rgba(243, 91, 4, 0.10);
+      border: 1px solid rgba(243, 91, 4, 0.18);
       border-radius: 999px;
       padding: 6px 10px;
-      font-size: 11px;
-      font-weight: 800;
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
-      background: var(--brand-bg);
-      color: var(--brand-primary);
+      font-size: 12px;
+      font-weight: 900;
+      margin-bottom: 10px;
     }
-    .pill.warn { background: #fff8e5; color: #9a6700; }
-    .pill.danger { background: #fff1f1; color: #b42318; }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(28px, 4vw, 42px);
+      line-height: 1.05;
+      letter-spacing: -0.055em;
+      color: #101828;
+    }
+
+    .subtitle {
+      margin: 10px 0 0;
+      color: var(--fx-muted);
+      font-size: 15px;
+      line-height: 1.55;
+      max-width: 670px;
+    }
 
     .actions {
       display: flex;
-      flex-wrap: wrap;
       gap: 10px;
       align-items: center;
+      flex-wrap: wrap;
     }
+
     .btn {
-      border: none;
+      border: 1px solid transparent;
       border-radius: 12px;
+      min-height: 42px;
       padding: 10px 14px;
-      font: inherit;
-      font-weight: 800;
       cursor: pointer;
-      background: var(--brand-primary);
-      color: white;
-      transition: transform .15s ease, box-shadow .15s ease, opacity .15s ease;
-      box-shadow: 0 10px 22px rgba(230, 74, 0, 0.16);
+      font-weight: 900;
+      font-size: 13px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      background: var(--fx-primary);
+      color: #fff;
+      box-shadow: 0 14px 26px rgba(243, 91, 4, 0.20);
+      transition: transform .16s ease, box-shadow .16s ease, opacity .16s ease, background .16s ease;
+      text-decoration: none;
     }
-    .btn:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 14px 26px rgba(230, 74, 0, 0.2); }
+
+    .btn:hover:not(:disabled) {
+      transform: translateY(-1px);
+      background: var(--fx-primary-dark);
+      box-shadow: 0 18px 34px rgba(243, 91, 4, 0.24);
+    }
+
     .btn.secondary {
-      background: var(--brand-bg);
-      color: var(--brand-primary);
-      border: 1px solid var(--brand-border);
+      background: rgba(255, 255, 255, 0.92);
+      color: #344054;
+      border-color: var(--fx-border);
+      box-shadow: var(--fx-shadow-soft);
+    }
+
+    .btn.secondary:hover:not(:disabled) {
+      background: #fff;
+      color: var(--fx-primary);
+      box-shadow: 0 14px 26px rgba(15, 23, 42, 0.08);
+    }
+
+    .btn.ghost {
+      background: transparent;
+      color: var(--fx-primary);
+      border-color: rgba(243, 91, 4, 0.24);
       box-shadow: none;
     }
+
+    .btn.danger {
+      background: #fff;
+      color: var(--fx-red);
+      border-color: rgba(220, 38, 38, 0.22);
+      box-shadow: none;
+    }
+
     .btn:disabled {
-      opacity: 0.58;
+      opacity: .56;
       cursor: not-allowed;
       transform: none;
       box-shadow: none;
     }
 
-    .status {
-      min-height: 18px;
-      color: #60786e;
-      font-size: 13px;
-      font-weight: 700;
+    .card {
+      background: rgba(255, 255, 255, 0.92);
+      border: 1px solid rgba(229, 231, 235, 0.92);
+      border-radius: var(--fx-radius);
+      box-shadow: var(--fx-shadow);
+      overflow: hidden;
     }
-    .status.ok { color: var(--brand-primary-hover); }
-    .status.error { color: #b42318; }
 
-    .alert {
-      display: none;
-      border-radius: 12px;
-      border: 1px solid #f0c7c7;
-      background: #fff7f7;
-      color: #b42318;
-      padding: 11px 12px;
+    .card-pad { padding: 22px; }
+
+    .section-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 14px;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+    }
+
+    .section-head h2 {
+      margin: 0 0 5px;
+      font-size: 18px;
+      color: #101828;
+      letter-spacing: -0.025em;
+    }
+
+    .section-head p {
+      margin: 0;
+      color: var(--fx-muted);
       font-size: 13px;
       line-height: 1.45;
-      font-weight: 700;
     }
 
-    .current-grid {
-      display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-      gap: 10px;
+    .status-line {
+      min-height: 20px;
+      color: var(--fx-muted);
+      font-size: 13px;
+      font-weight: 800;
     }
-    .metric {
-      border: 1px solid #dce9e2;
-      background: var(--brand-bg);
-      border-radius: 12px;
-      padding: 12px;
+
+    .status-line.ok { color: var(--fx-green); }
+    .status-line.error { color: var(--fx-red); }
+
+    .notice {
+      display: none;
+      border: 1px solid rgba(220, 38, 38, 0.18);
+      background: #fff7f7;
+      color: #b42318;
+      padding: 12px 14px;
+      border-radius: 14px;
+      font-size: 13px;
+      font-weight: 800;
+      line-height: 1.5;
+      margin-bottom: 14px;
+    }
+
+    .plan-hero {
+      padding: 24px;
+      display: grid;
+      grid-template-columns: 1.35fr repeat(4, minmax(130px, 1fr));
+      gap: 18px;
+      align-items: stretch;
+    }
+
+    .plan-title {
+      border-right: 1px solid var(--fx-border);
+      padding-right: 18px;
       min-width: 0;
     }
-    .metric span {
-      display: block;
+
+    .meta-label {
+      color: #667085;
       font-size: 11px;
       text-transform: uppercase;
-      letter-spacing: 0.05em;
-      color: #678075;
-      font-weight: 800;
-      margin-bottom: 6px;
+      letter-spacing: 0.08em;
+      font-weight: 900;
+      margin-bottom: 8px;
     }
-    .metric strong {
-      color: var(--brand-black);
-      font-size: 18px;
+
+    .plan-name-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 8px;
+    }
+
+    .plan-name-row h2 {
+      margin: 0;
+      font-size: 26px;
+      letter-spacing: -0.04em;
+      color: #101828;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      border-radius: 999px;
+      padding: 6px 9px;
+      font-size: 11px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      white-space: nowrap;
+      background: #ecfdf3;
+      color: #027a48;
+    }
+
+    .badge.warn { background: #fffaeb; color: #b54708; }
+    .badge.danger { background: #fef3f2; color: #b42318; }
+    .badge.neutral { background: #f2f4f7; color: #475467; }
+
+    .plan-title p {
+      margin: 0 0 18px;
+      color: var(--fx-muted);
+      line-height: 1.55;
+      font-size: 13px;
+      max-width: 360px;
+    }
+
+    .hero-stat {
+      border-left: 1px solid var(--fx-border);
+      padding-left: 16px;
+      display: grid;
+      align-content: start;
+      gap: 6px;
+      min-width: 0;
+    }
+
+    .hero-stat .icon-dot {
+      width: 28px;
+      height: 28px;
+      border-radius: 10px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: #f2f4f7;
+      color: #475467;
+      margin-bottom: 2px;
+    }
+
+    .hero-stat strong {
+      font-size: 15px;
+      color: #101828;
       word-break: break-word;
     }
 
-    .usage-grid {
+    .hero-stat span {
+      color: var(--fx-muted);
+      font-size: 12px;
+      line-height: 1.4;
+      word-break: break-word;
+    }
+
+    .summary-grid {
       display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 16px;
+    }
+
+    .summary-card {
+      padding: 20px;
+      background: #fff;
+      border: 1px solid var(--fx-border);
+      border-radius: 18px;
+      box-shadow: var(--fx-shadow-soft);
+      min-width: 0;
+      display: grid;
       gap: 10px;
     }
-    .usage-card {
-      border: 1px solid #dce9e2;
+
+    .summary-card.good {
+      background: linear-gradient(135deg, #f0fdf4, #ffffff 74%);
+      border-color: rgba(22, 163, 74, 0.18);
+    }
+
+    .summary-card.warn {
+      background: linear-gradient(135deg, #fffbeb, #ffffff 74%);
+      border-color: rgba(217, 119, 6, 0.20);
+    }
+
+    .summary-card.danger {
+      background: linear-gradient(135deg, #fff1f2, #ffffff 74%);
+      border-color: rgba(220, 38, 38, 0.20);
+    }
+
+    .summary-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 10px;
+    }
+
+    .summary-card small {
+      color: var(--fx-muted);
+      font-weight: 900;
+      font-size: 12px;
+    }
+
+    .summary-card b {
+      display: block;
+      font-size: 25px;
+      letter-spacing: -0.04em;
+      color: #101828;
+      word-break: break-word;
+    }
+
+    .summary-card p {
+      margin: 0;
+      color: var(--fx-muted);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    .ok-circle {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--fx-green);
+      color: #fff;
+      font-weight: 900;
+      flex: 0 0 auto;
+    }
+
+    .analytics-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.25fr) minmax(320px, .75fr);
+      gap: 18px;
+      align-items: stretch;
+    }
+
+    .usage-list {
+      display: grid;
+      gap: 14px;
+    }
+
+    .usage-row {
+      display: grid;
+      grid-template-columns: 34px minmax(0, 1fr) 68px;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .usage-icon {
+      width: 34px;
+      height: 34px;
       border-radius: 12px;
-      background: white;
-      padding: 12px;
+      border: 1px solid var(--fx-border);
+      background: #fff;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      color: #344054;
+    }
+
+    .usage-line {
+      min-width: 0;
       display: grid;
       gap: 7px;
     }
-    .usage-label {
+
+    .usage-title {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      color: #101828;
+      font-size: 13px;
+      font-weight: 900;
+    }
+
+    .usage-title span:last-child {
+      color: #475467;
+      font-weight: 800;
+    }
+
+    .track {
+      height: 9px;
+      border-radius: 999px;
+      background: #eef2f6;
+      overflow: hidden;
+    }
+
+    .fill {
+      height: 100%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, var(--fx-primary), #ff7a1a);
+      max-width: 100%;
+      transition: width .25s ease;
+    }
+
+    .fill.good { background: linear-gradient(90deg, #16a34a, #22c55e); }
+    .fill.warn { background: linear-gradient(90deg, #d97706, #f59e0b); }
+    .fill.danger { background: linear-gradient(90deg, #dc2626, #ef4444); }
+
+    .usage-pct {
+      text-align: right;
+      font-size: 13px;
+      font-weight: 900;
+      color: var(--fx-primary);
+    }
+
+    .usage-pct.good { color: var(--fx-green); }
+    .usage-pct.warn { color: var(--fx-amber); }
+    .usage-pct.danger { color: var(--fx-red); }
+
+    .donut-wrap {
+      display: grid;
+      justify-items: center;
+      gap: 14px;
+      padding: 10px 0 0;
+    }
+
+    .donut {
+      width: 190px;
+      height: 190px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      background: conic-gradient(var(--fx-primary) 0deg, #fb923c 0deg, #e5e7eb 0deg 360deg);
+      position: relative;
+    }
+
+    .donut::after {
+      content: "";
+      position: absolute;
+      inset: 28px;
+      border-radius: 50%;
+      background: #fff;
+      box-shadow: inset 0 0 0 1px var(--fx-border);
+    }
+
+    .donut-center {
+      position: relative;
+      z-index: 1;
+      text-align: center;
+    }
+
+    .donut-center b {
+      display: block;
+      font-size: 34px;
+      letter-spacing: -0.05em;
+    }
+
+    .donut-center span {
+      color: var(--fx-muted);
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .legend {
+      display: grid;
+      gap: 8px;
+      width: 100%;
+    }
+
+    .legend-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      color: #475467;
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .legend-row i {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      display: inline-block;
+      margin-right: 7px;
+      background: var(--fx-primary);
+    }
+
+    .recommendation {
+      border: 1px solid rgba(22, 163, 74, 0.18);
+      background: #f0fdf4;
+      color: #166534;
+      border-radius: 14px;
+      padding: 12px 14px;
+      font-size: 12px;
+      line-height: 1.45;
+      font-weight: 800;
+      width: 100%;
+    }
+
+    .recommendation.warn {
+      border-color: rgba(217, 119, 6, 0.22);
+      background: #fffbeb;
+      color: #92400e;
+    }
+
+    .recommendation.danger {
+      border-color: rgba(220, 38, 38, 0.22);
+      background: #fff1f2;
+      color: #991b1b;
+    }
+
+    .plans-table-wrap {
+      overflow-x: auto;
+      border: 1px solid var(--fx-border);
+      border-radius: 16px;
+      background: #fff;
+    }
+
+    .plans-table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      min-width: 780px;
+    }
+
+    .plans-table th,
+    .plans-table td {
+      padding: 15px 14px;
+      border-bottom: 1px solid var(--fx-border);
+      text-align: center;
+      font-size: 13px;
+      color: #344054;
+      vertical-align: middle;
+    }
+
+    .plans-table th:first-child,
+    .plans-table td:first-child {
+      text-align: left;
+      font-weight: 900;
+      color: #101828;
+      background: #fcfcfd;
+      position: sticky;
+      left: 0;
+      z-index: 1;
+    }
+
+    .plans-table th {
+      background: #fcfcfd;
+      color: #101828;
+      font-size: 14px;
+      font-weight: 900;
+    }
+
+    .plans-table tr:last-child td { border-bottom: none; }
+
+    .plans-table .current-col {
+      background: rgba(243, 91, 4, 0.055);
+      box-shadow: inset 1px 0 rgba(243, 91, 4, 0.28), inset -1px 0 rgba(243, 91, 4, 0.28);
+    }
+
+    .plan-head {
+      display: grid;
+      gap: 5px;
+      justify-items: center;
+    }
+
+    .plan-head strong {
+      font-size: 16px;
+      color: #101828;
+    }
+
+    .plan-head span {
+      color: var(--fx-primary);
+      font-weight: 900;
+    }
+
+    .split-grid {
+      display: grid;
+      grid-template-columns: minmax(0, .95fr) minmax(0, 1.05fr);
+      gap: 18px;
+    }
+
+    .activity-list {
+      display: grid;
+      gap: 13px;
+    }
+
+    .activity-item {
+      display: grid;
+      grid-template-columns: 28px minmax(0, 1fr) auto;
+      gap: 12px;
+      align-items: center;
+      font-size: 13px;
+    }
+
+    .activity-dot {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      background: var(--fx-green);
+      font-size: 12px;
+      font-weight: 900;
+    }
+
+    .activity-item b {
+      display: block;
+      color: #101828;
+      margin-bottom: 3px;
+    }
+
+    .activity-item span {
+      color: var(--fx-muted);
+      font-size: 12px;
+    }
+
+    .activity-money {
+      color: #344054;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+
+    .action-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .action-tile {
+      border: 1px solid var(--fx-border);
+      border-radius: 16px;
+      background: #fff;
+      padding: 16px;
+      display: flex;
+      align-items: center;
+      gap: 13px;
+      min-height: 86px;
+      cursor: pointer;
+      transition: transform .16s ease, border-color .16s ease, box-shadow .16s ease;
+      text-align: left;
+      color: inherit;
+    }
+
+    .action-tile:hover:not(:disabled) {
+      transform: translateY(-1px);
+      border-color: rgba(243, 91, 4, 0.30);
+      box-shadow: var(--fx-shadow-soft);
+    }
+
+    .action-tile:disabled {
+      opacity: .58;
+      cursor: not-allowed;
+    }
+
+    .action-icon {
+      width: 38px;
+      height: 38px;
+      border-radius: 13px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(243, 91, 4, 0.10);
+      color: var(--fx-primary);
+      flex: 0 0 auto;
+    }
+
+    .action-tile b {
+      display: block;
+      font-size: 13px;
+      color: #101828;
+      margin-bottom: 4px;
+    }
+
+    .action-tile span {
+      display: block;
+      font-size: 12px;
+      color: var(--fx-muted);
+      line-height: 1.35;
+    }
+
+    .danger-zone {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      gap: 10px;
-      font-size: 13px;
-      color: #4d665c;
-      font-weight: 700;
-    }
-    .track {
-      height: 10px;
-      border-radius: 999px;
-      background: #e8f0eb;
-      overflow: hidden;
-    }
-    .fill {
-      height: 100%;
-      border-radius: 999px;
-      background: linear-gradient(90deg, var(--brand-primary), var(--brand-primary-hover));
-      max-width: 100%;
-    }
-    .fill.warn { background: linear-gradient(90deg, #9a6700, #c08214); }
-    .fill.danger { background: linear-gradient(90deg, #b42318, #dc3a3a); }
-    .usage-help {
-      font-size: 12px;
-      color: #6a8177;
+      gap: 16px;
+      flex-wrap: wrap;
+      border: 1px solid rgba(220, 38, 38, 0.20);
+      background: linear-gradient(135deg, #fff7f7, #fff);
+      border-radius: var(--fx-radius);
+      padding: 20px;
     }
 
-    .plans-grid {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 12px;
+    .danger-zone h2 {
+      margin: 0 0 5px;
+      color: #991b1b;
+      font-size: 17px;
     }
-    .plan-card {
-      border: 1px solid var(--brand-border);
-      border-radius: 14px;
-      background: white;
-      padding: 14px;
-      display: grid;
-      gap: 10px;
-    }
-    .plan-card.current { border-color: var(--brand-primary); background: #fff3e8; }
-    .plan-card h3 {
+
+    .danger-zone p {
       margin: 0;
-      color: var(--brand-black);
-      font-size: 20px;
-    }
-    .plan-price {
-      font-size: 28px;
-      color: var(--brand-primary);
-      font-weight: 800;
-      letter-spacing: -0.02em;
-    }
-    .plan-price small {
-      font-size: 12px;
-      color: #678075;
-      font-weight: 700;
-    }
-    .limits {
-      border: 1px solid #dce9e2;
-      background: var(--brand-bg);
-      border-radius: 11px;
-      padding: 10px;
-      display: grid;
-      gap: 5px;
-      font-size: 12px;
-      color: #4c675d;
-      font-weight: 700;
-    }
-
-    .empty {
-      border: 1px dashed #d5e3db;
-      background: var(--brand-bg);
-      border-radius: 12px;
-      padding: 14px;
-      color: #657d73;
+      color: #7f1d1d;
       font-size: 13px;
     }
 
-    @media (max-width: 980px) {
-      .current-grid,
-      .plans-grid,
-      .usage-grid {
-        grid-template-columns: 1fr 1fr;
-      }
+    .skeleton {
+      position: relative;
+      overflow: hidden;
+      background: #eef2f6 !important;
+      color: transparent !important;
+      border-radius: 10px;
+      min-height: 16px;
     }
-    @media (max-width: 680px) {
-      body { padding: 14px; }
-      .hero h1 { font-size: 28px; }
-      .current-grid,
-      .plans-grid,
-      .usage-grid {
-        grid-template-columns: 1fr;
+
+    .skeleton::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      transform: translateX(-100%);
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,.55), transparent);
+      animation: shimmer 1.25s infinite;
+    }
+
+    @keyframes shimmer { 100% { transform: translateX(100%); } }
+
+    .mobile-brand { display: none; }
+
+    @media (max-width: 1120px) {
+      .shell { grid-template-columns: 1fr; }
+      .sidebar { display: none; }
+      .mobile-brand {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        color: var(--fx-primary);
+        font-weight: 900;
+        font-size: 20px;
+        margin-bottom: 14px;
       }
-      .actions .btn {
-        width: 100%;
-      }
+      .main { padding: 24px 18px; }
+      .plan-hero { grid-template-columns: 1fr 1fr; }
+      .plan-title { border-right: 0; padding-right: 0; grid-column: 1 / -1; }
+      .hero-stat { border-left: 0; padding-left: 0; border-top: 1px solid var(--fx-border); padding-top: 14px; }
+      .summary-grid { grid-template-columns: 1fr 1fr; }
+      .analytics-grid { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 760px) {
+      .main { padding: 18px 12px; }
+      .topbar .actions { width: 100%; }
+      .topbar .btn { flex: 1 1 100%; }
+      .card-pad { padding: 16px; }
+      .plan-hero { grid-template-columns: 1fr; padding: 18px; }
+      .summary-grid,
+      .split-grid,
+      .action-grid { grid-template-columns: 1fr; }
+      .usage-row { grid-template-columns: 30px minmax(0, 1fr) 48px; gap: 9px; }
+      .donut { width: 164px; height: 164px; }
+      .donut::after { inset: 24px; }
+      .danger-zone .actions { width: 100%; }
+      .danger-zone .btn { flex: 1 1 100%; }
     }
   </style>
+
   <script src="/js/role-guard.js"></script>
 </head>
 <body>
@@ -283,7 +969,7 @@
     (function(){
       const token = localStorage.getItem("token");
       let user = null;
-      try { user = JSON.parse(localStorage.getItem("user") || "null"); } catch { user = null; }
+      try { user = JSON.parse(localStorage.getItem("user") || "null"); } catch (_) { user = null; }
       if (!token || !user) {
         window.top.location.href = "/login.html";
         return;
@@ -295,68 +981,206 @@
     })();
   </script>
 
-  <div class="page fx-layout-public">
-    <header class="hero fx-hero fx-section-head">
-      <div>
-        <h1>Billing Plans</h1>
-        <p>Manage plan, billing status, usage limits, and upgrade actions for your company workspace.</p>
-      </div>
-      <span id="billingStatusPill" class="pill">Loading</span>
-    </header>
+  <div class="shell">
+    <aside class="sidebar" aria-label="Billing navigation">
+      <div class="brand-mark"><span class="brand-logo"></span><span>FairLinx</span></div>
 
-    <section class="panel fx-card">
-      <div class="head-row">
-        <div>
-          <h2>Billing Actions</h2>
-          <p>Refresh billing data, open customer portal, and change plan safely.</p>
-        </div>
-        <div class="actions">
-          <button id="refreshBtn" class="btn secondary fx-btn fx-btn--secondary" type="button">Refresh Billing</button>
-          <button id="portalBtn" class="btn secondary fx-btn fx-btn--secondary" type="button">Open Billing Portal</button>
-        </div>
-      </div>
-      <div id="warningBox" class="alert fx-alert"></div>
-      <div id="globalStatus" class="status fx-alert"></div>
-    </section>
+      <nav class="nav-group">
+        <a class="nav-item" href="/dashboard.html"><span class="nav-ico">⌂</span>Dashboard</a>
+        <a class="nav-item" href="/clients.html"><span class="nav-ico">👥</span>Clients</a>
+        <a class="nav-item" href="/jobs.html"><span class="nav-ico">▣</span>Jobs</a>
+        <a class="nav-item" href="/invoices.html"><span class="nav-ico">▤</span>Invoices</a>
+        <a class="nav-item" href="/analytics.html"><span class="nav-ico">◫</span>Reports</a>
+      </nav>
 
-    <section class="panel fx-card">
-      <div class="head-row">
-        <div>
-          <h2>Current Plan</h2>
-          <p>Live plan information from your billing and subscription records.</p>
-        </div>
-      </div>
-      <div id="currentPlanGrid" class="current-grid"></div>
-    </section>
+      <nav class="nav-group">
+        <div class="nav-label">Settings</div>
+        <a class="nav-item" href="/settings.html"><span class="nav-ico">⚙</span>Company</a>
+        <a class="nav-item active" href="/billing-plans.html"><span class="nav-ico">▰</span>Billing</a>
+        <a class="nav-item" href="/users.html"><span class="nav-ico">◎</span>Users</a>
+      </nav>
 
-    <section class="panel fx-card">
-      <div class="head-row">
-        <div>
-          <h2>Usage & Limits</h2>
-          <p>Usage progress for users, clients, jobs, invoices, and workers.</p>
-        </div>
+      <div class="sidebar-card">
+        <strong>Need help?</strong>
+        <p>Open the billing portal or contact support if your subscription needs manual review.</p>
+        <button id="supportBtn" class="btn secondary" type="button">Contact Support</button>
       </div>
-      <div id="usageGrid" class="usage-grid"></div>
-      <div id="upgradeSuggestion" class="status fx-alert"></div>
-    </section>
 
-    <section class="panel fx-card">
-      <div class="head-row">
+      <div class="account-chip">
+        <div id="accountAvatar" class="avatar">FL</div>
         <div>
-          <h2>Available Plans</h2>
-          <p>Starter, Pro, and Growth plans with usage limits and change actions.</p>
+          <b id="accountCompany">Company</b>
+          <span id="accountRole">Admin</span>
         </div>
       </div>
-      <div id="plansGrid" class="plans-grid"></div>
-    </section>
+    </aside>
+
+    <main class="main">
+      <div class="page fx-layout-public">
+        <div class="mobile-brand"><span class="brand-logo"></span><span>FairLinx</span></div>
+
+        <header class="topbar">
+          <div>
+            <div class="eyebrow">● Billing Control Center</div>
+            <h1>Billing & Subscription Center</h1>
+            <p class="subtitle">Manage your subscription, usage limits, billing status, customer portal access, and plan changes from one clean workspace.</p>
+          </div>
+          <div class="actions">
+            <button id="refreshBtn" class="btn secondary" type="button">↻ Refresh</button>
+            <button id="portalTopBtn" class="btn secondary" type="button">↗ Billing Portal</button>
+            <button id="upgradeTopBtn" class="btn" type="button">Change Plan</button>
+          </div>
+        </header>
+
+        <section class="card" aria-label="Current subscription">
+          <div class="plan-hero">
+            <div class="plan-title">
+              <div class="meta-label">Current Plan</div>
+              <div class="plan-name-row">
+                <h2 id="currentPlanName">Loading</h2>
+                <span id="billingStatusBadge" class="badge neutral">Loading</span>
+              </div>
+              <p id="currentPlanDescription">Your subscription details are loading.</p>
+              <button id="portalHeroBtn" class="btn secondary" type="button">▤ View Billing Portal</button>
+            </div>
+
+            <div class="hero-stat">
+              <div class="icon-dot">◷</div>
+              <div class="meta-label">Renews On</div>
+              <strong id="renewDate">—</strong>
+              <span id="renewHelp">Subscription renewal date</span>
+            </div>
+
+            <div class="hero-stat">
+              <div class="icon-dot">▣</div>
+              <div class="meta-label">Monthly Price</div>
+              <strong id="monthlyPrice">—</strong>
+              <span id="monthlyHelp">Current recurring charge</span>
+            </div>
+
+            <div class="hero-stat">
+              <div class="icon-dot">↗</div>
+              <div class="meta-label">Checkout</div>
+              <strong id="checkoutStatus">—</strong>
+              <span id="checkoutHelp">Stripe checkout availability</span>
+            </div>
+
+            <div class="hero-stat">
+              <div class="icon-dot">✉</div>
+              <div class="meta-label">Billing Email</div>
+              <strong id="billingEmail">—</strong>
+              <span>Receipts and notices</span>
+            </div>
+          </div>
+        </section>
+
+        <section class="card card-pad">
+          <div id="warningBox" class="notice"></div>
+          <div class="section-head">
+            <div>
+              <h2>Workspace Health</h2>
+              <p>Quick view of billing status, usage pressure, and portal readiness.</p>
+            </div>
+            <div id="globalStatus" class="status-line"></div>
+          </div>
+          <div id="summaryGrid" class="summary-grid"></div>
+        </section>
+
+        <section class="card card-pad" id="usageSection">
+          <div class="section-head">
+            <div>
+              <h2>Usage Overview</h2>
+              <p>Real-time usage against your plan limits.</p>
+            </div>
+            <span id="usagePeriod" class="badge neutral">This Month</span>
+          </div>
+
+          <div class="analytics-grid">
+            <div id="usageList" class="usage-list"></div>
+            <aside class="donut-wrap">
+              <div id="usageDonut" class="donut">
+                <div class="donut-center">
+                  <b id="donutValue">0%</b>
+                  <span>Total Used</span>
+                </div>
+              </div>
+              <div id="usageLegend" class="legend"></div>
+              <div id="upgradeSuggestion" class="recommendation">Loading upgrade recommendation...</div>
+            </aside>
+          </div>
+        </section>
+
+        <section class="card card-pad" id="plansSection">
+          <div class="section-head">
+            <div>
+              <h2>Compare Plans</h2>
+              <p>Choose the plan that fits your business growth.</p>
+            </div>
+          </div>
+          <div id="plansTableWrap" class="plans-table-wrap"></div>
+        </section>
+
+        <section class="split-grid">
+          <div class="card card-pad">
+            <div class="section-head">
+              <div>
+                <h2>Billing Activity</h2>
+                <p>Recent subscription milestones generated from current billing data.</p>
+              </div>
+            </div>
+            <div id="activityList" class="activity-list"></div>
+          </div>
+
+          <div class="card card-pad">
+            <div class="section-head">
+              <div>
+                <h2>Billing Actions</h2>
+                <p>Common billing controls and safe redirects.</p>
+              </div>
+            </div>
+            <div class="action-grid">
+              <button id="portalActionBtn" class="action-tile" type="button">
+                <span class="action-icon">↗</span>
+                <span><b>Billing Portal</b><span>Manage billing directly with Stripe.</span></span>
+              </button>
+              <button id="refreshActionBtn" class="action-tile" type="button">
+                <span class="action-icon">↻</span>
+                <span><b>Refresh Billing</b><span>Reload current plan and usage data.</span></span>
+              </button>
+              <button id="changePlanActionBtn" class="action-tile" type="button">
+                <span class="action-icon">▰</span>
+                <span><b>Change Plan</b><span>Upgrade or downgrade your workspace.</span></span>
+              </button>
+              <button id="emailActionBtn" class="action-tile" type="button">
+                <span class="action-icon">✉</span>
+                <span><b>Billing Email</b><span>Update this from company settings.</span></span>
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <section class="danger-zone">
+          <div>
+            <h2>Danger Zone</h2>
+            <p>Subscription pause/cancel actions should remain backend-controlled before enabling here.</p>
+          </div>
+          <div class="actions">
+            <button class="btn danger" type="button" disabled>Pause Subscription</button>
+            <button class="btn danger" type="button" disabled>Cancel Subscription</button>
+          </div>
+        </section>
+      </div>
+    </main>
   </div>
 
   <script>
     const API = window.location.origin;
+
     const state = {
       loading: false,
       changingPlanSlug: "",
       portalOpening: false,
+      aborter: null,
       data: {
         plans: [],
         current: null,
@@ -364,25 +1188,94 @@
       }
     };
 
-    function getToken() { return localStorage.getItem("token"); }
-    function getUser() {
-      try { return JSON.parse(localStorage.getItem("user") || "{}"); } catch { return {}; }
+    const els = {};
+
+    function cacheEls() {
+      [
+        "refreshBtn", "portalTopBtn", "upgradeTopBtn", "portalHeroBtn", "portalActionBtn",
+        "refreshActionBtn", "changePlanActionBtn", "emailActionBtn", "supportBtn",
+        "warningBox", "globalStatus", "summaryGrid", "currentPlanName", "billingStatusBadge",
+        "currentPlanDescription", "renewDate", "renewHelp", "monthlyPrice", "monthlyHelp",
+        "checkoutStatus", "checkoutHelp", "billingEmail", "usageList", "usageDonut",
+        "donutValue", "usageLegend", "upgradeSuggestion", "plansTableWrap", "activityList",
+        "accountAvatar", "accountCompany", "accountRole"
+      ].forEach(function(id){ els[id] = document.getElementById(id); });
     }
+
+    function getToken() { return localStorage.getItem("token"); }
+
+    function getUser() {
+      try { return JSON.parse(localStorage.getItem("user") || "{}"); } catch (_) { return {}; }
+    }
+
     function roleAllowed() {
       const role = String((getUser() && getUser().role) || "").toLowerCase();
-      return role === "owner" || role === "admin";
+      return role === "owner" || role === "admin" || role === "platform_owner";
     }
+
     function esc(value) {
       return String(value == null ? "" : value).replace(/[&<>"']/g, function(ch) {
         return ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[ch];
       });
     }
+
     function money(value) {
-      return "$" + Number(value || 0).toLocaleString(undefined, {
-        minimumFractionDigits: 0,
-        maximumFractionDigits: 2
-      });
+      const n = Number(value || 0);
+      return "$" + n.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 });
     }
+
+    function safeNumber(value) {
+      const n = Number(value);
+      return Number.isFinite(n) ? n : null;
+    }
+
+    function formatDate(value) {
+      if (!value) return "—";
+      const d = new Date(value);
+      if (Number.isNaN(d.getTime())) return "—";
+      return d.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
+    }
+
+    function daysUntil(value) {
+      if (!value) return "Subscription renewal date";
+      const d = new Date(value);
+      if (Number.isNaN(d.getTime())) return "Subscription renewal date";
+      const diff = Math.ceil((d.getTime() - Date.now()) / 86400000);
+      if (diff > 1) return "In " + diff + " days";
+      if (diff === 1) return "Tomorrow";
+      if (diff === 0) return "Today";
+      return "Past renewal date";
+    }
+
+    function statusText(status) {
+      return String(status || "unknown").replace(/_/g, " ").replace(/\b\w/g, function(c) { return c.toUpperCase(); });
+    }
+
+    function statusClass(status) {
+      const s = String(status || "").toLowerCase();
+      if (["past_due", "unpaid", "cancelled", "canceled", "expired", "suspended", "incomplete"].includes(s)) return "danger";
+      if (["trial", "trialing", "incomplete_expired"].includes(s)) return "warn";
+      if (["active", "paid"].includes(s)) return "";
+      return "neutral";
+    }
+
+    function setStatus(message, type) {
+      if (!els.globalStatus) return;
+      els.globalStatus.className = "status-line" + (type ? " " + type : "");
+      els.globalStatus.textContent = message || "";
+    }
+
+    function setWarning(message) {
+      if (!els.warningBox) return;
+      if (!message) {
+        els.warningBox.style.display = "none";
+        els.warningBox.textContent = "";
+        return;
+      }
+      els.warningBox.style.display = "block";
+      els.warningBox.textContent = message;
+    }
+
     function isAllowedBillingRedirect(url) {
       try {
         const parsed = new URL(String(url || ""), window.location.origin);
@@ -395,64 +1288,74 @@
         return false;
       }
     }
-    function safeNumber(value) {
-      const n = Number(value);
-      return Number.isFinite(n) ? n : null;
-    }
-    function planStatusClass(status) {
-      const s = String(status || "").toLowerCase();
-      if (["past_due", "unpaid", "cancelled", "expired", "suspended", "incomplete"].includes(s)) return "danger";
-      if (["trial", "trialing"].includes(s)) return "warn";
-      return "";
-    }
-    function statusText(status) {
-      return String(status || "unknown").replace(/_/g, " ").replace(/\b\w/g, function(c) { return c.toUpperCase(); });
-    }
-    function setStatus(message, type) {
-      const el = document.getElementById("globalStatus");
-      el.className = "status" + (type ? " " + type : "");
-      el.textContent = message || "";
-    }
-    function setWarning(message) {
-      const box = document.getElementById("warningBox");
-      if (!message) {
-        box.style.display = "none";
-        box.textContent = "";
-        return;
-      }
-      box.style.display = "block";
-      box.textContent = message;
-    }
+
     async function safeJson(res) {
-      try { return await res.json(); } catch { return {}; }
+      try { return await res.json(); } catch (_) { return {}; }
     }
+
     async function apiFetch(path, options) {
       const token = getToken();
       if (!token) {
         window.top.location.href = "/login.html";
         throw new Error("Missing token");
       }
+
       const res = await fetch(API + path, {
         ...(options || {}),
         headers: {
           ...((options && options.headers) || {}),
           Authorization: "Bearer " + token
-        }
+        },
+        signal: options && options.signal
       });
+
       if (res.status === 401) {
         localStorage.removeItem("token");
         localStorage.removeItem("user");
         window.top.location.href = "/login.html";
         throw new Error("Unauthorized");
       }
+
       return res;
     }
+
+    function checkoutPlanForSlug(slug) {
+      const s = String(slug || "").toLowerCase();
+      if (s === "starter") return "basic";
+      if (s === "growth") return "business";
+      return s || "pro";
+    }
+
+    function getCurrentPlan() {
+      const current = state.data.current || {};
+      if (current.selected_plan) return current.selected_plan;
+      const meBilling = state.data.me && state.data.me.billing;
+      const slug = (meBilling && meBilling.plan) || current.legacy_plan || "starter";
+      return (state.data.plans || []).find(function(p){
+        return String(p.slug || "").toLowerCase() === String(slug || "").toLowerCase();
+      }) || null;
+    }
+
+    function getBillingStatus() {
+      const current = state.data.current || {};
+      const me = state.data.me || {};
+      const billing = me.billing || {};
+      return current.billing_status || billing.billing_status || billing.status || "unknown";
+    }
+
+    function getRenewalDate() {
+      const me = state.data.me || {};
+      const current = state.data.current || {};
+      const billing = me.billing || {};
+      return billing.current_period_end || billing.stripe_current_period_end || current.current_period_end || current.stripe_current_period_end || null;
+    }
+
     function extractUsage(me, key) {
       const usage = (me && me.usage) || {};
       const aliases = {
         users: ["users_count", "users", "user_count"],
-        clients: ["clients_count", "clients", "client_count"],
         jobs: ["jobs_count", "jobs_this_month", "jobs", "job_count"],
+        clients: ["clients_count", "clients", "client_count"],
         invoices: ["invoices_count", "invoices", "invoice_count"],
         workers: ["workers_count", "workers", "worker_count"]
       };
@@ -463,12 +1366,13 @@
       }
       return 0;
     }
+
     function extractLimit(me, currentPlan, key) {
       const limits = (me && me.limits) || {};
       const aliases = {
         users: ["max_users"],
-        clients: ["max_clients"],
         jobs: ["max_jobs", "max_jobs_per_month"],
+        clients: ["max_clients"],
         invoices: ["max_invoices"],
         workers: ["max_workers"]
       };
@@ -483,144 +1387,275 @@
       }
       return null;
     }
+
     function usagePercent(used, limit) {
       if (limit == null || limit <= 0) return 0;
-      const p = Math.round((used / limit) * 100);
-      return Math.max(0, Math.min(100, p));
+      return Math.max(0, Math.min(100, Math.round((used / limit) * 100)));
     }
-    function usageClass(pct) {
+
+    function usageColorClass(pct) {
       if (pct >= 100) return "danger";
       if (pct >= 85) return "warn";
+      if (pct < 55) return "good";
       return "";
     }
-    function getCurrentPlan() {
-      const current = state.data.current || {};
-      if (current.selected_plan) return current.selected_plan;
-      const meBilling = state.data.me && state.data.me.billing;
-      const slug = (meBilling && meBilling.plan) || current.legacy_plan || "starter";
-      return state.data.plans.find(function(p){ return String(p.slug || "").toLowerCase() === String(slug || "").toLowerCase(); }) || null;
-    }
-    function checkoutPlanForSlug(slug) {
-      const s = String(slug || "").toLowerCase();
-      if (s === "starter") return "basic";
-      if (s === "growth") return "business";
-      return "pro";
-    }
-    function buttonDisabled(slug) {
-      return state.loading || state.changingPlanSlug === slug || !roleAllowed();
-    }
-    function renderCurrentPlan() {
-      const currentPlan = getCurrentPlan();
-      const current = state.data.current || {};
-      const me = state.data.me || {};
-      const billing = me.billing || {};
-      const status = current.billing_status || billing.billing_status || "unknown";
-      const stripePortal = me.portal_available === true;
 
-      document.getElementById("billingStatusPill").className = "pill " + planStatusClass(status);
-      document.getElementById("billingStatusPill").textContent = statusText(status);
-
-      const planName = currentPlan ? currentPlan.name : statusText(current.legacy_plan || billing.plan || "starter");
-      const planPrice = currentPlan ? money(currentPlan.monthly_price) : money(billing.monthly_price || 0);
-      const portalText = stripePortal ? "Available" : "Not available";
-      const checkoutText = me.checkout_available ? "Available" : "Not available";
-
-      document.getElementById("currentPlanGrid").innerHTML = [
-        '<div class="metric"><span>Plan Name</span><strong>' + esc(planName) + '</strong></div>',
-        '<div class="metric"><span>Billing Status</span><strong>' + esc(statusText(status)) + '</strong></div>',
-        '<div class="metric"><span>Monthly Price</span><strong>' + esc(planPrice) + '</strong></div>',
-        '<div class="metric"><span>Stripe Portal</span><strong>' + esc(portalText) + '</strong></div>',
-        '<div class="metric"><span>Checkout Session</span><strong>' + esc(checkoutText) + '</strong></div>',
-        '<div class="metric"><span>Legacy Plan</span><strong>' + esc(statusText(current.legacy_plan || billing.plan || "-")) + '</strong></div>',
-        '<div class="metric"><span>Warning Mode</span><strong>' + esc(me.warning_mode === true ? "Enabled" : "Disabled") + '</strong></div>',
-        '<div class="metric"><span>Portal Eligible</span><strong>' + esc(me.stripe_customer_id ? "Yes" : "No") + '</strong></div>'
-      ].join("");
-    }
-    function renderUsage() {
+    function getUsageItems() {
       const me = state.data.me || {};
       const currentPlan = getCurrentPlan();
-      const items = [
-        { key: "users", label: "Users" },
-        { key: "clients", label: "Clients" },
-        { key: "jobs", label: "Jobs" },
-        { key: "invoices", label: "Invoices" },
-        { key: "workers", label: "Workers" }
-      ];
-      const html = items.map(function(item){
+      return [
+        { key: "users", label: "Users", icon: "👥" },
+        { key: "jobs", label: "Jobs", icon: "▣" },
+        { key: "clients", label: "Clients", icon: "▥" },
+        { key: "invoices", label: "Invoices", icon: "▤" },
+        { key: "workers", label: "Workers", icon: "◎" }
+      ].map(function(item){
         const used = extractUsage(me, item.key);
         const limit = extractLimit(me, currentPlan, item.key);
         const pct = usagePercent(used, limit);
-        return '<div class="usage-card">' +
-          '<div class="usage-label"><span>' + esc(item.label) + '</span><span>' + esc(String(used)) + ' / ' + esc(limit == null ? "Unlimited" : String(limit)) + '</span></div>' +
-          '<div class="track"><div class="fill ' + esc(usageClass(pct)) + '" style="width:' + pct + '%"></div></div>' +
-          '<div class="usage-help">' + esc(limit == null ? "No limit set on this plan." : (pct + "% used")) + '</div>' +
-        '</div>';
-      }).join("");
-      document.getElementById("usageGrid").innerHTML = html || '<div class="empty">Usage is unavailable.</div>';
-
-      const warnings = me && me.warnings && Array.isArray(me.warnings.warnings) ? me.warnings.warnings : [];
-      const suggestion = warnings.length
-        ? (warnings[0].message || "Upgrade your plan to avoid usage limits.")
-        : "If your team is growing, upgrade to increase limits and avoid creation blocks.";
-      const sugEl = document.getElementById("upgradeSuggestion");
-      sugEl.textContent = suggestion;
-      sugEl.className = "status" + (warnings.length ? " error" : "");
+        return { ...item, used, limit, pct, className: usageColorClass(pct) };
+      });
     }
+
+    function averageUsagePercent(items) {
+      const limited = items.filter(function(item){ return item.limit != null && item.limit > 0; });
+      if (!limited.length) return 0;
+      return Math.round(limited.reduce(function(sum, item){ return sum + item.pct; }, 0) / limited.length);
+    }
+
+    function highestUsage(items) {
+      return items.reduce(function(max, item){ return item.pct > max.pct ? item : max; }, items[0] || { pct: 0, label: "Usage" });
+    }
+
+    function renderSkeleton() {
+      if (els.summaryGrid) {
+        els.summaryGrid.innerHTML = Array.from({ length: 4 }).map(function(){
+          return '<div class="summary-card"><small class="skeleton">Loading</small><b class="skeleton">Loading</b><p class="skeleton">Loading usage data</p></div>';
+        }).join("");
+      }
+      if (els.usageList) {
+        els.usageList.innerHTML = Array.from({ length: 5 }).map(function(){
+          return '<div class="usage-row"><span class="usage-icon skeleton"></span><div class="usage-line"><div class="usage-title"><span class="skeleton">Loading</span><span class="skeleton">0 / 0</span></div><div class="track"><div class="fill" style="width:0%"></div></div></div><span class="usage-pct skeleton">0%</span></div>';
+        }).join("");
+      }
+      if (els.plansTableWrap) {
+        els.plansTableWrap.innerHTML = '<div style="padding:18px"><div class="skeleton" style="height:220px"></div></div>';
+      }
+    }
+
+    function renderAccount() {
+      const user = getUser();
+      const companyName = user.company_name || user.companyName || user.company || "FairLinx";
+      const role = statusText(user.role || "admin");
+      const initials = String(companyName || "FL").split(/\s+/).filter(Boolean).slice(0, 2).map(function(w){ return w[0]; }).join("").toUpperCase() || "FL";
+      if (els.accountCompany) els.accountCompany.textContent = companyName;
+      if (els.accountRole) els.accountRole.textContent = role;
+      if (els.accountAvatar) els.accountAvatar.textContent = initials;
+    }
+
+    function renderHero() {
+      const currentPlan = getCurrentPlan();
+      const me = state.data.me || {};
+      const billing = me.billing || {};
+      const status = getBillingStatus();
+      const className = statusClass(status);
+      const planName = currentPlan ? currentPlan.name : statusText(billing.plan || (state.data.current && state.data.current.legacy_plan) || "Starter");
+      const planPrice = currentPlan ? money(currentPlan.monthly_price) : money(billing.monthly_price || 0);
+      const renewal = getRenewalDate();
+      const email = billing.billing_email || me.billing_email || me.email || getUser().email || "Not set";
+
+      if (els.currentPlanName) els.currentPlanName.textContent = planName;
+      if (els.billingStatusBadge) {
+        els.billingStatusBadge.className = "badge " + className;
+        els.billingStatusBadge.textContent = statusText(status);
+      }
+      if (els.currentPlanDescription) {
+        els.currentPlanDescription.textContent = statusClass(status) === "danger"
+          ? "Your billing status needs attention. Open the billing portal to update payment details."
+          : "You are on the " + planName + " plan. Your subscription is managed safely through your billing settings.";
+      }
+      if (els.renewDate) els.renewDate.textContent = formatDate(renewal);
+      if (els.renewHelp) els.renewHelp.textContent = daysUntil(renewal);
+      if (els.monthlyPrice) els.monthlyPrice.textContent = planPrice + " / month";
+      if (els.checkoutStatus) els.checkoutStatus.textContent = me.checkout_available ? "Available" : "Not available";
+      if (els.checkoutHelp) els.checkoutHelp.textContent = me.checkout_available ? "Plan changes use Stripe Checkout" : "Fallback plan change route is used";
+      if (els.billingEmail) els.billingEmail.textContent = email;
+    }
+
+    function renderSummary() {
+      const me = state.data.me || {};
+      const currentPlan = getCurrentPlan();
+      const items = getUsageItems();
+      const avg = averageUsagePercent(items);
+      const top = highestUsage(items);
+      const status = getBillingStatus();
+      const statusTone = statusClass(status);
+      const portalReady = me.portal_available === true;
+      const checkoutReady = me.checkout_available === true;
+      const planName = currentPlan ? currentPlan.name : "Starter";
+
+      const healthTone = avg >= 90 ? "danger" : avg >= 75 ? "warn" : "good";
+      const healthLabel = avg >= 90 ? "Critical" : avg >= 75 ? "Watch" : "Good";
+      const billingTone = statusTone === "danger" ? "danger" : statusTone === "warn" ? "warn" : "good";
+
+      if (!els.summaryGrid) return;
+      els.summaryGrid.innerHTML = [
+        '<div class="summary-card ' + healthTone + '"><div class="summary-top"><small>Usage Health</small><span class="ok-circle">✓</span></div><b>' + esc(healthLabel) + '</b><p>Your workspace is using ' + esc(avg) + '% of combined limits.</p></div>',
+        '<div class="summary-card"><small>Current Plan</small><b>' + esc(planName) + '</b><p>Plan limits are applied to users, clients, jobs, invoices, and workers.</p></div>',
+        '<div class="summary-card ' + billingTone + '"><small>Billing Health</small><b>' + esc(statusText(status)) + '</b><p>' + esc(statusTone === "danger" ? "Billing requires attention." : "Billing is ready for normal use.") + '</p></div>',
+        '<div class="summary-card"><small>Upgrade Signal</small><b>' + esc(top.label) + '</b><p>Your highest usage area is at ' + esc(top.pct) + '%.</p></div>'
+      ].join("");
+
+      const buttons = [els.portalTopBtn, els.portalHeroBtn, els.portalActionBtn];
+      buttons.forEach(function(btn){ if (btn) btn.disabled = state.loading || state.portalOpening || !portalReady || !roleAllowed(); });
+      if (els.upgradeTopBtn) els.upgradeTopBtn.disabled = state.loading || !roleAllowed();
+      if (els.changePlanActionBtn) els.changePlanActionBtn.disabled = state.loading || !roleAllowed();
+      if (els.refreshBtn) els.refreshBtn.disabled = state.loading;
+      if (els.refreshActionBtn) els.refreshActionBtn.disabled = state.loading;
+    }
+
+    function renderUsage() {
+      const items = getUsageItems();
+      const avg = averageUsagePercent(items);
+      const top = highestUsage(items);
+      const warningList = state.data.me && state.data.me.warnings && Array.isArray(state.data.me.warnings.warnings)
+        ? state.data.me.warnings.warnings
+        : [];
+
+      if (els.usageList) {
+        els.usageList.innerHTML = items.map(function(item){
+          const limitText = item.limit == null ? "Unlimited" : String(item.limit);
+          return '<div class="usage-row">' +
+            '<span class="usage-icon">' + esc(item.icon) + '</span>' +
+            '<div class="usage-line">' +
+              '<div class="usage-title"><span>' + esc(item.label) + '</span><span>' + esc(item.used) + ' / ' + esc(limitText) + '</span></div>' +
+              '<div class="track"><div class="fill ' + esc(item.className) + '" style="width:' + esc(item.pct) + '%"></div></div>' +
+            '</div>' +
+            '<span class="usage-pct ' + esc(item.className) + '">' + esc(item.pct) + '%</span>' +
+          '</div>';
+        }).join("");
+      }
+
+      if (els.donutValue) els.donutValue.textContent = avg + "%";
+      if (els.usageDonut) {
+        const deg = Math.max(0, Math.min(360, Math.round((avg / 100) * 360)));
+        els.usageDonut.style.background = 'conic-gradient(var(--fx-primary) 0deg, #fb923c ' + deg + 'deg, #e5e7eb ' + deg + 'deg 360deg)';
+      }
+
+      if (els.usageLegend) {
+        els.usageLegend.innerHTML = items.slice(0, 4).map(function(item){
+          return '<div class="legend-row"><span><i></i>' + esc(item.label) + '</span><strong>' + esc(item.pct) + '%</strong></div>';
+        }).join("");
+      }
+
+      if (els.upgradeSuggestion) {
+        const suggestion = warningList.length
+          ? (warningList[0].message || "Upgrade your plan to avoid usage limits.")
+          : (top.pct >= 85
+              ? "You are close to your " + top.label.toLowerCase() + " limit. Consider upgrading before work is blocked."
+              : "You are doing great. Keep an eye on your " + top.label.toLowerCase() + " usage as your company grows.");
+        const tone = warningList.length || top.pct >= 100 ? "danger" : top.pct >= 85 ? "warn" : "";
+        els.upgradeSuggestion.className = "recommendation " + tone;
+        els.upgradeSuggestion.textContent = suggestion;
+      }
+    }
+
     function renderPlans() {
       const plans = Array.isArray(state.data.plans) ? state.data.plans : [];
       const currentPlan = getCurrentPlan();
+      const checkoutAvailable = state.data.me && state.data.me.checkout_available === true;
+
+      if (!els.plansTableWrap) return;
+
       if (!plans.length) {
-        document.getElementById("plansGrid").innerHTML = '<div class="empty">No active plans found.</div>';
+        els.plansTableWrap.innerHTML = '<div style="padding:18px;color:#667085;font-weight:800">No active plans found.</div>';
         return;
       }
 
-      const checkoutAvailable = state.data.me && state.data.me.checkout_available === true;
-      const cards = plans.map(function(plan){
+      const rows = [
+        { label: "Users", key: "max_users" },
+        { label: "Clients", key: "max_clients" },
+        { label: "Jobs", key: "max_jobs" },
+        { label: "Invoices", key: "max_invoices" },
+        { label: "Workers", key: "max_workers" },
+        { label: "Price", key: "monthly_price", price: true }
+      ];
+
+      const head = '<tr><th>Features</th>' + plans.map(function(plan){
+        const slug = String(plan.slug || "").toLowerCase();
+        const isCurrent = currentPlan && String(currentPlan.slug || "").toLowerCase() === slug;
+        return '<th class="' + (isCurrent ? 'current-col' : '') + '"><div class="plan-head"><strong>' + esc(plan.name || slug) + '</strong><span>' + esc(money(plan.monthly_price)) + ' / month</span>' + (isCurrent ? '<em class="badge">Current Plan</em>' : '') + '</div></th>';
+      }).join("") + '</tr>';
+
+      const bodyRows = rows.map(function(row){
+        return '<tr><td>' + esc(row.label) + '</td>' + plans.map(function(plan){
+          const slug = String(plan.slug || "").toLowerCase();
+          const isCurrent = currentPlan && String(currentPlan.slug || "").toLowerCase() === slug;
+          const value = row.price ? (money(plan[row.key]) + ' / month') : (plan[row.key] == null ? 'Unlimited' : String(plan[row.key]));
+          return '<td class="' + (isCurrent ? 'current-col' : '') + '">' + esc(value) + '</td>';
+        }).join("") + '</tr>';
+      }).join("");
+
+      const actionRow = '<tr><td>Action</td>' + plans.map(function(plan){
         const slug = String(plan.slug || "").toLowerCase();
         const isCurrent = currentPlan && String(currentPlan.slug || "").toLowerCase() === slug;
         const changing = state.changingPlanSlug === slug;
-        const label = isCurrent ? "Current Plan" : (changing ? "Saving..." : "Select Plan");
-        return '<div class="plan-card ' + (isCurrent ? "current" : "") + '">' +
-          '<h3>' + esc(plan.name || slug) + '</h3>' +
-          '<div class="plan-price">' + esc(money(plan.monthly_price)) + ' <small>/ month</small></div>' +
-          '<div class="limits">' +
-            '<div>Users: ' + esc(plan.max_users) + '</div>' +
-            '<div>Clients: ' + esc(plan.max_clients) + '</div>' +
-            '<div>Jobs: ' + esc(plan.max_jobs) + '</div>' +
-            '<div>Invoices: ' + esc(plan.max_invoices) + '</div>' +
-            '<div>Workers: ' + esc(plan.max_workers) + '</div>' +
-          '</div>' +
-          (isCurrent
-            ? '<button class="btn secondary" type="button" disabled>Current Plan</button>'
-            : '<button class="btn" type="button" data-plan-change="' + esc(slug) + '" ' + (buttonDisabled(slug) ? "disabled" : "") + '>' + esc(checkoutAvailable ? "Upgrade via Checkout" : label) + '</button>') +
-        '</div>';
-      }).join("");
-      document.getElementById("plansGrid").innerHTML = cards;
+        const disabled = state.loading || changing || !roleAllowed();
+        const label = isCurrent ? 'Current Plan' : (changing ? 'Saving...' : (checkoutAvailable ? 'Use Checkout' : 'Select Plan'));
+        return '<td class="' + (isCurrent ? 'current-col' : '') + '">' +
+          '<button class="btn ' + (isCurrent ? 'secondary' : 'ghost') + '" type="button" data-plan-change="' + esc(slug) + '" ' + (isCurrent || disabled ? 'disabled' : '') + '>' + esc(label) + '</button>' +
+        '</td>';
+      }).join("") + '</tr>';
+
+      els.plansTableWrap.innerHTML = '<table class="plans-table">' + head + bodyRows + actionRow + '</table>';
     }
+
+    function renderActivity() {
+      const status = getBillingStatus();
+      const plan = getCurrentPlan();
+      const renewal = getRenewalDate();
+      const price = plan ? money(plan.monthly_price) : money(0);
+      const today = formatDate(new Date());
+      const renewalText = formatDate(renewal);
+
+      const items = [
+        { icon: '✓', title: 'Billing data refreshed', meta: today, money: '' },
+        { icon: '▰', title: 'Current status: ' + statusText(status), meta: 'Subscription status', money: '' },
+        { icon: '◷', title: renewal ? 'Next renewal scheduled' : 'Renewal date unavailable', meta: renewalText, money: price },
+        { icon: '↗', title: 'Portal readiness checked', meta: (state.data.me && state.data.me.portal_available) ? 'Available' : 'Not available', money: '' }
+      ];
+
+      if (!els.activityList) return;
+      els.activityList.innerHTML = items.map(function(item){
+        return '<div class="activity-item"><span class="activity-dot">' + esc(item.icon) + '</span><div><b>' + esc(item.title) + '</b><span>' + esc(item.meta) + '</span></div><span class="activity-money">' + esc(item.money) + '</span></div>';
+      }).join("");
+    }
+
     function renderAll() {
-      renderCurrentPlan();
+      renderAccount();
+      if (state.loading && !state.data.me && !state.data.current) renderSkeleton();
+      renderHero();
+      renderSummary();
       renderUsage();
       renderPlans();
-
-      const me = state.data.me || {};
-      const portalEnabled = me.portal_available === true;
-      const portalBtn = document.getElementById("portalBtn");
-      portalBtn.disabled = state.loading || state.portalOpening || !portalEnabled || !roleAllowed();
-      portalBtn.textContent = state.portalOpening ? "Opening..." : "Open Billing Portal";
-
-      document.getElementById("refreshBtn").disabled = state.loading;
+      renderActivity();
     }
+
     async function fetchAll() {
+      if (state.aborter) state.aborter.abort();
+      state.aborter = new AbortController();
       state.loading = true;
       setStatus("Loading billing data...", "");
       setWarning("");
       renderAll();
+
       try {
         const [plansRes, currentRes, meRes] = await Promise.all([
-          apiFetch("/billing/plans"),
-          apiFetch("/billing/current-plan"),
-          apiFetch("/billing/me")
+          apiFetch("/billing/plans", { signal: state.aborter.signal }),
+          apiFetch("/billing/current-plan", { signal: state.aborter.signal }),
+          apiFetch("/billing/me", { signal: state.aborter.signal })
         ]);
+
         const plansData = await safeJson(plansRes);
         const currentData = await safeJson(currentRes);
         const meData = await safeJson(meRes);
@@ -634,22 +1669,27 @@
         state.data.me = meData || {};
 
         const warnings = meData && meData.warnings && Array.isArray(meData.warnings.warnings) ? meData.warnings.warnings : [];
-        if (warnings.length) {
-          setWarning(warnings[0].message || "Billing warning detected.");
-        }
+        if (warnings.length) setWarning(warnings[0].message || "Billing warning detected.");
+        if (!roleAllowed()) setWarning("Only owner/admin can manage billing plans.");
+
         setStatus("Billing data refreshed.", "ok");
       } catch (err) {
-        setStatus(err.message || "Failed to load billing data.", "error");
-        setWarning(err.message || "Could not load billing data.");
+        if (err.name !== "AbortError") {
+          setStatus(err.message || "Failed to load billing data.", "error");
+          setWarning(err.message || "Could not load billing data.");
+        }
       } finally {
         state.loading = false;
         renderAll();
       }
     }
+
     async function openPortal() {
+      if (state.portalOpening) return;
       state.portalOpening = true;
       setStatus("Opening billing portal...", "");
       renderAll();
+
       try {
         const res = await apiFetch("/billing/create-portal-session", {
           method: "POST",
@@ -668,20 +1708,20 @@
         renderAll();
       }
     }
+
     async function changePlan(planSlug) {
-      if (!planSlug) return;
+      if (!planSlug || state.changingPlanSlug) return;
       state.changingPlanSlug = planSlug;
       setStatus("Changing plan...", "");
       renderAll();
+
       try {
         const me = state.data.me || {};
-        const checkoutAvailable = me.checkout_available === true;
-        if (checkoutAvailable) {
-          const checkoutPlan = checkoutPlanForSlug(planSlug);
+        if (me.checkout_available === true) {
           const checkoutRes = await apiFetch("/billing/create-checkout-session", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ plan: checkoutPlan })
+            body: JSON.stringify({ plan: checkoutPlanForSlug(planSlug) })
           });
           const checkoutData = await safeJson(checkoutRes);
           if (!checkoutRes.ok) throw new Error(checkoutData.error || "Unable to create checkout session.");
@@ -707,23 +1747,41 @@
         renderAll();
       }
     }
-    function bindEvents() {
-      document.getElementById("refreshBtn").addEventListener("click", function(){ fetchAll(); });
-      document.getElementById("portalBtn").addEventListener("click", function(){ openPortal(); });
-      document.getElementById("plansGrid").addEventListener("click", function(ev){
-        const btn = ev.target.closest("[data-plan-change]");
-        if (!btn) return;
-        const slug = btn.getAttribute("data-plan-change");
-        if (slug) changePlan(slug);
-      });
+
+    function scrollToPlans() {
+      const section = document.getElementById("plansSection");
+      if (section) section.scrollIntoView({ behavior: "smooth", block: "start" });
     }
-    function init() {
-      if (!roleAllowed()) {
-        setWarning("Only owner/admin can manage billing plans.");
+
+    function bindEvents() {
+      if (els.refreshBtn) els.refreshBtn.addEventListener("click", fetchAll);
+      if (els.refreshActionBtn) els.refreshActionBtn.addEventListener("click", fetchAll);
+      [els.portalTopBtn, els.portalHeroBtn, els.portalActionBtn].forEach(function(btn){
+        if (btn) btn.addEventListener("click", openPortal);
+      });
+      [els.upgradeTopBtn, els.changePlanActionBtn].forEach(function(btn){
+        if (btn) btn.addEventListener("click", scrollToPlans);
+      });
+      if (els.emailActionBtn) els.emailActionBtn.addEventListener("click", function(){ window.location.href = "/settings.html"; });
+      if (els.supportBtn) els.supportBtn.addEventListener("click", function(){ window.location.href = "/support.html"; });
+      if (els.plansTableWrap) {
+        els.plansTableWrap.addEventListener("click", function(ev){
+          const btn = ev.target.closest("[data-plan-change]");
+          if (!btn || btn.disabled) return;
+          const slug = btn.getAttribute("data-plan-change");
+          if (slug) changePlan(slug);
+        });
       }
+    }
+
+    function init() {
+      cacheEls();
       bindEvents();
+      renderAccount();
+      if (!roleAllowed()) setWarning("Only owner/admin can manage billing plans.");
       fetchAll();
     }
+
     init();
   </script>
 </body>

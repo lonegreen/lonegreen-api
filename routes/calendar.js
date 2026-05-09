@@ -46,6 +46,7 @@ const {
   getEstimate,
   formatTimelineItem
 } = require("../services/routeHelpers");
+const { sendSafeServerError } = require("../services/safeServerError");
 
 const router = express.Router();
 
@@ -81,8 +82,7 @@ async function fetchCalendarJobs(req, res) {
 
     res.json(result.rows);
   } catch (err) {
-    console.log("CALENDAR ERROR:", err);
-    res.status(500).json({ error: err.message });
+    sendSafeServerError(res, err, "CALENDAR FETCH ERROR");
   }
 }
 
@@ -122,8 +122,7 @@ router.get("/dashboard", auth, rejectPlatformOwnerWithoutTenantContext, requireM
       pending: parseIntSafe(openJobs.rows[0].count)
     });
   } catch (err) {
-    console.log("DASHBOARD ERROR:", err);
-    res.status(500).json({ error: err.message });
+    sendSafeServerError(res, err, "CALENDAR DASHBOARD ERROR");
   }
 });
 
@@ -245,8 +244,7 @@ router.get("/money", auth, rejectPlatformOwnerWithoutTenantContext, requireMinim
       }))
     });
   } catch (err) {
-    console.log("MONEY ERROR:", err);
-    res.status(500).json({ error: err.message });
+    sendSafeServerError(res, err, "CALENDAR MONEY ERROR");
   }
 });
 
@@ -283,8 +281,7 @@ router.get("/ops/calendar", auth, rejectPlatformOwnerWithoutTenantContext, requi
 
     res.json({ jobs: result.rows.map(job => ({ ...job, status: normalizeJobStatus(job.status) })), grouped_by_date: grouped });
   } catch (err) {
-    console.log("OPS CALENDAR ERROR:", err);
-    res.status(500).json({ error: err.message });
+    sendSafeServerError(res, err, "CALENDAR OPS CALENDAR ERROR");
   }
 });
 
@@ -321,8 +318,7 @@ router.get("/operations/calendar", auth, rejectPlatformOwnerWithoutTenantContext
 
     res.json({ jobs: result.rows.map(job => ({ ...job, status: normalizeJobStatus(job.status) })), grouped_by_date: grouped });
   } catch (err) {
-    console.log("OPS CALENDAR ERROR:", err);
-    res.status(500).json({ error: err.message });
+    sendSafeServerError(res, err, "CALENDAR OPERATIONS CALENDAR ERROR");
   }
 });
 

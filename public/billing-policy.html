@@ -1,37 +1,963 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
   <title>Billing Policy | FairLinx</title>
-  <link rel="stylesheet" href="/css/brand.css">
-  <link rel="stylesheet" href="/legal.css">
+  <meta
+    name="description"
+    content="FairLinx Billing Policy explaining platform subscriptions, renewals, failed payments, taxes, marketplace payments, and billing support."
+  />
+
+  <link rel="stylesheet" href="/css/brand.css" />
+  <link rel="stylesheet" href="/legal.css" />
+
+  <style>
+    :root {
+      --fl-orange: #ff5a00;
+      --fl-orange-hover: #e64a00;
+      --fl-orange-soft: #ff8a33;
+      --fl-black: #111111;
+      --fl-gray: #2b2b2b;
+      --fl-border: #d9d9d9;
+      --fl-bg: #f5f5f5;
+      --fl-white: #ffffff;
+      --fl-shadow: 0 18px 50px rgba(17, 17, 17, 0.08);
+      --fl-shadow-soft: 0 10px 30px rgba(17, 17, 17, 0.06);
+      --fl-radius: 22px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      color: var(--fl-black);
+      background:
+        radial-gradient(circle at 82% 10%, rgba(255, 90, 0, 0.13), transparent 34%),
+        linear-gradient(180deg, #ffffff 0%, #f7f7f7 55%, #ffffff 100%);
+      font-family:
+        Inter,
+        ui-sans-serif,
+        system-ui,
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        sans-serif;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    .fl-legal-shell {
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    .fl-topbar {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+      padding: 18px clamp(18px, 5vw, 64px);
+      background: rgba(255, 255, 255, 0.86);
+      border-bottom: 1px solid rgba(217, 217, 217, 0.72);
+      backdrop-filter: blur(18px);
+    }
+
+    .fl-brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      min-width: max-content;
+      font-weight: 900;
+      font-size: 1.35rem;
+      letter-spacing: -0.05em;
+    }
+
+    .fl-brand-mark {
+      width: 42px;
+      height: 42px;
+      border-radius: 14px;
+      display: grid;
+      place-items: center;
+      color: #ffffff;
+      background: linear-gradient(135deg, var(--fl-orange), var(--fl-orange-soft));
+      box-shadow: 0 14px 28px rgba(255, 90, 0, 0.24);
+      font-weight: 950;
+      letter-spacing: -0.1em;
+      transform: skew(-8deg);
+    }
+
+    .fl-brand span strong {
+      color: var(--fl-orange);
+    }
+
+    .fl-nav {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: clamp(16px, 2.5vw, 34px);
+      color: var(--fl-black);
+      font-size: 0.94rem;
+      font-weight: 700;
+    }
+
+    .fl-nav a {
+      opacity: 0.84;
+      transition: color 0.2s ease, opacity 0.2s ease;
+    }
+
+    .fl-nav a:hover {
+      color: var(--fl-orange);
+      opacity: 1;
+    }
+
+    .fl-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: max-content;
+    }
+
+    .fl-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 9px;
+      min-height: 44px;
+      padding: 0 18px;
+      border-radius: 10px;
+      border: 1px solid var(--fl-border);
+      background: var(--fl-white);
+      color: var(--fl-black);
+      font-weight: 800;
+      font-size: 0.92rem;
+      cursor: pointer;
+      transition:
+        transform 0.2s ease,
+        border-color 0.2s ease,
+        background 0.2s ease,
+        color 0.2s ease,
+        box-shadow 0.2s ease;
+    }
+
+    .fl-btn:hover {
+      transform: translateY(-1px);
+      border-color: rgba(255, 90, 0, 0.5);
+      box-shadow: var(--fl-shadow-soft);
+    }
+
+    .fl-btn-primary {
+      border-color: transparent;
+      color: #ffffff;
+      background: linear-gradient(135deg, var(--fl-orange), var(--fl-orange-hover));
+      box-shadow: 0 16px 34px rgba(255, 90, 0, 0.23);
+    }
+
+    .fl-page {
+      width: min(1120px, calc(100% - 36px));
+      margin: 0 auto;
+    }
+
+    .fl-hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(330px, 0.85fr);
+      align-items: center;
+      gap: clamp(28px, 5vw, 76px);
+      padding: clamp(54px, 8vw, 86px) 0 42px;
+    }
+
+    .fl-eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      margin-bottom: 20px;
+      border: 1px solid rgba(255, 90, 0, 0.18);
+      border-radius: 999px;
+      background: rgba(255, 90, 0, 0.07);
+      color: var(--fl-orange);
+      font-weight: 900;
+      font-size: 0.82rem;
+      letter-spacing: 0.01em;
+    }
+
+    .fl-hero h1 {
+      margin: 0;
+      font-size: clamp(3rem, 7vw, 5.25rem);
+      line-height: 0.92;
+      letter-spacing: -0.085em;
+      color: var(--fl-black);
+    }
+
+    .fl-meta-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 12px 18px;
+      margin: 26px 0 0;
+      color: var(--fl-gray);
+      font-weight: 750;
+      font-size: 0.96rem;
+    }
+
+    .fl-meta-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 9px;
+    }
+
+    .fl-meta-icon,
+    .fl-small-icon {
+      width: 20px;
+      height: 20px;
+      color: var(--fl-orange);
+      flex: 0 0 auto;
+    }
+
+    .fl-divider {
+      width: 1px;
+      height: 20px;
+      background: var(--fl-border);
+    }
+
+    .fl-disclaimer {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      width: min(520px, 100%);
+      margin: 30px 0 0;
+      padding: 18px 20px;
+      border-radius: 16px;
+      border: 1px solid rgba(255, 90, 0, 0.13);
+      background: linear-gradient(135deg, rgba(255, 90, 0, 0.09), rgba(255, 138, 51, 0.04));
+      color: var(--fl-gray);
+      box-shadow: 0 14px 34px rgba(255, 90, 0, 0.07);
+      line-height: 1.65;
+      font-weight: 650;
+    }
+
+    .fl-back-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 28px;
+    }
+
+    .fl-hero-art {
+      position: relative;
+      min-height: 360px;
+      display: grid;
+      place-items: center;
+    }
+
+    .fl-art-orb {
+      position: absolute;
+      width: min(430px, 90%);
+      aspect-ratio: 1;
+      border-radius: 999px;
+      background:
+        radial-gradient(circle at 55% 35%, rgba(255, 138, 51, 0.26), transparent 0 36%, rgba(255, 90, 0, 0.11) 37%, transparent 68%),
+        linear-gradient(145deg, rgba(255, 90, 0, 0.12), rgba(255, 255, 255, 0.2));
+      filter: blur(0.2px);
+    }
+
+    .fl-art-stage {
+      position: relative;
+      width: min(470px, 100%);
+      min-height: 320px;
+      display: grid;
+      place-items: end center;
+    }
+
+    .fl-platform {
+      position: absolute;
+      bottom: 14px;
+      width: 92%;
+      height: 58px;
+      border-radius: 50%;
+      background: linear-gradient(180deg, #ffffff, #eeeeee);
+      border: 1px solid rgba(217, 217, 217, 0.9);
+      box-shadow: 0 22px 45px rgba(17, 17, 17, 0.12);
+    }
+
+    .fl-invoice-card {
+      position: absolute;
+      right: 30px;
+      top: 34px;
+      width: 188px;
+      height: 230px;
+      padding: 28px 24px;
+      border-radius: 20px;
+      background: rgba(255, 255, 255, 0.92);
+      border: 1px solid rgba(217, 217, 217, 0.8);
+      box-shadow: 0 28px 60px rgba(17, 17, 17, 0.13);
+      transform: rotate(-4deg);
+    }
+
+    .fl-invoice-card strong {
+      display: block;
+      margin-bottom: 22px;
+      color: var(--fl-orange);
+      font-size: 0.92rem;
+      letter-spacing: 0.06em;
+    }
+
+    .fl-line {
+      height: 9px;
+      margin: 12px 0;
+      border-radius: 999px;
+      background: #e7e7e7;
+    }
+
+    .fl-line.short {
+      width: 66%;
+    }
+
+    .fl-card-chip {
+      position: absolute;
+      left: 38px;
+      bottom: 82px;
+      width: 162px;
+      height: 92px;
+      border-radius: 17px;
+      background:
+        radial-gradient(circle at 82% 25%, rgba(255, 255, 255, 0.18), transparent 30%),
+        linear-gradient(135deg, #202020, #050505);
+      box-shadow: 0 24px 44px rgba(17, 17, 17, 0.22);
+    }
+
+    .fl-card-chip::before {
+      content: "";
+      position: absolute;
+      left: 18px;
+      top: 24px;
+      width: 31px;
+      height: 23px;
+      border-radius: 6px;
+      background: linear-gradient(135deg, #f2f2f2, #9b9b9b);
+      opacity: 0.8;
+    }
+
+    .fl-card-chip::after {
+      content: "";
+      position: absolute;
+      right: 18px;
+      bottom: 20px;
+      width: 46px;
+      height: 18px;
+      border-radius: 999px;
+      background:
+        radial-gradient(circle at 12px 9px, rgba(255,255,255,0.88) 0 8px, transparent 9px),
+        radial-gradient(circle at 30px 9px, rgba(255,255,255,0.64) 0 8px, transparent 9px);
+    }
+
+    .fl-shield {
+      position: absolute;
+      right: 0;
+      bottom: 70px;
+      width: 118px;
+      height: 138px;
+      background: linear-gradient(135deg, var(--fl-orange), var(--fl-orange-hover));
+      clip-path: polygon(50% 0, 92% 18%, 86% 78%, 50% 100%, 14% 78%, 8% 18%);
+      box-shadow: 0 28px 50px rgba(255, 90, 0, 0.31);
+      display: grid;
+      place-items: center;
+    }
+
+    .fl-shield svg {
+      width: 54px;
+      height: 54px;
+      color: #ffffff;
+      filter: drop-shadow(0 6px 10px rgba(0,0,0,0.22));
+    }
+
+    .fl-coin {
+      position: absolute;
+      right: 120px;
+      bottom: 118px;
+      width: 64px;
+      height: 64px;
+      border-radius: 999px;
+      display: grid;
+      place-items: center;
+      color: var(--fl-orange);
+      background: #ffffff;
+      border: 1px solid rgba(217, 217, 217, 0.9);
+      box-shadow: 0 18px 32px rgba(17, 17, 17, 0.13);
+      font-size: 1.85rem;
+      font-weight: 950;
+    }
+
+    .legal-card,
+    .fl-legal-card {
+      width: 100%;
+      margin: 0 auto 22px;
+      padding: clamp(22px, 4vw, 44px);
+      border: 1px solid rgba(217, 217, 217, 0.84);
+      border-radius: var(--fl-radius);
+      background: rgba(255, 255, 255, 0.94);
+      box-shadow: var(--fl-shadow);
+    }
+
+    .legal-nav {
+      display: grid;
+      grid-template-columns: repeat(7, minmax(0, 1fr));
+      gap: 8px;
+      margin-bottom: 22px;
+      padding: 14px;
+      border: 1px solid rgba(217, 217, 217, 0.75);
+      border-radius: 18px;
+      background: #ffffff;
+      box-shadow: var(--fl-shadow-soft);
+    }
+
+    .legal-nav a {
+      position: relative;
+      min-height: 76px;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      padding: 12px 8px;
+      border-radius: 14px;
+      color: var(--fl-black);
+      font-size: 0.88rem;
+      font-weight: 800;
+      transition: background 0.2s ease, color 0.2s ease, transform 0.2s ease;
+    }
+
+    .legal-nav a:hover {
+      background: rgba(255, 90, 0, 0.07);
+      color: var(--fl-orange);
+      transform: translateY(-1px);
+    }
+
+    .legal-nav a[aria-current="page"] {
+      color: var(--fl-orange);
+      background: rgba(255, 90, 0, 0.08);
+    }
+
+    .legal-nav a[aria-current="page"]::after {
+      content: "";
+      position: absolute;
+      left: 18%;
+      right: 18%;
+      bottom: -14px;
+      height: 3px;
+      border-radius: 999px;
+      background: var(--fl-orange);
+    }
+
+    .fl-policy-list {
+      margin-top: 22px;
+    }
+
+    .fl-policy-item {
+      display: grid;
+      grid-template-columns: 40px minmax(0, 1fr);
+      gap: 18px;
+      padding: 24px 0;
+      border-bottom: 1px solid rgba(217, 217, 217, 0.82);
+    }
+
+    .fl-policy-item:last-child {
+      border-bottom: 0;
+      padding-bottom: 0;
+    }
+
+    .fl-policy-number {
+      width: 32px;
+      height: 32px;
+      margin-top: 2px;
+      display: grid;
+      place-items: center;
+      border-radius: 999px;
+      color: #ffffff;
+      background: linear-gradient(135deg, var(--fl-orange), var(--fl-orange-hover));
+      box-shadow: 0 10px 20px rgba(255, 90, 0, 0.25);
+      font-size: 0.9rem;
+      font-weight: 950;
+    }
+
+    .fl-policy-item h2 {
+      margin: 0 0 8px;
+      font-size: clamp(1.1rem, 2vw, 1.35rem);
+      line-height: 1.25;
+      letter-spacing: -0.035em;
+      color: var(--fl-black);
+    }
+
+    .fl-policy-item p {
+      margin: 0;
+      max-width: 900px;
+      color: var(--fl-gray);
+      font-size: 1rem;
+      line-height: 1.72;
+      font-weight: 560;
+    }
+
+    .fl-policy-item .contact a {
+      color: var(--fl-orange);
+      font-weight: 900;
+    }
+
+    .fl-help-card {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 22px;
+      margin: 20px 0 34px;
+      padding: 28px;
+      border-radius: var(--fl-radius);
+      border: 1px solid rgba(217, 217, 217, 0.82);
+      background:
+        radial-gradient(circle at 10% 20%, rgba(255, 90, 0, 0.11), transparent 28%),
+        #ffffff;
+      box-shadow: var(--fl-shadow-soft);
+    }
+
+    .fl-help-icon {
+      width: 72px;
+      height: 72px;
+      display: grid;
+      place-items: center;
+      border-radius: 999px;
+      color: #ffffff;
+      background: linear-gradient(135deg, var(--fl-orange), var(--fl-orange-hover));
+      box-shadow: 0 18px 32px rgba(255, 90, 0, 0.25);
+    }
+
+    .fl-help-icon svg {
+      width: 34px;
+      height: 34px;
+    }
+
+    .fl-help-card h2 {
+      margin: 0 0 6px;
+      font-size: 1.35rem;
+      letter-spacing: -0.035em;
+    }
+
+    .fl-help-card p {
+      margin: 0;
+      color: var(--fl-gray);
+      line-height: 1.55;
+      font-weight: 560;
+    }
+
+    .fl-footer {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      align-items: center;
+      gap: 24px;
+      padding: 28px 0 34px;
+      color: var(--fl-gray);
+      font-size: 0.9rem;
+    }
+
+    .fl-footer-links {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 22px;
+      font-weight: 700;
+      color: var(--fl-black);
+    }
+
+    .fl-social {
+      display: flex;
+      gap: 10px;
+    }
+
+    .fl-social a {
+      width: 36px;
+      height: 36px;
+      display: grid;
+      place-items: center;
+      border-radius: 999px;
+      background: #eeeeee;
+      color: var(--fl-black);
+      font-weight: 900;
+      font-size: 0.82rem;
+    }
+
+    @media (max-width: 980px) {
+      .fl-nav {
+        display: none;
+      }
+
+      .fl-hero {
+        grid-template-columns: 1fr;
+        padding-top: 44px;
+      }
+
+      .fl-hero-art {
+        min-height: 300px;
+      }
+
+      .legal-nav {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+
+      .fl-footer {
+        grid-template-columns: 1fr;
+        text-align: center;
+        justify-items: center;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .fl-topbar {
+        padding: 14px 16px;
+      }
+
+      .fl-actions .fl-btn-primary {
+        display: none;
+      }
+
+      .fl-brand {
+        font-size: 1.1rem;
+      }
+
+      .fl-brand-mark {
+        width: 36px;
+        height: 36px;
+      }
+
+      .fl-page {
+        width: min(100% - 24px, 1120px);
+      }
+
+      .fl-hero {
+        padding-top: 34px;
+      }
+
+      .fl-meta-row {
+        display: grid;
+        gap: 12px;
+      }
+
+      .fl-divider {
+        display: none;
+      }
+
+      .fl-back-links .fl-btn {
+        width: 100%;
+      }
+
+      .fl-hero-art {
+        min-height: 250px;
+      }
+
+      .fl-invoice-card {
+        right: 28px;
+        width: 148px;
+        height: 186px;
+      }
+
+      .fl-card-chip {
+        left: 8px;
+        width: 138px;
+      }
+
+      .fl-shield {
+        width: 92px;
+        height: 108px;
+      }
+
+      .fl-coin {
+        right: 96px;
+        width: 52px;
+        height: 52px;
+      }
+
+      .legal-nav {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .fl-policy-item {
+        grid-template-columns: 1fr;
+        gap: 10px;
+      }
+
+      .fl-help-card {
+        grid-template-columns: 1fr;
+        text-align: center;
+        justify-items: center;
+      }
+
+      .fl-help-card .fl-btn {
+        width: 100%;
+      }
+    }
+  </style>
 </head>
+
 <body>
-  <main class="legal-page">
-    <section class="legal-hero">
-      <h1>Billing Policy</h1>
-      <p class="meta">Effective date: May 3, 2026 | Last updated: May 3, 2026</p>
-      <p class="disclaimer">Attorney review required: this practical placeholder is provided for SaaS operations planning and is not legal advice.</p>
-      <div class="back-links"><a href="/">Home</a><a href="/login.html">Login</a></div>
-    </section>
-    <section class="legal-card">
-      <div class="legal-nav">
-        <a href="/terms.html">Terms</a><a href="/privacy.html">Privacy</a><a href="/billing-policy.html">Billing</a><a href="/refund-policy.html">Refunds</a><a href="/company-ownership.html">Company Ownership</a><a href="/cookie-policy.html">Cookies</a><a href="/data-processing.html">Data Processing</a>
+  <div class="fl-legal-shell">
+    <header class="fl-topbar">
+      <a class="fl-brand" href="/" aria-label="FairLinx home">
+        <span class="fl-brand-mark">FL</span>
+        <span>Fair<strong>Linx</strong></span>
+      </a>
+
+      <nav class="fl-nav" aria-label="Primary navigation">
+        <a href="/">Home</a>
+        <a href="/discover.html">For Customers</a>
+        <a href="/company-signup.html">For Companies</a>
+        <a href="/pricing.html">Pricing</a>
+        <a href="/about.html">About Us</a>
+        <a href="/terms.html">Resources</a>
+      </nav>
+
+      <div class="fl-actions">
+        <a class="fl-btn" href="/login.html">Login</a>
+        <a class="fl-btn fl-btn-primary" href="/company-signup.html">Get Started</a>
       </div>
-      <h2>1. Platform Subscriptions</h2>
-      <p>Companies may subscribe to paid platform plans. Prices, plan limits, billing cycles, and renewal dates are shown in the billing dashboard or checkout flow.</p>
-      <h2>2. Payment Provider</h2>
-      <p>Platform subscription payments may be processed through Stripe or another approved provider. Payment provider terms may also apply.</p>
-      <h2>3. Renewals</h2>
-      <p>Subscriptions renew automatically unless cancelled or changed according to the available billing controls.</p>
-      <h2>4. Failed Payments</h2>
-      <p>If payment fails, the account may enter past-due warning mode. Access restrictions may apply according to the product configuration and the applicable plan.</p>
-      <h2>5. Taxes</h2>
-      <p>Displayed prices may not include taxes unless stated. Companies are responsible for tax obligations associated with their business operations.</p>
-      <h2>6. Contact</h2>
-      <p class="contact">Billing contact placeholder: billing@lonegreen.example or your business mailing address.</p>
-    </section>
-  </main>
+    </header>
+
+    <main class="fl-page">
+      <section class="fl-hero" aria-labelledby="page-title">
+        <div>
+          <div class="fl-eyebrow">
+            <svg class="fl-small-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M12 3l7 4v5c0 5-3.5 8-7 9-3.5-1-7-4-7-9V7l7-4z" stroke="currentColor" stroke-width="2" />
+              <path d="M9 12l2 2 4-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+            SaaS Billing Terms
+          </div>
+
+          <h1 id="page-title">Billing Policy</h1>
+
+          <div class="fl-meta-row" aria-label="Policy dates">
+            <span class="fl-meta-item">
+              <svg class="fl-meta-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M7 3v3M17 3v3M4 9h16M6 5h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2z" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+              </svg>
+              Effective date: May 3, 2026
+            </span>
+
+            <span class="fl-divider" aria-hidden="true"></span>
+
+            <span class="fl-meta-item">
+              <svg class="fl-meta-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M21 12a9 9 0 1 1-2.64-6.36" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                <path d="M21 4v6h-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+              Last updated: May 3, 2026
+            </span>
+          </div>
+
+          <p class="fl-disclaimer">
+            <svg class="fl-small-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M12 9v4M12 17h.01M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+            </svg>
+            <span>
+              <strong>Attorney review required:</strong> this practical placeholder is provided for SaaS operations planning and is not legal advice.
+            </span>
+          </p>
+
+          <div class="fl-back-links" aria-label="Quick navigation">
+            <a class="fl-btn fl-btn-primary" href="/">
+              <svg class="fl-small-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M3 11l9-8 9 8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                <path d="M5 10v10h14V10" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+              </svg>
+              Home
+            </a>
+            <a class="fl-btn" href="/login.html">
+              <svg class="fl-small-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M7 11V8a5 5 0 0 1 10 0v3" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                <path d="M6 11h12v10H6z" stroke="currentColor" stroke-width="2" stroke-linejoin="round" />
+              </svg>
+              Login
+            </a>
+          </div>
+        </div>
+
+        <div class="fl-hero-art" aria-hidden="true">
+          <div class="fl-art-orb"></div>
+          <div class="fl-art-stage">
+            <div class="fl-platform"></div>
+
+            <div class="fl-invoice-card">
+              <strong>INVOICE</strong>
+              <div class="fl-line"></div>
+              <div class="fl-line"></div>
+              <div class="fl-line short"></div>
+              <div class="fl-line"></div>
+            </div>
+
+            <div class="fl-card-chip"></div>
+            <div class="fl-coin">$</div>
+
+            <div class="fl-shield">
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M5 12.5l4.2 4.2L19.5 6.5" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="fl-legal-card" aria-label="Billing policy content">
+        <nav class="legal-nav" aria-label="Legal pages">
+          <a href="/terms.html">Terms</a>
+          <a href="/privacy.html">Privacy</a>
+          <a href="/billing-policy.html" aria-current="page">Billing</a>
+          <a href="/refund-policy.html">Refunds</a>
+          <a href="/company-ownership.html">Company Ownership</a>
+          <a href="/cookie-policy.html">Cookies</a>
+          <a href="/data-processing.html">Data Processing</a>
+        </nav>
+
+        <div class="fl-policy-list">
+          <article class="fl-policy-item">
+            <div class="fl-policy-number">1</div>
+            <div>
+              <h2>Platform Subscriptions</h2>
+              <p>
+                Companies may subscribe to paid FairLinx platform plans. Prices, plan limits, billing cycles,
+                renewal dates, and included features are shown in the billing dashboard, pricing page, or checkout flow.
+              </p>
+            </div>
+          </article>
+
+          <article class="fl-policy-item">
+            <div class="fl-policy-number">2</div>
+            <div>
+              <h2>Payment Provider</h2>
+              <p>
+                Platform subscription payments may be processed through Stripe or another approved third-party payment provider.
+                Additional payment provider terms, fees, verification requirements, or processing rules may apply.
+              </p>
+            </div>
+          </article>
+
+          <article class="fl-policy-item">
+            <div class="fl-policy-number">3</div>
+            <div>
+              <h2>Automatic Renewals</h2>
+              <p>
+                Unless cancelled or changed through the available billing controls, subscriptions may renew automatically
+                at the end of each billing cycle using the payment method on file.
+              </p>
+            </div>
+          </article>
+
+          <article class="fl-policy-item">
+            <div class="fl-policy-number">4</div>
+            <div>
+              <h2>Failed Payments and Past-Due Accounts</h2>
+              <p>
+                If a payment fails, the company account may enter a past-due or warning state. FairLinx may retry payment,
+                request updated billing information, limit selected paid features, or restrict account access according to
+                the applicable plan and product configuration.
+              </p>
+            </div>
+          </article>
+
+          <article class="fl-policy-item">
+            <div class="fl-policy-number">5</div>
+            <div>
+              <h2>Plan Changes</h2>
+              <p>
+                Companies may be able to upgrade, downgrade, or cancel plans through supported billing controls. Changes may
+                take effect immediately, at the end of the current billing cycle, or according to the rules shown during checkout.
+              </p>
+            </div>
+          </article>
+
+          <article class="fl-policy-item">
+            <div class="fl-policy-number">6</div>
+            <div>
+              <h2>Taxes</h2>
+              <p>
+                Displayed prices may not include applicable taxes unless clearly stated. Companies are responsible for taxes,
+                reporting obligations, and business-related charges associated with their own operations.
+              </p>
+            </div>
+          </article>
+
+          <article class="fl-policy-item">
+            <div class="fl-policy-number">7</div>
+            <div>
+              <h2>Marketplace Payments</h2>
+              <p>
+                FairLinx platform subscription billing is separate from payments between customers and service companies.
+                Unless otherwise stated, FairLinx does not process customer job payments, hold contractor funds, or take a
+                commission from service work arranged outside the platform subscription.
+              </p>
+            </div>
+          </article>
+
+          <article class="fl-policy-item">
+            <div class="fl-policy-number">8</div>
+            <div>
+              <h2>Contact</h2>
+              <p class="contact">
+                For billing questions, contact FairLinx support through your account dashboard or email:
+                <a href="mailto:support@fairlinx.app">support@fairlinx.app</a>
+              </p>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section class="fl-help-card" aria-label="Billing support">
+        <div class="fl-help-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none">
+            <path d="M4 13a8 8 0 0 1 16 0" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+            <path d="M4 13v4a2 2 0 0 0 2 2h1v-8H6a2 2 0 0 0-2 2zM20 13v4a2 2 0 0 1-2 2h-1v-8h1a2 2 0 0 1 2 2z" stroke="currentColor" stroke-width="2" stroke-linejoin="round" />
+            <path d="M14 21h-2" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+          </svg>
+        </div>
+
+        <div>
+          <h2>Need help with billing?</h2>
+          <p>Our support team is here to help you with any billing questions or account issues you may have.</p>
+        </div>
+
+        <a class="fl-btn" href="mailto:support@fairlinx.app">
+          <svg class="fl-small-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M4 6h16v12H4z" stroke="currentColor" stroke-width="2" stroke-linejoin="round" />
+            <path d="M4 7l8 6 8-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+          Email Support
+        </a>
+      </section>
+
+      <footer class="fl-footer">
+        <a class="fl-brand" href="/" aria-label="FairLinx home">
+          <span class="fl-brand-mark">FL</span>
+          <span>Fair<strong>Linx</strong></span>
+        </a>
+
+        <nav class="fl-footer-links" aria-label="Footer legal links">
+          <a href="/terms.html">Terms</a>
+          <a href="/privacy.html">Privacy</a>
+          <a href="/billing-policy.html">Billing Policy</a>
+          <a href="/refund-policy.html">Refund Policy</a>
+          <a href="/contact.html">Contact Us</a>
+        </nav>
+
+        <div class="fl-social" aria-label="Social links">
+          <a href="#" aria-label="LinkedIn">in</a>
+          <a href="#" aria-label="Twitter">x</a>
+          <a href="#" aria-label="Facebook">f</a>
+        </div>
+
+        <div>© 2026 FairLinx. All rights reserved.</div>
+      </footer>
+    </main>
+  </div>
 </body>
 </html>

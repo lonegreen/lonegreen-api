@@ -5,30 +5,299 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Refund Policy | FairLinx</title>
   <link rel="stylesheet" href="/css/brand.css">
+  <link rel="stylesheet" href="/app-shell.css">
   <link rel="stylesheet" href="/legal.css">
+  <style>
+    :root {
+      --refund-orange: #FF5A00;
+      --refund-orange-deep: #E64A00;
+      --refund-black: #111111;
+      --refund-gray: #2B2B2B;
+      --refund-border: #D9D9D9;
+      --refund-white: #FFFFFF;
+      --refund-shadow: 0 18px 50px rgba(17, 17, 17, 0.08);
+      --refund-shadow-soft: 0 10px 28px rgba(17, 17, 17, 0.06);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      color: var(--refund-black);
+      background:
+        radial-gradient(circle at 8% 0%, rgba(255, 90, 0, 0.13), transparent 34%),
+        radial-gradient(circle at 92% 10%, rgba(255, 122, 26, 0.10), transparent 30%),
+        linear-gradient(180deg, #f5f5f5 0%, #fafafa 100%);
+    }
+
+    .refund-shell {
+      width: min(1120px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 42px 0;
+    }
+
+    .refund-hero {
+      position: relative;
+      overflow: hidden;
+      border: 1px solid rgba(217, 217, 217, 0.85);
+      border-radius: 28px;
+      background:
+        linear-gradient(135deg, rgba(255, 255, 255, 0.96), rgba(255, 255, 255, 0.88)),
+        radial-gradient(circle at top right, rgba(255, 90, 0, 0.16), transparent 36%);
+      box-shadow: var(--refund-shadow);
+      padding: 34px;
+    }
+
+    .refund-hero::before {
+      content: "";
+      position: absolute;
+      inset: 0 0 auto 0;
+      height: 5px;
+      background: linear-gradient(90deg, #FF5A00, #FF7A1A);
+    }
+
+    .refund-kicker {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      width: fit-content;
+      margin: 0 0 14px;
+      padding: 8px 12px;
+      border: 1px solid rgba(255, 90, 0, 0.20);
+      border-radius: 999px;
+      background: rgba(255, 90, 0, 0.08);
+      color: var(--refund-orange-deep);
+      font-size: 0.82rem;
+      font-weight: 800;
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
+    }
+
+    .refund-kicker::before {
+      content: "";
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: var(--refund-orange);
+      box-shadow: 0 0 0 5px rgba(255, 90, 0, 0.12);
+    }
+
+    .refund-hero h1 {
+      margin: 0;
+      color: var(--refund-black);
+      font-size: clamp(2.25rem, 5vw, 4rem);
+      line-height: 0.98;
+      letter-spacing: -0.055em;
+    }
+
+    .refund-hero .meta {
+      max-width: 760px;
+      margin: 18px 0 0;
+      color: var(--refund-gray);
+      font-size: 1.05rem;
+      line-height: 1.65;
+    }
+
+    .refund-hero .disclaimer {
+      max-width: 820px;
+      margin: 12px 0 0;
+      padding: 14px 16px;
+      border: 1px solid rgba(255, 90, 0, 0.18);
+      border-radius: 16px;
+      background: rgba(255, 90, 0, 0.07);
+      color: #5f3321;
+      font-size: 0.95rem;
+      line-height: 1.5;
+    }
+
+    .refund-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 22px;
+    }
+
+    .refund-actions .fx-btn {
+      min-height: 42px;
+      border-radius: 14px;
+    }
+
+    .refund-card {
+      margin-top: 18px;
+      border: 1px solid rgba(217, 217, 217, 0.9);
+      border-radius: 26px;
+      background: rgba(255, 255, 255, 0.94);
+      box-shadow: var(--refund-shadow-soft);
+      padding: 24px;
+    }
+
+    .refund-nav {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 24px;
+      padding: 12px;
+      border: 1px solid rgba(217, 217, 217, 0.75);
+      border-radius: 18px;
+      background: #fafafa;
+    }
+
+    .refund-nav a {
+      display: inline-flex;
+      align-items: center;
+      min-height: 34px;
+      padding: 7px 12px;
+      border: 1px solid rgba(217, 217, 217, 0.9);
+      border-radius: 999px;
+      background: #fff;
+      color: var(--refund-gray);
+      font-size: 0.88rem;
+      font-weight: 700;
+      text-decoration: none;
+      transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+    }
+
+    .refund-nav a:hover {
+      transform: translateY(-1px);
+      border-color: rgba(255, 90, 0, 0.32);
+      box-shadow: 0 8px 18px rgba(17, 17, 17, 0.07);
+    }
+
+    .refund-nav a[aria-current="page"] {
+      border-color: rgba(255, 90, 0, 0.35);
+      background: rgba(255, 90, 0, 0.10);
+      color: var(--refund-orange-deep);
+    }
+
+    .refund-nav a:focus-visible,
+    .refund-actions a:focus-visible {
+      outline: 3px solid rgba(255, 90, 0, 0.35);
+      outline-offset: 3px;
+    }
+
+    .refund-section {
+      padding: 22px 0;
+      border-top: 1px solid rgba(217, 217, 217, 0.78);
+    }
+
+    .refund-section:first-of-type {
+      border-top: 0;
+      padding-top: 0;
+    }
+
+    .refund-section h2 {
+      margin: 0 0 10px;
+      color: var(--refund-black);
+      font-size: clamp(1.18rem, 2vw, 1.45rem);
+      line-height: 1.2;
+      letter-spacing: -0.025em;
+    }
+
+    .refund-section p {
+      margin: 0;
+      color: #4b5563;
+      font-size: 1rem;
+      line-height: 1.72;
+    }
+
+    .refund-contact-box {
+      display: block;
+      margin-top: 4px;
+      padding: 16px;
+      border: 1px solid rgba(255, 90, 0, 0.18);
+      border-radius: 18px;
+      background: rgba(255, 90, 0, 0.06);
+      color: #5f3321;
+      font-weight: 700;
+    }
+
+    @media (max-width: 640px) {
+      .refund-shell {
+        width: min(100% - 22px, 1120px);
+        padding: 22px 0;
+      }
+
+      .refund-hero {
+        border-radius: 22px;
+        padding: 26px 20px;
+      }
+
+      .refund-card {
+        border-radius: 22px;
+        padding: 18px;
+      }
+
+      .refund-actions {
+        display: grid;
+        grid-template-columns: 1fr;
+      }
+
+      .refund-actions .fx-btn {
+        width: 100%;
+        justify-content: center;
+      }
+
+      .refund-nav {
+        display: grid;
+        grid-template-columns: 1fr;
+      }
+
+      .refund-nav a {
+        justify-content: center;
+      }
+    }
+  </style>
 </head>
 <body>
-  <main class="legal-page">
-    <section class="legal-hero">
-      <h1>Refund Policy</h1>
+  <main class="legal-page fx-layout-public refund-shell">
+    <section class="legal-hero fx-hero fx-section-head refund-hero" aria-labelledby="refund-policy-title">
+      <p class="refund-kicker">FairLinx Legal</p>
+      <h1 id="refund-policy-title">Refund Policy</h1>
       <p class="meta">Effective date: May 3, 2026 | Last updated: May 3, 2026</p>
       <p class="disclaimer">Attorney review required: this practical placeholder is provided for SaaS operations planning and is not legal advice.</p>
-      <div class="back-links"><a href="/">Home</a><a href="/login.html">Login</a></div>
-    </section>
-    <section class="legal-card">
-      <div class="legal-nav">
-        <a href="/terms.html">Terms</a><a href="/privacy.html">Privacy</a><a href="/billing-policy.html">Billing</a><a href="/refund-policy.html">Refunds</a><a href="/company-ownership.html">Company Ownership</a><a href="/cookie-policy.html">Cookies</a><a href="/data-processing.html">Data Processing</a>
+      <div class="back-links fx-cta-row refund-actions" aria-label="Primary navigation">
+        <a class="fx-btn fx-btn--secondary" href="/">Home</a>
+        <a class="fx-btn fx-btn--secondary" href="/login.html">Login</a>
       </div>
-      <h2>1. General Approach</h2>
-      <p>Unless required by law or separately agreed in writing, platform subscription fees are generally non-refundable after a billing period begins.</p>
-      <h2>2. Billing Errors</h2>
-      <p>If you believe you were charged in error, contact support promptly with the company name, charge date, and invoice or payment reference.</p>
-      <h2>3. Cancellations</h2>
-      <p>Cancelling a subscription stops future renewal according to the billing settings. Cancellation does not automatically create a refund for the current period.</p>
-      <h2>4. Service Issues</h2>
-      <p>Refund or credit requests related to outages or service issues will be reviewed case by case.</p>
-      <h2>5. Contact</h2>
-      <p class="contact">Refund contact placeholder: billing@lonegreen.example or your business mailing address.</p>
+    </section>
+
+    <section class="legal-card fx-card refund-card" aria-label="Refund policy content">
+      <nav class="legal-nav refund-nav" aria-label="Legal documents">
+        <a href="/terms.html">Terms</a>
+        <a href="/privacy.html">Privacy</a>
+        <a href="/billing-policy.html">Billing</a>
+        <a href="/refund-policy.html" aria-current="page">Refunds</a>
+        <a href="/company-ownership.html">Company Ownership</a>
+        <a href="/cookie-policy.html">Cookies</a>
+        <a href="/data-processing.html">Data Processing</a>
+      </nav>
+
+      <section class="refund-section">
+        <h2>1. General Approach</h2>
+        <p>Unless required by law or separately agreed in writing, platform subscription fees are generally non-refundable after a billing period begins.</p>
+      </section>
+
+      <section class="refund-section">
+        <h2>2. Billing Errors</h2>
+        <p>If you believe you were charged in error, contact support promptly with the company name, charge date, and invoice or payment reference.</p>
+      </section>
+
+      <section class="refund-section">
+        <h2>3. Cancellations</h2>
+        <p>Cancelling a subscription stops future renewal according to the billing settings. Cancellation does not automatically create a refund for the current period.</p>
+      </section>
+
+      <section class="refund-section">
+        <h2>4. Service Issues</h2>
+        <p>Refund or credit requests related to outages or service issues will be reviewed case by case.</p>
+      </section>
+
+      <section class="refund-section">
+        <h2>5. Contact</h2>
+        <p class="contact refund-contact-box">Refund contact placeholder: billing@lonegreen.example or your business mailing address.</p>
+      </section>
     </section>
   </main>
 </body>

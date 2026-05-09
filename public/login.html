@@ -6,123 +6,224 @@
   <title>FairLinx Login</title>
   <link rel="stylesheet" href="/css/brand.css">
 
-
   <style>
+    :root {
+      --brand-primary: #FF5A00;
+      --brand-primary-hover: #E64A00;
+      --brand-primary-light: #FF8A33;
+      --brand-black: #111111;
+      --brand-dark: #2B2B2B;
+      --brand-border: #D9D9D9;
+      --brand-bg: #F5F5F5;
+      --brand-white: #FFFFFF;
+      --brand-success: #16A34A;
+      --brand-warning: #F59E0B;
+      --brand-error: #DC2626;
+
+      --radius-xl: 32px;
+      --radius-lg: 22px;
+      --radius-md: 16px;
+      --radius-sm: 12px;
+      --shadow-shell: 0 34px 100px rgba(0, 0, 0, 0.42);
+      --shadow-orange: 0 18px 36px rgba(255, 90, 0, 0.28);
+      --shadow-card: 0 16px 40px rgba(17, 17, 17, 0.09);
+    }
+
     * {
       box-sizing: border-box;
       font-family: Inter, Arial, sans-serif;
+    }
+
+    html {
+      -webkit-text-size-adjust: 100%;
     }
 
     body {
       margin: 0;
       min-height: 100vh;
       background:
-        radial-gradient(circle at top left, rgba(255, 138, 51, 0.22), transparent 34%),
-        linear-gradient(135deg, #111111, #2B2B2B 52%, #3a3a3a);
+        radial-gradient(circle at 8% 8%, rgba(255, 90, 0, 0.26), transparent 28%),
+        radial-gradient(circle at 86% 12%, rgba(255, 138, 51, 0.16), transparent 28%),
+        linear-gradient(135deg, #080808 0%, #111111 48%, #202020 100%);
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 24px;
-      color: #102016;
+      padding: 34px;
+      color: var(--brand-black);
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background-image:
+        linear-gradient(rgba(255, 90, 0, 0.055) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 90, 0, 0.045) 1px, transparent 1px);
+      background-size: 52px 52px;
+      mask-image: radial-gradient(circle at center, rgba(0, 0, 0, 0.65), transparent 72%);
     }
 
     .page {
       width: 100%;
-      max-width: 1100px;
+      max-width: 1180px;
+      min-height: 760px;
       display: grid;
-      grid-template-columns: 1.1fr 0.9fr;
-      background: rgba(255,255,255,0.08);
-      border: 1px solid rgba(255,255,255,0.16);
-      border-radius: 28px;
+      grid-template-columns: 1.02fr 0.98fr;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 90, 0, 0.28);
+      border-radius: var(--radius-xl);
       overflow: hidden;
-      box-shadow: 0 30px 90px rgba(0,0,0,0.35);
+      box-shadow: var(--shadow-shell);
       backdrop-filter: blur(18px);
+      position: relative;
+      z-index: 1;
     }
 
     .brand-panel {
-      padding: 56px;
+      padding: 58px 54px;
       color: white;
       position: relative;
       overflow: hidden;
+      background:
+        radial-gradient(circle at 14% 78%, rgba(255, 90, 0, 0.36), transparent 32%),
+        linear-gradient(145deg, #070707 0%, #111111 58%, #1d1d1d 100%);
+    }
+
+    .brand-panel::before {
+      content: "";
+      position: absolute;
+      right: -130px;
+      bottom: -120px;
+      width: 520px;
+      height: 520px;
+      border-radius: 50%;
+      border: 1px solid rgba(255, 90, 0, 0.32);
+      box-shadow:
+        inset 0 0 0 28px rgba(255, 90, 0, 0.035),
+        inset 0 0 0 70px rgba(255, 90, 0, 0.025);
     }
 
     .brand-panel::after {
       content: "";
       position: absolute;
-      width: 280px;
-      height: 280px;
-      border-radius: 999px;
-      background: rgba(255, 138, 51, 0.22);
-      right: -90px;
-      bottom: -90px;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 170px;
+      background:
+        radial-gradient(circle at 10% 100%, rgba(255, 90, 0, 0.42), transparent 42%),
+        repeating-radial-gradient(circle at 12% 100%, rgba(255, 90, 0, 0.28) 0 2px, transparent 2px 12px);
+      opacity: 0.7;
+      pointer-events: none;
     }
 
     .brand-logo {
       display: inline-flex;
       align-items: center;
-      gap: 12px;
-      font-weight: 800;
-      font-size: 24px;
-      margin-bottom: 70px;
+      gap: 14px;
+      font-weight: 900;
+      font-size: 34px;
+      letter-spacing: -0.055em;
+      margin-bottom: 82px;
+      position: relative;
+      z-index: 2;
+    }
+
+    .brand-logo span {
+      color: #ffffff;
+    }
+
+    .brand-logo span::first-letter {
+      color: #ffffff;
     }
 
     .brand-mark {
-      width: 46px;
-      height: 46px;
-      border-radius: 15px;
+      width: 62px;
+      height: 62px;
+      border-radius: 18px;
       background: linear-gradient(135deg, var(--brand-primary), var(--brand-primary-light));
-      color: var(--brand-dark);
+      color: #ffffff;
       display: grid;
       place-items: center;
-      font-size: 24px;
-      box-shadow: 0 10px 30px rgba(230,74,0,0.30);
+      font-size: 22px;
+      font-weight: 950;
+      letter-spacing: -0.12em;
+      box-shadow: var(--shadow-orange);
+      transform: skew(-8deg);
+    }
+
+    .brand-mark::before {
+      content: "FL";
+      transform: skew(8deg);
+    }
+
+    .brand-mark {
+      font-size: 0;
     }
 
     .brand-panel h1 {
-      font-size: 46px;
-      line-height: 1.05;
-      margin: 0 0 18px;
-      letter-spacing: -1.4px;
+      max-width: 520px;
+      font-size: clamp(42px, 5vw, 66px);
+      line-height: 1.02;
+      margin: 0 0 22px;
+      letter-spacing: -0.065em;
+      position: relative;
+      z-index: 2;
+    }
+
+    .brand-panel h1 strong,
+    .brand-panel h1 .accent {
+      color: var(--brand-primary);
     }
 
     .brand-panel p {
       margin: 0;
       max-width: 470px;
-      color: rgba(255,255,255,0.78);
-      font-size: 16px;
-      line-height: 1.7;
+      color: rgba(255, 255, 255, 0.76);
+      font-size: 17px;
+      line-height: 1.75;
+      position: relative;
+      z-index: 2;
     }
 
     .brand-stats {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
-      gap: 14px;
-      margin-top: 46px;
+      gap: 16px;
+      margin-top: 54px;
       position: relative;
       z-index: 2;
     }
 
     .stat {
-      padding: 18px;
-      border-radius: 20px;
-      background: rgba(255,255,255,0.10);
-      border: 1px solid rgba(255,255,255,0.12);
+      min-height: 132px;
+      padding: 20px 18px;
+      border-radius: 22px;
+      background: rgba(255, 255, 255, 0.075);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      box-shadow: 0 16px 36px rgba(0, 0, 0, 0.18);
+      backdrop-filter: blur(10px);
     }
 
     .stat strong {
       display: block;
-      font-size: 22px;
-      margin-bottom: 4px;
+      font-size: 21px;
+      margin-bottom: 8px;
+      letter-spacing: -0.035em;
     }
 
     .stat span {
       font-size: 12px;
-      color: rgba(255,255,255,0.7);
+      color: rgba(255, 255, 255, 0.68);
+      line-height: 1.4;
     }
 
     .auth-panel {
-      background: #f8fbf8;
-      padding: 42px;
+      background:
+        radial-gradient(circle at 86% 14%, rgba(255, 90, 0, 0.08), transparent 26%),
+        linear-gradient(180deg, #ffffff 0%, #fafafa 100%);
+      padding: 54px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -130,34 +231,37 @@
 
     .auth-card {
       width: 100%;
-      max-width: 410px;
+      max-width: 460px;
     }
 
     .mobile-logo {
       display: none;
       align-items: center;
-      gap: 10px;
-      font-weight: 800;
+      gap: 12px;
+      font-weight: 900;
+      font-size: 26px;
       color: var(--brand-black);
-      margin-bottom: 24px;
+      margin-bottom: 28px;
+      letter-spacing: -0.045em;
     }
 
     .auth-header {
-      margin-bottom: 26px;
+      margin-bottom: 30px;
     }
 
     .auth-header h2 {
-      margin: 0 0 8px;
-      font-size: 30px;
-      letter-spacing: -0.7px;
-      color: #0f2418;
+      margin: 0 0 10px;
+      font-size: 42px;
+      line-height: 1.05;
+      letter-spacing: -0.065em;
+      color: var(--brand-black);
     }
 
     .auth-header p {
       margin: 0;
-      color: #6a756d;
-      font-size: 14px;
-      line-height: 1.5;
+      color: #5f6368;
+      font-size: 15px;
+      line-height: 1.55;
     }
 
     .form {
@@ -169,32 +273,41 @@
     }
 
     .field {
-      margin-bottom: 16px;
+      margin-bottom: 18px;
       text-align: left;
     }
 
     label {
       display: block;
-      font-size: 13px;
-      font-weight: 700;
-      margin-bottom: 7px;
-      color: #1f3528;
+      font-size: 14px;
+      font-weight: 850;
+      margin-bottom: 8px;
+      color: var(--brand-black);
     }
 
     input {
       width: 100%;
-      padding: 14px 14px;
+      min-height: 58px;
+      padding: 15px 16px;
       border-radius: 14px;
-      border: 1px solid #dbe5dd;
-      background: white;
+      border: 1px solid #d7d7d7;
+      background: #ffffff;
       outline: none;
       font-size: 15px;
-      transition: 0.18s ease;
+      color: var(--brand-black);
+      transition:
+        border-color 180ms ease,
+        box-shadow 180ms ease,
+        transform 180ms ease;
+    }
+
+    input::placeholder {
+      color: #8a8f98;
     }
 
     input:focus {
       border-color: var(--brand-primary);
-      box-shadow: 0 0 0 4px rgba(255,90,0,0.14);
+      box-shadow: 0 0 0 4px rgba(255, 90, 0, 0.14);
     }
 
     .password-wrap {
@@ -202,28 +315,30 @@
     }
 
     .password-wrap input {
-      padding-right: 48px;
+      padding-right: 54px;
     }
 
     .eye-btn {
       position: absolute;
-      right: 8px;
+      right: 10px;
       top: 50%;
       transform: translateY(-50%);
-      width: 38px;
-      height: 38px;
+      width: 40px;
+      height: 40px;
       border: none;
-      border-radius: 11px;
+      border-radius: 12px;
       background: transparent;
-      color: #5d6b63;
+      color: #5d636b;
       cursor: pointer;
       margin: 0;
       padding: 0;
       font-size: 17px;
+      transition: background 160ms ease, color 160ms ease;
     }
 
     .eye-btn:hover {
-      background: #eef5ef;
+      background: #fff3ed;
+      color: var(--brand-primary);
     }
 
     .row {
@@ -231,7 +346,7 @@
       justify-content: space-between;
       align-items: center;
       gap: 12px;
-      margin: 4px 0 18px;
+      margin: 2px 0 22px;
     }
 
     .link {
@@ -242,46 +357,59 @@
       margin: 0;
       width: auto;
       font-size: 13px;
-      font-weight: 700;
+      font-weight: 850;
       cursor: pointer;
       text-decoration: none;
     }
 
     .link:hover {
       text-decoration: underline;
+      text-underline-offset: 3px;
     }
 
     .btn {
       width: 100%;
-      padding: 14px 16px;
+      min-height: 58px;
+      padding: 15px 18px;
       border: none;
       border-radius: 14px;
       background: linear-gradient(135deg, var(--brand-primary), var(--brand-primary-hover));
       color: white;
       font-size: 15px;
-      font-weight: 800;
+      font-weight: 900;
       cursor: pointer;
-      transition: 0.18s ease;
-      box-shadow: 0 12px 28px rgba(230,74,0,0.20);
+      transition:
+        transform 180ms ease,
+        box-shadow 180ms ease,
+        opacity 180ms ease;
+      box-shadow: var(--shadow-orange);
     }
 
     .btn:hover {
       transform: translateY(-1px);
-      box-shadow: 0 16px 34px rgba(230,74,0,0.24);
+      box-shadow: 0 22px 42px rgba(255, 90, 0, 0.30);
+    }
+
+    .btn:active {
+      transform: translateY(0);
     }
 
     .btn:disabled {
-      opacity: 0.7;
+      opacity: 0.72;
       cursor: not-allowed;
       transform: none;
     }
 
     .secondary-btn {
-      background: white;
+      background: #ffffff;
       color: var(--brand-primary);
-      border: 1px solid #dbe5dd;
+      border: 1px solid #d9d9d9;
       box-shadow: none;
       margin-top: 10px;
+    }
+
+    .secondary-btn:hover {
+      box-shadow: 0 12px 26px rgba(17, 17, 17, 0.08);
     }
 
     .divider {
@@ -304,12 +432,13 @@
 
     .message {
       display: none;
-      padding: 12px 14px;
+      padding: 13px 15px;
       border-radius: 14px;
-      margin-top: 16px;
+      margin-top: 18px;
       font-size: 13px;
       line-height: 1.45;
       text-align: left;
+      font-weight: 750;
     }
 
     .message.show {
@@ -338,25 +467,39 @@
     .legal-links {
       display: flex;
       flex-wrap: wrap;
-      gap: 10px;
-      margin-top: 18px;
+      gap: 10px 14px;
+      margin-top: 22px;
       font-size: 12px;
       justify-content: center;
     }
 
     .legal-links a {
       color: var(--brand-primary);
-      font-weight: 800;
+      font-weight: 850;
       text-decoration: none;
     }
 
     .legal-links a:hover {
       text-decoration: underline;
+      text-underline-offset: 3px;
     }
 
-    @media (max-width: 850px) {
+    a:focus-visible,
+    button:focus-visible,
+    input:focus-visible {
+      outline: 3px solid rgba(255, 90, 0, 0.28);
+      outline-offset: 3px;
+    }
+
+    @media (max-width: 920px) {
+      body {
+        padding: 18px;
+      }
+
       .page {
         grid-template-columns: 1fr;
+        min-height: auto;
+        max-width: 560px;
       }
 
       .brand-panel {
@@ -364,7 +507,7 @@
       }
 
       .auth-panel {
-        padding: 30px 20px;
+        padding: 34px 22px;
       }
 
       .mobile-logo {
@@ -372,7 +515,45 @@
       }
 
       .auth-header h2 {
-        font-size: 26px;
+        font-size: 34px;
+      }
+    }
+
+    @media (max-width: 520px) {
+      body {
+        padding: 12px;
+        align-items: stretch;
+      }
+
+      .page {
+        border-radius: 24px;
+      }
+
+      .auth-panel {
+        padding: 28px 18px;
+      }
+
+      .auth-header h2 {
+        font-size: 31px;
+      }
+
+      input,
+      .btn {
+        min-height: 54px;
+      }
+
+      .legal-links {
+        flex-direction: column;
+        align-items: center;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *,
+      *::before,
+      *::after {
+        transition: none !important;
+        scroll-behavior: auto !important;
       }
     }
   </style>
@@ -380,57 +561,56 @@
 
 <body>
   <main class="page">
-    <section class="brand-panel">
+    <section class="brand-panel" aria-label="FairLinx platform overview">
       <div class="brand-logo">
-        <div class="brand-mark">🌿</div>
-        <span>FairLinx</span>
+        <div class="brand-mark">FL</div>
+        <span>Fair<span style="color: var(--brand-primary);">Linx</span></span>
       </div>
 
-      <h1>Run your outdoor service business with confidence.</h1>
+      <h1>Welcome Back to <span class="accent">FairLinx</span></h1>
       <p>
-        Manage customers, jobs, estimates, invoices, subscriptions, and daily operations from one clean control panel.
+        Sign in to your account and continue managing customers, jobs, estimates, invoices, subscriptions, and daily operations.
       </p>
 
-      <div class="brand-stats">
+      <div class="brand-stats" aria-label="FairLinx product highlights">
         <div class="stat">
           <strong>CRM</strong>
-          <span>Clients & leads</span>
+          <span>Clients, leads, and company workflows.</span>
         </div>
         <div class="stat">
           <strong>Jobs</strong>
-          <span>Schedule & dispatch</span>
+          <span>Schedule, assign, dispatch, and complete work.</span>
         </div>
         <div class="stat">
           <strong>Billing</strong>
-          <span>Invoices & payments</span>
+          <span>Invoices, payments, subscriptions, and plans.</span>
         </div>
       </div>
     </section>
 
-    <section class="auth-panel">
+    <section class="auth-panel" aria-label="Login forms">
       <div class="auth-card">
         <div class="mobile-logo">
-          <div class="brand-mark">🌿</div>
-          <span>FairLinx</span>
+          <div class="brand-mark">FL</div>
+          <span>Fair<span style="color: var(--brand-primary);">Linx</span></span>
         </div>
 
-        <!-- LOGIN FORM -->
         <form id="loginForm" class="form active">
           <div class="auth-header">
-            <h2>Welcome back</h2>
-            <p>Sign in to continue to your FairLinx control panel.</p>
+            <h2>Sign In</h2>
+            <p>Enter your credentials to access your FairLinx control panel.</p>
           </div>
 
           <div class="field">
             <label for="username">Username</label>
-            <input id="username" autocomplete="username" placeholder="Enter your username" />
+            <input id="username" name="username" type="text" autocomplete="username" placeholder="Enter your username" />
           </div>
 
           <div class="field">
             <label for="password">Password</label>
             <div class="password-wrap">
-              <input id="password" type="password" autocomplete="current-password" placeholder="Enter your password" />
-              <button type="button" class="eye-btn" data-password-target="password">👁</button>
+              <input id="password" name="password" type="password" autocomplete="current-password" placeholder="Enter your password" />
+              <button type="button" class="eye-btn" data-password-target="password" aria-label="Show password">👁</button>
             </div>
           </div>
 
@@ -441,13 +621,12 @@
 
           <button id="loginBtn" class="btn" type="submit">Sign In</button>
 
-          <div style="margin-top:14px;text-align:center;font-size:13px;color:#6a756d;">
+          <div style="margin-top:16px;text-align:center;font-size:13px;color:#5f6368;">
             Don’t have an account?
             <a href="/signup.html" class="link" style="font-size:13px;">Sign up</a>
           </div>
         </form>
 
-        <!-- FORGOT PASSWORD FORM -->
         <form id="forgotForm" class="form">
           <div class="auth-header">
             <h2>Reset password</h2>
@@ -456,14 +635,13 @@
 
           <div class="field">
             <label for="forgotUsername">Username</label>
-            <input id="forgotUsername" type="text" autocomplete="username" placeholder="Enter your username" />
+            <input id="forgotUsername" name="forgotUsername" type="text" autocomplete="username" placeholder="Enter your username" />
           </div>
 
           <button id="forgotBtn" class="btn" type="submit">Send Reset Code</button>
           <button type="button" class="btn secondary-btn" id="loginBackFromForgot">Back to Login</button>
         </form>
 
-        <!-- RESET PASSWORD FORM -->
         <form id="resetForm" class="form">
           <div class="auth-header">
             <h2>Create new password</h2>
@@ -472,27 +650,27 @@
 
           <div class="field">
             <label for="resetUsername">Username</label>
-            <input id="resetUsername" type="text" autocomplete="username" placeholder="Enter your username" />
+            <input id="resetUsername" name="resetUsername" type="text" autocomplete="username" placeholder="Enter your username" />
           </div>
 
           <div class="field">
             <label for="resetCode">Reset Code</label>
-            <input id="resetCode" inputmode="numeric" placeholder="Enter reset code" />
+            <input id="resetCode" name="resetCode" inputmode="numeric" placeholder="Enter reset code" />
           </div>
 
           <div class="field">
             <label for="newPassword">New Password</label>
             <div class="password-wrap">
-              <input id="newPassword" type="password" autocomplete="new-password" placeholder="Enter new password" />
-              <button type="button" class="eye-btn" data-password-target="newPassword">👁</button>
+              <input id="newPassword" name="newPassword" type="password" autocomplete="new-password" placeholder="Enter new password" />
+              <button type="button" class="eye-btn" data-password-target="newPassword" aria-label="Show new password">👁</button>
             </div>
           </div>
 
           <div class="field">
             <label for="confirmPassword">Confirm Password</label>
             <div class="password-wrap">
-              <input id="confirmPassword" type="password" autocomplete="new-password" placeholder="Confirm new password" />
-              <button type="button" class="eye-btn" data-password-target="confirmPassword">👁</button>
+              <input id="confirmPassword" name="confirmPassword" type="password" autocomplete="new-password" placeholder="Confirm new password" />
+              <button type="button" class="eye-btn" data-password-target="confirmPassword" aria-label="Show confirm password">👁</button>
             </div>
           </div>
 
@@ -500,7 +678,8 @@
           <button type="button" class="btn secondary-btn" id="loginBackFromReset">Back to Login</button>
         </form>
 
-        <div id="messageBox" class="message"></div>
+        <div id="messageBox" class="message" role="status" aria-live="polite"></div>
+
         <div class="legal-links">
           <a href="/terms.html" target="_blank" rel="noopener">Terms of Service</a>
           <a href="/privacy.html" target="_blank" rel="noopener">Privacy Policy</a>
@@ -577,24 +756,30 @@
       if (!btn) return;
 
       if (isLoading) {
-        btn.dataset.originalText = btn.textContent;
+        if (!btn.dataset.originalText) {
+          btn.dataset.originalText = btn.textContent;
+        }
         btn.textContent = loadingText || "Loading...";
         btn.disabled = true;
       } else {
         btn.textContent = btn.dataset.originalText || btn.textContent;
         btn.disabled = false;
+        delete btn.dataset.originalText;
       }
     }
 
     function togglePassword(inputId, button) {
       const input = document.getElementById(inputId);
+      if (!input) return;
 
       if (input.type === "password") {
         input.type = "text";
         button.textContent = "🙈";
+        button.setAttribute("aria-label", "Hide password");
       } else {
         input.type = "password";
         button.textContent = "👁";
+        button.setAttribute("aria-label", "Show password");
       }
     }
 
@@ -804,7 +989,6 @@
         setButtonLoading("resetBtn", false);
       }
     }
-
   </script>
 </body>
 </html>

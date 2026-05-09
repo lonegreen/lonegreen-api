@@ -154,6 +154,15 @@ async function resolveCanonicalCustomerPrincipal(customer) {
   };
 }
 
+/** Errors from verifyCustomerBearerToken / parseCustomerPrincipal only; others must not leak err.message. */
+const CUSTOMER_AUTH_OUTER_KNOWN_401 = new Set(["Customer login required", "Invalid customer token"]);
+const CUSTOMER_AUTH_OUTER_KNOWN_403 = new Set([
+  "Mixed auth boundary token",
+  "Forbidden",
+  "Customer account is deactivated",
+  "Customer account is suspended"
+]);
+
 function customerAuth(req, res, next) {
   try {
     req.customer = verifyCustomerBearerToken(req.headers.authorization);
@@ -190,7 +199,15 @@ function customerAuth(req, res, next) {
       }
     })();
   } catch (err) {
-    return res.status(err.status || 401).json({ error: err.message || "Invalid customer token" });
+    const status = err && Number(err.status);
+    const message = err && err.message;
+    if (status === 401 && CUSTOMER_AUTH_OUTER_KNOWN_401.has(String(message || ""))) {
+      return res.status(401).json({ error: message || "Invalid customer token" });
+    }
+    if (status === 403 && CUSTOMER_AUTH_OUTER_KNOWN_403.has(String(message || ""))) {
+      return res.status(403).json({ error: message });
+    }
+    return sendSafeServerError(res, err, "CUSTOMER AUTH TOKEN VERIFY ERROR");
   }
 }
 

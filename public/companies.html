@@ -4,196 +4,481 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Discover Companies</title>
+
   <link rel="stylesheet" href="/css/brand.css">
   <link rel="stylesheet" href="/app-shell.css">
+
   <style>
-    * { box-sizing: border-box; font-family: Inter, Arial, sans-serif; }
+    * {
+      box-sizing: border-box;
+      font-family: Inter, Arial, sans-serif;
+    }
+
+    :root {
+      --fl-orange: #FF5A00;
+      --fl-orange-hover: #E64A00;
+      --fl-orange-soft: #FFF3EA;
+      --fl-orange-soft-2: #FFE1CC;
+      --fl-black: #111111;
+      --fl-gray: #2B2B2B;
+      --fl-muted: #667085;
+      --fl-border: #D9D9D9;
+      --fl-bg: #F5F5F5;
+      --fl-white: #FFFFFF;
+      --fl-success: #16A34A;
+      --fl-warning: #F59E0B;
+      --fl-error: #DC2626;
+      --shadow-sm: 0 10px 26px rgba(17, 17, 17, 0.06);
+      --shadow-md: 0 18px 44px rgba(17, 17, 17, 0.09);
+      --radius: 20px;
+      --radius-lg: 28px;
+    }
+
     body {
       margin: 0;
       min-height: 100vh;
-      background: linear-gradient(180deg, #edf5f0 0%, #f7f9f8 180px, #f4f6f8 100%);
-      color: var(--brand-black);
-      padding: 20px;
+      background:
+        radial-gradient(circle at top left, rgba(255, 90, 0, 0.12), transparent 340px),
+        radial-gradient(circle at bottom right, rgba(255, 90, 0, 0.14), transparent 420px),
+        linear-gradient(180deg, #ffffff 0%, #fafafa 260px, var(--fl-bg) 100%);
+      color: var(--fl-black);
+      padding: 28px 20px 42px;
     }
+
     .page {
-      width: min(1180px, 100%);
+      width: min(1240px, 100%);
       margin: 0 auto;
       display: grid;
-      gap: 14px;
+      gap: 22px;
     }
+
     .hero {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-end;
-      gap: 12px;
-      flex-wrap: wrap;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(320px, 500px);
+      align-items: end;
+      gap: 22px;
+      padding: 12px 0 4px;
     }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 14px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: var(--fl-orange-soft);
+      color: var(--fl-orange-hover);
+      font-size: 12px;
+      font-weight: 900;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
     h1 {
-      margin: 0 0 6px;
-      color: var(--brand-primary);
-      font-size: 32px;
+      margin: 0 0 10px;
+      color: var(--fl-black);
+      font-size: clamp(38px, 5vw, 66px);
+      line-height: 0.96;
+      letter-spacing: -0.07em;
+      font-weight: 950;
     }
+
+    h1 span {
+      color: var(--fl-orange);
+    }
+
     .muted {
       margin: 0;
-      color: #648076;
-      line-height: 1.45;
+      color: var(--fl-muted);
+      line-height: 1.6;
+      font-size: 17px;
+      max-width: 700px;
     }
+
     .search-wrap {
-      width: min(420px, 100%);
+      width: 100%;
+      display: grid;
+      gap: 10px;
     }
+
+    .search-box {
+      position: relative;
+    }
+
+    .search-box::before {
+      content: "⌕";
+      position: absolute;
+      left: 18px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--fl-orange);
+      font-size: 24px;
+      pointer-events: none;
+    }
+
     .search {
       width: 100%;
-      border: 1px solid var(--brand-border);
-      border-radius: 12px;
-      padding: 12px 14px;
-      font-size: 14px;
-      color: var(--brand-black);
+      border: 1px solid rgba(217, 217, 217, 0.95);
+      border-radius: 18px;
+      padding: 18px 18px 18px 52px;
+      font-size: 16px;
+      color: var(--fl-black);
       outline: none;
-      background: #fff;
-      transition: 0.18s ease;
+      background: rgba(255, 255, 255, 0.92);
+      transition: border-color 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+      box-shadow: var(--shadow-sm);
     }
+
+    .search::placeholder {
+      color: #8A94A6;
+    }
+
     .search:focus {
-      border-color: #2c8b55;
-      box-shadow: 0 0 0 4px rgba(44,139,85,0.12);
+      border-color: var(--fl-orange);
+      box-shadow: 0 0 0 4px rgba(255, 90, 0, 0.13), var(--shadow-sm);
+      background: #ffffff;
     }
+
+    .status-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 14px;
+      flex-wrap: wrap;
+      min-height: 32px;
+    }
+
     .status {
-      min-height: 20px;
-      color: #5f6e66;
+      color: var(--fl-muted);
       font-size: 14px;
-    }
-    .status.error {
-      color: #b42318;
       font-weight: 700;
     }
+
+    .status.error {
+      color: var(--fl-error);
+      font-weight: 900;
+    }
+
+    .count-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255, 255, 255, 0.9);
+      border: 1px solid var(--fl-border);
+      color: var(--fl-gray);
+      padding: 9px 12px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 900;
+      box-shadow: 0 8px 18px rgba(17, 17, 17, 0.04);
+    }
+
+    .count-pill strong {
+      color: var(--fl-orange);
+    }
+
     .grid {
       display: grid;
       grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 12px;
+      gap: 18px;
     }
+
     .card {
-      background: #fff;
-      border: 1px solid var(--brand-border);
-      border-radius: 16px;
-      box-shadow: 0 14px 30px rgba(16,24,40,0.06);
-      padding: 16px;
+      position: relative;
+      overflow: hidden;
+      background: rgba(255, 255, 255, 0.96);
+      border: 1px solid rgba(217, 217, 217, 0.92);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-sm);
+      padding: 22px;
       display: grid;
-      gap: 10px;
+      gap: 16px;
+      min-height: 342px;
+      transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
     }
+
+    .card::before {
+      content: "";
+      position: absolute;
+      inset: 0 0 auto;
+      height: 4px;
+      background: linear-gradient(90deg, var(--fl-orange), #FF7A1A, transparent);
+      opacity: 0.95;
+    }
+
+    .card:hover {
+      transform: translateY(-3px);
+      border-color: rgba(255, 90, 0, 0.34);
+      box-shadow: var(--shadow-md);
+    }
+
     .head {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 15px;
     }
+
     .logo {
-      width: 52px;
-      height: 52px;
-      border-radius: 12px;
-      border: 1px solid var(--brand-border);
-      background: #f8fcf9;
+      width: 74px;
+      height: 74px;
+      border-radius: 20px;
+      border: 1px solid var(--fl-border);
+      background:
+        linear-gradient(135deg, #ffffff, var(--fl-orange-soft));
       display: grid;
       place-items: center;
-      color: var(--brand-primary);
-      font-weight: 900;
+      color: var(--fl-orange);
+      font-size: 22px;
+      font-weight: 950;
       overflow: hidden;
       flex: 0 0 auto;
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.75);
     }
+
     .logo img {
       width: 100%;
       height: 100%;
       object-fit: cover;
       display: block;
     }
+
     .name {
       margin: 0;
-      color: var(--brand-primary);
-      font-size: 20px;
-      line-height: 1.2;
+      color: var(--fl-black);
+      font-size: 22px;
+      line-height: 1.18;
+      letter-spacing: -0.04em;
+      font-weight: 950;
     }
+
     .desc {
       margin: 0;
-      color: #5f7469;
-      line-height: 1.45;
-      min-height: 40px;
+      color: #475467;
+      line-height: 1.55;
+      min-height: 50px;
+      font-size: 14px;
     }
+
+    .block {
+      display: grid;
+      gap: 8px;
+    }
+
     .label {
-      margin: 0 0 6px;
-      color: #648076;
+      margin: 0;
+      color: var(--fl-black);
       font-size: 12px;
-      font-weight: 800;
-      text-transform: uppercase;
+      font-weight: 950;
       letter-spacing: 0.04em;
+      text-transform: uppercase;
     }
+
     .chips {
       display: flex;
       flex-wrap: wrap;
       gap: 8px;
     }
+
     .chip {
       border-radius: 999px;
-      padding: 5px 10px;
+      padding: 7px 11px;
       font-size: 12px;
-      font-weight: 800;
-      background: var(--brand-bg);
-      color: var(--brand-primary);
+      font-weight: 900;
+      background: #F2F4F7;
+      color: #344054;
+      border: 1px solid rgba(217, 217, 217, 0.78);
     }
+
+    .chip.service {
+      background: var(--fl-orange-soft);
+      color: #B33B00;
+      border-color: var(--fl-orange-soft-2);
+    }
+
+    .chip.area {
+      background: #F3F4F6;
+      color: #374151;
+    }
+
+    .card-footer {
+      margin-top: auto;
+      display: flex;
+      justify-content: flex-start;
+    }
+
     .btn {
       border: none;
-      border-radius: 12px;
-      padding: 11px 14px;
+      border-radius: 15px;
+      padding: 12px 18px;
       font-size: 14px;
-      font-weight: 800;
+      font-weight: 950;
       cursor: pointer;
-      background: linear-gradient(135deg, var(--brand-primary), var(--brand-primary-hover));
+      background: linear-gradient(135deg, var(--fl-orange), #FF7A1A);
       color: #fff;
       text-decoration: none;
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      width: fit-content;
+      gap: 10px;
+      min-width: 160px;
+      box-shadow: 0 14px 26px rgba(255, 90, 0, 0.24);
+      transition: transform 0.16s ease, box-shadow 0.16s ease, background 0.16s ease;
     }
+
+    .btn:hover {
+      transform: translateY(-1px);
+      background: linear-gradient(135deg, var(--fl-orange-hover), var(--fl-orange));
+      box-shadow: 0 16px 30px rgba(255, 90, 0, 0.3);
+    }
+
     .empty {
-      border: 1px dashed var(--brand-border);
-      border-radius: 14px;
-      background: #f8fcf9;
-      padding: 18px;
+      grid-column: 1 / -1;
+      border: 1px dashed var(--fl-border);
+      border-radius: var(--radius-lg);
+      background: rgba(255, 255, 255, 0.88);
+      padding: 34px;
       text-align: center;
-      color: #648076;
-      line-height: 1.5;
+      color: var(--fl-muted);
+      line-height: 1.6;
+      box-shadow: var(--shadow-sm);
     }
+
     .empty strong {
       display: block;
-      color: var(--brand-black);
-      margin-bottom: 6px;
+      color: var(--fl-black);
+      margin-bottom: 8px;
+      font-size: 20px;
+      letter-spacing: -0.03em;
     }
-    @media (max-width: 1020px) {
-      .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+    .skeleton {
+      min-height: 342px;
+      border-radius: var(--radius-lg);
+      background: rgba(255, 255, 255, 0.96);
+      border: 1px solid var(--fl-border);
+      box-shadow: var(--shadow-sm);
+      padding: 22px;
+      display: grid;
+      gap: 14px;
     }
-    @media (max-width: 700px) {
-      body { padding: 14px; }
-      .grid { grid-template-columns: 1fr; }
-      h1 { font-size: 28px; }
-      .search-wrap { width: 100%; }
+
+    .sk {
+      position: relative;
+      overflow: hidden;
+      background: #eeeeee;
+      border-radius: 14px;
+      min-height: 16px;
+    }
+
+    .sk::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      transform: translateX(-100%);
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.75), transparent);
+      animation: shimmer 1.1s infinite;
+    }
+
+    @keyframes shimmer {
+      100% { transform: translateX(100%); }
+    }
+
+    @media (max-width: 1080px) {
+      .hero {
+        grid-template-columns: 1fr;
+      }
+
+      .grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 720px) {
+      body {
+        padding: 18px 14px 34px;
+      }
+
+      .grid {
+        grid-template-columns: 1fr;
+      }
+
+      .card {
+        padding: 18px;
+      }
+
+      .logo {
+        width: 64px;
+        height: 64px;
+      }
+
+      .name {
+        font-size: 20px;
+      }
+
+      .search {
+        padding-top: 16px;
+        padding-bottom: 16px;
+      }
+
+      .btn {
+        width: 100%;
+      }
     }
   </style>
 </head>
+
 <body>
   <main class="page">
     <section class="hero">
       <div>
-        <h1>Discover Companies</h1>
-        <p class="muted">Browse public company profiles and find services in your area.</p>
+        <div class="eyebrow">FairLinx Marketplace</div>
+        <h1>Discover <span>Companies</span></h1>
+        <p class="muted">Browse public company profiles, compare services, and find trusted local providers in your area.</p>
       </div>
+
       <div class="search-wrap">
-        <input id="searchInput" class="search" type="search" placeholder="Search by name, service, or area">
+        <div class="search-box">
+          <input id="searchInput" class="search" type="search" placeholder="Search by name, service, or area" autocomplete="off">
+        </div>
       </div>
     </section>
 
-    <div id="status" class="status" role="status" aria-live="polite"></div>
-    <section id="companiesGrid" class="grid"></section>
+    <section class="status-row">
+      <div id="status" class="status" role="status" aria-live="polite"></div>
+      <div class="count-pill" id="countPill" style="display:none;">
+        Showing <strong id="countValue">0</strong> companies
+      </div>
+    </section>
+
+    <section id="companiesGrid" class="grid" aria-label="Public companies">
+      <article class="skeleton">
+        <div class="sk" style="width:74px;height:74px;"></div>
+        <div class="sk" style="width:62%;height:22px;"></div>
+        <div class="sk" style="width:100%;height:48px;"></div>
+        <div class="sk" style="width:84%;height:34px;"></div>
+        <div class="sk" style="width:44%;height:42px;"></div>
+      </article>
+      <article class="skeleton">
+        <div class="sk" style="width:74px;height:74px;"></div>
+        <div class="sk" style="width:58%;height:22px;"></div>
+        <div class="sk" style="width:100%;height:48px;"></div>
+        <div class="sk" style="width:78%;height:34px;"></div>
+        <div class="sk" style="width:44%;height:42px;"></div>
+      </article>
+      <article class="skeleton">
+        <div class="sk" style="width:74px;height:74px;"></div>
+        <div class="sk" style="width:68%;height:22px;"></div>
+        <div class="sk" style="width:100%;height:48px;"></div>
+        <div class="sk" style="width:80%;height:34px;"></div>
+        <div class="sk" style="width:44%;height:42px;"></div>
+      </article>
+    </section>
   </main>
 
   <script>
     const API_BASE = window.location.origin;
+
     const state = {
       all: [],
       filtered: []
@@ -205,6 +490,14 @@
       el.className = "status" + (type ? " " + type : "");
     }
 
+    function setCount(count) {
+      const pill = document.getElementById("countPill");
+      const value = document.getElementById("countValue");
+
+      value.textContent = String(count || 0);
+      pill.style.display = count > 0 ? "inline-flex" : "none";
+    }
+
     function initials(name) {
       return String(name || "CO")
         .split(/\s+/)
@@ -214,52 +507,162 @@
         .toUpperCase() || "CO";
     }
 
+    function safeUrl(value) {
+      const raw = String(value || "").trim();
+
+      if (!raw) return "";
+
+      if (
+        raw.startsWith("/") ||
+        raw.startsWith("http://") ||
+        raw.startsWith("https://")
+      ) {
+        return raw;
+      }
+
+      return "";
+    }
+
+    function createChip(text, type) {
+      const chip = document.createElement("span");
+      chip.className = "chip " + (type || "");
+      chip.textContent = String(text || "Not listed");
+      return chip;
+    }
+
+    function createEmpty(title, message) {
+      const empty = document.createElement("div");
+      empty.className = "empty";
+
+      const strong = document.createElement("strong");
+      strong.textContent = title;
+
+      const text = document.createElement("div");
+      text.textContent = message;
+
+      empty.appendChild(strong);
+      empty.appendChild(text);
+
+      return empty;
+    }
+
+    function createCompanyCard(company) {
+      const card = document.createElement("article");
+      card.className = "card";
+
+      const head = document.createElement("div");
+      head.className = "head";
+
+      const logo = document.createElement("div");
+      logo.className = "logo";
+
+      const logoUrl = safeUrl(company.logo_url);
+      if (logoUrl) {
+        const img = document.createElement("img");
+        img.src = logoUrl;
+        img.alt = "";
+        img.loading = "lazy";
+        img.onerror = function() {
+          logo.textContent = initials(company.name);
+        };
+        logo.appendChild(img);
+      } else {
+        logo.textContent = initials(company.name);
+      }
+
+      const name = document.createElement("h2");
+      name.className = "name";
+      name.textContent = company.name || "Company";
+
+      head.appendChild(logo);
+      head.appendChild(name);
+
+      const desc = document.createElement("p");
+      desc.className = "desc";
+      desc.textContent = String(company.public_description || "").trim() || "No public description available.";
+
+      const servicesBlock = document.createElement("div");
+      servicesBlock.className = "block";
+
+      const servicesLabel = document.createElement("p");
+      servicesLabel.className = "label";
+      servicesLabel.textContent = "Services";
+
+      const servicesChips = document.createElement("div");
+      servicesChips.className = "chips";
+
+      const services = Array.isArray(company.services) ? company.services : [];
+      if (services.length) {
+        services.slice(0, 6).forEach((service) => {
+          servicesChips.appendChild(createChip(service, "service"));
+        });
+      } else {
+        servicesChips.appendChild(createChip("Not listed", "service"));
+      }
+
+      servicesBlock.appendChild(servicesLabel);
+      servicesBlock.appendChild(servicesChips);
+
+      const areasBlock = document.createElement("div");
+      areasBlock.className = "block";
+
+      const areasLabel = document.createElement("p");
+      areasLabel.className = "label";
+      areasLabel.textContent = "Service Areas";
+
+      const areasChips = document.createElement("div");
+      areasChips.className = "chips";
+
+      const areas = Array.isArray(company.service_areas) ? company.service_areas : [];
+      if (areas.length) {
+        areas.slice(0, 6).forEach((area) => {
+          areasChips.appendChild(createChip(area, "area"));
+        });
+      } else {
+        areasChips.appendChild(createChip("Not listed", "area"));
+      }
+
+      areasBlock.appendChild(areasLabel);
+      areasBlock.appendChild(areasChips);
+
+      const footer = document.createElement("div");
+      footer.className = "card-footer";
+
+      const link = document.createElement("a");
+      link.className = "btn";
+      link.textContent = "View Profile →";
+      link.href = "/company-profile.html?slug=" + encodeURIComponent(company.public_slug || "");
+
+      footer.appendChild(link);
+
+      card.appendChild(head);
+      card.appendChild(desc);
+      card.appendChild(servicesBlock);
+      card.appendChild(areasBlock);
+      card.appendChild(footer);
+
+      return card;
+    }
+
     function renderCompanies(items) {
       const host = document.getElementById("companiesGrid");
+      host.textContent = "";
+
+      setCount(items.length);
+
       if (!items.length) {
-        host.innerHTML = '<div class="empty" style="grid-column:1/-1;"><strong>No companies found</strong>Try a different search term.</div>';
+        host.appendChild(createEmpty("No companies found", "Try a different search term or check back later."));
         return;
       }
 
-      host.innerHTML = items.map((company) => {
-        const services = Array.isArray(company.services) ? company.services : [];
-        const areas = Array.isArray(company.service_areas) ? company.service_areas : [];
-        const desc = String(company.public_description || "").trim() || "No public description available.";
-        const logoHtml = company.logo_url
-          ? '<img src="' + company.logo_url + '" alt="">'
-          : initials(company.name);
-
-        return (
-          '<article class="card">' +
-            '<div class="head">' +
-              '<div class="logo">' + logoHtml + '</div>' +
-              '<h2 class="name">' + (company.name || "Company") + '</h2>' +
-            '</div>' +
-            '<p class="desc">' + desc + '</p>' +
-            '<div>' +
-              '<p class="label">Services</p>' +
-              '<div class="chips">' +
-                (services.length
-                  ? services.slice(0, 6).map((service) => '<span class="chip">' + service + '</span>').join("")
-                  : '<span class="chip">Not listed</span>') +
-              '</div>' +
-            '</div>' +
-            '<div>' +
-              '<p class="label">Service Areas</p>' +
-              '<div class="chips">' +
-                (areas.length
-                  ? areas.slice(0, 6).map((area) => '<span class="chip">' + area + '</span>').join("")
-                  : '<span class="chip">Not listed</span>') +
-              '</div>' +
-            '</div>' +
-            '<a class="btn" href="/company-profile.html?slug=' + encodeURIComponent(company.public_slug || "") + '">View Profile</a>' +
-          '</article>'
-        );
-      }).join("");
+      items.forEach((company) => {
+        host.appendChild(createCompanyCard(company || {}));
+      });
     }
 
     function applySearch() {
       const query = String(document.getElementById("searchInput").value || "").trim().toLowerCase();
+
       if (!query) {
         state.filtered = state.all.slice();
         renderCompanies(state.filtered);
@@ -270,7 +673,14 @@
         const name = String(company.name || "").toLowerCase();
         const services = Array.isArray(company.services) ? company.services.join(" ").toLowerCase() : "";
         const areas = Array.isArray(company.service_areas) ? company.service_areas.join(" ").toLowerCase() : "";
-        return name.includes(query) || services.includes(query) || areas.includes(query);
+        const description = String(company.public_description || "").toLowerCase();
+
+        return (
+          name.includes(query) ||
+          services.includes(query) ||
+          areas.includes(query) ||
+          description.includes(query)
+        );
       });
 
       renderCompanies(state.filtered);
@@ -278,17 +688,32 @@
 
     async function loadCompanies() {
       setStatus("Loading companies...", "");
+
       try {
-        const res = await fetch(API_BASE + "/companies/public");
+        const res = await fetch(API_BASE + "/companies/public", {
+          headers: {
+            "Accept": "application/json"
+          }
+        });
+
         const data = await res.json().catch(() => []);
-        if (!res.ok) throw new Error((data && data.error) || "Unable to load companies.");
+
+        if (!res.ok) {
+          throw new Error((data && data.error) || "Unable to load companies.");
+        }
+
         state.all = Array.isArray(data) ? data : [];
         state.filtered = state.all.slice();
+
         renderCompanies(state.filtered);
         setStatus(state.all.length ? "" : "No public companies are available yet.", "");
       } catch (err) {
         setStatus(err.message || "Unable to load companies.", "error");
-        renderCompanies([]);
+        setCount(0);
+
+        const host = document.getElementById("companiesGrid");
+        host.textContent = "";
+        host.appendChild(createEmpty("Unable to load companies", "Refresh the page and try again."));
       }
     }
 

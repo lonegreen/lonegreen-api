@@ -3,191 +3,718 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Company Service Areas</title>
+  <title>Company Service Areas | FairLinx</title>
   <link rel="stylesheet" href="/css/brand.css">
-
   <link rel="stylesheet" href="/app-shell.css">
+
   <style>
-    * { box-sizing: border-box; font-family: Inter, Arial, sans-serif; }
+    :root {
+      --fl-orange: #FF5A00;
+      --fl-orange-hover: #E64A00;
+      --fl-orange-soft: #FF8A33;
+      --fl-black: #111111;
+      --fl-gray: #2B2B2B;
+      --fl-border: #D9D9D9;
+      --fl-bg: #F5F5F5;
+      --fl-white: #FFFFFF;
+      --fl-success: #16A34A;
+      --fl-warning: #F59E0B;
+      --fl-error: #DC2626;
+      --fl-shadow: 0 20px 50px rgba(17, 17, 17, 0.10);
+      --fl-soft-shadow: 0 12px 30px rgba(17, 17, 17, 0.08);
+      --fl-radius: 18px;
+    }
+
+    * {
+      box-sizing: border-box;
+      font-family: Inter, Arial, sans-serif;
+    }
+
     body {
       margin: 0;
       min-height: 100vh;
-      background: linear-gradient(180deg, #edf5f0 0%, #f7f9f8 180px, #f4f6f8 100%);
-      color: var(--brand-black);
-      padding: 20px;
+      color: var(--fl-black);
+      background:
+        radial-gradient(circle at top left, rgba(255, 90, 0, 0.12), transparent 32%),
+        linear-gradient(135deg, #ffffff 0%, #f7f7f7 48%, #eeeeee 100%);
     }
-    .page {
-      width: min(1140px, 100%);
-      margin: 0 auto;
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background:
+        linear-gradient(90deg, rgba(255,255,255,0.55), transparent),
+        radial-gradient(circle at 80% 10%, rgba(255,90,0,0.08), transparent 30%);
+      z-index: -1;
+    }
+
+    .app-frame {
+      min-height: 100vh;
       display: grid;
-      gap: 14px;
+      grid-template-columns: 260px 1fr;
     }
+
+    .sidebar {
+      background:
+        linear-gradient(180deg, #090909 0%, #111111 52%, #050505 100%);
+      color: #fff;
+      padding: 26px 18px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      box-shadow: 16px 0 40px rgba(0, 0, 0, 0.22);
+      position: sticky;
+      top: 0;
+      height: 100vh;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 34px;
+      padding: 0 6px;
+    }
+
+    .brand-mark {
+      width: 48px;
+      height: 48px;
+      border-radius: 14px;
+      background: linear-gradient(135deg, var(--fl-orange), var(--fl-orange-hover));
+      display: grid;
+      place-items: center;
+      color: #fff;
+      font-size: 22px;
+      font-weight: 950;
+      letter-spacing: -0.08em;
+      box-shadow: 0 16px 30px rgba(255, 90, 0, 0.28);
+    }
+
+    .brand-name {
+      font-size: 26px;
+      font-weight: 900;
+      letter-spacing: -0.04em;
+      line-height: 1;
+    }
+
+    .brand-name span {
+      color: var(--fl-orange);
+    }
+
+    .nav {
+      display: grid;
+      gap: 8px;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 13px;
+      padding: 14px 14px;
+      border-radius: 14px;
+      color: rgba(255,255,255,0.82);
+      text-decoration: none;
+      font-size: 15px;
+      font-weight: 700;
+      transition: 0.18s ease;
+    }
+
+    .nav-item svg {
+      width: 21px;
+      height: 21px;
+      opacity: 0.9;
+      flex: 0 0 auto;
+    }
+
+    .nav-item.active {
+      background: linear-gradient(135deg, var(--fl-orange), var(--fl-orange-hover));
+      color: #fff;
+      box-shadow: 0 16px 28px rgba(255, 90, 0, 0.28);
+    }
+
+    .nav-item:not(.active):hover {
+      background: rgba(255,255,255,0.08);
+      color: #fff;
+      transform: translateX(2px);
+    }
+
+    .sidebar-user {
+      border-top: 1px solid rgba(255,255,255,0.12);
+      padding-top: 18px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .avatar {
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--fl-orange), var(--fl-orange-hover));
+      color: #fff;
+      display: grid;
+      place-items: center;
+      font-weight: 900;
+      flex: 0 0 auto;
+    }
+
+    .sidebar-user strong {
+      display: block;
+      font-size: 14px;
+      line-height: 1.2;
+    }
+
+    .sidebar-user span {
+      color: rgba(255,255,255,0.58);
+      font-size: 12px;
+    }
+
+    .page {
+      width: min(1260px, 100%);
+      margin: 0 auto;
+      padding: 64px 44px;
+      display: grid;
+      gap: 22px;
+    }
+
     .hero {
       display: flex;
       justify-content: space-between;
-      align-items: flex-end;
-      gap: 12px;
+      align-items: flex-start;
+      gap: 18px;
       flex-wrap: wrap;
+      margin-bottom: 12px;
     }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 11px;
+      border-radius: 999px;
+      background: rgba(255, 90, 0, 0.10);
+      color: var(--fl-orange);
+      font-weight: 900;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      margin-bottom: 14px;
+    }
+
     h1 {
-      margin: 0 0 6px;
-      color: var(--brand-primary);
-      font-size: 32px;
+      margin: 0 0 10px;
+      color: var(--fl-orange);
+      font-size: clamp(34px, 4vw, 52px);
+      letter-spacing: -0.055em;
+      line-height: 0.98;
+      font-weight: 950;
     }
+
     .muted {
       margin: 0;
-      color: #648076;
-      line-height: 1.45;
+      color: #5e5e5e;
+      line-height: 1.6;
+      font-size: 17px;
+      max-width: 680px;
     }
+
     .actions {
       display: flex;
-      gap: 10px;
+      gap: 12px;
       flex-wrap: wrap;
+      align-items: center;
+      padding-top: 26px;
     }
+
     .btn {
-      border: none;
+      border: 1px solid transparent;
       border-radius: 12px;
-      padding: 12px 16px;
+      padding: 13px 18px;
       font-size: 14px;
-      font-weight: 800;
+      font-weight: 900;
       cursor: pointer;
       transition: 0.18s ease;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 9px;
+      min-height: 48px;
+      white-space: nowrap;
+      background: #fff;
     }
+
     .btn.primary {
-      background: linear-gradient(135deg, var(--brand-primary), var(--brand-primary-hover));
+      background: linear-gradient(135deg, var(--fl-orange), var(--fl-orange-hover));
       color: #fff;
-      box-shadow: 0 12px 28px rgba(31,92,58,0.20);
+      box-shadow: 0 16px 32px rgba(255, 90, 0, 0.26);
     }
+
     .btn.secondary {
-      background: var(--brand-bg);
-      color: var(--brand-primary);
-      border: 1px solid var(--brand-border);
+      background: #fff;
+      color: var(--fl-orange);
+      border-color: rgba(255, 90, 0, 0.38);
+      box-shadow: 0 12px 26px rgba(17,17,17,0.05);
     }
+
     .btn.danger {
-      background: #b42318;
-      color: #fff;
+      background: #fff;
+      color: var(--fl-error);
+      border-color: rgba(220, 38, 38, 0.36);
     }
+
     .btn.small {
       padding: 9px 12px;
       border-radius: 10px;
-      font-size: 12px;
+      font-size: 13px;
+      min-height: 38px;
       box-shadow: none;
     }
-    .btn:disabled { opacity: 0.65; cursor: not-allowed; }
-    .btn:hover:not(:disabled) { transform: translateY(-1px); }
-    .status {
-      min-height: 20px;
-      color: #5f6e66;
-      font-size: 14px;
+
+    .btn:disabled {
+      opacity: 0.65;
+      cursor: not-allowed;
     }
-    .status.error { color: #b42318; font-weight: 700; }
-    .status.success { color: #027a48; font-weight: 700; }
-    .panel {
-      background: #fff;
-      border: 1px solid var(--brand-border);
-      border-radius: 16px;
-      box-shadow: 0 14px 30px rgba(16,24,40,0.06);
-      padding: 16px;
-      display: grid;
+
+    .btn:hover:not(:disabled) {
+      transform: translateY(-1px);
+    }
+
+    .btn.primary:hover:not(:disabled) {
+      box-shadow: 0 20px 42px rgba(255, 90, 0, 0.32);
+    }
+
+    .status {
+      min-height: 0;
+      color: #5f5f5f;
+      font-size: 15px;
+      border: 1px solid rgba(217,217,217,0.9);
+      background: rgba(255,255,255,0.86);
+      border-radius: 14px;
+      padding: 15px 18px;
+      box-shadow: var(--fl-soft-shadow);
+      display: none;
+      align-items: center;
       gap: 12px;
     }
-    .panel h2 {
-      margin: 0;
-      color: var(--brand-primary);
-      font-size: 20px;
+
+    .status:not(:empty) {
+      display: flex;
     }
+
+    .status::before {
+      content: "";
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: #777;
+      box-shadow: inset 0 0 0 6px rgba(255,255,255,0.75);
+      flex: 0 0 auto;
+    }
+
+    .status.error {
+      color: #991b1b;
+      border-color: rgba(220, 38, 38, 0.25);
+      background: rgba(254, 242, 242, 0.92);
+      font-weight: 800;
+    }
+
+    .status.error::before {
+      background: var(--fl-error);
+    }
+
+    .status.success {
+      color: #166534;
+      border-color: rgba(22, 163, 74, 0.22);
+      background: rgba(240, 253, 244, 0.92);
+      font-weight: 800;
+    }
+
+    .status.success::before {
+      background: var(--fl-success);
+    }
+
+    .panel {
+      background: rgba(255,255,255,0.92);
+      border: 1px solid rgba(217,217,217,0.75);
+      border-radius: var(--fl-radius);
+      box-shadow: var(--fl-shadow);
+      padding: 26px;
+      display: grid;
+      gap: 22px;
+      backdrop-filter: blur(14px);
+    }
+
+    .panel-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+
+    .panel h2 {
+      margin: 0 0 6px;
+      color: var(--fl-orange);
+      font-size: 24px;
+      letter-spacing: -0.035em;
+      font-weight: 950;
+    }
+
+    .panel-subtitle {
+      margin: 0;
+      color: #707070;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .result-count {
+      color: #777;
+      background: #f7f7f7;
+      border: 1px solid #e6e6e6;
+      border-radius: 999px;
+      padding: 8px 12px;
+      font-size: 12px;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+
     .table-wrap {
       overflow-x: auto;
-      border: 1px solid var(--brand-border);
-      border-radius: 12px;
+      border: 1px solid rgba(217,217,217,0.95);
+      border-radius: 14px;
       background: #fff;
     }
+
     table {
       width: 100%;
       border-collapse: collapse;
       min-width: 760px;
     }
+
     th, td {
       text-align: left;
-      vertical-align: top;
-      padding: 10px;
-      border-bottom: 1px solid #e7efea;
+      vertical-align: middle;
+      padding: 17px 18px;
+      border-bottom: 1px solid #eeeeee;
     }
+
     th {
-      font-size: 11px;
+      font-size: 12px;
       text-transform: uppercase;
-      letter-spacing: 0.05em;
-      color: #648076;
-      background: #f7faf8;
-      font-weight: 900;
+      letter-spacing: 0.055em;
+      color: #3d3d3d;
+      background: linear-gradient(180deg, #ffffff, #fafafa);
+      font-weight: 950;
     }
-    tr:last-child td { border-bottom: none; }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    tbody tr {
+      transition: 0.16s ease;
+    }
+
+    tbody tr:hover {
+      background: rgba(255, 90, 0, 0.035);
+    }
+
     input {
       width: 100%;
-      border: 1px solid var(--brand-border);
-      border-radius: 10px;
-      padding: 9px 10px;
+      border: 1px solid #dddddd;
+      border-radius: 11px;
+      padding: 11px 12px;
       font-size: 14px;
-      color: var(--brand-black);
+      color: var(--fl-black);
       outline: none;
       background: #fff;
+      transition: 0.16s ease;
+      font-weight: 650;
     }
+
+    input::placeholder {
+      color: #aaa;
+      font-weight: 500;
+    }
+
     input:focus {
-      border-color: #2c8b55;
-      box-shadow: 0 0 0 4px rgba(44,139,85,0.12);
+      border-color: var(--fl-orange);
+      box-shadow: 0 0 0 4px rgba(255, 90, 0, 0.12);
     }
+
+    .row-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
     .empty {
-      border: 1px dashed var(--brand-border);
-      border-radius: 12px;
-      background: #f8fcf9;
-      padding: 18px;
+      border: 1px dashed rgba(255, 90, 0, 0.35);
+      border-radius: 16px;
+      background:
+        radial-gradient(circle at top left, rgba(255, 90, 0, 0.10), transparent 35%),
+        #fff;
+      padding: 34px 24px;
       text-align: center;
-      color: #648076;
+      color: #666;
       line-height: 1.5;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.8);
     }
-    @media (max-width: 860px) {
-      body { padding: 14px; }
-      h1 { font-size: 28px; }
-      .actions { width: 100%; }
-      .btn { width: 100%; }
-      .btn.small { width: auto; }
+
+    .empty strong {
+      display: block;
+      color: var(--fl-black);
+      font-size: 18px;
+      margin-bottom: 6px;
+    }
+
+    .mobile-topbar {
+      display: none;
+      background: #111;
+      color: #fff;
+      padding: 14px 16px;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .mobile-brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 950;
+      font-size: 20px;
+      letter-spacing: -0.03em;
+    }
+
+    .mobile-brand span {
+      color: var(--fl-orange);
+    }
+
+    .mobile-chip {
+      background: rgba(255,90,0,0.14);
+      color: var(--fl-orange);
+      border: 1px solid rgba(255,90,0,0.28);
+      padding: 7px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 900;
+    }
+
+    @media (max-width: 980px) {
+      .mobile-topbar {
+        display: flex;
+      }
+
+      .app-frame {
+        display: block;
+      }
+
+      .sidebar {
+        display: none;
+      }
+
+      .page {
+        padding: 28px 16px;
+      }
+
+      .hero {
+        display: grid;
+      }
+
+      .actions {
+        width: 100%;
+        padding-top: 0;
+      }
+
+      .btn {
+        flex: 1;
+      }
+
+      .panel {
+        padding: 18px;
+      }
+    }
+
+    @media (max-width: 620px) {
+      h1 {
+        font-size: 36px;
+      }
+
+      .muted {
+        font-size: 15px;
+      }
+
+      .actions {
+        display: grid;
+      }
+
+      .btn {
+        width: 100%;
+      }
+
+      .btn.small {
+        width: auto;
+      }
+
+      .panel-head {
+        display: grid;
+      }
+
+      .result-count {
+        width: fit-content;
+      }
     }
   </style>
 </head>
+
 <body>
-  <main class="page">
-    <section class="hero">
+  <div class="mobile-topbar">
+    <div class="mobile-brand">
+      <strong>FL</strong>
+      Fair<span>Linx</span>
+    </div>
+    <div class="mobile-chip">Service Areas</div>
+  </div>
+
+  <div class="app-frame">
+    <aside class="sidebar" aria-label="FairLinx sidebar">
       <div>
-        <h1>Service Coverage Areas</h1>
-        <p class="muted">Manage ZIP and radius-based coverage areas for your company.</p>
-      </div>
-      <div class="actions">
-        <button id="addAreaBtn" class="btn secondary" type="button">Add Area</button>
-        <button id="saveAreasBtn" class="btn primary" type="button">Save Areas</button>
-      </div>
-    </section>
+        <div class="brand">
+          <div class="brand-mark">FL</div>
+          <div class="brand-name">Fair<span>Linx</span></div>
+        </div>
 
-    <div id="status" class="status" role="status" aria-live="polite"></div>
+        <nav class="nav" aria-label="Primary navigation">
+          <a class="nav-item active" href="/company-service-areas.html">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M12 21s7-5.1 7-12a7 7 0 1 0-14 0c0 6.9 7 12 7 12Z" stroke="currentColor" stroke-width="2"/>
+              <path d="M12 12.2a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z" stroke="currentColor" stroke-width="2"/>
+            </svg>
+            Service Areas
+          </a>
 
-    <section class="panel">
-      <h2>Company Service Areas</h2>
-      <div id="emptyState" class="empty" style="display:none;">No service areas yet. Add your first area.</div>
-      <div class="table-wrap" id="tableWrap">
-        <table>
-          <thead>
-            <tr>
-              <th>ZIP Code</th>
-              <th>City</th>
-              <th>State</th>
-              <th>Radius (Miles)</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody id="areasBody"></tbody>
-        </table>
+          <a class="nav-item" href="/dashboard.html">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M4 4h6v6H4V4Zm10 0h6v6h-6V4ZM4 14h6v6H4v-6Zm10 0h6v6h-6v-6Z" stroke="currentColor" stroke-width="2"/>
+            </svg>
+            Dashboard
+          </a>
+
+          <a class="nav-item" href="/jobs.html">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M9 6V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v1" stroke="currentColor" stroke-width="2"/>
+              <path d="M4 7h16v13H4V7Z" stroke="currentColor" stroke-width="2"/>
+              <path d="M4 12h16" stroke="currentColor" stroke-width="2"/>
+            </svg>
+            Jobs
+          </a>
+
+          <a class="nav-item" href="/clients.html">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M16 11a4 4 0 1 0-8 0" stroke="currentColor" stroke-width="2"/>
+              <path d="M4 21a8 8 0 0 1 16 0" stroke="currentColor" stroke-width="2"/>
+            </svg>
+            Customers
+          </a>
+
+          <a class="nav-item" href="/calendar.html">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M7 3v4M17 3v4M4 8h16M5 5h14v16H5V5Z" stroke="currentColor" stroke-width="2"/>
+            </svg>
+            Schedule
+          </a>
+
+          <a class="nav-item" href="/invoices.html">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M6 3h9l3 3v15H6V3Z" stroke="currentColor" stroke-width="2"/>
+              <path d="M14 3v4h4M8 11h8M8 15h8" stroke="currentColor" stroke-width="2"/>
+            </svg>
+            Invoices
+          </a>
+
+          <a class="nav-item" href="/analytics.html">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M5 20V10M12 20V4M19 20v-7" stroke="currentColor" stroke-width="2"/>
+              <path d="M3 20h18" stroke="currentColor" stroke-width="2"/>
+            </svg>
+            Reports
+          </a>
+
+          <a class="nav-item" href="/settings.html">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z" stroke="currentColor" stroke-width="2"/>
+              <path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06A1.7 1.7 0 0 0 15 19.4a1.7 1.7 0 0 0-1 .6 1.7 1.7 0 0 0-.4 1.1V21a2 2 0 1 1-4 0v-.09A1.7 1.7 0 0 0 8.6 19.4a1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-.6-1 1.7 1.7 0 0 0-1.1-.4H3a2 2 0 1 1 0-4h.09A1.7 1.7 0 0 0 4.6 8.6a1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1-.6 1.7 1.7 0 0 0 .4-1.1V3a2 2 0 1 1 4 0v.09A1.7 1.7 0 0 0 15.4 4.6a1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.7 1.7 0 0 0 19.4 9c.2.36.6.6 1 .6h.6a2 2 0 1 1 0 4h-.6c-.4 0-.8.24-1 .6Z" stroke="currentColor" stroke-width="1.7"/>
+            </svg>
+            Settings
+          </a>
+        </nav>
       </div>
-    </section>
-  </main>
+
+      <div class="sidebar-user">
+        <div class="avatar">FL</div>
+        <div>
+          <strong>FairLinx Admin</strong>
+          <span>Company account</span>
+        </div>
+      </div>
+    </aside>
+
+    <main class="page">
+      <section class="hero">
+        <div>
+          <div class="eyebrow">Coverage Manager</div>
+          <h1>Service Coverage Areas</h1>
+          <p class="muted">Manage ZIP and radius-based coverage areas for your company.</p>
+        </div>
+
+        <div class="actions">
+          <button id="addAreaBtn" class="btn secondary" type="button">
+            <span aria-hidden="true">＋</span>
+            Add Area
+          </button>
+
+          <button id="saveAreasBtn" class="btn primary" type="button">
+            <span aria-hidden="true">▣</span>
+            Save Areas
+          </button>
+        </div>
+      </section>
+
+      <div id="status" class="status" role="status" aria-live="polite"></div>
+
+      <section class="panel">
+        <div class="panel-head">
+          <div>
+            <h2>Company Service Areas</h2>
+            <p class="panel-subtitle">Edit your active ZIP coverage list. Changes are saved to your company marketplace profile.</p>
+          </div>
+          <div id="resultCount" class="result-count">0 areas</div>
+        </div>
+
+        <div id="emptyState" class="empty" style="display:none;">
+          <strong>No service areas yet</strong>
+          Add your first ZIP code and radius to start receiving marketplace requests in your coverage area.
+        </div>
+
+        <div class="table-wrap" id="tableWrap">
+          <table>
+            <thead>
+              <tr>
+                <th>ZIP Code</th>
+                <th>City</th>
+                <th>State</th>
+                <th>Radius (Miles)</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="areasBody"></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+  </div>
 
   <script src="/js/api.js"></script>
   <script>
@@ -206,7 +733,8 @@
       empty: document.getElementById("emptyState"),
       tableWrap: document.getElementById("tableWrap"),
       addBtn: document.getElementById("addAreaBtn"),
-      saveBtn: document.getElementById("saveAreasBtn")
+      saveBtn: document.getElementById("saveAreasBtn"),
+      resultCount: document.getElementById("resultCount")
     };
 
     function companyId() {
@@ -225,6 +753,15 @@
       return headers;
     }
 
+    function escapeHtml(value) {
+      return String(value || "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
     function createEmptyRow() {
       return {
         zip_code: "",
@@ -235,6 +772,8 @@
     }
 
     function render() {
+      els.resultCount.textContent = state.rows.length + (state.rows.length === 1 ? " area" : " areas");
+
       if (!state.rows.length) {
         els.empty.style.display = "block";
         els.tableWrap.style.display = "none";
@@ -244,14 +783,15 @@
 
       els.empty.style.display = "none";
       els.tableWrap.style.display = "block";
+
       els.body.innerHTML = state.rows.map((row, index) => {
         return (
           '<tr>' +
-            '<td><input type="text" data-field="zip_code" data-index="' + index + '" value="' + String(row.zip_code || "").replace(/"/g, "&quot;") + '" placeholder="12345" maxlength="10"></td>' +
-            '<td><input type="text" data-field="city" data-index="' + index + '" value="' + String(row.city || "").replace(/"/g, "&quot;") + '" placeholder="City"></td>' +
-            '<td><input type="text" data-field="state" data-index="' + index + '" value="' + String(row.state || "").replace(/"/g, "&quot;") + '" placeholder="ST" maxlength="2"></td>' +
+            '<td><input type="text" data-field="zip_code" data-index="' + index + '" value="' + escapeHtml(row.zip_code) + '" placeholder="77479" maxlength="10" inputmode="numeric"></td>' +
+            '<td><input type="text" data-field="city" data-index="' + index + '" value="' + escapeHtml(row.city) + '" placeholder="Sugar Land"></td>' +
+            '<td><input type="text" data-field="state" data-index="' + index + '" value="' + escapeHtml(row.state) + '" placeholder="TX" maxlength="2"></td>' +
             '<td><input type="number" data-field="radius_miles" data-index="' + index + '" value="' + Number(row.radius_miles || 0) + '" min="0" step="1"></td>' +
-            '<td><button class="btn danger small" type="button" data-action="remove-row" data-index="' + index + '">Remove</button></td>' +
+            '<td><div class="row-actions"><button class="btn danger small" type="button" data-action="remove-row" data-index="' + index + '">Delete</button></div></td>' +
           '</tr>'
         );
       }).join("");
@@ -264,14 +804,21 @@
     function validateRows(rows) {
       for (let i = 0; i < rows.length; i += 1) {
         const row = rows[i];
+
         if (!row.zip_code) {
           return "ZIP code is required for every area.";
         }
+
+        if (row.zip_code.length < 5) {
+          return "ZIP code must be 5 digits.";
+        }
+
         const radius = Number(row.radius_miles);
         if (!Number.isFinite(radius) || radius < 0) {
           return "Radius must be 0 or greater.";
         }
       }
+
       return "";
     }
 
@@ -292,22 +839,27 @@
     async function loadAreas() {
       if (!token || !companyId()) {
         setStatus("Missing account session. Sign in first.", "error");
+        render();
         return;
       }
 
       setStatus("Loading service areas...", "");
+
       try {
         const res = await fetch(API_BASE + "/companies/" + encodeURIComponent(companyId()) + "/service-areas");
         const data = await res.json().catch(() => []);
+
         if (!res.ok) {
           throw new Error((data && data.error) || "Unable to load service areas.");
         }
+
         state.rows = (Array.isArray(data) ? data : []).map((item) => ({
           zip_code: item.zip_code || "",
           city: item.city || "",
           state: item.state || "",
           radius_miles: Number(item.radius_miles || 0)
         }));
+
         render();
         setStatus("Service areas loaded.", "");
       } catch (err) {
@@ -325,33 +877,47 @@
 
       const payload = buildPayload();
       const validationError = validateRows(payload.service_areas);
+
       if (validationError) {
         setStatus(validationError, "error");
         return;
       }
 
       els.saveBtn.disabled = true;
+      els.addBtn.disabled = true;
       setStatus("Saving service areas...", "");
+
       try {
         const res = await fetch(API_BASE + "/companies/service-areas", {
           method: "PUT",
           headers: authHeaders({ "Content-Type": "application/json" }),
           body: JSON.stringify(payload)
         });
+
         const data = await res.json().catch(() => ({}));
-        if (!res.ok) throw new Error(data.error || "Unable to save service areas.");
+
+        if (!res.ok) {
+          throw new Error(data.error || "Unable to save service areas.");
+        }
+
         setStatus("Service areas saved successfully.", "success");
         await loadAreas();
       } catch (err) {
         setStatus(err.message || "Unable to save service areas.", "error");
       } finally {
         els.saveBtn.disabled = false;
+        els.addBtn.disabled = false;
       }
     }
 
     els.addBtn.addEventListener("click", function() {
       state.rows.push(createEmptyRow());
       render();
+
+      window.requestAnimationFrame(function() {
+        const lastInput = els.body.querySelector('tr:last-child input[data-field="zip_code"]');
+        if (lastInput) lastInput.focus();
+      });
     });
 
     els.saveBtn.addEventListener("click", saveAreas);
@@ -359,19 +925,34 @@
     els.body.addEventListener("input", function(event) {
       const target = event.target;
       if (!target) return;
+
       const index = Number(target.getAttribute("data-index"));
       const field = target.getAttribute("data-field");
+
       if (!Number.isInteger(index) || !field || !state.rows[index]) return;
+
+      if (field === "zip_code") {
+        target.value = normalizeZip(target.value);
+      }
+
+      if (field === "state") {
+        target.value = String(target.value || "").replace(/[^a-zA-Z]/g, "").toUpperCase().slice(0, 2);
+      }
+
       state.rows[index][field] = target.value;
+      render();
     });
 
     els.body.addEventListener("click", function(event) {
       const btn = event.target.closest("[data-action='remove-row']");
       if (!btn) return;
+
       const index = Number(btn.getAttribute("data-index"));
       if (!Number.isInteger(index) || !state.rows[index]) return;
+
       state.rows.splice(index, 1);
       render();
+      setStatus("Area removed. Click Save Areas to apply changes.", "");
     });
 
     loadAreas();

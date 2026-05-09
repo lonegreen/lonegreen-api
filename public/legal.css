@@ -1,96 +1,503 @@
-* { box-sizing: border-box; }
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Legal | FairLinx</title>
+  <link rel="stylesheet" href="/css/brand.css">
 
-body {
-  margin: 0;
-  font-family: Arial, sans-serif;
-  background:
-    radial-gradient(circle at top left, rgba(31, 92, 58, 0.10), transparent 28%),
-    linear-gradient(180deg, #edf5f0 0%, #f7f9f8 45%, #fbfcfb 100%);
-  color: var(--brand-black);
-  padding: 24px;
-}
+  <style>
+    :root {
+      --brand-primary: #FF5A00;
+      --brand-primary-hover: #E64A00;
+      --brand-primary-light: #FF8A33;
+      --brand-black: #111111;
+      --brand-dark: #2B2B2B;
+      --brand-border: #D9D9D9;
+      --brand-bg: #F5F5F5;
+      --brand-white: #FFFFFF;
+      --brand-success: #16A34A;
+      --brand-warning: #F59E0B;
+      --brand-error: #DC2626;
 
-.legal-page {
-  max-width: 980px;
-  margin: 0 auto;
-  display: grid;
-  gap: 16px;
-}
+      --page-max: 1080px;
+      --radius-xl: 28px;
+      --radius-lg: 22px;
+      --radius-md: 16px;
+      --radius-pill: 999px;
+      --shadow-hero: 0 28px 80px rgba(17, 17, 17, 0.12);
+      --shadow-card: 0 18px 45px rgba(17, 17, 17, 0.07);
+      --shadow-soft: 0 10px 26px rgba(17, 17, 17, 0.06);
+    }
 
-.legal-hero,
-.legal-card {
-  background: rgba(255,255,255,0.96);
-  border: 1px solid var(--brand-border);
-  border-radius: 18px;
-  box-shadow: 0 16px 40px rgba(16, 24, 40, 0.07);
-}
+    * {
+      box-sizing: border-box;
+    }
 
-.legal-hero {
-  padding: 24px;
-}
+    html {
+      scroll-behavior: smooth;
+      -webkit-text-size-adjust: 100%;
+    }
 
-.legal-card {
-  padding: 22px;
-}
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Arial, sans-serif;
+      color: var(--brand-black);
+      background:
+        radial-gradient(circle at 12% 0%, rgba(255, 90, 0, 0.18), transparent 30%),
+        radial-gradient(circle at 88% 8%, rgba(255, 122, 26, 0.14), transparent 26%),
+        linear-gradient(135deg, #ffffff 0%, #f7f7f7 46%, #f5f5f5 100%);
+      padding: 28px;
+    }
 
-h1 {
-  margin: 0 0 8px;
-  color: var(--brand-primary);
-  font-size: 34px;
-}
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background-image:
+        linear-gradient(rgba(17, 17, 17, 0.035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(17, 17, 17, 0.035) 1px, transparent 1px);
+      background-size: 42px 42px;
+      mask-image: linear-gradient(180deg, rgba(0,0,0,0.55), transparent 72%);
+    }
 
-h2 {
-  margin: 22px 0 8px;
-  color: var(--brand-black);
-  font-size: 20px;
-}
+    .legal-page {
+      width: min(100%, var(--page-max));
+      margin: 0 auto;
+      display: grid;
+      gap: 18px;
+      position: relative;
+      z-index: 1;
+    }
 
-p,
-li {
-  color: var(--brand-dark);
-  line-height: 1.65;
-}
+    .legal-hero,
+    .legal-card {
+      background: rgba(255, 255, 255, 0.96);
+      border: 1px solid rgba(217, 217, 217, 0.9);
+      border-radius: var(--radius-xl);
+      position: relative;
+      overflow: hidden;
+    }
 
-.meta,
-.disclaimer,
-.contact {
-  color: var(--brand-dark);
-  font-size: 14px;
-}
+    .legal-hero {
+      padding: 34px;
+      box-shadow: var(--shadow-hero);
+      display: grid;
+      gap: 18px;
+    }
 
-.disclaimer {
-  border: 1px solid #f4deb0;
-  background: #fffaf0;
-  color: #6f4400;
-  border-radius: 14px;
-  padding: 14px;
-}
+    .legal-hero::before {
+      content: "";
+      position: absolute;
+      inset: 0 0 auto 0;
+      height: 7px;
+      background: linear-gradient(90deg, var(--brand-primary), var(--brand-primary-light));
+    }
 
-.legal-nav,
-.back-links {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-}
+    .legal-hero::after {
+      content: "FL";
+      position: absolute;
+      right: 28px;
+      top: 22px;
+      font-size: 112px;
+      line-height: 1;
+      font-weight: 900;
+      letter-spacing: -0.12em;
+      color: rgba(255, 90, 0, 0.07);
+      transform: skew(-8deg);
+      pointer-events: none;
+    }
 
-a {
-  color: var(--brand-primary);
-  font-weight: 800;
-}
+    .legal-card {
+      padding: 30px;
+      box-shadow: var(--shadow-card);
+    }
 
-.legal-nav a,
-.back-links a {
-  display: inline-flex;
-  text-decoration: none;
-  border: 1px solid var(--brand-border);
-  border-radius: 999px;
-  padding: 8px 11px;
-  background: white;
-}
+    .brand-mark {
+      width: fit-content;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 900;
+      letter-spacing: -0.055em;
+      font-size: 30px;
+      color: var(--brand-black);
+      position: relative;
+      z-index: 1;
+    }
 
-@media (max-width: 640px) {
-  body { padding: 14px; }
-  h1 { font-size: 28px; }
-  .legal-hero,
-  .legal-card { padding: 16px; }
-}
+    .brand-mark::before {
+      content: "FL";
+      width: 44px;
+      height: 44px;
+      border-radius: 15px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, var(--brand-primary), var(--brand-primary-light));
+      color: #fff;
+      font-size: 18px;
+      font-weight: 900;
+      letter-spacing: -0.08em;
+      box-shadow: 0 14px 28px rgba(255, 90, 0, 0.24);
+    }
+
+    .brand-mark span {
+      color: var(--brand-primary);
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 9px;
+      width: fit-content;
+      margin: 0;
+      color: var(--brand-primary);
+      font-size: 12px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      position: relative;
+      z-index: 1;
+    }
+
+    .eyebrow::before,
+    .eyebrow::after {
+      content: "";
+      width: 26px;
+      height: 3px;
+      border-radius: var(--radius-pill);
+      background: linear-gradient(90deg, var(--brand-primary), var(--brand-primary-light));
+    }
+
+    h1 {
+      max-width: 760px;
+      margin: 0;
+      color: var(--brand-black);
+      font-size: clamp(36px, 6vw, 62px);
+      line-height: 0.98;
+      letter-spacing: -0.07em;
+      position: relative;
+      z-index: 1;
+    }
+
+    h1 strong {
+      color: var(--brand-primary);
+    }
+
+    h2 {
+      margin: 28px 0 10px;
+      color: var(--brand-black);
+      font-size: 21px;
+      line-height: 1.25;
+      letter-spacing: -0.03em;
+    }
+
+    p,
+    li {
+      color: var(--brand-dark);
+      line-height: 1.72;
+      font-size: 15.5px;
+    }
+
+    p {
+      margin: 0 0 12px;
+    }
+
+    ul {
+      padding-left: 22px;
+      margin: 10px 0 0;
+    }
+
+    li + li {
+      margin-top: 8px;
+    }
+
+    .meta,
+    .contact {
+      color: var(--brand-dark);
+      font-size: 14px;
+    }
+
+    .meta {
+      max-width: 680px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .disclaimer {
+      max-width: 780px;
+      border: 1px solid rgba(245, 158, 11, 0.36);
+      background:
+        linear-gradient(180deg, rgba(255, 250, 240, 0.98), rgba(255, 253, 248, 0.98));
+      color: #6f4400;
+      border-radius: var(--radius-md);
+      padding: 15px 16px;
+      margin: 0;
+      font-size: 14px;
+      box-shadow: 0 10px 24px rgba(245, 158, 11, 0.08);
+      position: relative;
+      z-index: 1;
+    }
+
+    .legal-nav,
+    .back-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .legal-nav {
+      padding: 10px;
+      margin: 0 0 24px;
+      border: 1px solid rgba(217, 217, 217, 0.76);
+      border-radius: var(--radius-lg);
+      background: linear-gradient(180deg, #ffffff, #fafafa);
+      box-shadow: var(--shadow-soft);
+    }
+
+    .back-links {
+      margin-top: 2px;
+    }
+
+    a {
+      color: var(--brand-primary);
+      font-weight: 900;
+      text-underline-offset: 3px;
+    }
+
+    .legal-nav a,
+    .back-links a {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 42px;
+      text-decoration: none;
+      border: 1px solid var(--brand-border);
+      border-radius: var(--radius-pill);
+      padding: 9px 15px;
+      background: var(--brand-white);
+      color: var(--brand-black);
+      font-size: 14px;
+      font-weight: 900;
+      transition:
+        transform 160ms ease,
+        border-color 160ms ease,
+        background 160ms ease,
+        color 160ms ease,
+        box-shadow 160ms ease;
+    }
+
+    .back-links a:first-child,
+    .legal-nav a:first-child {
+      border-color: rgba(255, 90, 0, 0.42);
+      background: linear-gradient(135deg, var(--brand-primary), var(--brand-primary-light));
+      color: #ffffff;
+      box-shadow: 0 12px 24px rgba(255, 90, 0, 0.18);
+    }
+
+    .legal-nav a:hover,
+    .back-links a:hover {
+      transform: translateY(-1px);
+      border-color: rgba(255, 90, 0, 0.48);
+      background: #fff7f2;
+      color: var(--brand-primary);
+      box-shadow: 0 12px 26px rgba(255, 90, 0, 0.13);
+    }
+
+    .back-links a:first-child:hover,
+    .legal-nav a:first-child:hover {
+      background: linear-gradient(135deg, var(--brand-primary-hover), var(--brand-primary));
+      color: #ffffff;
+    }
+
+    a:focus-visible {
+      outline: 3px solid rgba(255, 90, 0, 0.32);
+      outline-offset: 3px;
+      border-radius: var(--radius-pill);
+    }
+
+    .legal-card h2:first-of-type {
+      margin-top: 0;
+    }
+
+    .legal-card h2 {
+      padding-top: 2px;
+    }
+
+    .legal-card h2::before {
+      content: "";
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      margin-right: 9px;
+      border-radius: 50%;
+      background: var(--brand-primary);
+      box-shadow: 0 0 0 5px rgba(255, 90, 0, 0.1);
+      vertical-align: 2px;
+    }
+
+    .legal-footer {
+      text-align: center;
+      color: var(--brand-dark);
+      font-size: 13px;
+      padding: 10px 0 4px;
+    }
+
+    @media (max-width: 760px) {
+      body {
+        padding: 14px;
+      }
+
+      .legal-page {
+        gap: 14px;
+      }
+
+      .legal-hero,
+      .legal-card {
+        border-radius: 20px;
+      }
+
+      .legal-hero {
+        padding: 24px 18px 18px;
+      }
+
+      .legal-card {
+        padding: 18px;
+      }
+
+      .legal-hero::after {
+        right: 14px;
+        top: 18px;
+        font-size: 74px;
+      }
+
+      .brand-mark {
+        font-size: 25px;
+      }
+
+      .brand-mark::before {
+        width: 40px;
+        height: 40px;
+        border-radius: 13px;
+        font-size: 16px;
+      }
+
+      .eyebrow {
+        font-size: 11px;
+        letter-spacing: 0.11em;
+      }
+
+      .eyebrow::before,
+      .eyebrow::after {
+        width: 18px;
+      }
+
+      .legal-nav,
+      .back-links {
+        display: grid;
+        grid-template-columns: 1fr;
+      }
+
+      .legal-nav {
+        padding: 8px;
+      }
+
+      .legal-nav a,
+      .back-links a {
+        width: 100%;
+        min-height: 44px;
+      }
+
+      h2 {
+        font-size: 19px;
+      }
+
+      p,
+      li {
+        font-size: 15px;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      html {
+        scroll-behavior: auto;
+      }
+
+      *,
+      *::before,
+      *::after {
+        transition: none !important;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <main class="legal-page">
+    <section class="legal-hero">
+      <div class="brand-mark">Fair<span>Linx</span></div>
+      <p class="eyebrow">Legal Center</p>
+
+      <h1>FairLinx <strong>Legal</strong> Page</h1>
+
+      <p class="meta">Effective date: May 3, 2026 | Last updated: May 3, 2026</p>
+
+      <p class="disclaimer">
+        Attorney review required: this practical placeholder is provided for SaaS operations planning and is not legal advice.
+      </p>
+
+      <div class="back-links">
+        <a href="/">Home</a>
+        <a href="/login.html">Company Login</a>
+        <a href="/customer-login-v2.html">Customer Login</a>
+      </div>
+    </section>
+
+    <section class="legal-card">
+      <nav class="legal-nav" aria-label="Legal page navigation">
+        <a href="#overview">Overview</a>
+        <a href="#use">Use of Platform</a>
+        <a href="#accounts">Accounts</a>
+        <a href="#billing">Billing</a>
+        <a href="#contact">Contact</a>
+      </nav>
+
+      <h2 id="overview">1. Overview</h2>
+      <p>
+        FairLinx provides software and marketplace tools designed to help local service companies manage operations,
+        customer requests, estimates, jobs, invoices, and related business workflows.
+      </p>
+
+      <h2 id="use">2. Use of Platform</h2>
+      <p>
+        Users must use the platform responsibly and only for lawful business purposes. Companies are responsible for
+        the accuracy of their service information, pricing, customer communications, and job-related activity.
+      </p>
+
+      <h2 id="accounts">3. Accounts and Access</h2>
+      <p>
+        Each user is responsible for maintaining secure access to their account. Role-based access may limit available
+        actions depending on whether the user is an owner, admin, manager, worker, customer, or platform operator.
+      </p>
+
+      <h2 id="billing">4. Billing and Subscriptions</h2>
+      <p>
+        Company billing, subscription status, plan limits, and platform access may be managed according to the active
+        FairLinx plan and applicable billing terms.
+      </p>
+
+      <h2 id="contact">5. Contact</h2>
+      <p class="contact">
+        Questions about this page may be directed to FairLinx support or the company administrator responsible for the account.
+      </p>
+    </section>
+
+    <p class="legal-footer">© 2026 FairLinx. Connect, collaborate, grow.</p>
+  </main>
+</body>
+</html>

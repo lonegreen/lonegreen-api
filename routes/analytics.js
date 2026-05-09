@@ -2,6 +2,7 @@ const express = require("express");
 const pool = require("../db/pool");
 const auth = require("../middleware/auth");
 const { logActivity } = require("../services/routeHelpers");
+const { sendSafeServerError } = require("../services/safeServerError");
 const { requireMinimumRole } = auth;
 
 const router = express.Router();
@@ -297,8 +298,7 @@ router.get("/analytics/overview", ownerAdmin, async (req, res) => {
       jobs_this_week: num(jobsWeek.count)
     });
   } catch (err) {
-    console.log("ANALYTICS OVERVIEW ERROR:", err);
-    res.status(500).json({ error: err.message });
+    sendSafeServerError(res, err, "ANALYTICS OVERVIEW ERROR");
   }
 });
 
@@ -590,13 +590,7 @@ router.get("/analytics/revenue", ownerAdmin, async (req, res) => {
       }
     });
   } catch (err) {
-    console.log(JSON.stringify({
-      level: "error",
-      event: "analytics_revenue_error",
-      message: err && err.message ? String(err.message) : "unknown_error",
-      code: err && err.code ? String(err.code) : null
-    }));
-    res.status(500).json({ error: err.message });
+    sendSafeServerError(res, err, "ANALYTICS REVENUE ERROR");
   }
 });
 
@@ -630,8 +624,7 @@ router.get("/analytics/workers", ownerAdmin, async (req, res) => {
       };
     }));
   } catch (err) {
-    console.log("ANALYTICS WORKERS ERROR:", err);
-    res.status(500).json({ error: err.message });
+    sendSafeServerError(res, err, "ANALYTICS WORKERS ERROR");
   }
 });
 
@@ -716,8 +709,7 @@ router.get("/analytics/clients", ownerAdmin, async (req, res) => {
       last_service_date: row.last_service_date
     })));
   } catch (err) {
-    console.log("ANALYTICS CLIENTS ERROR:", err);
-    res.status(500).json({ error: err.message });
+    sendSafeServerError(res, err, "ANALYTICS CLIENTS ERROR");
   }
 });
 
@@ -922,8 +914,7 @@ router.get("/analytics/pro", ownerAdmin, async (req, res) => {
       }
     });
   } catch (err) {
-    console.log("ANALYTICS PRO ERROR:", err);
-    res.status(500).json({ error: err.message });
+    sendSafeServerError(res, err, "ANALYTICS PRO ERROR");
   }
 });
 

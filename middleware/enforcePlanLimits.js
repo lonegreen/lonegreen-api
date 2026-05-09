@@ -9,6 +9,9 @@ const LIMIT_COLUMN_BY_RESOURCE = {
   workers: "max_workers"
 };
 
+/** Table names allowed in COUNT queries; must stay in sync with LIMIT_COLUMN_BY_RESOURCE keys. */
+const ALLOWED_PLAN_LIMIT_TABLE_NAMES = new Set(Object.keys(LIMIT_COLUMN_BY_RESOURCE));
+
 function formatResourceLabel(resourceKey) {
   return String(resourceKey || "")
     .replace(/_/g, " ")
@@ -21,7 +24,11 @@ function buildUpgradeSuggestion(planName) {
 }
 
 function enforcePlanLimits(resourceKey) {
-  const limitColumn = LIMIT_COLUMN_BY_RESOURCE[String(resourceKey || "").toLowerCase()];
+  const normalizedKey = String(resourceKey || "").toLowerCase();
+  if (!ALLOWED_PLAN_LIMIT_TABLE_NAMES.has(normalizedKey)) {
+    throw new Error(`Unsupported plan limit resource: ${resourceKey}`);
+  }
+  const limitColumn = LIMIT_COLUMN_BY_RESOURCE[normalizedKey];
   if (!limitColumn) {
     throw new Error(`Unsupported plan limit resource: ${resourceKey}`);
   }
@@ -70,7 +77,7 @@ function enforcePlanLimits(resourceKey) {
       const usageResult = await pool.query(
         `
         SELECT COUNT(*)::int AS current_count
-        FROM ${resourceKey}
+        FROM ${normalizedKey}
         WHERE company_id = $1
         `,
         [companyId]
@@ -80,9 +87,9 @@ function enforcePlanLimits(resourceKey) {
 
       if (currentCount >= planLimit) {
         return res.status(403).json({
-          error: `${formatResourceLabel(resourceKey)} limit reached`,
+          error: `${formatResourceLabel(normalizedKey)} limit reached`,
           code: "PLAN_LIMIT_REACHED",
-          resource: resourceKey,
+          resource: normalizedKey,
           current_count: currentCount,
           max_allowed: planLimit,
           plan: {

@@ -423,9 +423,12 @@ process.on("uncaughtException", (err) => {
   logger.error("UNCAUGHT_EXCEPTION", err);
   gracefulShutdown("UNCAUGHT_EXCEPTION").catch(() => process.exit(1));
 });
-process.on("unhandledRejection", (err) => {
+process.on("unhandledRejection", (reason) => {
+  const err = reason instanceof Error ? reason : new Error(String(reason));
   logger.error("UNHANDLED_REJECTION", err);
-  gracefulShutdown("UNHANDLED_REJECTION").catch(() => process.exit(1));
+  logger.warn("UNHANDLED_REJECTION_ALERT", {
+    message: "Unhandled promise rejection logged; process continues (no shutdown)."
+  });
 });
 
 (async () => {

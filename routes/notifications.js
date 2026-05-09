@@ -103,12 +103,23 @@ async function markSingleNotificationRead(notificationId, companyId, userId) {
 
 router.get("/me", auth, async (req, res) => {
   try {
-    const result = await pool.query(`
-      SELECT id, username, role, company_id
-      FROM users
-      WHERE id = $1 AND company_id = $2
-      LIMIT 1
-    `, [req.user.id, req.user.company_id]);
+    const role = normalizeRole(req.user && req.user.role);
+    let result;
+    if (role === "platform_owner") {
+      result = await pool.query(`
+        SELECT id, username, role, company_id
+        FROM users
+        WHERE id = $1
+        LIMIT 1
+      `, [req.user.id]);
+    } else {
+      result = await pool.query(`
+        SELECT id, username, role, company_id
+        FROM users
+        WHERE id = $1 AND company_id = $2
+        LIMIT 1
+      `, [req.user.id, req.user.company_id]);
+    }
 
     if (result.rows.length === 0) {
       return res.status(404).json({ error: "User not found" });

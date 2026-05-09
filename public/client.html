@@ -11,149 +11,400 @@
     * { box-sizing: border-box; }
 
     :root {
-      --bg: #f5f8f6;
-      --panel: #ffffff;
-      --text: var(--brand-black);
-      --muted: #60796d;
-      --border: var(--brand-border);
-      --green: var(--brand-primary);
-      --green-dark: #17462c;
-      --green-soft: #eaf5ee;
-      --blue: var(--brand-primary);
-      --orange: #f59e0b;
-      --red: #ef4444;
-      --gray-soft: var(--brand-bg);
-      --shadow: 0 18px 42px rgba(16, 24, 40, 0.07);
-      --radius: 20px;
+      --fl-orange: #ff5a00;
+      --fl-orange-hover: #e64a00;
+      --fl-orange-soft: #fff1e8;
+      --fl-orange-soft-2: #fff7f2;
+      --fl-black: #111111;
+      --fl-gray: #2b2b2b;
+      --fl-muted: #6b7280;
+      --fl-border: #e5e7eb;
+      --fl-bg: #f6f7f8;
+      --fl-panel: #ffffff;
+      --fl-green: #16a34a;
+      --fl-blue: #2563eb;
+      --fl-amber: #f59e0b;
+      --fl-red: #dc2626;
+      --fl-shadow: 0 18px 48px rgba(17, 17, 17, 0.08);
+      --fl-shadow-soft: 0 10px 28px rgba(17, 17, 17, 0.06);
+      --fl-radius: 22px;
+
+      --bg: var(--fl-bg);
+      --panel: var(--fl-panel);
+      --text: var(--fl-black);
+      --muted: var(--fl-muted);
+      --border: var(--fl-border);
+      --green: var(--fl-orange);
+      --green-dark: var(--fl-orange-hover);
+      --green-soft: var(--fl-orange-soft);
+      --blue: var(--fl-blue);
+      --orange: var(--fl-amber);
+      --red: var(--fl-red);
+      --gray-soft: #f5f5f5;
+      --shadow: var(--fl-shadow);
+      --radius: var(--fl-radius);
+    }
+
+    html {
+      min-height: 100%;
+      background: var(--fl-bg);
     }
 
     body {
       margin: 0;
-      font-family: Arial, sans-serif;
+      min-height: 100vh;
+      font-family: Inter, Arial, Helvetica, sans-serif;
       background:
-        radial-gradient(circle at top left, rgba(31, 92, 58, 0.10), transparent 340px),
-        linear-gradient(180deg, #edf5f0 0%, #f7f9f8 190px, #f4f6f8 100%);
+        radial-gradient(circle at 5% 0%, rgba(255, 90, 0, 0.10), transparent 330px),
+        radial-gradient(circle at 100% 10%, rgba(255, 90, 0, 0.06), transparent 360px),
+        linear-gradient(180deg, #ffffff 0%, #f6f7f8 280px, #f6f7f8 100%);
       color: var(--text);
-      padding: 22px;
+      padding: 0;
+    }
+
+    button,
+    input,
+    textarea,
+    select {
+      font: inherit;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    .app-shell {
+      display: grid;
+      grid-template-columns: 272px minmax(0, 1fr);
+      min-height: 100vh;
+    }
+
+    .sidebar {
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      padding: 28px 22px;
+      background: rgba(255, 255, 255, 0.94);
+      border-right: 1px solid var(--fl-border);
+      display: flex;
+      flex-direction: column;
+      gap: 34px;
+      backdrop-filter: blur(18px);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 26px;
+      font-weight: 950;
+      letter-spacing: -0.07em;
+      color: var(--fl-black);
+    }
+
+    .brand-mark {
+      width: 46px;
+      height: 46px;
+      border-radius: 15px;
+      display: grid;
+      place-items: center;
+      color: #fff;
+      background: linear-gradient(135deg, var(--fl-orange), var(--fl-orange-hover));
+      box-shadow: 0 16px 32px rgba(255, 90, 0, 0.24);
+      transform: skew(-8deg);
+      font-weight: 950;
+      letter-spacing: -0.12em;
+    }
+
+    .brand strong {
+      color: var(--fl-orange);
+    }
+
+    .side-nav {
+      display: grid;
+      gap: 8px;
+    }
+
+    .side-nav a {
+      min-height: 48px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 0 14px;
+      border-radius: 15px;
+      color: var(--fl-black);
+      font-size: 14px;
+      font-weight: 800;
+      transition: 0.18s ease;
+    }
+
+    .side-nav a:hover {
+      background: var(--fl-orange-soft-2);
+      color: var(--fl-orange);
+      transform: translateX(2px);
+    }
+
+    .side-nav a.active {
+      color: var(--fl-orange);
+      background: linear-gradient(90deg, rgba(255, 90, 0, 0.14), rgba(255, 90, 0, 0.04));
+      box-shadow: inset 3px 0 0 var(--fl-orange);
+    }
+
+    .side-user {
+      margin-top: auto;
+      padding: 16px;
+      border: 1px solid var(--fl-border);
+      border-radius: 18px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: #fff;
+      box-shadow: var(--fl-shadow-soft);
+    }
+
+    .side-avatar,
+    .client-avatar {
+      display: grid;
+      place-items: center;
+      border-radius: 999px;
+      color: #fff;
+      background: linear-gradient(135deg, var(--fl-orange), var(--fl-orange-hover));
+      box-shadow: 0 16px 34px rgba(255, 90, 0, 0.24);
+      font-weight: 950;
+      letter-spacing: -0.05em;
+      flex: 0 0 auto;
+    }
+
+    .side-avatar {
+      width: 42px;
+      height: 42px;
+      font-size: 14px;
+    }
+
+    .client-avatar {
+      width: 132px;
+      height: 132px;
+      font-size: 46px;
+    }
+
+    .side-user b {
+      display: block;
+      font-size: 14px;
+    }
+
+    .side-user span {
+      display: block;
+      margin-top: 2px;
+      color: var(--fl-muted);
+      font-size: 12px;
+      font-weight: 650;
+    }
+
+    .main {
+      min-width: 0;
+    }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      min-height: 88px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      padding: 18px 34px;
+      background: rgba(255, 255, 255, 0.88);
+      border-bottom: 1px solid var(--fl-border);
+      backdrop-filter: blur(18px);
+    }
+
+    .topbar-title h1 {
+      margin: 0;
+      font-size: clamp(24px, 3vw, 34px);
+      line-height: 1;
+      letter-spacing: -0.06em;
+      color: var(--fl-black);
+    }
+
+    .topbar-title p {
+      margin: 7px 0 0;
+      color: var(--fl-muted);
+      font-size: 14px;
+      font-weight: 650;
+    }
+
+    .topbar-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
     }
 
     .page {
-      max-width: 1280px;
+      max-width: 1500px;
       margin: 0 auto;
+      padding: 26px 34px 42px;
       display: grid;
       gap: 18px;
     }
 
-    .hero {
-      display: flex;
-      justify-content: space-between;
-      gap: 18px;
-      align-items: flex-end;
-      flex-wrap: wrap;
+    .hero,
+    .client-hero {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr) minmax(280px, 0.75fr);
+      gap: 28px;
+      align-items: center;
+      padding: 28px;
+      background: rgba(255,255,255,0.96);
+      border: 1px solid var(--fl-border);
+      border-radius: var(--fl-radius);
+      box-shadow: var(--fl-shadow);
     }
 
     .hero h1 {
-      margin: 0 0 6px;
-      font-size: 34px;
-      color: var(--green);
-      letter-spacing: -0.04em;
+      margin: 0 0 7px;
+      font-size: clamp(30px, 4vw, 46px);
+      color: var(--fl-black);
+      letter-spacing: -0.07em;
+      line-height: 1.02;
     }
 
-    .hero p {
+    .hero p,
+    .client-copy {
       margin: 0;
-      color: var(--muted);
-      line-height: 1.5;
-    }
-
-    .panel {
-      background: rgba(255,255,255,0.96);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-    }
-
-    .client-panel {
-      padding: 24px;
-    }
-
-    .client-head {
-      display: flex;
-      justify-content: space-between;
-      gap: 18px;
-      align-items: flex-start;
-      flex-wrap: wrap;
-      margin-bottom: 18px;
+      max-width: 680px;
+      color: var(--fl-muted);
+      line-height: 1.65;
+      font-size: 15px;
+      font-weight: 600;
     }
 
     .client-name {
       margin: 0 0 8px;
-      color: var(--brand-black);
-      font-size: 31px;
-      font-weight: 900;
-      letter-spacing: -0.04em;
+      color: var(--fl-black);
+      font-size: clamp(32px, 4.5vw, 48px);
+      font-weight: 950;
+      letter-spacing: -0.075em;
+      line-height: 1.02;
     }
 
-    .client-copy {
-      color: var(--muted);
-      line-height: 1.6;
-      max-width: 760px;
+    .client-contact-grid {
+      display: grid;
+      gap: 13px;
+      align-self: stretch;
+      align-content: center;
+    }
+
+    .contact-row {
+      display: grid;
+      grid-template-columns: 24px minmax(0, 1fr);
+      gap: 10px;
+      align-items: start;
+      color: var(--fl-black);
+      font-weight: 800;
+      overflow-wrap: anywhere;
+    }
+
+    .contact-row .ico {
+      width: 24px;
+      height: 24px;
+      display: grid;
+      place-items: center;
+      color: var(--fl-orange);
+      font-size: 18px;
+    }
+
+    .contact-row small {
+      display: block;
+      margin-top: 2px;
+      color: var(--fl-muted);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .panel {
+      background: rgba(255,255,255,0.96);
+      border: 1px solid var(--fl-border);
+      border-radius: var(--fl-radius);
+      box-shadow: var(--fl-shadow);
+    }
+
+    .client-panel {
+      padding: 0;
+      overflow: hidden;
+    }
+
+    .client-head {
+      display: none;
     }
 
     .meta {
       display: grid;
       grid-template-columns: repeat(4, minmax(0, 1fr));
-      gap: 12px;
+      gap: 14px;
+      margin-top: 18px;
     }
 
     .meta-box,
     .summary-box,
     .detail {
-      padding: 14px;
-      border-radius: 16px;
-      background: var(--brand-bg);
-      border: 1px solid var(--border);
+      padding: 16px;
+      border-radius: 17px;
+      background: #fff;
+      border: 1px solid var(--fl-border);
       min-width: 0;
       overflow-wrap: anywhere;
+      box-shadow: 0 8px 18px rgba(17, 17, 17, 0.035);
     }
 
-    .label {
-      display: block;
-      margin-bottom: 6px;
-      font-size: 11px;
-      font-weight: 900;
-      letter-spacing: 0.07em;
-      text-transform: uppercase;
-      color: #688076;
-    }
-
-    .value-strong {
-      font-size: 22px;
-      font-weight: 900;
-      color: var(--green);
-      letter-spacing: -0.03em;
-    }
-
-
-    .summary-box.pro-card {
+    .meta-box {
+      display: grid;
+      align-content: center;
+      min-height: 92px;
       position: relative;
       overflow: hidden;
-      background: linear-gradient(180deg, #ffffff 0%, #f7fbf8 100%);
     }
 
+    .meta-box:before,
     .summary-box.pro-card:before {
       content: "";
       position: absolute;
       left: 0;
       top: 0;
       bottom: 0;
-      width: 5px;
-      background: var(--green);
-      opacity: 0.9;
+      width: 4px;
+      background: var(--fl-orange);
+      opacity: 0.95;
     }
 
-    .summary-box.money-card:before { background: var(--brand-primary); }
-    .summary-box.warning-card:before { background: #f59e0b; }
-    .summary-box.success-card:before { background: #027a48; }
+    .label {
+      display: block;
+      margin-bottom: 7px;
+      font-size: 11px;
+      font-weight: 950;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--fl-muted);
+    }
+
+    .value-strong {
+      font-size: 24px;
+      font-weight: 950;
+      color: var(--fl-orange);
+      letter-spacing: -0.04em;
+    }
+
+    .summary-box.pro-card {
+      position: relative;
+      overflow: hidden;
+      background: linear-gradient(180deg, #ffffff 0%, #fffaf6 100%);
+    }
+
+    .summary-box.money-card:before { background: var(--fl-orange); }
+    .summary-box.warning-card:before { background: var(--fl-amber); }
+    .summary-box.success-card:before { background: var(--fl-green); }
 
     .overview-block {
       margin-top: 18px;
@@ -161,103 +412,126 @@
 
     .overview-block-title {
       margin: 0 0 12px;
-      color: var(--green);
+      color: var(--fl-black);
       font-size: 18px;
-      font-weight: 900;
-      letter-spacing: -0.03em;
+      font-weight: 950;
+      letter-spacing: -0.04em;
     }
 
     .timeline-label {
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      padding: 4px 9px;
+      padding: 5px 10px;
       border-radius: 999px;
-      background: #eef7f1;
-      color: var(--green);
+      background: var(--fl-orange-soft);
+      color: var(--fl-orange);
       font-size: 11px;
-      font-weight: 900;
+      font-weight: 950;
       text-transform: uppercase;
       letter-spacing: 0.04em;
       margin-bottom: 8px;
     }
 
     .muted-line {
-      color: var(--muted);
+      color: var(--fl-muted);
       font-size: 13px;
-      line-height: 1.45;
+      line-height: 1.55;
+      font-weight: 600;
     }
 
     .action-bar {
       display: grid;
       grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 14px;
+      gap: 16px;
     }
 
     .action-btn {
+      position: relative;
+      overflow: hidden;
       border: none;
-      border-radius: 18px;
-      min-height: 96px;
-      padding: 18px 20px;
+      border-radius: 19px;
+      min-height: 104px;
+      padding: 22px 24px;
       text-align: left;
       cursor: pointer;
-      background: linear-gradient(135deg, var(--brand-primary) 0%, var(--brand-primary-hover) 100%);
+      background: linear-gradient(135deg, var(--fl-orange) 0%, var(--fl-orange-hover) 100%);
       color: white;
-      font-weight: 900;
-      box-shadow: 0 18px 34px rgba(31, 92, 58, 0.18);
+      font-weight: 950;
+      box-shadow: 0 20px 36px rgba(255, 90, 0, 0.22);
       transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .action-btn:after {
+      content: "→";
+      position: absolute;
+      right: 24px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 34px;
+      font-weight: 400;
+      opacity: 0.9;
     }
 
     .action-btn:hover {
       transform: translateY(-2px);
-      box-shadow: 0 22px 40px rgba(31, 92, 58, 0.22);
+      box-shadow: 0 24px 44px rgba(255, 90, 0, 0.28);
     }
 
     .action-btn strong {
       display: block;
       font-size: 22px;
-      margin-bottom: 6px;
+      margin-bottom: 7px;
+      letter-spacing: -0.035em;
     }
 
     .action-btn span {
       display: block;
+      max-width: 260px;
       font-size: 13px;
-      color: rgba(255,255,255,0.88);
-      line-height: 1.45;
-      font-weight: 700;
+      color: rgba(255,255,255,0.9);
+      line-height: 1.48;
+      font-weight: 750;
     }
 
     .tabs {
       display: flex;
-      gap: 10px;
+      gap: 8px;
       flex-wrap: wrap;
+      padding: 8px;
+      border: 1px solid var(--fl-border);
+      background: rgba(255, 255, 255, 0.82);
+      border-radius: 18px;
+      box-shadow: var(--fl-shadow-soft);
     }
 
     .tab {
-      padding: 12px 18px;
-      border-radius: 999px;
-      border: 1px solid var(--border);
-      background: rgba(255,255,255,0.92);
-      color: #365a4c;
+      padding: 13px 18px;
+      border-radius: 13px;
+      border: 1px solid transparent;
+      background: transparent;
+      color: var(--fl-gray);
       font-weight: 900;
       cursor: pointer;
       transition: 0.16s ease;
+      position: relative;
     }
 
     .tab:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 10px 22px rgba(16, 24, 40, 0.08);
+      background: var(--fl-orange-soft-2);
+      color: var(--fl-orange);
     }
 
     .tab.active {
-      background: var(--green);
-      border-color: var(--green);
+      background: var(--fl-orange);
+      border-color: var(--fl-orange);
       color: white;
+      box-shadow: 0 12px 24px rgba(255, 90, 0, 0.20);
     }
 
     .section {
       display: none;
-      padding: 22px;
+      padding: 24px;
     }
 
     .section.active {
@@ -270,28 +544,30 @@
       gap: 12px;
       align-items: center;
       flex-wrap: wrap;
-      margin-bottom: 16px;
+      margin-bottom: 18px;
     }
 
     .section-head h2 {
       margin: 0;
-      color: var(--green);
-      font-size: 23px;
-      letter-spacing: -0.03em;
+      color: var(--fl-black);
+      font-size: 24px;
+      font-weight: 950;
+      letter-spacing: -0.05em;
     }
 
     .section-copy {
-      color: #648076;
+      color: var(--fl-muted);
       font-size: 13px;
-      line-height: 1.45;
+      line-height: 1.5;
+      font-weight: 650;
     }
 
     .summary-grid,
     .detail-grid {
       display: grid;
       grid-template-columns: repeat(4, minmax(0, 1fr));
-      gap: 12px;
-      margin-bottom: 16px;
+      gap: 14px;
+      margin-bottom: 18px;
     }
 
     .list {
@@ -300,10 +576,11 @@
     }
 
     .card {
-      border: 1px solid #deebe3;
-      border-radius: 18px;
+      border: 1px solid var(--fl-border);
+      border-radius: 19px;
       padding: 18px;
-      background: #fbfdfc;
+      background: #ffffff;
+      box-shadow: 0 10px 24px rgba(17, 17, 17, 0.045);
     }
 
     .card-top {
@@ -312,33 +589,35 @@
       gap: 14px;
       align-items: flex-start;
       flex-wrap: wrap;
-      margin-bottom: 12px;
+      margin-bottom: 14px;
     }
 
     .card-title {
       margin: 0 0 6px;
-      color: var(--text);
+      color: var(--fl-black);
       font-size: 20px;
-      font-weight: 900;
-      letter-spacing: -0.03em;
+      font-weight: 950;
+      letter-spacing: -0.04em;
     }
 
     .sub {
-      color: #648076;
+      color: var(--fl-muted);
       font-size: 13px;
-      line-height: 1.5;
+      line-height: 1.55;
       margin-bottom: 4px;
+      font-weight: 620;
     }
 
     .badge {
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      padding: 6px 10px;
+      padding: 7px 11px;
       border-radius: 999px;
-      font-size: 12px;
-      font-weight: 900;
+      font-size: 11px;
+      font-weight: 950;
       text-transform: uppercase;
+      letter-spacing: 0.03em;
     }
 
     .status-scheduled,
@@ -351,8 +630,8 @@
 
     .status-assigned,
     .status-in_progress {
-      background: #ebf3ff;
-      color: var(--brand-primary-hover);
+      background: #eff6ff;
+      color: #1d4ed8;
     }
 
     .status-clear,
@@ -374,17 +653,22 @@
     }
 
     .active-highlight {
-      border-color: #b7ebc7;
-      background: linear-gradient(180deg, #ffffff 0%, #f5fcf7 100%);
+      border-color: rgba(22, 163, 74, 0.25);
+      background: linear-gradient(180deg, #ffffff 0%, #f7fff9 100%);
     }
 
     .paused-highlight {
-      border-color: #f6c6c6;
-      background: linear-gradient(180deg, #ffffff 0%, #fff6f6 100%);
+      border-color: rgba(220, 38, 38, 0.22);
+      background: linear-gradient(180deg, #ffffff 0%, #fff7f7 100%);
     }
 
     .detail-grid {
       margin-bottom: 14px;
+    }
+
+    .detail {
+      box-shadow: none;
+      background: #fafafa;
     }
 
     .actions {
@@ -395,47 +679,47 @@
       margin-top: 14px;
     }
 
-    .btn,
-    textarea,
-    input,
-    select {
-      font: inherit;
-    }
-
     .btn {
-      border: none;
-      border-radius: 12px;
+      border: 1px solid transparent;
+      border-radius: 13px;
       padding: 11px 16px;
       cursor: pointer;
-      font-weight: 900;
+      font-weight: 950;
       transition: 0.16s ease;
       white-space: nowrap;
+      background: #fff;
     }
 
     .btn:hover {
       transform: translateY(-1px);
-      box-shadow: 0 12px 24px rgba(16, 24, 40, 0.12);
+      box-shadow: 0 12px 24px rgba(17, 17, 17, 0.12);
     }
 
-    .primary { background: var(--green); color: white; }
-    .primary:hover { background: var(--green-dark); }
-    .blue { background: var(--blue); color: white; }
-    .orange { background: var(--orange); color: white; }
-    .red { background: var(--red); color: white; }
-    .gray { background: var(--gray-soft); color: var(--green); border: 1px solid var(--border); }
+    .primary {
+      background: linear-gradient(135deg, var(--fl-orange), var(--fl-orange-hover));
+      color: white;
+      box-shadow: 0 12px 24px rgba(255, 90, 0, 0.20);
+    }
+
+    .primary:hover { background: linear-gradient(135deg, var(--fl-orange-hover), var(--fl-orange)); }
+    .blue { background: var(--fl-blue); color: white; }
+    .orange { background: var(--fl-amber); color: white; }
+    .red { background: var(--fl-red); color: white; }
+    .gray { background: #ffffff; color: var(--fl-black); border-color: var(--fl-border); }
 
     .empty {
       padding: 18px;
-      border: 1px dashed var(--border);
-      border-radius: 16px;
-      background: var(--brand-bg);
-      color: #688076;
-      line-height: 1.5;
+      border: 1px dashed var(--fl-border);
+      border-radius: 17px;
+      background: #fafafa;
+      color: var(--fl-muted);
+      line-height: 1.55;
+      font-weight: 600;
     }
 
     .empty strong {
       display: block;
-      color: var(--text);
+      color: var(--fl-black);
       margin-bottom: 5px;
     }
 
@@ -443,40 +727,42 @@
     input,
     select {
       width: 100%;
-      padding: 11px 13px;
-      border-radius: 12px;
-      border: 1px solid var(--brand-border);
+      padding: 12px 13px;
+      border-radius: 13px;
+      border: 1px solid var(--fl-border);
       background: white;
-      color: var(--text);
+      color: var(--fl-black);
       outline: none;
     }
 
     textarea:focus,
     input:focus,
     select:focus {
-      border-color: var(--green);
-      box-shadow: 0 0 0 3px rgba(31, 92, 58, 0.12);
+      border-color: var(--fl-orange);
+      box-shadow: 0 0 0 4px rgba(255, 90, 0, 0.12);
     }
 
     .notes-box {
       width: 100%;
-      min-height: 220px;
-      padding: 14px;
-      border-radius: 16px;
-      border: 1px solid var(--brand-border);
-      background: white;
+      min-height: 250px;
+      padding: 16px;
+      border-radius: 17px;
+      border: 1px solid var(--fl-border);
+      background: #fff;
       resize: vertical;
+      line-height: 1.6;
     }
 
     .modal {
       display: none;
       position: fixed;
       inset: 0;
-      background: rgba(0,0,0,0.52);
+      background: rgba(17, 17, 17, 0.58);
       justify-content: center;
       align-items: center;
       z-index: 1000;
       padding: 18px;
+      backdrop-filter: blur(10px);
     }
 
     .modal-box {
@@ -487,14 +773,15 @@
       background: white;
       padding: 24px;
       border-radius: 22px;
-      box-shadow: 0 24px 54px rgba(16, 24, 40, 0.22);
+      box-shadow: 0 30px 70px rgba(17, 17, 17, 0.30);
     }
 
     .modal-box h3 {
       margin: 0 0 16px;
-      color: var(--green);
-      font-size: 24px;
-      letter-spacing: -0.03em;
+      color: var(--fl-black);
+      font-size: 25px;
+      font-weight: 950;
+      letter-spacing: -0.045em;
     }
 
     .form-grid {
@@ -517,7 +804,7 @@
     .skeleton {
       position: relative;
       overflow: hidden;
-      background: #edf3ef;
+      background: #eeeeee;
       border-radius: 12px;
       min-height: 16px;
     }
@@ -535,6 +822,26 @@
       100% { transform: translateX(100%); }
     }
 
+    @media (max-width: 1180px) {
+      .app-shell {
+        grid-template-columns: 1fr;
+      }
+
+      .sidebar {
+        display: none;
+      }
+
+      .hero,
+      .client-hero {
+        grid-template-columns: auto minmax(0, 1fr);
+      }
+
+      .client-contact-grid {
+        grid-column: 1 / -1;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+    }
+
     @media (max-width: 980px) {
       .meta,
       .summary-grid,
@@ -546,15 +853,40 @@
       .action-bar {
         grid-template-columns: 1fr;
       }
+
+      .topbar {
+        align-items: flex-start;
+        flex-direction: column;
+      }
     }
 
     @media (max-width: 640px) {
-      body {
+      .page {
         padding: 14px;
       }
 
-      .hero h1 {
-        font-size: 28px;
+      .topbar {
+        padding: 16px;
+      }
+
+      .hero,
+      .client-hero {
+        grid-template-columns: 1fr;
+        padding: 18px;
+      }
+
+      .client-avatar {
+        width: 96px;
+        height: 96px;
+        font-size: 34px;
+      }
+
+      .client-contact-grid,
+      .meta,
+      .summary-grid,
+      .detail-grid,
+      .form-grid {
+        grid-template-columns: 1fr;
       }
 
       .section,
@@ -563,18 +895,21 @@
       }
 
       .actions,
-      .modal-actions {
+      .modal-actions,
+      .topbar-actions {
         flex-direction: column;
         align-items: stretch;
+        width: 100%;
       }
 
       .btn,
-      .modal-actions .btn {
+      .modal-actions .btn,
+      .topbar-actions .btn {
         width: 100%;
       }
 
       .tabs .tab {
-        flex: 1;
+        flex: 1 1 calc(50% - 8px);
       }
     }
   </style>
@@ -608,208 +943,260 @@
   }
 })();
 </script>
-<div class="page fx-layout-public">
-  <div class="hero fx-hero fx-section-head">
-    <div>
-      <h1>Client Profile</h1>
-      <p>Central control for jobs, subscriptions, invoices, and client notes.</p>
-    </div>
-  </div>
 
-  <div id="clientInfo" class="panel client-panel fx-card">
-    <div class="skeleton" style="width:240px;height:28px;margin-bottom:12px;"></div>
-    <div class="skeleton" style="width:70%;height:16px;margin-bottom:16px;"></div>
-    <div class="meta">
-      <div class="meta-box"><div class="skeleton" style="height:44px;"></div></div>
-      <div class="meta-box"><div class="skeleton" style="height:44px;"></div></div>
-      <div class="meta-box"><div class="skeleton" style="height:44px;"></div></div>
-      <div class="meta-box"><div class="skeleton" style="height:44px;"></div></div>
-    </div>
-  </div>
+<div class="app-shell">
+  <aside class="sidebar" aria-label="FairLinx navigation">
+    <a class="brand" href="/dashboard.html" aria-label="FairLinx dashboard">
+      <span class="brand-mark">FL</span>
+      <span>Fair<strong>Linx</strong></span>
+    </a>
 
-  <div class="panel section fx-card" style="display:block;">
-    <div class="section-head" style="margin-bottom:0;">
-      <h2>Quick Actions</h2>
-      <div class="section-copy">Keep everything inside the client record.</div>
-    </div>
-    <div class="action-bar">
-      <button type="button" class="action-btn" id="clientQuickAddJob">
-        <strong>+ Add Job</strong>
-        <span>Schedule work, assign a worker, and keep this client moving.</span>
-      </button>
-      <button type="button" class="action-btn" id="clientQuickAddSub">
-        <strong>+ Add Subscription</strong>
-        <span>Create recurring service without leaving the client page.</span>
-      </button>
-      <button type="button" class="action-btn" id="clientQuickAddInvoice">
-        <strong>+ Create Invoice</strong>
-        <span>Bill work from this client record and track payment status here.</span>
-      </button>
-    </div>
-  </div>
+    <nav class="side-nav">
+      <a href="/dashboard.html">⌂ Dashboard</a>
+      <a href="/jobs.html">▦ Jobs</a>
+      <a href="/messages.html">✉ Inbox</a>
+      <a href="/clients.html" class="active">◉ Client Profile</a>
+      <a href="/calendar.html">▣ Calendar</a>
+      <a href="/invoices.html">▤ Invoices</a>
+      <a href="/estimates.html">▧ Estimates</a>
+      <a href="/reviews.html">☆ Reviews</a>
+      <a href="/workers.html">◌ Team</a>
+      <a href="/analytics.html">▥ Reports</a>
+      <a href="/settings.html">⚙ Settings</a>
+    </nav>
 
-  <div class="tabs">
-    <button type="button" class="tab active" id="overviewTab">Overview</button>
-    <button type="button" class="tab" id="jobsTab">Jobs</button>
-    <button type="button" class="tab" id="subsTab">Subscriptions</button>
-    <button type="button" class="tab" id="invoicesTab">Invoices</button>
-    <button type="button" class="tab" id="notesTab">Notes</button>
-  </div>
-
-  <div id="overviewSection" class="panel section active fx-card">
-    <div class="section-head">
+    <div class="side-user">
+      <div class="side-avatar">FL</div>
       <div>
-        <h2>Overview</h2>
-        <div class="section-copy">Full client timeline plus lead and estimate history in one place.</div>
+        <b>FairLinx</b>
+        <span>Operations Manager</span>
       </div>
     </div>
-    <div id="overviewSummary" class="summary-grid"></div>
-    <div id="timelineList" class="list"></div>
-    <div style="margin-top:18px;">
-      <div class="section-head">
-        <div>
-          <h2 style="font-size:20px;">Leads & Estimates</h2>
-          <div class="section-copy">History connected to this client record.</div>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <div class="topbar-title">
+        <h1>Client Profile</h1>
+        <p>Central control for jobs, subscriptions, invoices, and client notes.</p>
+      </div>
+
+      <div class="topbar-actions">
+        <a class="btn gray" href="/clients.html">← Back to Clients</a>
+        <button type="button" class="btn primary" id="clientTopAddJobBtn">+ Schedule Service</button>
+      </div>
+    </div>
+
+    <div class="page fx-layout-public">
+      <div id="clientInfo" class="panel client-panel fx-card">
+        <div class="client-hero">
+          <div class="client-avatar">FL</div>
+          <div>
+            <h2 class="client-name">Loading client...</h2>
+            <p class="client-copy">Loading the client workspace, service history, billing activity, and internal notes.</p>
+          </div>
+          <div class="client-contact-grid">
+            <div class="contact-row"><span class="ico">☎</span><span><span class="skeleton" style="display:block;width:160px;height:16px;"></span><small>Phone</small></span></div>
+            <div class="contact-row"><span class="ico">⌖</span><span><span class="skeleton" style="display:block;width:210px;height:16px;"></span><small>Address</small></span></div>
+            <div class="contact-row"><span class="ico">◎</span><span><span class="skeleton" style="display:block;width:90px;height:16px;"></span><small>ZIP Code</small></span></div>
+          </div>
+        </div>
+        <div style="padding:0 28px 28px;">
+          <div class="meta">
+            <div class="meta-box"><div class="skeleton" style="height:44px;"></div></div>
+            <div class="meta-box"><div class="skeleton" style="height:44px;"></div></div>
+            <div class="meta-box"><div class="skeleton" style="height:44px;"></div></div>
+            <div class="meta-box"><div class="skeleton" style="height:44px;"></div></div>
+          </div>
         </div>
       </div>
-      <div id="estimatesList" class="list"></div>
-    </div>
-  </div>
 
-  <div id="jobsSection" class="panel section fx-card">
-    <div class="section-head">
-      <div>
-        <h2>Jobs</h2>
-        <div class="section-copy">Track status, start work, and complete jobs without leaving the client.</div>
+      <div class="panel section fx-card" style="display:block;">
+        <div class="section-head" style="margin-bottom:0;">
+          <h2>Quick Actions</h2>
+          <div class="section-copy">Keep every action inside the client record.</div>
+        </div>
+        <div class="action-bar">
+          <button type="button" class="action-btn" id="clientQuickAddJob">
+            <strong>Schedule Service</strong>
+            <span>Book a new service appointment and keep this client moving.</span>
+          </button>
+          <button type="button" class="action-btn" id="clientQuickAddSub">
+            <strong>Create Subscription</strong>
+            <span>Start recurring care without leaving the client page.</span>
+          </button>
+          <button type="button" class="action-btn" id="clientQuickAddInvoice">
+            <strong>Create Invoice</strong>
+            <span>Bill work from this client record and track payment status here.</span>
+          </button>
+        </div>
       </div>
-      <button type="button" class="btn primary" id="clientJobsSectionAdd">+ Add Job</button>
-    </div>
-    <div id="jobsList" class="list"></div>
-  </div>
 
-  <div id="subsSection" class="panel section fx-card">
-    <div class="section-head">
-      <div>
-        <h2>Subscriptions</h2>
-        <div class="section-copy">See next visit, frequency, and status clearly.</div>
+      <div class="tabs">
+        <button type="button" class="tab active" id="overviewTab">Overview</button>
+        <button type="button" class="tab" id="jobsTab">Jobs</button>
+        <button type="button" class="tab" id="subsTab">Subscriptions</button>
+        <button type="button" class="tab" id="invoicesTab">Invoices</button>
+        <button type="button" class="tab" id="notesTab">Notes</button>
       </div>
-      <button type="button" class="btn primary" id="clientSubsSectionAdd">+ Add Subscription</button>
-    </div>
-    <div id="subsList" class="list"></div>
-  </div>
 
-  <div id="invoicesSection" class="panel section fx-card">
-    <div class="section-head">
-      <div>
-        <h2>Invoices</h2>
-        <div class="section-copy">Review billing totals and mark invoices paid from here.</div>
+      <div id="overviewSection" class="panel section active fx-card">
+        <div class="section-head">
+          <div>
+            <h2>Overview</h2>
+            <div class="section-copy">Full client timeline plus lead and estimate history in one place.</div>
+          </div>
+        </div>
+        <div id="overviewSummary" class="summary-grid"></div>
+        <div id="timelineList" class="list"></div>
+        <div style="margin-top:18px;">
+          <div class="section-head">
+            <div>
+              <h2 style="font-size:20px;">Leads & Estimates</h2>
+              <div class="section-copy">History connected to this client record.</div>
+            </div>
+          </div>
+          <div id="estimatesList" class="list"></div>
+        </div>
       </div>
-      <button type="button" class="btn primary" id="clientInvoicesSectionAdd">+ Create Invoice</button>
-    </div>
-    <div id="invoiceSummary" class="summary-grid"></div>
-    <div id="invoicesList" class="list"></div>
-  </div>
 
-  <div id="notesSection" class="panel section fx-card">
-    <div class="section-head">
-      <div>
-        <h2>Notes</h2>
-        <div class="section-copy">Save internal notes directly on the client profile.</div>
+      <div id="jobsSection" class="panel section fx-card">
+        <div class="section-head">
+          <div>
+            <h2>Jobs</h2>
+            <div class="section-copy">Track status, start work, and complete jobs without leaving the client.</div>
+          </div>
+          <button type="button" class="btn primary" id="clientJobsSectionAdd">+ Add Job</button>
+        </div>
+        <div id="jobsList" class="list"></div>
       </div>
-      <button type="button" class="btn primary" id="clientSaveNotesBtn">Save Notes</button>
-    </div>
-    <textarea id="clientNotes" class="notes-box" placeholder="No notes yet. Add internal client notes, access details, billing notes, or worker instructions here."></textarea>
-  </div>
-</div>
 
-<div id="jobModal" class="modal">
-  <div class="modal-box">
-    <h3>Add Job</h3>
-    <div class="form-grid">
-      <input id="job_service" placeholder="Service">
-      <select id="job_estimate_id">
-        <option value="">No linked estimate</option>
-      </select>
-      <input id="job_date" type="date">
-      <select id="job_status">
-        <option value="scheduled">Scheduled</option>
-        <option value="assigned">Assigned</option>
-        <option value="in_progress">In Progress</option>
-        <option value="completed">Completed</option>
-        <option value="cancelled">Cancelled</option>
-      </select>
-      <input id="job_start" type="time">
-      <input id="job_end" type="time">
-      <select id="job_worker_id">
-        <option value="">No worker assigned</option>
-      </select>
-      <input id="job_price" type="number" placeholder="Price">
-      <textarea id="job_internal_notes" class="wide" rows="4" placeholder="Internal notes"></textarea>
-    </div>
-    <div class="modal-actions">
-      <button type="button" class="btn primary" id="clientSaveJobBtn">Save Job</button>
-      <button type="button" class="btn gray" id="clientCancelJobModalBtn">Cancel</button>
-    </div>
-  </div>
-</div>
+      <div id="subsSection" class="panel section fx-card">
+        <div class="section-head">
+          <div>
+            <h2>Subscriptions</h2>
+            <div class="section-copy">See next visit, frequency, and status clearly.</div>
+          </div>
+          <button type="button" class="btn primary" id="clientSubsSectionAdd">+ Add Subscription</button>
+        </div>
+        <div id="subsList" class="list"></div>
+      </div>
 
-<div id="subModal" class="modal">
-  <div class="modal-box">
-    <h3>Add Subscription</h3>
-    <div class="form-grid">
-      <input id="sub_service" placeholder="Service">
-      <select id="sub_frequency">
-        <option value="weekly">Weekly</option>
-        <option value="biweekly">Biweekly</option>
-        <option value="monthly">Monthly</option>
-      </select>
-      <input id="sub_price" type="number" placeholder="Price">
-      <input id="sub_next_date" type="date">
-      <select id="sub_worker_id" class="wide">
-        <option value="">No worker assigned</option>
-      </select>
-    </div>
-    <div class="modal-actions">
-      <button type="button" class="btn primary" id="clientSaveSubBtn">Save Subscription</button>
-      <button type="button" class="btn gray" id="clientCancelSubModalBtn">Cancel</button>
-    </div>
-  </div>
-</div>
+      <div id="invoicesSection" class="panel section fx-card">
+        <div class="section-head">
+          <div>
+            <h2>Invoices</h2>
+            <div class="section-copy">Review billing totals and mark invoices paid from here.</div>
+          </div>
+          <button type="button" class="btn primary" id="clientInvoicesSectionAdd">+ Create Invoice</button>
+        </div>
+        <div id="invoiceSummary" class="summary-grid"></div>
+        <div id="invoicesList" class="list"></div>
+      </div>
 
-<div id="invoiceModal" class="modal">
-  <div class="modal-box">
-    <h3>Create Invoice</h3>
-    <div class="form-grid">
-      <select id="invoice_job_id" class="wide">
-        <option value="">No linked job</option>
-      </select>
-      <input id="invoice_amount" type="number" placeholder="Amount">
-      <input id="invoice_due_date" type="date">
-      <select id="invoice_status">
-        <option value="draft">Draft</option>
-        <option value="unpaid">Unpaid</option>
-        <option value="paid">Paid</option>
-        <option value="overdue">Overdue</option>
-        <option value="cancelled">Cancelled</option>
-      </select>
-      <textarea id="invoice_notes" class="wide" rows="4" placeholder="Invoice notes"></textarea>
+      <div id="notesSection" class="panel section fx-card">
+        <div class="section-head">
+          <div>
+            <h2>Notes</h2>
+            <div class="section-copy">Save internal notes directly on the client profile.</div>
+          </div>
+          <button type="button" class="btn primary" id="clientSaveNotesBtn">Save Notes</button>
+        </div>
+        <textarea id="clientNotes" class="notes-box" placeholder="No notes yet. Add internal client notes, access details, billing notes, or worker instructions here."></textarea>
+      </div>
     </div>
-    <div class="modal-actions">
-      <button type="button" class="btn primary" id="clientSaveInvoiceBtn">Create Invoice</button>
-      <button type="button" class="btn gray" id="clientCancelInvoiceModalBtn">Cancel</button>
-    </div>
-  </div>
-</div>
 
-<div id="deleteSubscriptionVisitModal" class="modal">
-  <div class="modal-box">
-    <h3>Remove Subscription Visit</h3>
-    <p>This will safely cancel this generated subscription visit without deleting subscription, invoice, or payment history.</p>
-    <div class="modal-actions">
-      <button type="button" class="btn gray" id="clientCancelDeleteVisitBtn">Cancel</button>
-      <button type="button" class="btn red" id="clientConfirmDeleteVisitBtn">Remove Visit</button>
+    <div id="jobModal" class="modal">
+      <div class="modal-box">
+        <h3>Add Job</h3>
+        <div class="form-grid">
+          <input id="job_service" placeholder="Service">
+          <select id="job_estimate_id">
+            <option value="">No linked estimate</option>
+          </select>
+          <input id="job_date" type="date">
+          <select id="job_status">
+            <option value="scheduled">Scheduled</option>
+            <option value="assigned">Assigned</option>
+            <option value="in_progress">In Progress</option>
+            <option value="completed">Completed</option>
+            <option value="cancelled">Cancelled</option>
+          </select>
+          <input id="job_start" type="time">
+          <input id="job_end" type="time">
+          <select id="job_worker_id">
+            <option value="">No worker assigned</option>
+          </select>
+          <input id="job_price" type="number" placeholder="Price">
+          <textarea id="job_internal_notes" class="wide" rows="4" placeholder="Internal notes"></textarea>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn primary" id="clientSaveJobBtn">Save Job</button>
+          <button type="button" class="btn gray" id="clientCancelJobModalBtn">Cancel</button>
+        </div>
+      </div>
     </div>
-  </div>
+
+    <div id="subModal" class="modal">
+      <div class="modal-box">
+        <h3>Add Subscription</h3>
+        <div class="form-grid">
+          <input id="sub_service" placeholder="Service">
+          <select id="sub_frequency">
+            <option value="weekly">Weekly</option>
+            <option value="biweekly">Biweekly</option>
+            <option value="monthly">Monthly</option>
+          </select>
+          <input id="sub_price" type="number" placeholder="Price">
+          <input id="sub_next_date" type="date">
+          <select id="sub_worker_id" class="wide">
+            <option value="">No worker assigned</option>
+          </select>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn primary" id="clientSaveSubBtn">Save Subscription</button>
+          <button type="button" class="btn gray" id="clientCancelSubModalBtn">Cancel</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="invoiceModal" class="modal">
+      <div class="modal-box">
+        <h3>Create Invoice</h3>
+        <div class="form-grid">
+          <select id="invoice_job_id" class="wide">
+            <option value="">No linked job</option>
+          </select>
+          <input id="invoice_amount" type="number" placeholder="Amount">
+          <input id="invoice_due_date" type="date">
+          <select id="invoice_status">
+            <option value="draft">Draft</option>
+            <option value="unpaid">Unpaid</option>
+            <option value="paid">Paid</option>
+            <option value="overdue">Overdue</option>
+            <option value="cancelled">Cancelled</option>
+          </select>
+          <textarea id="invoice_notes" class="wide" rows="4" placeholder="Invoice notes"></textarea>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn primary" id="clientSaveInvoiceBtn">Create Invoice</button>
+          <button type="button" class="btn gray" id="clientCancelInvoiceModalBtn">Cancel</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="deleteSubscriptionVisitModal" class="modal">
+      <div class="modal-box">
+        <h3>Remove Subscription Visit</h3>
+        <p>This will safely cancel this generated subscription visit without deleting subscription, invoice, or payment history.</p>
+        <div class="modal-actions">
+          <button type="button" class="btn gray" id="clientCancelDeleteVisitBtn">Cancel</button>
+          <button type="button" class="btn red" id="clientConfirmDeleteVisitBtn">Remove Visit</button>
+        </div>
+      </div>
+    </div>
+
+  </main>
 </div>
 
 <script src="/js/ui.js"></script>
@@ -1080,32 +1467,47 @@ function fillInvoiceJobOptions(selectedId = ""){
   select.innerHTML = `<option value="">No linked job</option>` + state.jobs.map(job => `<option value="${escapeHtml(job.id)}" ${String(selectedId) === String(job.id) ? "selected" : ""}>${escapeHtml(job.service || "Job")} - ${escapeHtml(formatDate(job.date))}</option>`).join("");
 }
 
+function getInitials(name){
+  const clean = String(name || "Client").trim();
+  const parts = clean.split(/\s+/).filter(Boolean);
+  if(parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+}
+
 function renderClientInfo(){
   const client = state.client;
   const openJobs = state.jobs.filter(isJobOpen).length;
   const activeSubs = state.subscriptions.filter(sub => normalizeStatus(sub.status || "active") === "active").length;
   const unpaidInvoices = state.invoices.filter(inv => ["unpaid", "overdue", "draft", "sent"].includes(normalizeStatus(inv.status))).length;
   const financial = getFinancialSummary();
+  const nextJob = getNextJob();
+  const latestInvoice = getLatestInvoice();
 
   document.getElementById("clientInfo").innerHTML = `
-    <div class="client-head">
+    <div class="client-hero">
+      <div class="client-avatar">${escapeHtml(getInitials(client.name || "Client"))}</div>
       <div>
         <h2 class="client-name">${escapeHtml(client.name || "Client")}</h2>
-        <div class="client-copy">This page is the main workspace for service scheduling, recurring care, invoicing, and client notes.</div>
+        <div class="client-copy">Main workspace for service scheduling, recurring care, invoicing, and internal notes. ${openJobs > 0 ? "This client currently has active work in progress." : "No open jobs are currently active for this client."}</div>
+        <div style="margin-top:14px;">${openJobs > 0 ? badge("active") : badge("clear")}</div>
       </div>
-      <div>
-        ${openJobs > 0 ? badge("active") : badge("clear")}
+      <div class="client-contact-grid">
+        <div class="contact-row"><span class="ico">☎</span><span>${escapeHtml(client.phone || "-")}<small>Phone</small></span></div>
+        <div class="contact-row"><span class="ico">⌖</span><span>${escapeHtml(client.address || "-")}<small>Address</small></span></div>
+        <div class="contact-row"><span class="ico">◎</span><span>${escapeHtml(client.zip || "-")}<small>ZIP Code</small></span></div>
       </div>
     </div>
-    <div class="meta">
-      <div class="meta-box"><span class="label">Phone</span>${escapeHtml(client.phone || "-")}</div>
-      <div class="meta-box"><span class="label">Address</span>${escapeHtml(client.address || "-")}</div>
-      <div class="meta-box"><span class="label">ZIP</span>${escapeHtml(client.zip || "-")}</div>
-      <div class="meta-box"><span class="label">Open Jobs</span><span class="value-strong">${openJobs}</span></div>
-      <div class="meta-box"><span class="label">Active Subscriptions</span><span class="value-strong">${activeSubs}</span></div>
-      <div class="meta-box"><span class="label">Unpaid Invoices</span><span class="value-strong">${unpaidInvoices}</span></div>
-      <div class="meta-box"><span class="label">Total Jobs</span><span class="value-strong">${state.jobs.length}</span></div>
-      <div class="meta-box"><span class="label">Lifetime Revenue</span><span class="value-strong">${money(financial.lifetimeRevenue)}</span></div>
+    <div style="padding:0 28px 28px;">
+      <div class="meta">
+        <div class="meta-box"><span class="label">Open Jobs</span><span class="value-strong">${openJobs}</span><div class="sub">Active client work</div></div>
+        <div class="meta-box"><span class="label">Lifetime Revenue</span><span class="value-strong">${money(financial.lifetimeRevenue)}</span><div class="sub">Paid invoices</div></div>
+        <div class="meta-box"><span class="label">Last Invoice</span><span class="value-strong" style="font-size:18px;">${latestInvoice ? money(latestInvoice.amount || 0) : "$0.00"}</span><div class="sub">${latestInvoice ? escapeHtml(latestInvoice.status || "draft") : "No invoice yet"}</div></div>
+        <div class="meta-box"><span class="label">Next Service</span><span class="value-strong" style="font-size:18px;">${nextJob ? escapeHtml(formatDate(nextJob.date)) : "-"}</span><div class="sub">${nextJob ? escapeHtml(nextJob.service || "Scheduled job") : "No upcoming open job"}</div></div>
+        <div class="meta-box"><span class="label">Active Subscriptions</span><span class="value-strong">${activeSubs}</span></div>
+        <div class="meta-box"><span class="label">Unpaid Invoices</span><span class="value-strong">${unpaidInvoices}</span></div>
+        <div class="meta-box"><span class="label">Total Jobs</span><span class="value-strong">${state.jobs.length}</span></div>
+        <div class="meta-box"><span class="label">Outstanding Balance</span><span class="value-strong">${money(financial.outstandingBalance)}</span></div>
+      </div>
     </div>
   `;
 
@@ -1747,6 +2149,8 @@ function handleClientDelegatedClick(ev){
 
 function bindClientUiHandlers(){
   document.body.addEventListener("click", handleClientDelegatedClick);
+  const topAddJobBtn = document.getElementById("clientTopAddJobBtn");
+  if(topAddJobBtn) topAddJobBtn.addEventListener("click", () => openJobModal());
   document.getElementById("clientQuickAddJob").addEventListener("click", () => openJobModal());
   document.getElementById("clientQuickAddSub").addEventListener("click", () => openSubModal());
   document.getElementById("clientQuickAddInvoice").addEventListener("click", () => openInvoiceModal());

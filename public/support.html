@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -8,101 +8,397 @@
   <link rel="stylesheet" href="/app-shell.css">
   <style>
     * { box-sizing: border-box; }
+
+    :root {
+      --fx-card: rgba(255,255,255,0.96);
+      --fx-text: var(--brand-black);
+      --fx-muted: #667d73;
+      --fx-line: var(--brand-border);
+      --fx-soft: var(--brand-bg);
+      --fx-orange: var(--brand-primary);
+      --fx-orange-dark: var(--brand-primary-hover);
+      --fx-red: #b42318;
+      --fx-blue: #2050b4;
+      --fx-shadow: 0 18px 42px rgba(16,24,40,0.08);
+      --fx-radius: 22px;
+    }
+
     body {
       margin: 0;
       font-family: Arial, sans-serif;
       background:
-        radial-gradient(circle at top left, rgba(255, 90, 0, 0.08), transparent 28%),
-        linear-gradient(180deg, #f5f5f5 0%, #f7f9f8 180px, #f4f7f5 100%);
-      padding: 22px;
-      color: var(--brand-black);
+        radial-gradient(circle at top left, rgba(255, 90, 0, 0.13), transparent 28%),
+        radial-gradient(circle at top right, rgba(22, 101, 52, 0.08), transparent 24%),
+        linear-gradient(180deg, #fbfcfb 0%, #f6f8f7 42%, #f4f7f5 100%);
+      padding: 28px;
+      color: var(--fx-text);
     }
-    .page { max-width: 1240px; margin: 0 auto; }
+
+    .page {
+      width: min(1320px, 100%);
+      margin: 0 auto;
+    }
+
     .hero {
-      display: flex; justify-content: space-between; gap: 16px; align-items: flex-end;
-      padding: 22px; margin-bottom: 18px; background: rgba(255,255,255,0.96);
-      border: 1px solid var(--brand-border); border-radius: 20px;
-      box-shadow: 0 18px 42px rgba(16,24,40,0.06); flex-wrap: wrap;
+      display: flex;
+      justify-content: space-between;
+      gap: 18px;
+      align-items: flex-end;
+      padding: 26px;
+      margin-bottom: 20px;
+      background: var(--fx-card);
+      border: 1px solid var(--fx-line);
+      border-radius: 26px;
+      box-shadow: var(--fx-shadow);
+      flex-wrap: wrap;
     }
-    h1 { margin: 0 0 6px; font-size: 28px; color: var(--brand-primary); letter-spacing: -0.03em; }
-    h2 { margin: 0 0 14px; color: var(--brand-black); font-size: 18px; letter-spacing: -0.02em; }
-    p.lead { margin: 0; color: #667d73; line-height: 1.5; max-width: 720px; }
-    .grid { display: grid; grid-template-columns: 380px 1fr; gap: 18px; align-items: start; }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: clamp(32px, 4vw, 46px);
+      line-height: 1;
+      color: var(--fx-orange);
+      letter-spacing: -0.045em;
+      font-weight: 950;
+    }
+
+    h2 {
+      margin: 0 0 14px;
+      color: var(--fx-text);
+      font-size: 20px;
+      letter-spacing: -0.025em;
+      font-weight: 950;
+    }
+
+    p.lead {
+      margin: 0;
+      color: var(--fx-muted);
+      line-height: 1.55;
+      max-width: 760px;
+      font-weight: 650;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 410px minmax(0, 1fr);
+      gap: 20px;
+      align-items: start;
+    }
+
     .panel {
-      padding: 18px; background: rgba(255,255,255,0.96);
-      border: 1px solid var(--brand-border); border-radius: 18px;
-      box-shadow: 0 18px 42px rgba(16,24,40,0.06); min-width: 0;
+      padding: 20px;
+      background: var(--fx-card);
+      border: 1px solid var(--fx-line);
+      border-radius: var(--fx-radius);
+      box-shadow: var(--fx-shadow);
+      min-width: 0;
     }
-    label { display: grid; gap: 6px; font-weight: 700; color: #315548; font-size: 13px; margin-bottom: 12px; }
-    input, select, textarea {
-      width: 100%; padding: 11px 12px; border-radius: 10px;
-      border: 1px solid #d6e1da; background: white; color: var(--brand-black);
-      font-size: 14px; outline: none; transition: 0.15s;
+
+    label {
+      display: grid;
+      gap: 7px;
+      font-weight: 900;
+      color: #315548;
+      font-size: 12px;
+      margin-bottom: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.045em;
     }
-    input:focus, select:focus, textarea:focus {
-      border-color: rgba(255,90,0,0.5); box-shadow: 0 0 0 3px rgba(255,90,0,0.12);
+
+    input,
+    select,
+    textarea {
+      width: 100%;
+      min-height: 44px;
+      padding: 11px 12px;
+      border-radius: 13px;
+      border: 1px solid #d6e1da;
+      background: white;
+      color: var(--fx-text);
+      font-size: 14px;
+      outline: none;
+      transition: border-color .15s ease, box-shadow .15s ease;
     }
-    textarea { min-height: 100px; resize: vertical; font-family: inherit; }
+
+    input:focus,
+    select:focus,
+    textarea:focus {
+      border-color: rgba(255,90,0,0.5);
+      box-shadow: 0 0 0 3px rgba(255,90,0,0.13);
+    }
+
+    textarea {
+      min-height: 112px;
+      resize: vertical;
+      font-family: inherit;
+      line-height: 1.5;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+
     .btn {
-      display: inline-flex; align-items: center; gap: 6px;
-      padding: 10px 14px; border: none; border-radius: 10px;
-      background: var(--brand-primary); color: white; cursor: pointer;
-      font-weight: 700; font-size: 13px; transition: 0.15s;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      min-height: 42px;
+      padding: 10px 15px;
+      border: none;
+      border-radius: 13px;
+      background: linear-gradient(135deg, var(--fx-orange), var(--fx-orange-dark));
+      color: white;
+      cursor: pointer;
+      font-weight: 900;
+      font-size: 13px;
+      transition: transform .15s ease, box-shadow .15s ease, opacity .15s ease;
+      box-shadow: 0 10px 22px rgba(16,24,40,0.07);
     }
-    .btn:hover { filter: brightness(1.05); }
-    .btn:disabled { opacity: 0.55; cursor: not-allowed; }
-    .btn.ghost { background: white; color: #315548; border: 1px solid #d6e1da; }
-    .btn.danger { background: #b42318; }
-    .btn.subtle { background: #eef4ef; color: #315548; }
-    .row { display: flex; gap: 8px; flex-wrap: wrap; }
-    .filter-bar { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
-    .filter-bar select { width: auto; padding: 8px 10px; }
-    .ticket-list { display: grid; gap: 8px; max-height: 60vh; overflow: auto; }
+
+    .btn:hover:not(:disabled) {
+      transform: translateY(-1px);
+      box-shadow: 0 14px 26px rgba(16,24,40,0.11);
+    }
+
+    .btn:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    .btn.ghost {
+      background: white;
+      color: #315548;
+      border: 1px solid #d6e1da;
+    }
+
+    .btn.danger {
+      background: var(--fx-red);
+    }
+
+    .btn.subtle {
+      background: #eef4ef;
+      color: #315548;
+    }
+
+    .row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .filter-bar {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+    }
+
+    .filter-bar select {
+      width: auto;
+      min-height: 38px;
+      padding: 8px 10px;
+    }
+
+    .ticket-list {
+      display: grid;
+      gap: 10px;
+      max-height: 62vh;
+      overflow: auto;
+      padding-right: 2px;
+    }
+
     .ticket-item {
-      padding: 12px 14px; border-radius: 12px; border: 1px solid #e1ece5;
-      background: white; cursor: pointer; transition: 0.12s;
+      padding: 14px;
+      border-radius: 16px;
+      border: 1px solid #e1ece5;
+      background: white;
+      cursor: pointer;
+      transition: transform .15s ease, border-color .15s ease, box-shadow .15s ease, background .15s ease;
     }
-    .ticket-item:hover { border-color: rgba(255,90,0,0.5); box-shadow: 0 4px 14px rgba(230,74,0,0.08); }
-    .ticket-item.active { border-color: rgba(255,90,0,0.5); background: #fff3e8; }
-    .ticket-meta { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; font-size: 11px; color: #6b7c73; }
+
+    .ticket-item:hover {
+      transform: translateY(-1px);
+      border-color: rgba(255,90,0,0.45);
+      box-shadow: 0 8px 20px rgba(230,74,0,0.09);
+    }
+
+    .ticket-item.active {
+      border-color: rgba(255,90,0,0.55);
+      background: #fff3e8;
+      box-shadow: 0 10px 24px rgba(230,74,0,0.10);
+    }
+
+    .ticket-meta {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      align-items: center;
+      font-size: 11px;
+      color: #6b7c73;
+      line-height: 1.4;
+    }
+
     .pill {
-      display: inline-block; padding: 2px 8px; border-radius: 999px;
-      font-size: 11px; font-weight: 700; letter-spacing: 0.02em; text-transform: uppercase;
+      display: inline-block;
+      padding: 4px 9px;
+      border-radius: 999px;
+      font-size: 10px;
+      font-weight: 950;
+      letter-spacing: 0.035em;
+      text-transform: uppercase;
     }
-    .pill.status-open    { background: #fff3e8; color: var(--brand-primary-hover); }
-    .pill.status-in_progress { background: #eaf1ff; color: #2050b4; }
+
+    .pill.status-open { background: #fff3e8; color: var(--fx-orange-dark); }
+    .pill.status-in_progress { background: #eaf1ff; color: var(--fx-blue); }
     .pill.status-waiting_customer { background: #fff4d6; color: #8a6300; }
     .pill.status-pending { background: #fff4d6; color: #8a6300; }
-    .pill.status-resolved{ background: #e8eefc; color: #2050b4; }
-    .pill.status-closed  { background: #ececec; color: #4a4a4a; }
-    .pill.priority-low    { background: #eef4ef; color: #4a6357; }
-    .pill.priority-medium { background: #fff3e8; color: var(--brand-primary-hover); }
-    .pill.priority-normal { background: #fff3e8; color: var(--brand-primary-hover); }
-    .pill.priority-high   { background: #ffe9d6; color: #9a4a00; }
-    .pill.priority-urgent { background: #fde0de; color: #b42318; }
-    .ticket-title { font-weight: 700; color: #1c2c25; margin: 4px 0; }
-    .empty { padding: 18px; text-align: center; color: #91a39a; font-size: 13px; }
-    .thread { display: grid; gap: 10px; max-height: 50vh; overflow: auto; padding: 4px; }
+    .pill.status-resolved { background: #e8eefc; color: var(--fx-blue); }
+    .pill.status-closed { background: #ececec; color: #4a4a4a; }
+
+    .pill.priority-low { background: #eef4ef; color: #4a6357; }
+    .pill.priority-medium,
+    .pill.priority-normal { background: #fff3e8; color: var(--fx-orange-dark); }
+    .pill.priority-high { background: #ffe9d6; color: #9a4a00; }
+    .pill.priority-urgent { background: #fde0de; color: var(--fx-red); }
+
+    .ticket-title {
+      font-weight: 950;
+      color: #1c2c25;
+      margin: 7px 0;
+      letter-spacing: -0.01em;
+      word-break: break-word;
+    }
+
+    .empty {
+      padding: 24px;
+      text-align: center;
+      color: #71867c;
+      font-size: 13px;
+      line-height: 1.55;
+      border: 1px dashed #d2e0d8;
+      border-radius: 16px;
+      background: linear-gradient(180deg, #ffffff, #fbfdfc);
+    }
+
+    .thread {
+      display: grid;
+      gap: 10px;
+      max-height: 52vh;
+      overflow: auto;
+      padding: 4px;
+    }
+
     .msg {
-      padding: 10px 12px; border-radius: 12px; border: 1px solid #e1ece5;
-      background: white; font-size: 14px; color: #1c2c25; line-height: 1.5;
-      white-space: pre-wrap; word-break: break-word;
+      padding: 12px 14px;
+      border-radius: 16px;
+      border: 1px solid #e1ece5;
+      background: white;
+      font-size: 14px;
+      color: #1c2c25;
+      line-height: 1.55;
+      white-space: pre-wrap;
+      word-break: break-word;
     }
-    .msg.platform { border-color: #c8d6f3; background: #f5f8ff; }
-    .msg-head { font-size: 11px; color: #6b7c73; margin-bottom: 6px; display: flex; gap: 6px; align-items: center; }
-    .msg-head strong { color: #1c2c25; }
-    .toolbar { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; align-items: center; }
-    .toolbar .meta { font-size: 12px; color: #6b7c73; }
-    #status { min-height: 18px; font-size: 13px; color: #5f6e66; margin-top: 6px; }
-    #status.error { color: #b42318; font-weight: 700; }
-    #status.success { color: var(--brand-primary-hover); font-weight: 700; }
+
+    .msg.platform {
+      border-color: #c8d6f3;
+      background: #f5f8ff;
+    }
+
+    .msg-head {
+      font-size: 11px;
+      color: #6b7c73;
+      margin-bottom: 7px;
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .msg-head strong {
+      color: #1c2c25;
+    }
+
+    .toolbar {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 14px;
+      align-items: center;
+    }
+
+    .toolbar .meta {
+      font-size: 12px;
+      color: #6b7c73;
+    }
+
+    #status {
+      min-height: 18px;
+      font-size: 13px;
+      color: #5f6e66;
+      margin-top: 10px;
+      line-height: 1.45;
+      font-weight: 800;
+    }
+
+    #status.error {
+      color: var(--fx-red);
+    }
+
+    #status.success {
+      color: var(--fx-orange-dark);
+    }
+
+    #status:not(:empty) {
+      border: 1px solid #d6e1da;
+      background: #fff;
+      border-radius: 14px;
+      padding: 10px 12px;
+    }
+
     .platform-badge {
-      display: inline-block; padding: 3px 10px; border-radius: 999px;
-      background: #2050b4; color: white; font-size: 11px; font-weight: 800;
-      letter-spacing: 0.04em; text-transform: uppercase; margin-left: 8px;
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: var(--fx-blue);
+      color: white;
+      font-size: 11px;
+      font-weight: 950;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      margin-left: 8px;
+      vertical-align: middle;
     }
+
+    hr {
+      margin: 18px 0;
+      border: 0;
+      border-top: 1px solid #e1ece5;
+    }
+
     @media (max-width: 980px) {
+      body { padding: 18px; }
       .grid { grid-template-columns: 1fr; }
+      .ticket-list { max-height: 380px; }
+    }
+
+    @media (max-width: 620px) {
+      body { padding: 14px; }
+      .hero,
+      .panel {
+        border-radius: 18px;
+        padding: 18px;
+      }
+      .row,
+      .filter-bar {
+        display: grid;
+        grid-template-columns: 1fr;
+      }
+      .btn,
+      .filter-bar select {
+        width: 100%;
+      }
     }
   </style>
 </head>
@@ -119,7 +415,6 @@
     </div>
 
     <div class="grid">
-      <!-- LEFT: list + create form -->
       <div class="panel fx-card">
         <h2 id="listHeading">Your tickets</h2>
 
@@ -145,7 +440,7 @@
           <div class="empty fx-empty">Loading tickets...</div>
         </div>
 
-        <hr style="margin:18px 0;border:0;border-top:1px solid #e1ece5">
+        <hr>
 
         <h2 id="createHeading">Open a new ticket</h2>
         <form id="createForm">
@@ -178,7 +473,6 @@
         <div id="status" class="fx-alert" role="status" aria-live="polite"></div>
       </div>
 
-      <!-- RIGHT: detail / thread -->
       <div class="panel fx-card" id="detailPanel">
         <div class="empty fx-empty">Select a ticket on the left to view the conversation.</div>
       </div>
@@ -192,7 +486,10 @@
       try { return JSON.parse(localStorage.getItem("user") || "null"); }
       catch { return null; }
     }
-    function getToken() { return localStorage.getItem("token"); }
+
+    function getToken() {
+      return localStorage.getItem("token");
+    }
 
     const user = getUser();
     const isPlatform = user && String(user.role || "").toLowerCase() === "platform_owner";
@@ -203,7 +500,6 @@
         "Browse and respond to support tickets across every company. Assign tickets to platform owners and update status as they progress.";
       document.getElementById("listHeading").textContent = "All company tickets";
       document.getElementById("createHeading").textContent = "Open ticket on behalf (rare)";
-      // Platform_owner does not own a company_id; hide create form (they reply, not create).
       document.getElementById("createForm").style.display = "none";
       document.querySelector("#detailPanel .empty").textContent =
         "Select a ticket on the left to read its full thread.";
@@ -214,7 +510,18 @@
 
     function setStatus(message, type) {
       statusEl.textContent = message || "";
-      statusEl.className = type ? type : "";
+      statusEl.className = "fx-alert" + (type ? " " + type : "");
+    }
+
+    function setButtonLoading(button, text) {
+      if (!button) return function(){};
+      const oldText = button.textContent;
+      button.disabled = true;
+      button.textContent = text;
+      return function() {
+        button.disabled = false;
+        button.textContent = oldText;
+      };
     }
 
     function escapeHtml(s) {
@@ -252,8 +559,8 @@
     let currentTickets = [];
     let activeTicketId = null;
 
-    async function uploadSupportAttachment(file){
-      if(!file) return null;
+    async function uploadSupportAttachment(file) {
+      if (!file) return null;
       throw new Error("Support attachments are temporarily unavailable.");
     }
 
@@ -268,24 +575,28 @@
       return base + q;
     }
 
-    async function loadTickets() {
+    async function loadTickets(button) {
+      const restoreButton = setButtonLoading(button, "Refreshing...");
       const listEl = $("ticketList");
-      listEl.innerHTML = '<div class="empty">Loading tickets...</div>';
+      listEl.innerHTML = '<div class="empty fx-empty">Loading tickets...</div>';
       try {
         const tickets = await api(listEndpoint());
         currentTickets = Array.isArray(tickets) ? tickets : [];
         renderTickets();
       } catch (err) {
-        listEl.innerHTML = '<div class="empty">' + escapeHtml(err.message) + '</div>';
+        listEl.innerHTML = '<div class="empty fx-empty">' + escapeHtml(err.message) + '</div>';
+      } finally {
+        restoreButton();
       }
     }
 
     function renderTickets() {
       const listEl = $("ticketList");
       if (!currentTickets.length) {
-        listEl.innerHTML = '<div class="empty">No tickets yet.</div>';
+        listEl.innerHTML = '<div class="empty fx-empty">No tickets yet.</div>';
         return;
       }
+
       listEl.innerHTML = currentTickets.map(t => {
         const isActive = String(t.id) === String(activeTicketId);
         const subject = escapeHtml(t.subject || "(no subject)");
@@ -314,7 +625,10 @@
       listEl.querySelectorAll(".ticket-item").forEach(el => {
         el.addEventListener("click", () => openTicket(el.getAttribute("data-id")));
         el.addEventListener("keydown", e => {
-          if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openTicket(el.getAttribute("data-id")); }
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            openTicket(el.getAttribute("data-id"));
+          }
         });
       });
     }
@@ -330,10 +644,11 @@
           '<button class="btn" id="setStatusBtn" type="button">Update status</button>'
         );
       }
-      // Company manager+: open <-> closed
+
       if (ticket.status === "closed") {
         return '<button class="btn" id="reopenBtn" type="button">Reopen ticket</button>';
       }
+
       return '<button class="btn ghost" id="closeBtn" type="button">Close ticket</button>';
     }
 
@@ -351,12 +666,12 @@
       activeTicketId = id;
       renderTickets();
       const detailEl = $("detailPanel");
-      detailEl.innerHTML = '<div class="empty">Loading conversation...</div>';
+      detailEl.innerHTML = '<div class="empty fx-empty">Loading conversation...</div>';
       try {
         const data = await api("/support/tickets/" + encodeURIComponent(id));
         renderTicketDetail(data);
       } catch (err) {
-        detailEl.innerHTML = '<div class="empty">' + escapeHtml(err.message) + '</div>';
+        detailEl.innerHTML = '<div class="empty fx-empty">' + escapeHtml(err.message) + '</div>';
       }
     }
 
@@ -421,21 +736,23 @@
 
       const replyDisabled = t.status === "closed" ? "disabled" : "";
       const replyHint = t.status === "closed"
-        ? '<div class="empty" style="text-align:left">Ticket is closed. Reopen it before replying.</div>'
+        ? '<div class="empty fx-empty" style="text-align:left">Ticket is closed. Reopen it before replying.</div>'
         : '';
 
       const internalNoteBlock = isPlatform
         ? ('<label>Internal note<textarea id="internalText" maxlength="5000"></textarea></label>' +
            '<button class="btn ghost" id="internalBtn" type="button">Add internal note</button>')
         : "";
+
       const disputeBlock = !isPlatform
         ? (
-          '<div class="empty" style="text-align:left">' +
+          '<div class="empty fx-empty" style="text-align:left">' +
           'Disputes are reviewed by FairLinx. This does not automatically issue refunds or payment reversals.' +
           '</div>' +
           '<button class="btn ghost" id="openDisputeBtn" type="button">Open dispute</button>'
         )
         : "";
+
       detailEl.innerHTML = (
         head +
         '<div class="toolbar">' +
@@ -443,8 +760,8 @@
         assignControls(t) +
         '</div>' +
         attachmentHtml +
-        '<div class="thread" id="thread">' + (thread || '<div class="empty">No messages yet.</div>') + '</div>' +
-        '<hr style="margin:14px 0;border:0;border-top:1px solid #e1ece5">' +
+        '<div class="thread" id="thread">' + (thread || '<div class="empty fx-empty">No messages yet.</div>') + '</div>' +
+        '<hr>' +
         replyHint +
         '<label>Reply<textarea id="replyText" maxlength="5000" ' + replyDisabled + '></textarea></label>' +
         '<button class="btn" id="replyBtn" type="button" ' + replyDisabled + '>Send reply</button>' +
@@ -453,27 +770,37 @@
       );
 
       const replyBtn = $("replyBtn");
-      if (replyBtn) replyBtn.addEventListener("click", () => sendReply(t.id));
+      if (replyBtn) replyBtn.addEventListener("click", event => sendReply(t.id, event.currentTarget));
 
       const closeBtn = $("closeBtn");
-      if (closeBtn) closeBtn.addEventListener("click", () => updateCompanyStatus(t.id, "closed"));
+      if (closeBtn) closeBtn.addEventListener("click", event => updateCompanyStatus(t.id, "closed", event.currentTarget));
+
       const reopenBtn = $("reopenBtn");
-      if (reopenBtn) reopenBtn.addEventListener("click", () => updateCompanyStatus(t.id, "open"));
+      if (reopenBtn) reopenBtn.addEventListener("click", event => updateCompanyStatus(t.id, "open", event.currentTarget));
 
       const setStatusBtn = $("setStatusBtn");
-      if (setStatusBtn) setStatusBtn.addEventListener("click", () => updatePlatformStatus(t.id));
+      if (setStatusBtn) setStatusBtn.addEventListener("click", event => updatePlatformStatus(t.id, event.currentTarget));
+
       const assignBtn = $("assignBtn");
-      if (assignBtn) assignBtn.addEventListener("click", () => updateAssignee(t.id));
+      if (assignBtn) assignBtn.addEventListener("click", event => updateAssignee(t.id, event.currentTarget));
+
       const internalBtn = $("internalBtn");
-      if (internalBtn) internalBtn.addEventListener("click", () => addInternalNote(t.id));
+      if (internalBtn) internalBtn.addEventListener("click", event => addInternalNote(t.id, event.currentTarget));
+
       const openDisputeBtn = $("openDisputeBtn");
-      if (openDisputeBtn) openDisputeBtn.addEventListener("click", () => openDisputeFromTicket(t.id));
+      if (openDisputeBtn) openDisputeBtn.addEventListener("click", event => openDisputeFromTicket(t.id, event.currentTarget));
     }
 
-    async function sendReply(id) {
+    async function sendReply(id, button) {
       const text = $("replyText").value.trim();
-      if (!text) { setStatus("Reply message is required.", "error"); return; }
+      if (!text) {
+        setStatus("Reply message is required.", "error");
+        return;
+      }
+
+      const restoreButton = setButtonLoading(button, "Sending...");
       setStatus("Sending reply...", "");
+
       try {
         await api("/support/tickets/" + encodeURIComponent(id) + "/reply", {
           method: "POST",
@@ -483,11 +810,15 @@
         await Promise.all([loadTickets(), openTicket(id)]);
       } catch (err) {
         setStatus(err.message || "Could not send reply.", "error");
+      } finally {
+        restoreButton();
       }
     }
 
-    async function updateCompanyStatus(id, status) {
+    async function updateCompanyStatus(id, status, button) {
+      const restoreButton = setButtonLoading(button, "Updating...");
       setStatus("Updating status...", "");
+
       try {
         await api("/support/tickets/" + encodeURIComponent(id) + "/status", {
           method: "PATCH",
@@ -497,12 +828,16 @@
         await Promise.all([loadTickets(), openTicket(id)]);
       } catch (err) {
         setStatus(err.message || "Could not update status.", "error");
+      } finally {
+        restoreButton();
       }
     }
 
-    async function updatePlatformStatus(id) {
+    async function updatePlatformStatus(id, button) {
       const status = $("statusSelect").value;
+      const restoreButton = setButtonLoading(button, "Updating...");
       setStatus("Updating status...", "");
+
       try {
         await api("/platform/support/tickets/" + encodeURIComponent(id) + "/status", {
           method: "PUT",
@@ -512,13 +847,17 @@
         await Promise.all([loadTickets(), openTicket(id)]);
       } catch (err) {
         setStatus(err.message || "Could not update status.", "error");
+      } finally {
+        restoreButton();
       }
     }
 
-    async function updateAssignee(id) {
+    async function updateAssignee(id, button) {
       const raw = $("assignInput").value.trim();
       const body = raw === "" ? { assigned_to_user_id: null } : { assigned_to_user_id: Number(raw) };
+      const restoreButton = setButtonLoading(button, "Assigning...");
       setStatus("Updating assignee...", "");
+
       try {
         await api("/platform/support/tickets/" + encodeURIComponent(id) + "/assign", {
           method: "PATCH",
@@ -528,13 +867,21 @@
         await Promise.all([loadTickets(), openTicket(id)]);
       } catch (err) {
         setStatus(err.message || "Could not update assignee.", "error");
+      } finally {
+        restoreButton();
       }
     }
 
-    async function addInternalNote(id) {
+    async function addInternalNote(id, button) {
       const text = $("internalText").value.trim();
-      if (!text) { setStatus("Internal note is required.", "error"); return; }
+      if (!text) {
+        setStatus("Internal note is required.", "error");
+        return;
+      }
+
+      const restoreButton = setButtonLoading(button, "Adding...");
       setStatus("Adding internal note...", "");
+
       try {
         await api("/platform/support/tickets/" + encodeURIComponent(id) + "/internal-note", {
           method: "POST",
@@ -544,17 +891,22 @@
         await Promise.all([loadTickets(), openTicket(id)]);
       } catch (err) {
         setStatus(err.message || "Could not add internal note.", "error");
+      } finally {
+        restoreButton();
       }
     }
 
-    async function openDisputeFromTicket(id) {
+    async function openDisputeFromTicket(id, button) {
       const reason = String(window.prompt("Dispute reason (required):", "service conflict") || "").trim();
       if (reason.length < 3) {
         setStatus("Dispute reason is required.", "error");
         return;
       }
+
       const details = String(window.prompt("Additional details (optional):", "") || "").trim();
+      const restoreButton = setButtonLoading(button, "Opening...");
       setStatus("Opening dispute...", "");
+
       try {
         await api("/support/tickets/" + encodeURIComponent(id) + "/dispute", {
           method: "POST",
@@ -563,22 +915,28 @@
         setStatus("Dispute opened. FairLinx moderation will review it.", "success");
       } catch (err) {
         setStatus(err.message || "Could not open dispute.", "error");
+      } finally {
+        restoreButton();
       }
     }
 
     document.getElementById("createForm").addEventListener("submit", async event => {
       event.preventDefault();
+
       const subject = $("newSubject").value.trim();
       const message = $("newMessage").value.trim();
       const category = $("newCategory").value;
       const priority = $("newPriority").value;
+
       if (!subject || !message) {
         setStatus("Subject and message are required.", "error");
         return;
       }
+
       const btn = $("createBtn");
-      btn.disabled = true;
+      const restoreButton = setButtonLoading(btn, "Opening...");
       setStatus("Opening ticket...", "");
+
       try {
         const created = await api("/support/tickets", {
           method: "POST",
@@ -597,13 +955,13 @@
       } catch (err) {
         setStatus(err.message || "Could not create ticket.", "error");
       } finally {
-        btn.disabled = false;
+        restoreButton();
       }
     });
 
-    document.getElementById("filterStatus").addEventListener("change", loadTickets);
-    document.getElementById("filterPriority").addEventListener("change", loadTickets);
-    document.getElementById("refreshBtn").addEventListener("click", loadTickets);
+    document.getElementById("filterStatus").addEventListener("change", () => loadTickets());
+    document.getElementById("filterPriority").addEventListener("change", () => loadTickets());
+    document.getElementById("refreshBtn").addEventListener("click", event => loadTickets(event.currentTarget));
 
     loadTickets();
   </script>

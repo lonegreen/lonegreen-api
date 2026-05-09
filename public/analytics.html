@@ -6,21 +6,41 @@
   <title>Analytics</title>
   <link rel="stylesheet" href="/css/brand.css">
   <link rel="stylesheet" href="/app-shell.css">
+
   <style>
-    * { box-sizing: border-box; }
+    :root {
+      --fl-orange: #ff5a00;
+      --fl-orange-dark: #e64a00;
+      --fl-orange-soft: #fff1e8;
+      --fl-black: #050505;
+      --fl-ink: #111111;
+      --fl-gray: #667085;
+      --fl-line: #d9d9d9;
+      --fl-bg: #f5f5f5;
+      --fl-white: #ffffff;
+      --fl-red: #dc2626;
+      --fl-green: #16a34a;
+      --fl-amber: #f59e0b;
+      --fl-shadow: 0 18px 50px rgba(17, 17, 17, 0.10);
+      --fl-shadow-soft: 0 10px 28px rgba(17, 17, 17, 0.07);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
 
     body {
       margin: 0;
-      font-family: Arial, sans-serif;
+      font-family: Inter, Arial, sans-serif;
       background:
-        radial-gradient(circle at top left, rgba(31, 92, 58, 0.08), transparent 28%),
-        linear-gradient(180deg, #edf5f0 0%, #f7f9f8 190px, #f4f6f8 100%);
-      color: var(--brand-black);
-      padding: 22px;
+        radial-gradient(circle at top left, rgba(255, 90, 0, 0.10), transparent 30%),
+        linear-gradient(180deg, #ffffff 0%, var(--fl-bg) 260px, #f4f4f4 100%);
+      color: var(--fl-ink);
+      padding: 24px;
     }
 
     .page {
-      max-width: 1240px;
+      max-width: 1280px;
       margin: 0 auto;
       display: grid;
       gap: 18px;
@@ -30,28 +50,97 @@
       display: flex;
       justify-content: space-between;
       align-items: flex-end;
-      gap: 14px;
+      gap: 16px;
       flex-wrap: wrap;
+      padding: 4px 0 4px;
     }
 
     h1 {
       margin: 0 0 6px;
-      color: var(--brand-primary);
-      font-size: 32px;
-      letter-spacing: -0.03em;
+      color: var(--fl-ink);
+      font-size: clamp(30px, 3vw, 42px);
+      line-height: 1.05;
+      letter-spacing: -0.045em;
+      font-weight: 950;
     }
 
     p {
       margin: 0;
-      color: #648076;
-      line-height: 1.5;
+      color: var(--fl-gray);
+      line-height: 1.55;
+    }
+
+    .btn {
+      border: 0;
+      border-radius: 12px;
+      padding: 12px 16px;
+      font-weight: 900;
+      cursor: pointer;
+      background: linear-gradient(135deg, var(--fl-orange), var(--fl-orange-dark));
+      color: white;
+      font-family: inherit;
+      transition: transform .16s ease, box-shadow .16s ease, opacity .16s ease;
+      box-shadow: 0 14px 26px rgba(255, 90, 0, 0.24);
+    }
+
+    .btn:hover:not(:disabled) {
+      transform: translateY(-1px);
+      box-shadow: 0 18px 34px rgba(255, 90, 0, 0.30);
+    }
+
+    .btn:disabled {
+      opacity: .55;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    .tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 2px;
+    }
+
+    .tab {
+      border: 1px solid var(--fl-line);
+      background: white;
+      color: #344054;
+      border-radius: 10px;
+      padding: 10px 18px;
+      font-weight: 900;
+      cursor: pointer;
+      transition: transform .16s ease, border-color .16s ease, color .16s ease, box-shadow .16s ease, background .16s ease;
+      box-shadow: 0 8px 18px rgba(17, 17, 17, 0.04);
+    }
+
+    .tab:hover {
+      border-color: var(--fl-orange);
+      color: var(--fl-orange-dark);
+      transform: translateY(-1px);
+    }
+
+    .tab.active {
+      background: #fff7f2;
+      color: var(--fl-orange-dark);
+      border-color: var(--fl-orange);
+      box-shadow: 0 12px 24px rgba(255, 90, 0, 0.12);
+    }
+
+    .section {
+      display: none;
+      gap: 16px;
+    }
+
+    .section.active {
+      display: grid;
     }
 
     .panel {
-      background: rgba(255,255,255,0.96);
-      border: 1px solid var(--brand-border);
-      border-radius: 18px;
-      box-shadow: 0 18px 42px rgba(16,24,40,0.06);
+      background: rgba(255, 255, 255, 0.98);
+      border: 1px solid var(--fl-line);
+      border-radius: 20px;
+      box-shadow: var(--fl-shadow-soft);
       padding: 18px;
       min-width: 0;
     }
@@ -59,161 +148,144 @@
     .kpi-grid {
       display: grid;
       grid-template-columns: repeat(6, minmax(0, 1fr));
-      gap: 12px;
+      gap: 14px;
     }
 
     .kpi {
-      background: var(--brand-bg);
-      border: 1px solid var(--brand-border);
-      border-radius: 16px;
-      padding: 14px;
+      position: relative;
+      overflow: hidden;
+      background: #ffffff;
+      border: 1px solid var(--fl-line);
+      border-radius: 18px;
+      padding: 18px;
       min-width: 0;
+      min-height: 132px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      box-shadow: 0 12px 28px rgba(17, 17, 17, 0.055);
+    }
+
+    .kpi::before {
+      content: "";
+      width: 46px;
+      height: 46px;
+      border-radius: 16px;
+      background: var(--fl-orange-soft);
+      border: 1px solid rgba(255, 90, 0, 0.18);
+      position: absolute;
+      top: 16px;
+      left: 16px;
+    }
+
+    .kpi::after {
+      content: "↗";
+      width: 20px;
+      height: 20px;
+      display: grid;
+      place-items: center;
+      position: absolute;
+      top: 29px;
+      left: 29px;
+      color: var(--fl-orange);
+      font-size: 14px;
+      font-weight: 950;
     }
 
     .kpi span {
       display: block;
-      color: #648076;
-      font-size: 11px;
-      text-transform: uppercase;
-      letter-spacing: .06em;
-      font-weight: 800;
+      color: #344054;
+      font-size: 13px;
+      font-weight: 900;
+      margin-left: 58px;
+      margin-bottom: 18px;
+      line-height: 1.3;
     }
 
     .kpi strong {
       display: block;
-      margin-top: 6px;
-      font-size: 24px;
-      color: var(--brand-black);
-      letter-spacing: -0.03em;
+      margin-top: 4px;
+      font-size: clamp(25px, 2.2vw, 34px);
+      color: var(--fl-ink);
+      letter-spacing: -0.045em;
       word-break: break-word;
+      line-height: 1.05;
+      font-weight: 950;
     }
 
-    .chart-grid {
+    .chart-grid,
+    .pro-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 14px;
+      gap: 16px;
     }
 
     .chart-title {
-      margin: 0 0 14px;
-      color: var(--brand-black);
-      font-size: 16px;
-      font-weight: 800;
+      margin: 0 0 18px;
+      color: var(--fl-ink);
+      font-size: 18px;
+      font-weight: 950;
+      letter-spacing: -0.03em;
     }
 
-    .css-chart {
+    .css-chart,
+    .split-chart {
       display: grid;
-      gap: 10px;
+      gap: 14px;
     }
 
-    .bar-row {
+    .bar-row,
+    .split-row {
       display: grid;
-      grid-template-columns: 120px 1fr 90px;
-      gap: 10px;
+      grid-template-columns: 130px 1fr 96px;
+      gap: 12px;
       align-items: center;
     }
 
     .bar-label {
-      color: #315548;
+      color: var(--fl-ink);
       font-size: 13px;
-      font-weight: 800;
+      font-weight: 900;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
     }
 
-    .bar-track {
+    .bar-track,
+    .mini-track {
       height: 14px;
       border-radius: 999px;
-      background: #edf3ef;
+      background: #eef0f3;
       overflow: hidden;
-      border: 1px solid var(--brand-border);
+      border: 1px solid #e5e7eb;
     }
 
-    .bar-fill {
+    .bar-fill,
+    .mini-fill,
+    .mini-fill.done {
       height: 100%;
       border-radius: 999px;
-      background: var(--brand-primary);
+      background: linear-gradient(90deg, var(--fl-orange), var(--fl-orange-dark));
       min-width: 3px;
-    }
-
-    .bar-fill.secondary {
-      background: var(--brand-primary);
     }
 
     .bar-value {
       text-align: right;
-      color: #648076;
+      color: var(--fl-orange-dark);
       font-size: 13px;
-      font-weight: 800;
+      font-weight: 950;
       white-space: nowrap;
-    }
-
-    .split-chart {
-      display: grid;
-      gap: 10px;
-    }
-
-    .split-row {
-      display: grid;
-      grid-template-columns: 120px 1fr 90px;
-      gap: 10px;
-      align-items: center;
     }
 
     .split-track {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 4px;
+      gap: 5px;
       align-items: center;
-    }
-
-    .mini-track {
-      height: 14px;
-      border-radius: 999px;
-      background: #edf3ef;
-      overflow: hidden;
-      border: 1px solid var(--brand-border);
-    }
-
-    .mini-fill {
-      height: 100%;
-      border-radius: 999px;
-      background: var(--brand-primary);
-      min-width: 3px;
-    }
-
-    .mini-fill.done {
-      background: var(--brand-primary);
     }
 
     .table-wrap {
       overflow: auto;
-    }
-
-    .pro-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 14px;
-    }
-
-    .compact-list {
-      display: grid;
-      gap: 10px;
-    }
-
-    .compact-row {
-      display: flex;
-      justify-content: space-between;
-      gap: 12px;
-      padding: 10px 0;
-      border-bottom: 1px solid #e4ece7;
-      color: #315548;
-      font-weight: 800;
-    }
-
-    .compact-row:last-child {
-      border-bottom: 0;
     }
 
     table {
@@ -224,8 +296,8 @@
 
     th,
     td {
-      padding: 11px 10px;
-      border-bottom: 1px solid #e4ece7;
+      padding: 13px 12px;
+      border-bottom: 1px solid #ececec;
       text-align: left;
       white-space: nowrap;
     }
@@ -234,96 +306,72 @@
       border-bottom: none;
     }
 
+    tbody tr:hover {
+      background: #fff7f2;
+    }
+
     th {
-      color: #648076;
+      color: var(--fl-gray);
       font-size: 12px;
       text-transform: uppercase;
-      letter-spacing: .05em;
-      background: var(--brand-bg);
+      letter-spacing: .06em;
+      background: #fafafa;
+      font-weight: 950;
     }
 
-    .tabs {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
+    td {
+      color: #344054;
+      font-size: 14px;
+      font-weight: 700;
     }
 
-    .tab {
-      border: 1px solid var(--brand-border);
-      background: white;
-      color: var(--brand-primary);
-      border-radius: 999px;
-      padding: 10px 14px;
-      font-weight: 800;
-      cursor: pointer;
-      transition: .15s ease;
-    }
-
-    .tab:hover {
-      border-color: var(--brand-primary);
-      transform: translateY(-1px);
-    }
-
-    .tab.active {
-      background: var(--brand-primary);
-      color: white;
-      box-shadow: 0 10px 20px rgba(31,92,58,0.18);
-    }
-
-    .section {
-      display: none;
-      gap: 14px;
-    }
-
-    .section.active {
+    .compact-list {
       display: grid;
+      gap: 10px;
     }
 
-    .btn {
-      border: 0;
-      border-radius: 12px;
-      padding: 11px 14px;
-      font-weight: 800;
-      cursor: pointer;
-      background: var(--brand-primary);
-      color: white;
-      font-family: inherit;
-      transition: transform .15s ease, box-shadow .15s ease, opacity .15s ease;
-      box-shadow: 0 8px 16px rgba(16,24,40,0.06);
+    .compact-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      padding: 13px 0;
+      border-bottom: 1px solid #ececec;
+      color: var(--fl-ink);
+      font-weight: 850;
     }
 
-    .btn:hover:not(:disabled) {
-      transform: translateY(-1px);
-      box-shadow: 0 12px 22px rgba(16,24,40,0.10);
+    .compact-row:last-child {
+      border-bottom: 0;
     }
 
-    .btn:disabled {
-      opacity: .55;
-      cursor: not-allowed;
-      transform: none;
-      box-shadow: none;
+    .compact-row strong {
+      color: var(--fl-orange-dark);
+      font-weight: 950;
     }
 
     .empty,
     .error-box {
       padding: 22px;
       border-radius: 16px;
-      border: 1px dashed var(--brand-border);
-      background: var(--brand-bg);
-      color: #648076;
-      line-height: 1.5;
+      border: 1px dashed var(--fl-line);
+      background:
+        radial-gradient(circle at top right, rgba(255, 90, 0, 0.08), transparent 35%),
+        #ffffff;
+      color: var(--fl-gray);
+      line-height: 1.55;
     }
 
     .empty strong,
     .error-box strong {
       display: block;
-      color: var(--brand-black);
+      color: var(--fl-ink);
       font-size: 18px;
       margin-bottom: 6px;
     }
 
     .error-box {
-      border-color: #f0c7c7;
+      border-color: #fecaca;
       background: #fff7f7;
       color: #b42318;
     }
@@ -331,34 +379,37 @@
     .page-forbidden {
       padding: 28px;
       background: white;
-      border: 1px solid var(--brand-border);
+      border: 1px solid #fecaca;
       border-radius: 18px;
-      box-shadow: 0 18px 42px rgba(16,24,40,0.06);
+      box-shadow: var(--fl-shadow-soft);
       color: #b42318;
-      font-weight: 800;
+      font-weight: 900;
+    }
+
+    @media (max-width: 1180px) {
+      .kpi-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
     }
 
     @media (max-width: 980px) {
-      .kpi-grid,
       .chart-grid,
       .pro-grid {
-        grid-template-columns: 1fr 1fr;
+        grid-template-columns: 1fr;
       }
 
       .bar-row,
       .split-row {
-        grid-template-columns: 90px 1fr 80px;
+        grid-template-columns: 110px 1fr 82px;
       }
     }
 
     @media (max-width: 640px) {
       body {
-        padding: 12px;
+        padding: 14px;
       }
 
-      .kpi-grid,
-      .chart-grid,
-      .pro-grid {
+      .kpi-grid {
         grid-template-columns: 1fr;
       }
 
@@ -371,24 +422,38 @@
         width: 100%;
       }
 
+      .tabs {
+        display: grid;
+        grid-template-columns: 1fr;
+      }
+
+      .tab {
+        width: 100%;
+      }
+
       .bar-row,
       .split-row {
         grid-template-columns: 1fr;
-        gap: 6px;
+        gap: 7px;
       }
 
       .bar-value {
         text-align: left;
       }
+
+      .panel {
+        padding: 16px;
+      }
     }
   </style>
 </head>
+
 <body class="phase2-internal">
 <div class="page">
   <div class="hero fx-section-head">
     <div>
-      <h1>Analytics</h1>
-      <p>Internal business reporting for revenue, work, workers, and clients.</p>
+      <h1>Analytics Overview</h1>
+      <p>Track business performance, revenue, work, workers, and clients.</p>
     </div>
     <button type="button" class="btn fx-btn fx-btn--primary" id="analyticsRefreshBtn">Refresh</button>
   </div>
@@ -479,9 +544,18 @@
 <script src="/js/auth.js"></script>
 <script src="/js/api.js"></script>
 <script src="/js/format.js"></script>
+
 <script>
 const API = window.location.origin;
-const charts = {};
+
+function el(id){
+  return document.getElementById(id);
+}
+
+function setHtml(id, html){
+  const target = el(id);
+  if(target) target.innerHTML = html;
+}
 
 function money(value){
   return AppFormat.formatMoney(value || 0);
@@ -581,17 +655,19 @@ function maxValue(rows, key){
 }
 
 function renderBarChart(id, rows, labelKey, valueKey, valueFormatter){
-  const el = document.getElementById(id);
+  const target = el(id);
+  if(!target) return;
+
   const safeRows = Array.isArray(rows) ? rows : [];
 
   if(!safeRows.length){
-    el.innerHTML = emptyState("No chart data", "There is no data to display yet.");
+    target.innerHTML = emptyState("No chart data", "There is no data to display yet.");
     return;
   }
 
   const max = maxValue(safeRows, valueKey);
 
-  el.innerHTML = safeRows.map(row => {
+  target.innerHTML = safeRows.map(row => {
     const value = number(row[valueKey]);
     const width = Math.max(2, Math.round((value / max) * 100));
     const display = valueFormatter ? valueFormatter(value) : value;
@@ -605,18 +681,20 @@ function renderBarChart(id, rows, labelKey, valueKey, valueFormatter){
 }
 
 function renderSplitChart(id, rows){
-  const el = document.getElementById(id);
+  const target = el(id);
+  if(!target) return;
+
   const safeRows = Array.isArray(rows) ? rows : [];
 
   if(!safeRows.length){
-    el.innerHTML = emptyState("No worker data", "Workers will appear here after jobs are assigned.");
+    target.innerHTML = emptyState("No worker data", "Workers will appear here after jobs are assigned.");
     return;
   }
 
   const maxAssigned = Math.max(1, ...safeRows.map(row => number(row.jobs_assigned)));
   const maxCompleted = Math.max(1, ...safeRows.map(row => number(row.jobs_completed)));
 
-  el.innerHTML = safeRows.map(row => {
+  target.innerHTML = safeRows.map(row => {
     const assigned = number(row.jobs_assigned);
     const completed = number(row.jobs_completed);
     const assignedWidth = Math.max(2, Math.round((assigned / maxAssigned) * 100));
@@ -667,14 +745,14 @@ function drawChart(id, config){
 function renderOverview(data){
   data = data || {};
 
-  document.getElementById("overviewKpis").innerHTML = [
+  setHtml("overviewKpis", [
     kpi("Total Clients", number(data.total_clients)),
     kpi("Active Subscriptions", number(data.active_subscriptions)),
     kpi("Open Invoices", number(data.open_invoices)),
     kpi("Overdue Invoices", number(data.overdue_invoices)),
     kpi("Jobs Today", number(data.jobs_today)),
     kpi("Jobs This Week", number(data.jobs_this_week))
-  ].join("");
+  ].join(""));
 }
 
 function renderRevenue(data){
@@ -684,18 +762,19 @@ function renderRevenue(data){
   const paymentTotals = Array.isArray(data.payment_totals) ? data.payment_totals : [];
   const monthlyRevenue = Array.isArray(data.monthly_revenue) ? data.monthly_revenue : [];
 
-  document.getElementById("revenueKpis").innerHTML = [
+  setHtml("revenueKpis", [
     kpi("Total Revenue", money(data.total_revenue)),
     kpi("Unpaid Amount", money(data.unpaid_amount)),
     kpi("Invoice Statuses", invoiceTotals.length),
     kpi("Payment Methods", paymentTotals.length)
-  ].join("");
+  ].join(""));
 
-  document.getElementById("paymentRows").innerHTML = paymentTotals.length
+  setHtml("paymentRows", paymentTotals.length
     ? paymentTotals.map(row =>
       '<tr><td>' + esc(row.method || "-") + '</td><td>' + esc(number(row.count)) + '</td><td>' + esc(money(row.amount)) + '</td></tr>'
     ).join("")
-    : '<tr><td colspan="3">No payments yet.</td></tr>';
+    : '<tr><td colspan="3">No payments yet.</td></tr>'
+  );
 
   drawChart("monthlyRevenueChart", {
     type: "bar",
@@ -733,25 +812,26 @@ function renderPro(data){
   const monthlyRevenue = Array.isArray(trends.monthly_revenue) ? trends.monthly_revenue : [];
   const monthlyJobs = Array.isArray(trends.monthly_jobs) ? trends.monthly_jobs : [];
 
-  document.getElementById("proKpis").innerHTML = [
+  setHtml("proKpis", [
     kpi("Collected", money(revenue.total_collected)),
     kpi("This Month", money(revenue.this_month_collected)),
     kpi("Unpaid", money(revenue.unpaid_total)),
     kpi("Completion Rate", percent(jobs.completion_rate) + "%"),
     kpi("Estimated MRR", money(subscriptions.estimated_mrr)),
     kpi("Active Clients", number(clients.active_clients))
-  ].join("");
+  ].join(""));
 
-  document.getElementById("proTopWorkers").innerHTML = topWorkers.length
+  setHtml("proTopWorkers", topWorkers.length
     ? topWorkers.map(row => compactRow(row.worker_name || "Worker", number(row.completed_jobs) + " completed")).join("")
-    : emptyState("No worker data", "Completed jobs will appear here.");
+    : emptyState("No worker data", "Completed jobs will appear here.")
+  );
 
-  document.getElementById("proAlerts").innerHTML = [
+  setHtml("proAlerts", [
     compactRow("Unassigned Jobs", number(alerts.unassigned_jobs)),
     compactRow("Overdue Jobs", number(alerts.overdue_jobs)),
     compactRow("Unpaid Invoices", number(alerts.unpaid_invoices)),
     compactRow("Overdue Invoices", number(alerts.overdue_invoices))
-  ].join("");
+  ].join(""));
 
   renderBarChart("proRevenueTrend", monthlyRevenue, "month", "revenue", money);
   renderBarChart("proJobsTrend", monthlyJobs, "month", "jobs");
@@ -760,11 +840,12 @@ function renderPro(data){
 function renderWorkers(rows){
   const safeRows = Array.isArray(rows) ? rows : [];
 
-  document.getElementById("workerRows").innerHTML = safeRows.length
+  setHtml("workerRows", safeRows.length
     ? safeRows.map(row =>
       '<tr><td>' + esc(row.name || "Worker") + '</td><td>' + esc(number(row.jobs_assigned)) + '</td><td>' + esc(number(row.jobs_completed)) + '</td><td>' + esc(percent(row.completion_rate)) + '%</td></tr>'
     ).join("")
-    : '<tr><td colspan="4">No workers yet.</td></tr>';
+    : '<tr><td colspan="4">No workers yet.</td></tr>'
+  );
 
   renderSplitChart("workerChart", safeRows);
 }
@@ -772,27 +853,32 @@ function renderWorkers(rows){
 function renderClients(rows){
   const safeRows = Array.isArray(rows) ? rows : [];
 
-  document.getElementById("clientRows").innerHTML = safeRows.length
+  setHtml("clientRows", safeRows.length
     ? safeRows.map(row =>
       '<tr><td>' + esc(row.name || "Client") + '</td><td>' + esc(number(row.total_jobs)) + '</td><td>' + esc(number(row.active_subscriptions)) + '</td><td>' + esc(money(row.unpaid_balance)) + '</td><td>' + esc(date(row.last_service_date)) + '</td></tr>'
     ).join("")
-    : '<tr><td colspan="5">No clients yet.</td></tr>';
+    : '<tr><td colspan="5">No clients yet.</td></tr>'
+  );
 }
 
 function renderLoadError(message){
-  document.getElementById("overviewKpis").innerHTML = errorState("Unable to load overview", message);
-  document.getElementById("revenueKpis").innerHTML = errorState("Unable to load revenue", message);
-  document.getElementById("proKpis").innerHTML = errorState("Unable to load pro analytics", message);
-  document.getElementById("proTopWorkers").innerHTML = errorState("Unable to load top workers", message);
-  document.getElementById("proAlerts").innerHTML = errorState("Unable to load alerts", message);
-  document.getElementById("proRevenueTrend").innerHTML = errorState("Unable to load trend", message);
-  document.getElementById("proJobsTrend").innerHTML = errorState("Unable to load trend", message);
-  document.getElementById("paymentRows").innerHTML = '<tr><td colspan="3">Unable to load payments.</td></tr>';
-  document.getElementById("monthlyRevenueChart").innerHTML = errorState("Unable to load chart", message);
-  document.getElementById("invoiceTotalsChart").innerHTML = errorState("Unable to load chart", message);
-  document.getElementById("workerChart").innerHTML = errorState("Unable to load workers", message);
-  document.getElementById("workerRows").innerHTML = '<tr><td colspan="4">Unable to load workers.</td></tr>';
-  document.getElementById("clientRows").innerHTML = '<tr><td colspan="5">Unable to load clients.</td></tr>';
+  setHtml("overviewKpis", errorState("Unable to load overview", message));
+  setHtml("revenueKpis", errorState("Unable to load revenue", message));
+  setHtml("proKpis", errorState("Unable to load pro analytics", message));
+  setHtml("proTopWorkers", errorState("Unable to load top workers", message));
+  setHtml("proAlerts", errorState("Unable to load alerts", message));
+  setHtml("proRevenueTrend", errorState("Unable to load trend", message));
+  setHtml("proJobsTrend", errorState("Unable to load trend", message));
+  setHtml("paymentRows", '<tr><td colspan="3">Unable to load payments.</td></tr>');
+  setHtml("monthlyRevenueChart", errorState("Unable to load chart", message));
+  setHtml("invoiceTotalsChart", errorState("Unable to load chart", message));
+  setHtml("workerChart", errorState("Unable to load workers", message));
+  setHtml("workerRows", '<tr><td colspan="4">Unable to load workers.</td></tr>');
+  setHtml("clientRows", '<tr><td colspan="5">Unable to load clients.</td></tr>');
+}
+
+function renderEndpointError(targetId, title, reason){
+  setHtml(targetId, errorState(title, reason || "Request failed."));
 }
 
 async function load(){
@@ -810,7 +896,7 @@ async function load(){
   AppUI.setLoading(true, "Loading analytics...");
 
   try {
-    const [overview, revenue, pro, workers, clients] = await Promise.all([
+    const results = await Promise.allSettled([
       loadJson("/analytics/overview"),
       loadJson("/analytics/revenue"),
       loadJson("/analytics/pro"),
@@ -818,11 +904,50 @@ async function load(){
       loadJson("/analytics/clients")
     ]);
 
-    renderOverview(overview);
-    renderRevenue(revenue);
-    renderPro(pro);
-    renderWorkers(workers);
-    renderClients(clients);
+    const [overview, revenue, pro, workers, clients] = results;
+
+    if(overview.status === "fulfilled") {
+      renderOverview(overview.value);
+    } else {
+      renderEndpointError("overviewKpis", "Unable to load overview", overview.reason && overview.reason.message);
+    }
+
+    if(revenue.status === "fulfilled") {
+      renderRevenue(revenue.value);
+    } else {
+      renderEndpointError("revenueKpis", "Unable to load revenue", revenue.reason && revenue.reason.message);
+      setHtml("paymentRows", '<tr><td colspan="3">Unable to load payments.</td></tr>');
+      setHtml("monthlyRevenueChart", errorState("Unable to load chart", revenue.reason && revenue.reason.message));
+      setHtml("invoiceTotalsChart", errorState("Unable to load chart", revenue.reason && revenue.reason.message));
+    }
+
+    if(pro.status === "fulfilled") {
+      renderPro(pro.value);
+    } else {
+      renderEndpointError("proKpis", "Unable to load pro analytics", pro.reason && pro.reason.message);
+      setHtml("proTopWorkers", errorState("Unable to load top workers", pro.reason && pro.reason.message));
+      setHtml("proAlerts", errorState("Unable to load alerts", pro.reason && pro.reason.message));
+      setHtml("proRevenueTrend", errorState("Unable to load trend", pro.reason && pro.reason.message));
+      setHtml("proJobsTrend", errorState("Unable to load trend", pro.reason && pro.reason.message));
+    }
+
+    if(workers.status === "fulfilled") {
+      renderWorkers(workers.value);
+    } else {
+      setHtml("workerChart", errorState("Unable to load workers", workers.reason && workers.reason.message));
+      setHtml("workerRows", '<tr><td colspan="4">Unable to load workers.</td></tr>');
+    }
+
+    if(clients.status === "fulfilled") {
+      renderClients(clients.value);
+    } else {
+      setHtml("clientRows", '<tr><td colspan="5">Unable to load clients.</td></tr>');
+    }
+
+    const failed = results.filter(result => result.status === "rejected").length;
+    if(failed > 0) {
+      AppUI.showToast("Some analytics sections could not load.", "error");
+    }
   } catch(err){
     const message = err && err.message ? err.message : "Please refresh and try again.";
     renderLoadError(message);
@@ -836,6 +961,7 @@ document.getElementById("analyticsRefreshBtn").addEventListener("click", () => l
 document.querySelectorAll("[data-analytics-tab]").forEach(btn => {
   btn.addEventListener("click", () => showSection(btn.getAttribute("data-analytics-tab"), btn));
 });
+
 load();
 </script>
 </body>

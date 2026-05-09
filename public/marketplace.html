@@ -5,120 +5,294 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>FairLinx | Marketplace Requests</title>
   <link rel="stylesheet" href="/css/brand.css">
-
   <link rel="stylesheet" href="/app-shell.css">
   <link rel="stylesheet" href="/ui-cleanup.css">
+
   <style>
     * { box-sizing: border-box; }
+
+    :root {
+      --fx-page: #f6f8f7;
+      --fx-card: rgba(255, 255, 255, 0.96);
+      --fx-card-strong: #ffffff;
+      --fx-text: var(--brand-black, #10231c);
+      --fx-muted: #60786e;
+      --fx-line: var(--brand-border, #dbe7e0);
+      --fx-soft: var(--brand-bg, #f2f7f4);
+      --fx-orange: var(--brand-primary, #e64a00);
+      --fx-orange-dark: var(--brand-primary-hover, #c83f00);
+      --fx-green: #166534;
+      --fx-red: #b42318;
+      --fx-shadow: 0 18px 42px rgba(16, 24, 40, 0.08);
+      --fx-shadow-soft: 0 10px 26px rgba(16, 24, 40, 0.06);
+      --fx-radius: 22px;
+    }
+
     body {
       margin: 0;
+      min-height: 100vh;
       font-family: Inter, Arial, sans-serif;
-      color: var(--brand-black);
+      color: var(--fx-text);
       background:
-        radial-gradient(circle at top left, rgba(255,90,0,0.08), transparent 28%),
-        linear-gradient(180deg, #f5f5f5 0%, #f6f8f7 210px, #f4f6f8 100%);
-      padding: 22px;
+        radial-gradient(circle at top left, rgba(255, 90, 0, 0.14), transparent 27%),
+        radial-gradient(circle at top right, rgba(22, 101, 52, 0.08), transparent 24%),
+        linear-gradient(180deg, #fbfcfb 0%, var(--fx-page) 44%, #f3f6f4 100%);
+      padding: 30px;
     }
+
     .page {
-      width: min(1220px, 100%);
+      width: min(1420px, 100%);
       margin: 0 auto;
       display: grid;
-      gap: 16px;
+      gap: 22px;
     }
+
     .hero {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-end;
-      gap: 12px;
-      flex-wrap: wrap;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: start;
+      gap: 18px;
     }
+
     .hero h1 {
-      margin: 0 0 6px;
-      color: var(--brand-primary);
-      font-size: 32px;
-      letter-spacing: -0.02em;
+      margin: 0 0 8px;
+      color: var(--fx-orange);
+      font-size: clamp(32px, 4vw, 46px);
+      line-height: 1;
+      letter-spacing: -0.045em;
+      font-weight: 950;
     }
-    .hero p { margin: 0; color: #5f646d; line-height: 1.5; }
-    .customer-nav { display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; }
-    .customer-nav a { border:1px solid var(--brand-border); background:#fff; color:var(--brand-primary); border-radius:999px; padding:8px 12px; font-size:13px; font-weight:800; text-decoration:none; }
-    .seo-links { display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; }
-    .seo-links a { border:1px solid var(--brand-border); background:#fff; color:var(--brand-primary); border-radius:999px; padding:7px 11px; font-size:12px; font-weight:800; text-decoration:none; }
-    .trust-link { margin-top: 10px; }
-    .trust-link a { color: var(--brand-primary); font-size: 12px; font-weight: 800; text-decoration: none; }
-    .trust-link a:hover { text-decoration: underline; }
+
+    .hero p {
+      margin: 0;
+      max-width: 780px;
+      color: #44675a;
+      line-height: 1.6;
+      font-size: 16px;
+      font-weight: 650;
+    }
+
+    .customer-nav,
+    .seo-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .customer-nav a,
+    .seo-links a {
+      border: 1px solid var(--fx-line);
+      background: rgba(255, 255, 255, 0.86);
+      color: var(--fx-orange);
+      border-radius: 999px;
+      padding: 8px 12px;
+      font-size: 12px;
+      font-weight: 900;
+      text-decoration: none;
+      box-shadow: 0 6px 16px rgba(16, 24, 40, 0.04);
+      transition: transform .15s ease, border-color .15s ease, background .15s ease;
+    }
+
+    .customer-nav a:hover,
+    .seo-links a:hover {
+      transform: translateY(-1px);
+      border-color: rgba(230, 74, 0, 0.36);
+      background: #fffaf6;
+    }
+
+    .trust-link {
+      margin-top: 10px;
+    }
+
+    .trust-link a {
+      color: var(--fx-orange);
+      font-size: 12px;
+      font-weight: 900;
+      text-decoration: none;
+    }
+
+    .trust-link a:hover {
+      text-decoration: underline;
+    }
+
     .hero-actions {
       display: flex;
       gap: 10px;
       flex-wrap: wrap;
+      justify-content: flex-end;
     }
+
     .btn {
+      min-height: 44px;
       border: none;
-      border-radius: 12px;
-      padding: 10px 14px;
+      border-radius: 14px;
+      padding: 11px 15px;
       font: inherit;
-      font-weight: 800;
+      font-size: 14px;
+      font-weight: 900;
       cursor: pointer;
-      transition: transform .15s ease, box-shadow .15s ease, opacity .15s ease;
+      transition: transform .15s ease, box-shadow .15s ease, opacity .15s ease, border-color .15s ease;
     }
-    .btn:hover:not(:disabled) { transform: translateY(-1px); }
+
+    .btn:hover:not(:disabled) {
+      transform: translateY(-1px);
+    }
+
     .btn.primary {
-      background: linear-gradient(135deg, var(--brand-primary), var(--brand-primary-hover));
+      background: linear-gradient(135deg, var(--fx-orange), var(--fx-orange-dark));
       color: #fff;
-      box-shadow: 0 10px 22px rgba(230,74,0,0.14);
+      box-shadow: 0 14px 28px rgba(230, 74, 0, 0.18);
     }
+
     .btn.secondary {
-      background: var(--brand-bg);
-      color: var(--brand-primary);
-      border: 1px solid var(--brand-border);
+      background: rgba(255, 255, 255, 0.9);
+      color: var(--fx-orange);
+      border: 1px solid var(--fx-line);
+      box-shadow: var(--fx-shadow-soft);
     }
+
     .btn.danger {
-      background: #b42318;
+      background: var(--fx-red);
       color: #fff;
     }
+
     .btn:disabled {
-      opacity: 0.62;
+      opacity: 0.58;
       cursor: not-allowed;
       transform: none;
       box-shadow: none;
     }
+
     .layout {
       display: grid;
-      grid-template-columns: 360px 1fr;
-      gap: 14px;
+      grid-template-columns: 430px minmax(0, 1fr);
+      gap: 22px;
       align-items: start;
     }
+
     .panel {
-      background: rgba(255, 255, 255, 0.96);
-      border: 1px solid var(--brand-border);
-      border-radius: 16px;
-      box-shadow: 0 18px 38px rgba(16, 24, 40, 0.06);
-      padding: 16px;
+      background: var(--fx-card);
+      border: 1px solid var(--fx-line);
+      border-radius: var(--fx-radius);
+      box-shadow: var(--fx-shadow);
+      padding: 22px;
       display: grid;
-      gap: 12px;
+      gap: 16px;
     }
+
+    aside.panel {
+      position: sticky;
+      top: 18px;
+    }
+
     .panel h2 {
       margin: 0;
-      color: var(--brand-primary);
-      font-size: 20px;
+      color: var(--fx-orange);
+      font-size: 23px;
+      line-height: 1.15;
+      letter-spacing: -0.03em;
+      font-weight: 950;
     }
+
     .subhead {
-      margin: 0;
-      color: #678075;
+      margin: -8px 0 2px;
+      color: #557267;
+      font-size: 14px;
+      line-height: 1.55;
+      font-weight: 650;
+    }
+
+    .status-line {
+      min-height: 20px;
+      color: #60786e;
       font-size: 13px;
+      font-weight: 800;
       line-height: 1.45;
     }
-    .status-line { min-height: 18px; color: #5f646d; font-size: 13px; font-weight: 700; }
-    .status-line.error { color: #b42318; }
-    .status-line.ok { color: var(--brand-primary-hover); }
+
+    .status-line.error { color: var(--fx-red); }
+    .status-line.ok { color: var(--fx-green); }
+
+    #globalStatus:not(:empty),
+    #formStatus:not(:empty),
+    #matchesStatus:not(:empty),
+    #offersStatus:not(:empty),
+    #offersNextStep:not(:empty) {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      width: fit-content;
+      max-width: 100%;
+      min-height: 44px;
+      padding: 10px 14px;
+      border-radius: 14px;
+      border: 1px solid var(--fx-line);
+      background: rgba(255,255,255,0.88);
+      box-shadow: var(--fx-shadow-soft);
+    }
+
     .field-grid {
       display: grid;
-      gap: 10px;
+      gap: 12px;
       grid-template-columns: 1fr 1fr;
     }
+
+    .field {
+      display: grid;
+      gap: 7px;
+      min-width: 0;
+    }
+
+    .field.full {
+      grid-column: 1 / -1;
+    }
+
+    .field label {
+      font-size: 11px;
+      font-weight: 950;
+      text-transform: uppercase;
+      letter-spacing: 0.055em;
+      color: #4f6a5f;
+    }
+
+    input,
+    textarea,
+    select {
+      width: 100%;
+      min-height: 44px;
+      border: 1px solid #d6e3db;
+      border-radius: 13px;
+      background: #fff;
+      color: var(--fx-text);
+      padding: 11px 12px;
+      font: inherit;
+      font-size: 14px;
+      outline: none;
+      transition: border-color .15s ease, box-shadow .15s ease;
+    }
+
+    input:focus,
+    textarea:focus,
+    select:focus {
+      border-color: rgba(255, 90, 0, 0.42);
+      box-shadow: 0 0 0 3px rgba(255, 90, 0, 0.13);
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 100px;
+    }
+
     .stepper {
       display: grid;
-      gap: 10px;
+      gap: 12px;
+      padding: 14px;
+      border: 1px solid var(--fx-line);
+      border-radius: 18px;
+      background: linear-gradient(180deg, #ffffff, #fbfdfc);
     }
+
     .progress-track {
       width: 100%;
       height: 10px;
@@ -127,263 +301,322 @@
       overflow: hidden;
       border: 1px solid #d6e3db;
     }
+
     .progress-fill {
       height: 100%;
       width: 25%;
-      background: linear-gradient(90deg, var(--brand-primary), var(--brand-primary-hover));
+      background: linear-gradient(90deg, var(--fx-orange), var(--fx-orange-dark));
       transition: width .2s ease;
     }
+
     .step-list {
       display: grid;
       grid-template-columns: repeat(4, minmax(0, 1fr));
       gap: 8px;
     }
+
     .step-pill {
       border: 1px solid #dce9e2;
-      border-radius: 10px;
-      padding: 8px;
+      border-radius: 12px;
+      padding: 9px 8px;
       background: #fff;
       color: #678075;
-      font-size: 11px;
-      font-weight: 800;
+      font-size: 10px;
+      font-weight: 950;
       text-transform: uppercase;
       letter-spacing: 0.04em;
       text-align: center;
     }
-    .step-pill.active {
-      border-color: var(--brand-primary);
-      color: var(--brand-primary);
-      background: #fff3e8;
-    }
+
+    .step-pill.active,
     .step-pill.done {
-      border-color: #ffd5bf;
-      color: var(--brand-primary-hover);
+      border-color: rgba(230, 74, 0, 0.34);
+      color: var(--fx-orange);
       background: #fff3e8;
     }
+
     .step-card {
-      border: 1px solid #dce9e2;
-      border-radius: 14px;
+      border: 1px solid var(--fx-line);
+      border-radius: 18px;
       background: #fff;
-      padding: 12px;
+      padding: 16px;
       display: grid;
-      gap: 10px;
+      gap: 14px;
+      box-shadow: 0 10px 22px rgba(16, 24, 40, 0.045);
     }
-    .step-panel { display: none; gap: 10px; }
-    .step-panel.active { display: grid; }
+
+    .step-panel {
+      display: none;
+      gap: 12px;
+    }
+
+    .step-panel.active {
+      display: grid;
+    }
+
     .step-head h3 {
       margin: 0;
-      color: var(--brand-black);
-      font-size: 17px;
+      color: var(--fx-text);
+      font-size: 19px;
+      letter-spacing: -0.02em;
+      font-weight: 950;
     }
+
     .step-head p {
-      margin: 4px 0 0;
+      margin: 5px 0 0;
       color: #60786e;
       font-size: 13px;
-      line-height: 1.45;
+      line-height: 1.5;
+      font-weight: 650;
     }
+
     .toggle-row {
       display: flex;
-      align-items: center;
-      gap: 8px;
+      align-items: flex-start;
+      gap: 10px;
       border: 1px solid #d6e3db;
-      border-radius: 11px;
+      border-radius: 13px;
       background: #fff;
-      padding: 10px 12px;
+      padding: 12px;
+      color: #26473c;
+      font-size: 13px;
+      font-weight: 750;
+      line-height: 1.45;
     }
+
     .toggle-row input[type="checkbox"] {
       width: 18px;
       height: 18px;
-      margin: 0;
+      min-height: 18px;
+      margin: 1px 0 0;
       padding: 0;
+      accent-color: var(--fx-orange);
+      flex: 0 0 auto;
     }
+
     .review-grid {
       display: grid;
       gap: 8px;
       grid-template-columns: 1fr 1fr;
     }
+
     .review-item {
       border: 1px solid #dce9e2;
-      border-radius: 10px;
+      border-radius: 12px;
       background: #fbfdfc;
       padding: 10px;
       display: grid;
       gap: 4px;
     }
+
     .review-item span {
-      font-size: 11px;
+      font-size: 10px;
       color: #678075;
       text-transform: uppercase;
-      letter-spacing: .04em;
-      font-weight: 800;
+      letter-spacing: .045em;
+      font-weight: 950;
     }
+
     .review-item strong {
       font-size: 13px;
-      color: var(--brand-black);
+      color: var(--fx-text);
       overflow-wrap: anywhere;
-      font-weight: 700;
+      font-weight: 800;
     }
+
     .step-actions {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 8px;
+      gap: 10px;
     }
-    .field {
-      display: grid;
-      gap: 6px;
-      min-width: 0;
-    }
-    .field.full { grid-column: 1 / -1; }
-    .field label {
-      font-size: 12px;
-      font-weight: 800;
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
-      color: #4f6a5f;
-    }
-    input, textarea, select {
+
+    #submitRequestBtn {
       width: 100%;
-      border: 1px solid #d6e3db;
-      border-radius: 11px;
-      background: #fff;
-      color: var(--brand-black);
-      padding: 10px 12px;
-      font: inherit;
-      outline: none;
+      min-height: 48px;
+      border-radius: 15px;
     }
-    input:focus, textarea:focus, select:focus {
-      border-color: rgba(255,90,0,0.42);
-      box-shadow: 0 0 0 2px rgba(255,90,0,0.14);
-    }
-    textarea { resize: vertical; min-height: 84px; }
+
     .list-head {
       display: flex;
       align-items: center;
       justify-content: space-between;
       gap: 8px;
       flex-wrap: wrap;
+      margin-top: 4px;
     }
+
     .pill {
       display: inline-flex;
       align-items: center;
       justify-content: center;
+      min-width: 34px;
       border-radius: 999px;
-      padding: 6px 10px;
+      padding: 7px 11px;
       font-size: 11px;
-      font-weight: 800;
+      font-weight: 950;
       text-transform: uppercase;
       letter-spacing: 0.04em;
-      background: var(--brand-bg);
-      color: var(--brand-primary);
+      background: var(--fx-soft);
+      color: var(--fx-orange);
+      border: 1px solid var(--fx-line);
     }
+
     .requests-list {
       display: grid;
-      gap: 8px;
-      max-height: 500px;
+      gap: 10px;
+      max-height: 520px;
       overflow: auto;
-      padding-right: 2px;
+      padding-right: 3px;
     }
+
     .request-item {
       border: 1px solid #dce9e2;
-      border-radius: 12px;
+      border-radius: 16px;
       background: #fbfdfc;
-      padding: 11px;
+      padding: 14px;
       display: grid;
-      gap: 6px;
+      gap: 7px;
       text-align: left;
       width: 100%;
       cursor: pointer;
+      transition: transform .15s ease, border-color .15s ease, background .15s ease, box-shadow .15s ease;
     }
+
+    .request-item:hover {
+      transform: translateY(-1px);
+      border-color: rgba(230, 74, 0, 0.26);
+      box-shadow: var(--fx-shadow-soft);
+      background: #fff;
+    }
+
     .request-item.active {
-      border-color: var(--brand-primary);
-      background: #f2fbf5;
+      border-color: rgba(230, 74, 0, 0.45);
+      background: #fff7f0;
+      box-shadow: 0 10px 24px rgba(230, 74, 0, 0.10);
     }
+
     .request-item-top {
       display: flex;
       justify-content: space-between;
       gap: 8px;
-      align-items: center;
+      align-items: flex-start;
     }
+
     .request-title {
       margin: 0;
       font-size: 15px;
-      color: var(--brand-black);
-      font-weight: 800;
+      color: var(--fx-text);
+      font-weight: 950;
       overflow-wrap: anywhere;
     }
+
     .request-meta {
       margin: 0;
       color: #667f75;
       font-size: 12px;
       line-height: 1.45;
+      font-weight: 650;
     }
+
     .badge {
       border-radius: 999px;
-      padding: 4px 9px;
+      padding: 5px 10px;
       font-size: 10px;
-      font-weight: 900;
+      font-weight: 950;
       text-transform: uppercase;
-      letter-spacing: 0.03em;
-      background: var(--brand-bg);
-      color: var(--brand-primary);
+      letter-spacing: 0.035em;
+      background: var(--fx-soft);
+      color: var(--fx-orange);
       white-space: nowrap;
     }
-    .badge.open { background: #fff7ed; color: #c2410c; }
-    .badge.matched { background: #fff3e8; color: var(--brand-primary-hover); }
-    .badge.closed, .badge.cancelled, .badge.rejected { background: #fef2f2; color: #b42318; }
-    .badge.pending { background: #fff7ed; color: #c2410c; }
-    .badge.accepted { background: #fff3e8; color: var(--brand-primary-hover); }
+
+    .badge.open,
+    .badge.pending {
+      background: #fff7ed;
+      color: #c2410c;
+    }
+
+    .badge.matched,
+    .badge.accepted {
+      background: #ecfdf3;
+      color: #027a48;
+    }
+
+    .badge.closed,
+    .badge.cancelled,
+    .badge.rejected {
+      background: #fef2f2;
+      color: var(--fx-red);
+    }
+
     .detail-header {
       display: flex;
       justify-content: space-between;
       align-items: flex-start;
       gap: 12px;
       flex-wrap: wrap;
+      padding-bottom: 4px;
+      border-bottom: 1px solid rgba(219, 231, 224, 0.8);
     }
+
     .detail-title {
       margin: 0;
-      color: var(--brand-primary);
-      font-size: 22px;
+      color: var(--fx-orange);
+      font-size: 28px;
+      line-height: 1.1;
+      letter-spacing: -0.035em;
+      font-weight: 950;
       overflow-wrap: anywhere;
     }
+
     .detail-meta {
-      margin: 4px 0 0;
+      margin: 6px 0 0;
       color: #61796f;
       font-size: 13px;
+      font-weight: 700;
     }
+
     .detail-grid {
       display: grid;
       grid-template-columns: repeat(4, minmax(0, 1fr));
       gap: 10px;
     }
+
     .detail-card {
       border: 1px solid #dce9e2;
-      background: var(--brand-bg);
-      border-radius: 12px;
-      padding: 10px;
-      display: grid;
-      gap: 5px;
-      min-width: 0;
-    }
-    .detail-card span {
-      font-size: 11px;
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
-      color: #678075;
-      font-weight: 800;
-    }
-    .detail-card strong {
-      font-size: 14px;
-      color: var(--brand-black);
-      word-break: break-word;
-    }
-    .section {
-      border: 1px solid #dce9e2;
-      border-radius: 14px;
+      background: linear-gradient(180deg, #ffffff, #fbfdfc);
+      border-radius: 15px;
       padding: 12px;
       display: grid;
-      gap: 10px;
-      background: #fff;
+      gap: 6px;
+      min-width: 0;
     }
+
+    .detail-card span {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.055em;
+      color: #678075;
+      font-weight: 950;
+    }
+
+    .detail-card strong {
+      font-size: 15px;
+      color: var(--fx-text);
+      word-break: break-word;
+      font-weight: 900;
+    }
+
+    .section {
+      border: 1px solid #dce9e2;
+      border-radius: 18px;
+      padding: 16px;
+      display: grid;
+      gap: 12px;
+      background: #fff;
+      box-shadow: 0 10px 24px rgba(16, 24, 40, 0.045);
+    }
+
     .section-head {
       display: flex;
       justify-content: space-between;
@@ -391,23 +624,29 @@
       gap: 8px;
       flex-wrap: wrap;
     }
+
     .section-head h3 {
       margin: 0;
-      color: var(--brand-primary);
-      font-size: 17px;
+      color: var(--fx-orange);
+      font-size: 19px;
+      letter-spacing: -0.02em;
+      font-weight: 950;
     }
+
     .cards {
+      display: grid;
+      gap: 10px;
+    }
+
+    .card {
+      border: 1px solid #dce9e2;
+      border-radius: 16px;
+      background: #fbfdfc;
+      padding: 14px;
       display: grid;
       gap: 8px;
     }
-    .card {
-      border: 1px solid #dce9e2;
-      border-radius: 12px;
-      background: #fbfdfc;
-      padding: 10px;
-      display: grid;
-      gap: 6px;
-    }
+
     .card-top {
       display: flex;
       justify-content: space-between;
@@ -415,70 +654,106 @@
       gap: 8px;
       flex-wrap: wrap;
     }
+
     .card h4 {
       margin: 0;
-      color: var(--brand-black);
-      font-size: 15px;
+      color: var(--fx-text);
+      font-size: 16px;
+      font-weight: 950;
     }
+
     .card p {
       margin: 0;
       color: #637b71;
       font-size: 13px;
       line-height: 1.45;
       overflow-wrap: anywhere;
+      font-weight: 650;
     }
+
     .price {
-      color: var(--brand-primary);
-      font-size: 20px;
-      font-weight: 900;
-      letter-spacing: -0.01em;
+      color: var(--fx-orange);
+      font-size: 28px;
+      font-weight: 950;
+      letter-spacing: -0.035em;
     }
+
+    .actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
     .empty {
-      border: 1px dashed #d5e3db;
-      border-radius: 12px;
-      background: var(--brand-bg);
-      padding: 14px;
+      min-height: 132px;
+      border: 1px dashed #cfded6;
+      border-radius: 16px;
+      background:
+        radial-gradient(circle at center top, rgba(22, 101, 52, 0.07), transparent 34%),
+        linear-gradient(180deg, #ffffff, #fbfdfc);
+      padding: 20px;
       color: #657d73;
       font-size: 13px;
-      line-height: 1.5;
+      line-height: 1.55;
       text-align: center;
+      display: grid;
+      place-items: center;
+      align-content: center;
+      gap: 5px;
     }
+
     .empty strong {
       display: block;
-      margin-bottom: 5px;
-      color: var(--brand-black);
+      margin-bottom: 0;
+      color: var(--fx-text);
+      font-size: 17px;
+      letter-spacing: -0.02em;
+      font-weight: 950;
     }
-    @media (max-width: 1040px) {
+
+    @media (max-width: 1120px) {
+      body { padding: 22px; }
+      .hero { grid-template-columns: 1fr; }
+      .hero-actions { justify-content: flex-start; }
       .layout { grid-template-columns: 1fr; }
+      aside.panel { position: static; }
       .detail-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-      .requests-list { max-height: 340px; }
+      .requests-list { max-height: 360px; }
     }
+
     @media (max-width: 720px) {
       body { padding: 14px; }
-      .hero h1 { font-size: 28px; }
+      .page { gap: 16px; }
+      .hero h1 { font-size: 30px; }
       .hero-actions { width: 100%; display: grid; grid-template-columns: 1fr; }
       .hero-actions .btn { width: 100%; }
+      .panel { padding: 17px; border-radius: 18px; }
       .field-grid { grid-template-columns: 1fr; }
       .step-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .review-grid { grid-template-columns: 1fr; }
       .detail-grid { grid-template-columns: 1fr; }
       .step-actions { grid-template-columns: 1fr; }
       .section-head .btn { width: 100%; }
+      .detail-title { font-size: 24px; }
     }
   </style>
 </head>
+
 <body>
   <main class="page fx-layout-public">
     <header class="hero fx-hero fx-section-head">
       <div>
         <h1>Request Service</h1>
         <p>Request service from FairLinx companies. Sign in or create a customer account if your session is needed.</p>
+
         <div class="seo-links">
           <a href="/service-area.html?service=lawn-care&city=Richmond&state=TX">Lawn Care in Richmond</a>
           <a href="/service-area.html?service=landscaping&city=Sugar+Land&state=TX">Landscaping in Sugar Land</a>
           <a href="/service-area.html?service=pressure-washing&city=Katy&state=TX">Pressure Washing in Katy</a>
         </div>
+
         <p class="trust-link"><a href="/trust.html">Read FairLinx Trust & Safety</a></p>
+
         <nav class="customer-nav">
           <a href="/customer-dashboard.html">Dashboard</a>
           <a href="/marketplace.html">My Requests</a>
@@ -488,6 +763,7 @@
           <a href="#" id="customerLogoutLink">Logout</a>
         </nav>
       </div>
+
       <div class="hero-actions fx-cta-row">
         <a class="btn secondary fx-btn fx-btn--secondary" href="/discover.html">Find Services</a>
         <button id="refreshAllBtn" class="btn secondary fx-btn fx-btn--secondary" type="button">Refresh</button>
@@ -500,6 +776,7 @@
       <aside class="panel fx-card">
         <h2>Create Request</h2>
         <p class="subhead">Complete 4 quick steps to send a clear service request.</p>
+
         <div class="stepper" aria-label="Request progress">
           <div class="progress-track"><div id="stepProgressFill" class="progress-fill"></div></div>
           <div class="step-list">
@@ -509,6 +786,7 @@
             <div id="stepPill4" class="step-pill">4. Job Details</div>
           </div>
         </div>
+
         <form id="requestForm" class="field-grid">
           <div class="field full">
             <div class="step-card fx-card">
@@ -517,12 +795,14 @@
                   <h3>What service do you need?</h3>
                   <p>Choose the category, then enter a specific service type.</p>
                 </div>
+
                 <div class="field fx-field">
                   <label for="categoryId">Category *</label>
                   <select id="categoryId" class="fx-select" name="category_id" required>
                     <option value="">Select a category</option>
                   </select>
                 </div>
+
                 <div class="field fx-field">
                   <label for="title">Service Type *</label>
                   <input id="title" class="fx-input" name="title" type="text" maxlength="140" required placeholder="Example: Weekly lawn mowing">
@@ -534,19 +814,23 @@
                   <h3>Where is the service needed?</h3>
                   <p>Add location details to improve company matching in your area.</p>
                 </div>
+
                 <div class="field fx-field">
                   <label for="address">Service Address</label>
                   <input id="address" class="fx-input" name="address" type="text" maxlength="160" placeholder="123 Main St">
                 </div>
+
                 <div class="field-grid">
                   <div class="field fx-field">
                     <label for="zipCode">Zip Code</label>
                     <input id="zipCode" class="fx-input" name="zip_code" type="text" maxlength="5" inputmode="numeric" placeholder="10001">
                   </div>
+
                   <div class="field fx-field">
                     <label for="city">City</label>
                     <input id="city" class="fx-input" name="city" type="text" maxlength="60" placeholder="New York">
                   </div>
+
                   <div class="field fx-field">
                     <label for="state">State</label>
                     <input id="state" class="fx-input" name="state" type="text" maxlength="2" placeholder="NY">
@@ -559,15 +843,18 @@
                   <h3>When do you need service?</h3>
                   <p>Select your preferred date and urgency. Flexible scheduling helps with faster matches.</p>
                 </div>
+
                 <div class="field-grid">
                   <div class="field fx-field">
                     <label for="requestedDate">Requested Date</label>
                     <input id="requestedDate" class="fx-input" name="requested_date" type="date">
                   </div>
+
                   <div class="field fx-field">
                     <label for="requestedTime">Requested Time</label>
                     <input id="requestedTime" class="fx-input" name="requested_time" type="time">
                   </div>
+
                   <div class="field fx-field">
                     <label for="urgencyLevel">Urgency</label>
                     <select id="urgencyLevel" class="fx-select" name="urgency_level">
@@ -578,6 +865,7 @@
                     </select>
                   </div>
                 </div>
+
                 <label class="toggle-row" for="flexibleSchedule">
                   <input id="flexibleSchedule" name="flexible_schedule" type="checkbox">
                   <span>My schedule is flexible</span>
@@ -589,14 +877,17 @@
                   <h3>Job details and review</h3>
                   <p>Add details, confirm your contact and location, then submit.</p>
                 </div>
+
                 <div class="field fx-field">
                   <label for="description">Description</label>
                   <textarea id="description" class="fx-textarea" name="description" maxlength="2000" placeholder="Describe scope, property size, and special requests."></textarea>
                 </div>
+
                 <label class="toggle-row" for="contactConfirm">
                   <input id="contactConfirm" name="contact_confirm" type="checkbox" required>
                   <span>I confirm my contact/location details are accurate for company responses.</span>
                 </label>
+
                 <div>
                   <label style="font-size:12px; font-weight:800; text-transform:uppercase; letter-spacing:.04em; color:#4f6a5f;">Final Review</label>
                   <div id="reviewSummary" class="review-grid"></div>
@@ -609,16 +900,19 @@
               </div>
             </div>
           </div>
+
           <div class="field full">
             <button id="submitRequestBtn" class="btn primary fx-btn fx-btn--primary" type="submit">Create Request</button>
           </div>
         </form>
+
         <div id="formStatus" class="status-line"></div>
 
         <div class="list-head">
           <h2>My Requests</h2>
           <span id="requestCountPill" class="pill fx-badge fx-badge--info">0</span>
         </div>
+
         <div id="requestsList" class="requests-list"></div>
       </aside>
 
@@ -843,7 +1137,7 @@
         els.detailStatusBadge.textContent = prettyStatus(r.status);
 
         els.requestDetailsGrid.innerHTML = [
-            '<article class="detail-card fx-stat"><span class="fx-stat__label">Category ID</span><strong class="fx-stat__value">' + esc(niceText(r.category_id)) + "</strong></article>",
+          '<article class="detail-card fx-stat"><span class="fx-stat__label">Category ID</span><strong class="fx-stat__value">' + esc(niceText(r.category_id)) + "</strong></article>",
           '<article class="detail-card fx-stat"><span class="fx-stat__label">Requested Date</span><strong class="fx-stat__value">' + esc(fmtDateOnly(r.requested_date)) + "</strong></article>",
           '<article class="detail-card fx-stat"><span class="fx-stat__label">Requested Time</span><strong class="fx-stat__value">' + esc(niceText(r.requested_time)) + "</strong></article>",
           '<article class="detail-card fx-stat"><span class="fx-stat__label">Accepted Offer</span><strong class="fx-stat__value">' + esc(niceText(r.accepted_offer_id)) + "</strong></article>",
@@ -1106,6 +1400,7 @@
           setLine(els.formStatus, "Please select a category and enter service type.", "error");
           return false;
         }
+
         if (step === 2) {
           var hasLocation = String(zip.value || "").trim() || String(city.value || "").trim() || String(document.getElementById("address").value || "").trim();
           if (!hasLocation) {
@@ -1113,15 +1408,18 @@
             return false;
           }
         }
+
         if (step === 4 && !contactConfirm.checked) {
           setLine(els.formStatus, "Please confirm your contact/location details before submitting.", "error");
           return false;
         }
+
         for (var i = 0; i < fields.length; i += 1) {
           var field = fields[i];
           if (!field) continue;
           if (typeof field.reportValidity === "function" && !field.reportValidity()) return false;
         }
+
         setLine(els.formStatus, "", "");
         return true;
       }
@@ -1130,12 +1428,14 @@
         if (!els.reviewSummary) return;
         var categoryId = document.getElementById("categoryId").value;
         var categoryName = "-";
+
         for (var i = 0; i < categories.length; i += 1) {
           if (String(categories[i].id) === String(categoryId)) {
             categoryName = categories[i].name || ("Category " + categories[i].id);
             break;
           }
         }
+
         var reviewData = [
           { label: "Category", value: categoryName },
           { label: "Service Type", value: document.getElementById("title").value || "-" },
@@ -1148,6 +1448,7 @@
           { label: "Flexible Schedule", value: els.flexibleSchedule.checked ? "Yes" : "No" },
           { label: "Description", value: document.getElementById("description").value || "-" }
         ];
+
         els.reviewSummary.innerHTML = reviewData.map(function(item) {
           return '<article class="review-item"><span>' + esc(item.label) + '</span><strong>' + esc(item.value) + "</strong></article>";
         }).join("");
@@ -1158,6 +1459,7 @@
           var step = idx + 1;
           panel.classList.toggle("active", step === currentStep);
         });
+
         els.stepPills.forEach(function(pill, idx) {
           if (!pill) return;
           var step = idx + 1;
@@ -1165,6 +1467,7 @@
           if (step < currentStep) pill.classList.add("done");
           if (step === currentStep) pill.classList.add("active");
         });
+
         var percent = (currentStep / 4) * 100;
         els.stepProgressFill.style.width = percent + "%";
         els.backStepBtn.disabled = currentStep === 1 || state.creatingRequest;
@@ -1181,11 +1484,13 @@
       async function handleCreateRequest(event) {
         event.preventDefault();
         if (state.creatingRequest) return;
+
         if (currentStep < 4) {
           if (!validateStep(currentStep)) return;
           setStep(currentStep + 1);
           return;
         }
+
         if (!validateStep(4)) return;
 
         const payload = createPayloadFromForm(els.form);
@@ -1224,6 +1529,7 @@
         state.acceptingOfferId = Number(offerId);
         renderOffers();
         setLine(els.offersStatus, "Accepting offer...", "");
+
         try {
           await request("/marketplace/offers/" + encodeURIComponent(offerId) + "/accept", {
             method: "POST",
@@ -1244,26 +1550,33 @@
 
       function bindEvents() {
         els.form.addEventListener("submit", handleCreateRequest);
+
         els.nextStepBtn.addEventListener("click", function() {
           if (!validateStep(currentStep)) return;
           setStep(currentStep + 1);
         });
+
         els.backStepBtn.addEventListener("click", function() {
           setLine(els.formStatus, "", "");
           setStep(currentStep - 1);
         });
+
         els.form.addEventListener("input", function() {
           if (currentStep === 4) updateReviewSummary();
         });
+
         els.form.addEventListener("change", function() {
           if (currentStep === 4) updateReviewSummary();
         });
+
         els.refreshAllBtn.addEventListener("click", function() {
           loadRequests(state.selectedRequestId);
         });
+
         els.refreshMatchesBtn.addEventListener("click", function() {
           loadMatches(true);
         });
+
         els.refreshOffersBtn.addEventListener("click", function() {
           loadOffers(true);
         });
@@ -1284,12 +1597,15 @@
           const offerId = Number(button.getAttribute("data-accept-offer-id"));
           if (offerId) handleAcceptOffer(offerId);
         });
-        customerLogoutLink.addEventListener("click", function(event) {
-          event.preventDefault();
-          localStorage.removeItem("customerToken");
-          localStorage.removeItem("customer");
-          window.location.href = "/customer-login-v2.html";
-        });
+
+        if (customerLogoutLink) {
+          customerLogoutLink.addEventListener("click", function(event) {
+            event.preventDefault();
+            localStorage.removeItem("customerToken");
+            localStorage.removeItem("customer");
+            window.location.href = "/customer-login-v2.html";
+          });
+        }
       }
 
       async function init() {
@@ -1297,6 +1613,7 @@
           window.location.href = LOGIN_REDIRECT;
           return;
         }
+
         bindEvents();
         await loadCategories();
         setButtonsState();

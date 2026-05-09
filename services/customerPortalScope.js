@@ -11,6 +11,24 @@ function toPositiveInt(value) {
  */
 async function resolveCustomerAccountId(customerPayload) {
   const fromToken = toPositiveInt(customerPayload && customerPayload.customer_account_id);
+  const clientId = toPositiveInt(customerPayload && customerPayload.client_id);
+
+  if (fromToken && clientId) {
+    const check = await pool.query(
+      "SELECT id, client_id FROM customer_accounts WHERE id = $1 LIMIT 1",
+      [fromToken]
+    );
+    const row = check.rows[0];
+    if (!row) {
+      return null;
+    }
+    const dbClientId = row.client_id != null ? Number(row.client_id) : NaN;
+    if (!Number.isInteger(dbClientId) || dbClientId <= 0 || dbClientId !== clientId) {
+      return null;
+    }
+    return fromToken;
+  }
+
   if (fromToken) {
     const check = await pool.query(
       "SELECT id FROM customer_accounts WHERE id = $1 LIMIT 1",
@@ -20,7 +38,7 @@ async function resolveCustomerAccountId(customerPayload) {
       return fromToken;
     }
   }
-  const clientId = toPositiveInt(customerPayload && customerPayload.client_id);
+
   if (!clientId) {
     return null;
   }

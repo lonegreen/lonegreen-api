@@ -1,4 +1,5 @@
 const express = require("express");
+const rateLimit = require("express-rate-limit");
 const pool = require("../db/pool");
 const auth = require("../middleware/auth");
 const requireCompanyBillingForMutations = require("../middleware/requireCompanyBillingForMutations");
@@ -17,6 +18,14 @@ const {
 } = require("../services/trustExpiryService");
 
 const router = express.Router();
+
+const companyPublicReportLimiter = rateLimit({
+  windowMs: 10 * 60 * 1000,
+  max: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Too many requests, please try again later" }
+});
 
 function cleanText(value) {
   return String(value || "").trim();
@@ -262,7 +271,7 @@ router.post(
   }
 );
 
-router.post("/companies/:id/report", async (req, res) => {
+router.post("/companies/:id/report", companyPublicReportLimiter, async (req, res) => {
   try {
     const companyId = Number(req.params.id);
     if (!Number.isInteger(companyId) || companyId <= 0) {

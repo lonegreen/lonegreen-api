@@ -12,29 +12,44 @@
       font-family: Inter, Arial, sans-serif;
     }
 
+    :root {
+      --fl-orange: #FF5A00;
+      --fl-orange-hover: #E64A00;
+      --fl-orange-light: #FF8A33;
+      --fl-black: #111111;
+      --fl-dark: #2B2B2B;
+      --fl-border: #D9D9D9;
+      --fl-bg: #F5F5F5;
+      --fl-white: #FFFFFF;
+      --fl-success: #16A34A;
+      --fl-error: #DC2626;
+    }
+
     body {
       margin: 0;
       min-height: 100vh;
       background:
-        radial-gradient(circle at top left, rgba(255, 138, 51, 0.22), transparent 34%),
-        linear-gradient(135deg, #111111, #2B2B2B 52%, #3a3a3a);
+        radial-gradient(circle at 92% 8%, rgba(255, 90, 0, 0.42), transparent 28%),
+        radial-gradient(circle at 8% 95%, rgba(255, 90, 0, 0.34), transparent 30%),
+        linear-gradient(135deg, #050505 0%, #111111 48%, #2B2B2B 100%);
       display: flex;
       align-items: center;
       justify-content: center;
       padding: 24px;
-      color: #102016;
+      color: var(--fl-black);
     }
 
     .page {
       width: 100%;
-      max-width: 1160px;
+      max-width: 1180px;
+      min-height: 720px;
       display: grid;
-      grid-template-columns: 1.08fr 0.92fr;
-      background: rgba(255,255,255,0.08);
-      border: 1px solid rgba(255,255,255,0.16);
-      border-radius: 28px;
+      grid-template-columns: 1.04fr 0.96fr;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      border-radius: 30px;
       overflow: hidden;
-      box-shadow: 0 30px 90px rgba(0,0,0,0.35);
+      box-shadow: 0 34px 110px rgba(0, 0, 0, 0.42);
       backdrop-filter: blur(18px);
     }
 
@@ -43,86 +58,140 @@
       color: white;
       position: relative;
       overflow: hidden;
+      background:
+        radial-gradient(circle at 100% 78%, rgba(255, 90, 0, 0.38), transparent 34%),
+        radial-gradient(circle at 0% 100%, rgba(255, 90, 0, 0.18), transparent 30%),
+        linear-gradient(135deg, rgba(0,0,0,0.82), rgba(17,17,17,0.94));
+    }
+
+    .brand-panel::before {
+      content: "";
+      position: absolute;
+      inset: auto auto 0 0;
+      width: 230px;
+      height: 230px;
+      background-image: radial-gradient(rgba(255, 90, 0, 0.42) 1.2px, transparent 1.2px);
+      background-size: 13px 13px;
+      opacity: 0.45;
     }
 
     .brand-panel::after {
       content: "";
       position: absolute;
-      width: 290px;
-      height: 290px;
+      width: 340px;
+      height: 340px;
       border-radius: 999px;
-      background: rgba(255, 138, 51, 0.22);
-      right: -100px;
-      bottom: -95px;
+      background: linear-gradient(135deg, rgba(255, 90, 0, 0.42), rgba(255, 138, 51, 0.16));
+      right: -135px;
+      bottom: -120px;
+      box-shadow: 0 0 100px rgba(255, 90, 0, 0.28);
     }
 
     .brand-logo {
+      position: relative;
+      z-index: 2;
       display: inline-flex;
       align-items: center;
-      gap: 12px;
-      font-weight: 800;
-      font-size: 24px;
-      margin-bottom: 70px;
+      gap: 14px;
+      font-weight: 950;
+      font-size: 34px;
+      letter-spacing: -0.05em;
+      margin-bottom: 76px;
+    }
+
+    .brand-logo span {
+      color: #fff;
+    }
+
+    .brand-logo span strong {
+      color: var(--fl-orange);
     }
 
     .brand-mark {
-      width: 46px;
-      height: 46px;
-      border-radius: 15px;
-      background: linear-gradient(135deg, var(--brand-primary), var(--brand-primary-light));
-      color: var(--brand-dark);
+      width: 62px;
+      height: 62px;
+      border-radius: 18px;
+      background: linear-gradient(135deg, var(--fl-orange), #FF7A1A);
+      color: #111;
       display: grid;
       place-items: center;
-      font-size: 24px;
-      box-shadow: 0 10px 30px rgba(230,74,0,0.30);
+      font-size: 28px;
+      font-weight: 950;
+      box-shadow: 0 18px 38px rgba(255, 90, 0, 0.35);
+      border: 1px solid rgba(255, 255, 255, 0.14);
     }
 
     .brand-panel h1 {
-      margin: 0 0 18px;
-      font-size: 44px;
-      line-height: 1.06;
-      letter-spacing: -1.2px;
-      max-width: 520px;
+      position: relative;
+      z-index: 2;
+      margin: 0 0 22px;
+      font-size: clamp(44px, 5vw, 64px);
+      line-height: 1.02;
+      letter-spacing: -0.07em;
+      max-width: 560px;
+      font-weight: 950;
+    }
+
+    .brand-panel h1 .orange {
+      color: var(--fl-orange);
     }
 
     .brand-panel p {
+      position: relative;
+      z-index: 2;
       margin: 0;
       max-width: 500px;
       color: rgba(255,255,255,0.78);
-      font-size: 16px;
-      line-height: 1.7;
+      font-size: 17px;
+      line-height: 1.75;
+    }
+
+    .brand-rule {
+      position: relative;
+      z-index: 2;
+      width: 78px;
+      height: 5px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, #FF5A00, #FF7A1A);
+      margin: 28px 0 26px;
     }
 
     .brand-stats {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
       gap: 14px;
-      margin-top: 46px;
+      margin-top: 48px;
       position: relative;
       z-index: 2;
     }
 
     .stat {
       padding: 18px;
-      border-radius: 20px;
-      background: rgba(255,255,255,0.10);
-      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 22px;
+      background: rgba(255,255,255,0.09);
+      border: 1px solid rgba(255,255,255,0.14);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.08);
     }
 
     .stat strong {
       display: block;
       font-size: 21px;
-      margin-bottom: 4px;
+      margin-bottom: 6px;
+      color: #fff;
+      letter-spacing: -0.035em;
     }
 
     .stat span {
       font-size: 12px;
       color: rgba(255,255,255,0.72);
+      line-height: 1.35;
     }
 
     .auth-panel {
-      background: #f8fbf8;
-      padding: 42px;
+      background:
+        radial-gradient(circle at 50% 0%, rgba(255, 90, 0, 0.07), transparent 28%),
+        #ffffff;
+      padding: 44px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -130,34 +199,43 @@
 
     .auth-card {
       width: 100%;
-      max-width: 460px;
+      max-width: 500px;
     }
 
     .mobile-logo {
       display: none;
       align-items: center;
       gap: 10px;
-      font-weight: 800;
-      color: var(--brand-black);
+      font-weight: 950;
+      color: var(--fl-black);
       margin-bottom: 24px;
+      font-size: 24px;
+      letter-spacing: -0.04em;
+    }
+
+    .mobile-logo strong {
+      color: var(--fl-orange);
     }
 
     .auth-header {
-      margin-bottom: 22px;
+      margin-bottom: 24px;
+      text-align: left;
     }
 
     .auth-header h2 {
       margin: 0 0 8px;
-      font-size: 30px;
-      letter-spacing: -0.7px;
-      color: #0f2418;
+      font-size: clamp(32px, 4vw, 44px);
+      line-height: 1;
+      letter-spacing: -0.065em;
+      color: var(--fl-black);
+      font-weight: 950;
     }
 
     .auth-header p {
       margin: 0;
-      color: #6a756d;
-      font-size: 14px;
-      line-height: 1.55;
+      color: #5f6368;
+      font-size: 15px;
+      line-height: 1.6;
     }
 
     .form-grid {
@@ -170,6 +248,9 @@
       display: grid;
       gap: 7px;
       text-align: left;
+      color: #111111;
+      font-size: 13px;
+      font-weight: 850;
     }
 
     .field.full {
@@ -178,8 +259,8 @@
 
     label {
       font-size: 13px;
-      font-weight: 700;
-      color: #1f3528;
+      font-weight: 850;
+      color: var(--fl-black);
     }
 
     input,
@@ -187,18 +268,18 @@
       width: 100%;
       padding: 14px 14px;
       border-radius: 14px;
-      border: 1px solid #dbe5dd;
+      border: 1px solid var(--fl-border);
       background: white;
       outline: none;
       font-size: 15px;
-      transition: 0.18s ease;
-      color: var(--brand-black);
+      transition: border-color 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+      color: var(--fl-black);
       resize: vertical;
     }
 
     input:focus,
     textarea:focus {
-      border-color: var(--brand-primary);
+      border-color: var(--fl-orange);
       box-shadow: 0 0 0 4px rgba(255,90,0,0.14);
     }
 
@@ -207,23 +288,24 @@
       align-items: flex-start;
       gap: 10px;
       margin: 16px 0 0;
-      color: #5f6e66;
+      color: #5f6368;
       font-size: 13px;
       line-height: 1.5;
     }
 
     .legal-check input {
-      width: 16px;
-      height: 16px;
+      width: 17px;
+      height: 17px;
       margin-top: 3px;
       padding: 0;
-      accent-color: var(--brand-primary);
+      accent-color: var(--fl-orange);
       border-radius: 4px;
+      flex: 0 0 auto;
     }
 
     .link {
-      color: var(--brand-primary);
-      font-weight: 700;
+      color: var(--fl-orange);
+      font-weight: 850;
       text-decoration: none;
     }
 
@@ -231,58 +313,81 @@
       text-decoration: underline;
     }
 
+    .link:focus-visible,
+    .btn:focus-visible,
+    input:focus-visible,
+    textarea:focus-visible {
+      outline: 3px solid rgba(255, 90, 0, 0.32);
+      outline-offset: 3px;
+    }
+
     .actions {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
+      display: grid;
       gap: 14px;
-      margin-top: 18px;
-      flex-wrap: wrap;
+      margin-top: 20px;
     }
 
     .btn {
-      padding: 14px 18px;
+      width: 100%;
+      padding: 15px 18px;
       border: none;
-      border-radius: 14px;
-      background: linear-gradient(135deg, var(--brand-primary), var(--brand-primary-hover));
+      border-radius: 15px;
+      background: linear-gradient(135deg, var(--fl-orange), #FF7A1A);
       color: white;
       font-size: 15px;
-      font-weight: 800;
+      font-weight: 950;
       cursor: pointer;
-      transition: 0.18s ease;
-      box-shadow: 0 12px 28px rgba(230,74,0,0.20);
-      min-width: 180px;
+      transition: transform 0.18s ease, box-shadow 0.18s ease, opacity 0.18s ease;
+      box-shadow: 0 14px 30px rgba(255, 90, 0, 0.25);
+      min-height: 52px;
     }
 
-    .btn:hover {
+    .btn:hover:not(:disabled) {
       transform: translateY(-1px);
-      box-shadow: 0 16px 34px rgba(230,74,0,0.24);
+      box-shadow: 0 18px 38px rgba(255, 90, 0, 0.30);
+    }
+
+    .btn:disabled {
+      opacity: 0.65;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .login-row {
+      text-align: center;
+      color: #6b7280;
+      font-size: 14px;
+      margin-top: 4px;
     }
 
     .status {
       min-height: 20px;
       margin-top: 16px;
-      font-weight: 700;
+      font-weight: 800;
       font-size: 13px;
-      color: #067647;
+      color: var(--fl-success);
+      line-height: 1.45;
     }
 
     .status.error {
-      color: #c13d39;
+      color: var(--fl-error);
     }
 
     .legal-links {
       display: flex;
       flex-wrap: wrap;
-      gap: 10px;
-      margin-top: 14px;
+      gap: 10px 14px;
+      margin-top: 24px;
+      padding-top: 20px;
+      border-top: 1px solid var(--fl-border);
       font-size: 12px;
       justify-content: center;
+      line-height: 1.4;
     }
 
     .legal-links a {
-      color: var(--brand-primary);
-      font-weight: 800;
+      color: var(--fl-orange);
+      font-weight: 850;
       text-decoration: none;
     }
 
@@ -291,8 +396,13 @@
     }
 
     @media (max-width: 980px) {
+      body {
+        align-items: flex-start;
+      }
+
       .page {
         grid-template-columns: 1fr;
+        min-height: auto;
       }
 
       .brand-panel {
@@ -300,7 +410,7 @@
       }
 
       .auth-panel {
-        padding: 30px 20px;
+        padding: 34px 22px;
       }
 
       .mobile-logo {
@@ -308,11 +418,19 @@
       }
 
       .auth-header h2 {
-        font-size: 27px;
+        font-size: 34px;
       }
     }
 
     @media (max-width: 720px) {
+      body {
+        padding: 14px;
+      }
+
+      .page {
+        border-radius: 24px;
+      }
+
       .form-grid {
         grid-template-columns: 1fr;
       }
@@ -321,13 +439,8 @@
         grid-column: auto;
       }
 
-      .actions {
-        flex-direction: column;
-        align-items: stretch;
-      }
-
-      .btn {
-        width: 100%;
+      .auth-panel {
+        padding: 26px 18px;
       }
     }
   </style>
@@ -336,13 +449,14 @@
   <main class="page">
     <section class="brand-panel">
       <div class="brand-logo">
-        <div class="brand-mark">🌿</div>
-        <span>FairLinx</span>
+        <div class="brand-mark">FL</div>
+        <span>Fair<strong>Linx</strong></span>
       </div>
 
-      <h1>Launch your company workspace in minutes.</h1>
+      <h1>Connect, Collaborate, <span class="orange">Grow Your Business</span></h1>
+      <div class="brand-rule"></div>
       <p>
-        Create your organization, set up owner access, and start managing clients, jobs, invoices, and subscriptions in one premium control center.
+        FairLinx is the all-in-one platform for service businesses to streamline operations, manage clients, and grow with confidence.
       </p>
 
       <div class="brand-stats">
@@ -364,8 +478,8 @@
     <section class="auth-panel">
       <div class="auth-card">
         <div class="mobile-logo">
-          <div class="brand-mark">🌿</div>
-          <span>FairLinx</span>
+          <div class="brand-mark">FL</div>
+          <span>Fair<strong>Linx</strong></span>
         </div>
 
         <form id="signupForm">
@@ -391,8 +505,10 @@
           </label>
 
           <div class="actions">
-            <a class="link" href="/login.html">Already have an account? Log in</a>
             <button class="btn primary" type="submit">Create Company</button>
+            <div class="login-row">
+              Already have an account? <a class="link" href="/login.html">Log in</a>
+            </div>
           </div>
 
           <div class="legal-links">
@@ -400,7 +516,7 @@
             <a href="/refund-policy.html" target="_blank" rel="noopener">Refund Policy</a>
           </div>
 
-          <div class="status" id="status"></div>
+          <div class="status" id="status" role="status" aria-live="polite"></div>
         </form>
       </div>
     </section>
@@ -413,13 +529,18 @@ const statusBox = document.getElementById("status");
 
 form.addEventListener("submit", async event => {
   event.preventDefault();
+  const submitBtn = form.querySelector('button[type="submit"]');
+
   if(!document.getElementById("legalAccepted").checked){
     statusBox.textContent = "You must agree to the Terms of Service and Privacy Policy.";
     statusBox.className = "status error";
     return;
   }
+
+  if(submitBtn) submitBtn.disabled = true;
   statusBox.textContent = "Creating company...";
   statusBox.className = "status";
+
   const payload = {
     name: document.getElementById("name").value.trim(),
     username: document.getElementById("username").value.trim(),
@@ -445,6 +566,7 @@ form.addEventListener("submit", async event => {
   } catch(err) {
     statusBox.textContent = err.message || "Signup failed";
     statusBox.className = "status error";
+    if(submitBtn) submitBtn.disabled = false;
   }
 });
 </script>

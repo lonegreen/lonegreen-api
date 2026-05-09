@@ -8,296 +8,826 @@
   <meta property="og:type" content="website">
   <meta property="og:title" content="Company Profile">
   <meta property="og:description" content="Browse services, trust details, and customer reviews.">
+
   <link rel="stylesheet" href="/css/brand.css">
   <link rel="stylesheet" href="/app-shell.css">
+
   <style>
-    * { box-sizing: border-box; font-family: Inter, Arial, sans-serif; }
+    * {
+      box-sizing: border-box;
+      font-family: Inter, Arial, sans-serif;
+    }
+
+    :root {
+      --fl-orange: #FF5A00;
+      --fl-orange-dark: #E64A00;
+      --fl-orange-soft: #FFF3EA;
+      --fl-orange-soft-2: #FFE2CC;
+      --fl-black: #111111;
+      --fl-gray: #2B2B2B;
+      --fl-muted: #667085;
+      --fl-border: #D9D9D9;
+      --fl-bg: #F5F5F5;
+      --fl-white: #FFFFFF;
+      --fl-green: #16A34A;
+      --fl-green-dark: #087443;
+      --fl-green-soft: #ECFDF3;
+      --fl-blue-soft: #EFF6FF;
+      --fl-blue: #2563EB;
+      --fl-red: #DC2626;
+      --shadow-sm: 0 10px 28px rgba(17,17,17,.06);
+      --shadow-md: 0 18px 44px rgba(17,17,17,.09);
+      --shadow-lg: 0 26px 70px rgba(17,17,17,.13);
+      --radius: 18px;
+      --radius-lg: 28px;
+    }
+
     body {
       margin: 0;
       min-height: 100vh;
-      background: linear-gradient(180deg, #f5f5f5 0%, #f7f9f8 190px, #f4f6f8 100%);
-      color: var(--brand-black);
-      padding: 20px;
+      background:
+        radial-gradient(circle at top left, rgba(255,90,0,.10), transparent 360px),
+        linear-gradient(180deg, #fff 0%, #fafafa 240px, var(--fl-bg) 100%);
+      color: var(--fl-black);
     }
-    .page { width: min(1100px, 100%); margin: 0 auto; display: grid; gap: 16px; }
-    .hero {
-      background: #fff;
-      border: 1px solid var(--brand-border);
-      border-radius: 18px;
-      box-shadow: 0 18px 42px rgba(16,24,40,0.06);
-      overflow: hidden;
+
+    a {
+      color: inherit;
     }
-    .cover {
-      min-height: 180px;
-      background: linear-gradient(135deg, var(--brand-primary), var(--brand-primary-hover));
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      background: rgba(255,255,255,.94);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid rgba(217,217,217,.75);
+    }
+
+    .topbar-inner {
+      width: min(1360px, calc(100% - 36px));
+      margin: 0 auto;
+      min-height: 74px;
+      display: grid;
+      grid-template-columns: auto minmax(240px, 430px) 1fr auto;
+      align-items: center;
+      gap: 24px;
+    }
+
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      font-weight: 950;
+      font-size: 28px;
+      letter-spacing: -0.06em;
+      color: var(--fl-black);
+      white-space: nowrap;
+    }
+
+    .brand-mark {
+      width: 44px;
+      height: 44px;
+      border-radius: 14px;
       display: grid;
       place-items: center;
       color: #fff;
-      font-weight: 800;
+      font-weight: 950;
+      background: linear-gradient(135deg, var(--fl-orange), #FF7A1A);
+      box-shadow: 0 12px 24px rgba(255,90,0,.22);
+      font-size: 18px;
+      letter-spacing: -0.04em;
     }
-    .cover img { width: 100%; height: 240px; object-fit: cover; display: block; }
-    .hero-body { padding: 20px; display: grid; gap: 14px; }
-    .identity { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
-    .logo {
-      width: 72px; height: 72px; border-radius: 16px; border: 1px solid var(--brand-border);
-      display: grid; place-items: center; background: #f8fcf9; font-weight: 900;
-      color: var(--brand-primary); overflow: hidden;
+
+    .brand span span {
+      color: var(--fl-orange);
     }
-    .logo img { width: 100%; height: 100%; object-fit: cover; display: block; }
-    h1 { margin: 0 0 4px; color: var(--brand-primary); font-size: 30px; }
-    .muted { margin: 0; color: #5f646d; line-height: 1.5; }
-    .hero-summary { margin: 0; color: #3f434b; max-width: 72ch; line-height: 1.6; }
-    .hero-meta { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
-    .hero-cta { display: flex; gap: 10px; flex-wrap: wrap; }
-    .hero-topline {
-      display: grid;
-      gap: 10px;
-      grid-template-columns: 1fr auto;
-      align-items: start;
-    }
-    .hero-trust-grid {
-      display: grid;
-      gap: 8px;
-      grid-template-columns: repeat(5, minmax(0, 1fr));
-    }
-    .hero-trust-card {
-      border: 1px solid #e3ebe6;
-      border-radius: 12px;
-      background: #f9fbfa;
-      padding: 10px;
-      display: grid;
-      gap: 3px;
-    }
-    .hero-trust-card span {
-      font-size: 11px;
+
+    .brand small {
+      display: block;
+      margin-top: -4px;
+      font-size: 8px;
+      letter-spacing: .08em;
       text-transform: uppercase;
-      letter-spacing: .04em;
-      color: #678075;
-      font-weight: 800;
+      color: var(--fl-gray);
     }
-    .hero-trust-card strong {
+
+    .global-search {
+      position: relative;
+    }
+
+    .global-search::before {
+      content: "⌕";
+      position: absolute;
+      left: 15px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #475467;
+      font-size: 22px;
+      pointer-events: none;
+    }
+
+    .global-search input {
+      width: 100%;
+      height: 42px;
+      border-radius: 999px;
+      border: 1px solid var(--fl-border);
+      padding: 0 16px 0 42px;
+      outline: none;
+      background: #fff;
+      color: var(--fl-black);
       font-size: 14px;
-      color: var(--brand-black);
+      box-shadow: 0 8px 18px rgba(17,17,17,.04);
+    }
+
+    .global-search input:focus {
+      border-color: var(--fl-orange);
+      box-shadow: 0 0 0 4px rgba(255,90,0,.12);
+    }
+
+    .nav {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 28px;
+      font-size: 14px;
       font-weight: 900;
     }
+
+    .nav a {
+      text-decoration: none;
+      color: var(--fl-black);
+    }
+
+    .nav a.active {
+      color: var(--fl-orange-dark);
+      position: relative;
+    }
+
+    .nav a.active::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: -26px;
+      height: 3px;
+      border-radius: 999px;
+      background: var(--fl-orange);
+    }
+
+    .top-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .icon-btn {
+      width: 42px;
+      height: 42px;
+      border-radius: 999px;
+      border: 1px solid var(--fl-border);
+      background: #fff;
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+      color: var(--fl-black);
+      box-shadow: 0 8px 18px rgba(17,17,17,.04);
+    }
+
+    .avatar {
+      width: 42px;
+      height: 42px;
+      border-radius: 999px;
+      display: grid;
+      place-items: center;
+      background: var(--fl-black);
+      color: #fff;
+      font-weight: 950;
+      font-size: 13px;
+    }
+
+    .page {
+      width: min(1360px, calc(100% - 36px));
+      margin: 0 auto;
+      padding: 26px 0 34px;
+      display: grid;
+      gap: 16px;
+    }
+
+    .profile-actions-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: #344054;
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 900;
+    }
+
+    .profile-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .small-action {
+      min-height: 40px;
+      border-radius: 12px;
+      border: 1px solid var(--fl-border);
+      background: #fff;
+      padding: 0 14px;
+      cursor: pointer;
+      font-weight: 900;
+      color: #344054;
+      box-shadow: 0 8px 18px rgba(17,17,17,.04);
+    }
+
+    .hero {
+      overflow: hidden;
+      background: #fff;
+      border: 1px solid rgba(217,217,217,.9);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-md);
+    }
+
+    .cover {
+      min-height: 180px;
+      background:
+        linear-gradient(135deg, rgba(255,90,0,.82), rgba(8,116,67,.72)),
+        radial-gradient(circle at 20% 10%, rgba(255,255,255,.32), transparent 320px);
+      display: grid;
+      place-items: center;
+      color: #fff;
+      font-size: 24px;
+      font-weight: 950;
+      letter-spacing: -0.04em;
+    }
+
+    .cover img {
+      width: 100%;
+      height: 230px;
+      object-fit: cover;
+      display: block;
+    }
+
+    .hero-body {
+      position: relative;
+      padding: 0 28px 24px;
+      display: grid;
+      gap: 20px;
+    }
+
+    .identity {
+      display: grid;
+      grid-template-columns: 178px minmax(0, 1fr) 260px;
+      gap: 24px;
+      align-items: center;
+      margin-top: -52px;
+    }
+
+    .logo {
+      width: 154px;
+      height: 154px;
+      border-radius: 30px;
+      border: 6px solid #fff;
+      display: grid;
+      place-items: center;
+      background:
+        linear-gradient(135deg, #fff, var(--fl-green-soft));
+      font-size: 38px;
+      font-weight: 950;
+      color: var(--fl-green-dark);
+      overflow: hidden;
+      box-shadow: var(--shadow-lg);
+    }
+
+    .logo img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .hero-topline {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    h1 {
+      margin: 0;
+      color: var(--fl-black);
+      font-size: clamp(34px, 4vw, 46px);
+      line-height: 1;
+      letter-spacing: -0.07em;
+      font-weight: 950;
+    }
+
+    .hero-summary {
+      margin: 12px 0 0;
+      color: #475467;
+      max-width: 760px;
+      line-height: 1.6;
+      font-size: 15px;
+    }
+
+    .hero-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+      margin-top: 13px;
+    }
+
+    .hero-side {
+      display: grid;
+      gap: 10px;
+      padding-top: 54px;
+    }
+
+    .rating-box {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      justify-content: flex-end;
+      color: var(--fl-black);
+      font-weight: 950;
+      font-size: 25px;
+    }
+
+    .rating-box span {
+      color: #F59E0B;
+    }
+
+    .rating-box small {
+      display: block;
+      font-size: 12px;
+      color: var(--fl-muted);
+      font-weight: 800;
+    }
+
     .btn {
       border: none;
-      border-radius: 10px;
-      padding: 10px 14px;
-      font-size: 13px;
-      font-weight: 800;
+      border-radius: 14px;
+      padding: 12px 16px;
+      font-size: 14px;
+      font-weight: 950;
       text-decoration: none;
       display: inline-flex;
       align-items: center;
       justify-content: center;
+      gap: 8px;
       cursor: pointer;
-      transition: 0.18s ease;
+      transition: .18s ease;
     }
+
+    .btn:hover {
+      transform: translateY(-1px);
+    }
+
     .btn.primary {
-      background: linear-gradient(135deg, var(--brand-primary), var(--brand-primary-hover));
+      background: linear-gradient(135deg, var(--fl-orange), #FF7A1A);
       color: #fff;
-      box-shadow: 0 12px 24px rgba(230, 74, 0, 0.16);
+      box-shadow: 0 14px 28px rgba(255,90,0,.24);
     }
-    .btn.secondary {
-      background: #fff;
-      color: var(--brand-primary);
-      border: 1px solid var(--brand-border);
-    }
+
+    .btn.secondary,
     .btn.ghost {
-      background: var(--brand-bg);
-      color: var(--brand-primary);
-      border: 1px solid var(--brand-border);
-    }
-    .btn:hover { transform: translateY(-1px); }
-    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-    .panel {
       background: #fff;
-      border: 1px solid var(--brand-border);
-      border-radius: 16px;
-      box-shadow: 0 12px 28px rgba(16,24,40,0.05);
-      padding: 16px;
+      color: #344054;
+      border: 1px solid var(--fl-border);
+    }
+
+    .btn.secondary:hover,
+    .btn.ghost:hover {
+      border-color: var(--fl-orange);
+      color: var(--fl-orange-dark);
+      background: var(--fl-orange-soft);
+    }
+
+    .hero-cta {
       display: grid;
       gap: 10px;
     }
-    .panel h2 { margin: 0; color: var(--brand-primary); font-size: 20px; }
-    .panel h3 { margin: 0; color: #143225; font-size: 15px; }
-    .chips { display: flex; flex-wrap: wrap; gap: 8px; }
-    .chip {
-      border-radius: 999px; background: var(--brand-bg); color: var(--brand-primary);
-      padding: 6px 10px; font-size: 12px; font-weight: 800;
+
+    .hero-trust-grid {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 2px;
     }
-    a.chip { text-decoration: none; }
-    .chip.badge-green { background: #fff3e8; color: var(--brand-primary-hover); }
-    .chip.badge-blue { background: #eaf1ff; color: #1f4ea3; }
-    .chip.badge-warn { background: #fff8e8; color: #8a5a00; }
-    .chip.badge-slate { background: #f1f3f5; color: #364152; }
+
+    .hero-trust-card {
+      border: 1px solid #E6E8EC;
+      border-radius: 16px;
+      background: #fff;
+      padding: 14px;
+      display: grid;
+      grid-template-columns: 46px 1fr;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .hero-trust-icon {
+      width: 42px;
+      height: 42px;
+      border-radius: 999px;
+      display: grid;
+      place-items: center;
+      color: var(--fl-green-dark);
+      background: var(--fl-green-soft);
+      font-size: 21px;
+    }
+
+    .hero-trust-card span {
+      display: block;
+      font-size: 12px;
+      color: var(--fl-muted);
+      font-weight: 800;
+      margin-bottom: 3px;
+    }
+
+    .hero-trust-card strong {
+      display: block;
+      font-size: 15px;
+      color: var(--fl-black);
+      font-weight: 950;
+      line-height: 1.25;
+    }
+
+    .tabs {
+      background: #fff;
+      border: 1px solid rgba(217,217,217,.9);
+      border-radius: 16px;
+      box-shadow: var(--shadow-sm);
+      padding: 0 18px;
+      display: flex;
+      gap: 28px;
+      overflow-x: auto;
+    }
+
+    .tabs a {
+      min-height: 54px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: #344054;
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 950;
+      white-space: nowrap;
+      border-bottom: 3px solid transparent;
+    }
+
+    .tabs a.active {
+      color: var(--fl-orange-dark);
+      border-bottom-color: var(--fl-orange);
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 1.02fr 1.18fr 1.08fr;
+      gap: 16px;
+      align-items: start;
+    }
+
+    .stack {
+      display: grid;
+      gap: 16px;
+    }
+
+    .panel {
+      background: #fff;
+      border: 1px solid rgba(217,217,217,.9);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-sm);
+      padding: 18px;
+      display: grid;
+      gap: 14px;
+    }
+
+    .panel-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+      padding-bottom: 10px;
+      border-bottom: 1px solid #EAECF0;
+    }
+
+    .panel h2 {
+      margin: 0;
+      color: var(--fl-black);
+      font-size: 19px;
+      letter-spacing: -0.04em;
+      font-weight: 950;
+    }
+
+    .panel h3 {
+      margin: 0;
+      color: var(--fl-black);
+      font-size: 15px;
+      letter-spacing: -0.02em;
+      font-weight: 950;
+    }
+
+    .panel-link {
+      color: var(--fl-orange-dark);
+      font-size: 12px;
+      font-weight: 950;
+      text-decoration: none;
+    }
+
+    .muted,
+    .service-desc,
+    .area-meta,
+    .review-meta,
+    .review-text,
+    .activity-meta {
+      margin: 0;
+      color: #475467;
+      line-height: 1.55;
+      font-size: 14px;
+    }
+
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .chip {
+      border-radius: 999px;
+      padding: 7px 10px;
+      font-size: 12px;
+      font-weight: 900;
+      background: #F2F4F7;
+      color: #344054;
+      border: 1px solid transparent;
+    }
+
+    a.chip {
+      text-decoration: none;
+    }
+
+    .chip.badge-green {
+      background: var(--fl-green-soft);
+      color: var(--fl-green-dark);
+      border-color: #ABEFC6;
+    }
+
+    .chip.badge-blue {
+      background: var(--fl-blue-soft);
+      color: var(--fl-blue);
+      border-color: #BFDBFE;
+    }
+
+    .chip.badge-warn {
+      background: #FFFAEB;
+      color: #B54708;
+      border-color: #FEDF89;
+    }
+
+    .chip.badge-slate {
+      background: #F2F4F7;
+      color: #344054;
+    }
+
     .cards {
       display: grid;
       gap: 10px;
-      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
     }
-    .service-card, .area-card, .review-card {
-      background: #f9fbfa;
-      border: 1px solid #e3ebe6;
-      border-radius: 12px;
-      padding: 12px;
-      display: grid;
-      gap: 6px;
-    }
-    .service-title, .area-title { margin: 0; font-size: 15px; color: #262a31; }
-    .service-desc, .area-meta, .review-meta, .review-text { margin: 0; color: #545a63; font-size: 13px; line-height: 1.5; }
-    .service-pills { display: flex; gap: 6px; flex-wrap: wrap; }
+
+    .service-card,
+    .area-card,
+    .review-card,
+    .activity-card,
+    .overview-card,
+    .trust-card,
     .service-group {
-      border: 1px solid #dce9e2;
-      border-radius: 12px;
-      padding: 10px;
-      background: #fff;
+      background: #FCFCFD;
+      border: 1px solid #EAECF0;
+      border-radius: 14px;
+      padding: 14px;
       display: grid;
       gap: 8px;
     }
-    .service-group h3 {
+
+    .service-title,
+    .area-title,
+    .activity-title {
       margin: 0;
-      color: #262a31;
-      font-size: 14px;
-      text-transform: uppercase;
-      letter-spacing: .04em;
+      font-size: 15px;
+      color: var(--fl-black);
+      font-weight: 950;
     }
+
+    .service-pills {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .overview-grid,
+    .trust-grid {
+      display: grid;
+      gap: 10px;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    }
+
+    .overview-card p,
+    .trust-card p {
+      margin: 0;
+      color: #475467;
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    .overview-card strong {
+      color: var(--fl-green-dark);
+      font-size: 22px;
+      font-weight: 950;
+    }
+
     .stat-row {
       display: flex;
       gap: 10px;
       flex-wrap: wrap;
       align-items: center;
     }
+
     .stat {
-      border-radius: 12px;
-      background: #f4f8f6;
-      border: 1px solid var(--brand-border);
-      padding: 10px 12px;
-      min-width: 120px;
-    }
-    .stat strong { display: block; font-size: 18px; color: var(--brand-primary); }
-    .overview-grid {
-      display: grid;
-      gap: 10px;
-      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-    }
-    .overview-card {
-      border: 1px solid #e3ebe6;
-      border-radius: 12px;
+      border-radius: 14px;
+      background: #FCFCFD;
+      border: 1px solid #EAECF0;
       padding: 12px;
-      background: #f9fbfa;
+      min-width: 130px;
+    }
+
+    .stat strong {
+      display: block;
+      font-size: 24px;
+      color: var(--fl-orange);
+      font-weight: 950;
+    }
+
+    .breakdown {
       display: grid;
-      gap: 5px;
+      gap: 7px;
     }
-    .overview-card p { margin: 0; color: #4d6358; font-size: 13px; }
-    .trust-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
-      gap: 10px;
-    }
-    .trust-card {
-      border: 1px solid #e3ebe6;
-      border-radius: 12px;
-      padding: 10px 12px;
-      background: #f9fbfa;
-    }
-    .trust-card h3 { margin: 0 0 4px; font-size: 14px; color: #1b3a2c; }
-    .trust-card p { margin: 0; color: #4d6358; font-size: 12px; }
-    .panel-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
-    .panel-link { color: var(--brand-primary); font-size: 12px; font-weight: 800; text-decoration: none; }
-    .panel-link:hover { text-decoration: underline; }
-    .activity-card {
-      background: #f9fbfa;
-      border: 1px solid #e3ebe6;
-      border-radius: 12px;
-      padding: 12px;
-      display: grid;
-      gap: 5px;
-    }
-    .activity-title { margin: 0; font-size: 14px; color: #143225; }
-    .activity-meta { margin: 0; color: #4d6358; font-size: 12px; line-height: 1.5; }
-    .gallery {
-      display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 10px;
-    }
-    .gallery img {
-      width: 100%; height: 140px; object-fit: cover; border-radius: 10px; border: 1px solid var(--brand-border);
-      background: #f8fcf9;
-    }
-    .gallery img:first-child { grid-column: span 2; height: 180px; }
-    .breakdown { display: grid; gap: 6px; }
+
     .breakdown-row {
       display: grid;
       grid-template-columns: 58px 1fr 42px;
       align-items: center;
       gap: 8px;
       font-size: 12px;
-      color: #4d6358;
+      color: #4D6358;
     }
+
     .breakdown-track {
       height: 8px;
       border-radius: 999px;
-      background: #e8efe9;
+      background: #EAECF0;
       overflow: hidden;
     }
+
     .breakdown-fill {
       height: 100%;
-      background: linear-gradient(90deg, var(--brand-primary), var(--brand-primary-hover));
+      background: linear-gradient(90deg, var(--fl-orange), #FF7A1A);
     }
-    .kv { margin: 0; color: var(--brand-black); }
-    .kv strong { color: var(--brand-primary); }
-    a.link { color: var(--brand-primary); font-weight: 700; text-decoration: none; word-break: break-all; }
-    a.link:hover { text-decoration: underline; }
+
+    .gallery {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0,1fr));
+      gap: 10px;
+    }
+
+    .gallery img {
+      width: 100%;
+      height: 140px;
+      object-fit: cover;
+      border-radius: 12px;
+      border: 1px solid var(--fl-border);
+      background: #F8FCF9;
+    }
+
+    .gallery img:first-child {
+      grid-column: span 2;
+      height: 180px;
+    }
+
+    .kv {
+      margin: 0;
+      color: #344054;
+      line-height: 1.55;
+    }
+
+    .kv strong {
+      color: var(--fl-black);
+    }
+
+    a.link {
+      color: var(--fl-green-dark);
+      font-weight: 900;
+      text-decoration: none;
+      word-break: break-all;
+    }
+
+    a.link:hover {
+      text-decoration: underline;
+    }
+
     .status {
       min-height: 20px;
-      color: #5f6e66;
+      color: #667085;
       font-size: 14px;
     }
-    .status.error { color: #b42318; font-weight: 700; }
+
+    .status.error {
+      color: #B42318;
+      font-weight: 900;
+    }
+
     .skeleton {
       border-radius: 10px;
-      background: linear-gradient(90deg, #eef3f0, #f7faf8, #eef3f0);
+      background: linear-gradient(90deg, #EEF3F0, #F7FAF8, #EEF3F0);
       background-size: 200% 100%;
       animation: shimmer 1.4s infinite;
       min-height: 18px;
     }
+
     @keyframes shimmer {
       0% { background-position: 200% 0; }
       100% { background-position: -200% 0; }
     }
+
     .empty-state {
-      border: 1px dashed #c7d9ce;
-      border-radius: 12px;
-      padding: 12px;
-      background: #fcfefd;
-      color: #4d6358;
+      border: 1px dashed #CDD5DF;
+      border-radius: 14px;
+      padding: 14px;
+      background: #FCFCFD;
+      color: #475467;
       font-size: 13px;
+      line-height: 1.5;
     }
+
     .cta-panel {
-      display: grid;
-      gap: 10px;
-      align-items: center;
-      background: linear-gradient(120deg, #1f1f1f, #2a2a2a);
+      background: linear-gradient(120deg, #111111, #2B2B2B);
       color: #fff;
     }
-    .cta-panel h2 { color: #fff; }
-    .cta-panel p { margin: 0; color: #d8efe1; }
-    .cta-actions { display: flex; gap: 10px; flex-wrap: wrap; }
-    .seo-links { display: flex; gap: 8px; flex-wrap: wrap; }
+
+    .cta-panel h2 {
+      color: #fff;
+    }
+
+    .cta-panel p {
+      margin: 0;
+      color: #F2F4F7;
+    }
+
+    .cta-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .seo-links {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
     .seo-links a {
-      border: 1px solid rgba(255,255,255,0.35);
+      border: 1px solid rgba(255,255,255,.28);
       border-radius: 999px;
       padding: 7px 10px;
       font-size: 12px;
       color: #fff;
       text-decoration: none;
-      background: rgba(255,255,255,0.08);
-      font-weight: 800;
+      background: rgba(255,255,255,.08);
+      font-weight: 900;
     }
-    .cta-panel .btn.secondary, .cta-panel .btn.ghost {
-      border-color: rgba(255,255,255,0.35);
+
+    .cta-panel .btn.secondary,
+    .cta-panel .btn.ghost {
+      border-color: rgba(255,255,255,.32);
       color: #fff;
-      background: rgba(255,255,255,0.08);
+      background: rgba(255,255,255,.08);
     }
+
     .sticky-cta {
       position: fixed;
       left: 12px;
@@ -306,107 +836,277 @@
       z-index: 70;
       display: none;
       border: 1px solid rgba(20,50,37,.18);
-      border-radius: 14px;
+      border-radius: 16px;
       background: rgba(255,255,255,.98);
       box-shadow: 0 18px 32px rgba(16,24,40,.16);
       padding: 10px;
       gap: 8px;
       grid-template-columns: 1fr 1fr 1fr;
     }
+
     .sticky-cta .btn {
       width: 100%;
       min-height: 42px;
       font-size: 12px;
       padding: 8px 10px;
     }
-    @media (max-width: 860px) {
-      body { padding: 14px; }
-      .grid { grid-template-columns: 1fr; }
-      .hero-topline { grid-template-columns: 1fr; }
-      .hero-trust-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-      .gallery { grid-template-columns: 1fr 1fr; }
-      .hero-cta .btn { flex: 1 1 auto; }
-      .sticky-cta { display: grid; }
-      .page { padding-bottom: 84px; }
+
+    @media (max-width: 1120px) {
+      .topbar-inner {
+        grid-template-columns: auto 1fr auto;
+      }
+
+      .global-search {
+        display: none;
+      }
+
+      .nav {
+        display: none;
+      }
+
+      .identity {
+        grid-template-columns: 150px minmax(0,1fr);
+      }
+
+      .hero-side {
+        grid-column: 1 / -1;
+        padding-top: 0;
+      }
+
+      .hero-cta {
+        grid-template-columns: repeat(3, minmax(0,1fr));
+      }
+
+      .hero-trust-grid {
+        grid-template-columns: repeat(2, minmax(0,1fr));
+      }
+
+      .layout {
+        grid-template-columns: 1fr;
+      }
     }
-    @media (max-width: 560px) {
-      .gallery { grid-template-columns: 1fr; }
-      .gallery img:first-child { grid-column: span 1; height: 140px; }
-      h1 { font-size: 26px; }
-      .hero-cta, .cta-actions { display: grid; }
-      .hero-trust-grid { grid-template-columns: 1fr; }
+
+    @media (max-width: 720px) {
+      .top-actions {
+        display: none;
+      }
+
+      .topbar-inner,
+      .page {
+        width: min(100% - 24px, 1360px);
+      }
+
+      .brand {
+        font-size: 24px;
+      }
+
+      .brand-mark {
+        width: 40px;
+        height: 40px;
+      }
+
+      .identity {
+        grid-template-columns: 1fr;
+        margin-top: -42px;
+      }
+
+      .logo {
+        width: 122px;
+        height: 122px;
+      }
+
+      .hero-body {
+        padding: 0 18px 20px;
+      }
+
+      h1 {
+        font-size: 32px;
+      }
+
+      .hero-cta {
+        grid-template-columns: 1fr;
+      }
+
+      .hero-trust-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .tabs {
+        gap: 18px;
+      }
+
+      .gallery {
+        grid-template-columns: 1fr;
+      }
+
+      .gallery img:first-child {
+        grid-column: span 1;
+        height: 140px;
+      }
+
+      .sticky-cta {
+        display: grid;
+      }
+
+      .page {
+        padding-bottom: 86px;
+      }
     }
   </style>
 </head>
+
 <body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a class="brand" href="/" aria-label="FairLinx home">
+        <span class="brand-mark">FL</span>
+        <span>
+          Fair<span>Linx</span>
+          <small>Connect. Collaborate. Grow.</small>
+        </span>
+      </a>
+
+      <div class="global-search" aria-label="Search">
+        <input type="search" placeholder="Search services, companies, or locations...">
+      </div>
+
+      <nav class="nav" aria-label="Primary navigation">
+        <a href="/discover.html">Find Services</a>
+        <a href="/marketplace.html">Marketplace</a>
+        <a class="active" href="/companies.html">Discover Companies</a>
+        <a href="/pricing.html">Pricing</a>
+      </nav>
+
+      <div class="top-actions">
+        <button class="icon-btn" type="button" aria-label="Notifications">🔔</button>
+        <div class="avatar" aria-hidden="true">JD</div>
+      </div>
+    </div>
+  </header>
+
   <main class="page fx-layout-public">
+    <div class="profile-actions-row">
+      <a class="back-link" href="/companies.html">← Back to companies</a>
+
+      <div class="profile-actions">
+        <button class="small-action" type="button" onclick="navigator.clipboard && navigator.clipboard.writeText(window.location.href)">↗ Share</button>
+        <button class="small-action" type="button" id="topSaveCompanyBtn">♡ Save</button>
+        <button class="small-action" type="button" id="topReportCompanyBtn">⚐ Report</button>
+      </div>
+    </div>
+
     <section class="hero fx-hero">
       <div id="cover" class="cover">Company Profile</div>
+
       <div class="hero-body">
         <div class="identity">
           <div id="logo" class="logo">CO</div>
+
           <div>
             <div class="hero-topline">
               <h1 id="companyName">Loading...</h1>
               <div id="heroQuickBadge" class="chips"></div>
             </div>
+
             <p id="description" class="hero-summary"></p>
             <div id="heroCoverage" class="hero-meta"></div>
-            <div id="trustBadges" class="chips" style="margin-top:8px;"></div>
-            <div id="heroTrustSummary" class="hero-trust-grid" style="margin-top:10px;"></div>
+            <div id="trustBadges" class="chips" style="margin-top:10px;"></div>
           </div>
+
+          <aside class="hero-side">
+            <div id="ratingHero" class="rating-box"></div>
+            <div id="heroCtas" class="hero-cta"></div>
+          </aside>
         </div>
-        <div id="heroCtas" class="hero-cta"></div>
+
+        <div id="heroTrustSummary" class="hero-trust-grid"></div>
         <div id="status" class="status" role="status" aria-live="polite"></div>
       </div>
     </section>
 
-    <section class="grid">
-      <article class="panel fx-card" style="grid-column: 1 / -1;">
-        <h2>Company Overview</h2>
-        <p id="companyOverview" class="muted">Company details and marketplace trust information.</p>
-        <div id="overviewCards" class="overview-grid"></div>
-      </article>
+    <nav class="tabs" aria-label="Profile sections">
+      <a class="active" href="#overview">⌂ Overview</a>
+      <a href="#services">▣ Services</a>
+      <a href="#areas">⌖ Service Areas</a>
+      <a href="#reviews">★ Reviews</a>
+      <a href="#trust">ⓘ Trust</a>
+      <a href="#activity">⌁ Activity</a>
+    </nav>
 
-      <article class="panel fx-card">
-        <h2>Services</h2>
-        <div id="serviceGroups" class="cards"></div>
-        <div id="services" class="cards"></div>
-      </article>
+    <section class="layout" id="overview">
+      <div class="stack">
+        <article class="panel fx-card">
+          <div class="panel-head">
+            <h2>About Company</h2>
+          </div>
+          <p id="companyOverview" class="muted">Company details and marketplace trust information.</p>
+          <div id="overviewCards" class="overview-grid"></div>
+        </article>
 
-      <article class="panel fx-card">
-        <h2>Coverage Areas</h2>
-        <div id="coverageSummary" class="chips"></div>
-        <div id="serviceAreas" class="cards"></div>
-      </article>
+        <article class="panel fx-card" id="contact">
+          <div class="panel-head">
+            <h2>Contact</h2>
+          </div>
+          <div id="contact"></div>
+        </article>
 
-      <article class="panel fx-card">
-        <h2>Business Hours</h2>
-        <div id="hours"></div>
-      </article>
-
-      <article class="panel fx-card">
-        <h2>Contact</h2>
-        <div id="contact"></div>
-      </article>
-    </section>
-
-    <section class="panel fx-card">
-      <h2>Reviews</h2>
-      <div id="reviewStats" class="stat-row"></div>
-      <div id="ratingBreakdown" class="breakdown"></div>
-      <div id="reviewsPreview" class="cards"></div>
-    </section>
-
-    <section class="panel fx-card">
-      <div class="panel-head">
-        <h2>Trust &amp; Safety</h2>
-        <a class="panel-link" href="/trust.html">How trust badges work</a>
+        <article class="panel fx-card">
+          <div class="panel-head">
+            <h2>Business Hours</h2>
+          </div>
+          <div id="hours"></div>
+        </article>
       </div>
-      <div id="trustDetails" class="trust-grid"></div>
+
+      <div class="stack">
+        <article class="panel fx-card" id="services">
+          <div class="panel-head">
+            <h2>Top Services</h2>
+            <a class="panel-link" href="#services">View all services →</a>
+          </div>
+          <div id="serviceGroups" class="cards"></div>
+          <div id="servicesList" class="cards"></div>
+        </article>
+
+        <article class="panel fx-card" id="reviews">
+          <div class="panel-head">
+            <h2>Recent Reviews</h2>
+            <a class="panel-link" href="#reviews">View all reviews →</a>
+          </div>
+          <div id="reviewStats" class="stat-row"></div>
+          <div id="ratingBreakdown" class="breakdown"></div>
+          <div id="reviewsPreview" class="cards"></div>
+        </article>
+      </div>
+
+      <div class="stack">
+        <article class="panel fx-card" id="areas">
+          <div class="panel-head">
+            <h2>Service Areas</h2>
+            <a class="panel-link" href="#areas">View all areas →</a>
+          </div>
+          <div id="coverageSummary" class="chips"></div>
+          <div id="serviceAreas" class="cards"></div>
+        </article>
+
+        <article class="panel fx-card">
+          <div class="panel-head">
+            <h2>Company Reputation</h2>
+          </div>
+          <div id="reputationPanel"></div>
+        </article>
+
+        <article class="panel fx-card" id="trust">
+          <div class="panel-head">
+            <h2>Trust &amp; Safety</h2>
+            <a class="panel-link" href="/trust.html">How trust badges work</a>
+          </div>
+          <div id="trustDetails" class="trust-grid"></div>
+        </article>
+      </div>
     </section>
 
-    <section class="panel fx-card">
+    <section class="panel fx-card" id="activity">
       <div class="panel-head">
         <h2>Recent Activity</h2>
         <a class="panel-link" href="/trust.html">Trust & Safety details</a>
@@ -415,7 +1115,9 @@
     </section>
 
     <section class="panel fx-card">
-      <h2>Gallery</h2>
+      <div class="panel-head">
+        <h2>Gallery</h2>
+      </div>
       <div id="gallery" class="gallery"></div>
     </section>
 
@@ -426,6 +1128,7 @@
       <div id="seoAreaLinks" class="seo-links"></div>
     </section>
   </main>
+
   <aside id="stickyCta" class="sticky-cta" aria-label="Quick actions">
     <a id="stickyRequestBtn" class="btn primary fx-btn fx-btn--primary" href="/marketplace.html">Request Service</a>
     <a id="stickyContactBtn" class="btn secondary fx-btn fx-btn--secondary" href="#contact">Contact</a>
@@ -436,7 +1139,9 @@
     const params = new URLSearchParams(window.location.search);
     const slug = String(params.get("slug") || "").trim().toLowerCase();
     const API_BASE = window.location.origin;
-    const SAVED_KEY = "company-profile:saved";
+    const SAVED_KEY = "fairlinx:company-profile:saved";
+
+    let currentCompanyData = null;
 
     function setStatus(message, type) {
       const el = document.getElementById("status");
@@ -472,26 +1177,8 @@
       var img = document.createElement("img");
       img.setAttribute("src", String(url));
       img.setAttribute("alt", safeText(altText, ""));
+      img.setAttribute("loading", "lazy");
       return img;
-    }
-
-    function chipList(hostId, items, emptyText) {
-      const host = document.getElementById(hostId);
-      const list = Array.isArray(items) ? items.filter(Boolean) : [];
-      host.textContent = "";
-      if (!list.length) {
-        var empty = document.createElement("p");
-        empty.className = "muted";
-        empty.textContent = safeText(emptyText, "");
-        host.appendChild(empty);
-        return;
-      }
-      list.forEach(function(item) {
-        var chip = document.createElement("span");
-        chip.className = "chip";
-        chip.textContent = safeText(item, "");
-        host.appendChild(chip);
-      });
     }
 
     function toDisplayPhone(value) {
@@ -517,12 +1204,15 @@
         alert("Please log in as a customer or company user to report this company.");
         return;
       }
+
       var reason = String(window.prompt("Report reason (required):", "misleading profile") || "").trim();
       if (reason.length < 3) {
         alert("A short reason is required.");
         return;
       }
+
       var details = String(window.prompt("Additional details (optional):", "") || "").trim();
+
       var res = await fetch(API_BASE + "/companies/" + encodeURIComponent(String(companyId || "")) + "/report", {
         method: "POST",
         headers: {
@@ -531,10 +1221,13 @@
         },
         body: JSON.stringify({ reason: reason, details: details })
       });
+
       var payload = await res.json().catch(function(){ return {}; });
+
       if (!res.ok) {
         throw new Error(payload.error || "Unable to submit report.");
       }
+
       alert("Report submitted. Our moderation team will review it.");
     }
 
@@ -549,10 +1242,8 @@
     function setLoadingState() {
       document.getElementById("companyName").textContent = "Loading company...";
       document.getElementById("description").innerHTML = "<span class='skeleton' style='display:block;height:16px;max-width:480px;'></span>";
-      var services = document.getElementById("services");
-      services.innerHTML = "<div class='skeleton' style='height:64px;'></div><div class='skeleton' style='height:64px;'></div>";
-      var areas = document.getElementById("serviceAreas");
-      areas.innerHTML = "<div class='skeleton' style='height:64px;'></div><div class='skeleton' style='height:64px;'></div>";
+      document.getElementById("servicesList").innerHTML = "<div class='skeleton' style='height:64px;'></div><div class='skeleton' style='height:64px;'></div>";
+      document.getElementById("serviceAreas").innerHTML = "<div class='skeleton' style='height:64px;'></div><div class='skeleton' style='height:64px;'></div>";
       document.getElementById("reviewStats").innerHTML = "<div class='skeleton' style='height:58px;min-width:120px;'></div>";
       document.getElementById("reviewsPreview").innerHTML = "<div class='skeleton' style='height:80px;'></div>";
     }
@@ -561,13 +1252,18 @@
       var name = safeText(data.name, "Company");
       var summary = safeText(data.public_description, "View services, trust details, and recent reviews.");
       var description = summary.slice(0, 160);
-      document.title = name + " | Public Profile";
+
+      document.title = name + " | FairLinx Public Profile";
+
       var metaDescription = document.querySelector('meta[name="description"]');
       if (metaDescription) metaDescription.setAttribute("content", description);
+
       var ogTitle = document.querySelector('meta[property="og:title"]');
-      if (ogTitle) ogTitle.setAttribute("content", name + " | Fairlinx");
+      if (ogTitle) ogTitle.setAttribute("content", name + " | FairLinx");
+
       var ogDescription = document.querySelector('meta[property="og:description"]');
       if (ogDescription) ogDescription.setAttribute("content", description);
+
       if (isSafeHttpUrl(data.cover_image_url) || isSafeHttpUrl(data.logo_url)) {
         var ogImage = document.querySelector('meta[property="og:image"]');
         if (!ogImage) {
@@ -580,22 +1276,27 @@
     }
 
     function renderServices(data) {
-      var host = document.getElementById("services");
+      var host = document.getElementById("servicesList");
       var groupHost = document.getElementById("serviceGroups");
       host.textContent = "";
       groupHost.textContent = "";
+
       var services = Array.isArray(data.marketplace_services) ? data.marketplace_services : [];
+
       if (!services.length) {
         setEmptyState(groupHost, "Service fit details are not published yet.");
         setEmptyState(host, "No public services listed yet.");
         return;
       }
+
       var names = services.map(function(service) {
         return safeText(service.display_name, "Service");
       }).filter(Boolean);
+
       var primary = names.slice(0, 3);
       var secondary = names.slice(3, 6);
       var specialties = names.slice(6);
+
       [
         { title: "Primary Services", list: primary, empty: "Primary services not listed" },
         { title: "Secondary Services", list: secondary, empty: "Secondary services not listed" },
@@ -603,14 +1304,17 @@
       ].forEach(function(group) {
         var card = document.createElement("article");
         card.className = "service-group fx-card";
+
         var h3 = document.createElement("h3");
         h3.textContent = group.title;
+
         var chips = document.createElement("div");
         chips.className = "chips";
+
         if (group.list.length) {
           group.list.forEach(function(item) {
             var chip = document.createElement("span");
-            chip.className = "chip badge-slate fx-badge fx-badge--neutral";
+            chip.className = "chip badge-green fx-badge fx-badge--success";
             chip.textContent = item;
             chips.appendChild(chip);
           });
@@ -620,29 +1324,38 @@
           fallback.textContent = group.empty;
           chips.appendChild(fallback);
         }
+
         card.appendChild(h3);
         card.appendChild(chips);
         groupHost.appendChild(card);
       });
-      services.forEach(function(service) {
+
+      services.slice(0, 6).forEach(function(service) {
         var card = document.createElement("article");
         card.className = "service-card fx-card";
+
         var title = document.createElement("h3");
         title.className = "service-title";
         title.textContent = safeText(service.display_name, "Service");
+
         var desc = document.createElement("p");
         desc.className = "service-desc";
         desc.textContent = safeText(service.category && service.category.description, "Service details will be shared during request.");
+
         var pills = document.createElement("div");
         pills.className = "service-pills";
+
         var price = document.createElement("span");
         price.className = "chip badge-slate fx-badge fx-badge--neutral";
-        price.textContent = "Pricing: Request quote";
+        price.textContent = "Request quote";
+
         var availability = document.createElement("span");
         availability.className = "chip badge-green fx-badge fx-badge--success";
         availability.textContent = "Available";
+
         pills.appendChild(price);
         pills.appendChild(availability);
+
         card.appendChild(title);
         card.appendChild(desc);
         card.appendChild(pills);
@@ -653,9 +1366,12 @@
     function renderCoverage(data) {
       var host = document.getElementById("serviceAreas");
       var summary = document.getElementById("coverageSummary");
+
       host.textContent = "";
       summary.textContent = "";
+
       var areas = Array.isArray(data.marketplace_service_areas) ? data.marketplace_service_areas : [];
+
       if (!areas.length) {
         var noSummary = document.createElement("span");
         noSummary.className = "chip badge-slate";
@@ -664,25 +1380,32 @@
         setEmptyState(host, "Coverage areas are not published yet.");
         return;
       }
+
       var cities = {};
       var zips = {};
       var maxRadius = 0;
-      areas.forEach(function(area) {
+
+      areas.slice(0, 6).forEach(function(area) {
         var card = document.createElement("article");
         card.className = "area-card fx-card";
+
         var title = document.createElement("h3");
         title.className = "area-title";
-        title.textContent = [area.city, area.state, area.zip_code].filter(Boolean).join(", ").replace(/, ([A-Z]{2}),/, ", $1 ");
+        title.textContent = [area.city, area.state].filter(Boolean).join(", ") || safeText(area.zip_code, "Service area");
+
         var radius = document.createElement("p");
         radius.className = "area-meta";
         radius.textContent = "Service radius: " + (Number(area.radius_miles || 0) > 0 ? (Number(area.radius_miles) + " miles") : "Not specified");
+
         if (area.city) cities[String(area.city).trim()] = true;
         if (area.zip_code) zips[String(area.zip_code).trim()] = true;
         if (Number(area.radius_miles || 0) > maxRadius) maxRadius = Number(area.radius_miles || 0);
+
         card.appendChild(title);
         card.appendChild(radius);
         host.appendChild(card);
       });
+
       [
         "Cities served: " + Object.keys(cities).length,
         "Zip areas: " + Object.keys(zips).length,
@@ -698,8 +1421,11 @@
     function renderHeroCoverage(data) {
       var host = document.getElementById("heroCoverage");
       host.textContent = "";
+
       var areas = Array.isArray(data.service_areas) ? data.service_areas.filter(Boolean) : [];
+
       if (!areas.length) return;
+
       areas.slice(0, 4).forEach(function(area) {
         var chip = document.createElement("span");
         chip.className = "chip badge-slate fx-badge fx-badge--neutral";
@@ -711,13 +1437,16 @@
     function renderCtas(data) {
       var ctaHost = document.getElementById("heroCtas");
       ctaHost.textContent = "";
+
       ctaHost.appendChild(createButtonLink("Request Service", "/marketplace.html?company=" + encodeURIComponent(String(data.public_slug || "")), "primary"));
+
       var saveBtn = document.createElement("button");
       saveBtn.className = "btn secondary";
       saveBtn.type = "button";
       saveBtn.id = "saveCompanyBtn";
       saveBtn.textContent = "Save Company";
       ctaHost.appendChild(saveBtn);
+
       var reportBtn = document.createElement("button");
       reportBtn.className = "btn secondary";
       reportBtn.type = "button";
@@ -728,6 +1457,7 @@
 
       var conversionHost = document.getElementById("conversionCtas");
       conversionHost.textContent = "";
+
       conversionHost.appendChild(createButtonLink("Request Service", "/marketplace.html?company=" + encodeURIComponent(String(data.public_slug || "")), "primary"));
       conversionHost.appendChild(createButtonLink("Contact", "#contact", "secondary"));
       conversionHost.appendChild(createButtonLink("Find Services", "/discover.html?company=" + encodeURIComponent(String(data.public_slug || "")), "secondary"));
@@ -736,6 +1466,7 @@
     function renderTrustDetails(data) {
       var host = document.getElementById("trustDetails");
       host.textContent = "";
+
       var trust = data && data.trust ? data.trust : {};
       var completedJobs = Number(data.completed_jobs || data.completedJobs || data.jobs_completed || 0);
       var areasCount = Array.isArray(data.marketplace_service_areas) ? data.marketplace_service_areas.length : 0;
@@ -746,25 +1477,28 @@
       var insuranceStatus = String(trust.insurance_status || "").toLowerCase();
       var licenseStatus = String(trust.license_status || "").toLowerCase();
       var identityStatus = String(trust.identity_status || "").toLowerCase();
+
       var rows = [
         { title: "Verified Business", value: verified ? "Verified badge active" : (trust.verification_status === "pending" ? "Verification pending review" : "Not yet verified") },
         { title: "Licensed", value: trust.license_expired === true ? "License status expired" : (licenseStatus === "verified" ? "License verified" : (licenseStatus === "pending" ? "License pending review" : "License not yet verified")) },
         { title: "Insured", value: trust.insurance_expired === true ? "Insurance status expired" : (insuranceStatus === "verified" ? "Insurance verified" : (insuranceStatus === "pending" ? "Insurance pending review" : "Insurance not yet verified")) },
         { title: "Identity", value: identityStatus === "verified" ? "Identity verified" : (identityStatus === "pending" ? "Identity pending review" : "Identity not yet verified") },
-        { title: "Fair Response Standards", value: responseMinutes > 0 ? ("Average response around " + responseMinutes + " minutes") : "Response standard not published" },
-        { title: "Accountability Standards", value: reviewCount > 0 ? ("Public reviews and trust monitoring active") : "Trust monitoring active; awaiting public reviews" },
         { title: "Response Time", value: responseMinutes > 0 ? ("~" + responseMinutes + " min average response") : "Response time not published" },
         { title: "Service Areas", value: areasCount > 0 ? (areasCount + " areas listed") : "Service areas not published" },
         { title: "Completed Jobs", value: completedJobs > 0 ? (completedJobs + " completed jobs") : "Job completion count not published" },
         { title: "Reviews Summary", value: reviewCount > 0 ? (avgRating.toFixed(1) + "/5 across " + reviewCount + " reviews") : "No published reviews yet" }
       ];
+
       rows.forEach(function(row) {
         var card = document.createElement("article");
         card.className = "trust-card fx-card";
+
         var h3 = document.createElement("h3");
         h3.textContent = row.title;
+
         var p = document.createElement("p");
         p.textContent = safeText(row.value, "pending");
+
         card.appendChild(h3);
         card.appendChild(p);
         host.appendChild(card);
@@ -775,16 +1509,17 @@
       var textHost = document.getElementById("companyOverview");
       var cardsHost = document.getElementById("overviewCards");
       var trust = data && data.trust ? data.trust : {};
+
       var areasCount = Array.isArray(data.marketplace_service_areas) ? data.marketplace_service_areas.length : 0;
       var servicesCount = Array.isArray(data.marketplace_services) ? data.marketplace_services.length : 0;
       var completedJobs = Number(data.completed_jobs || data.completedJobs || data.jobs_completed || 0);
       var reviewCount = Number(data.rating_count || data.reviews_count || data.review_count || 0);
       var avgRating = Number(data.rating_avg || data.average_rating || data.rating || 0);
-      var reputationScore = Number(data.reputation_score || 0);
       var responseMinutes = Number(data.response_time_minutes || trust.response_time_minutes || 0);
 
       textHost.textContent = safeText(data.public_description, "This company has an active FairLinx public profile with services, coverage, and trust details.");
       cardsHost.textContent = "";
+
       [
         { title: "Primary Services", value: servicesCount > 0 ? String(servicesCount) : "Not listed", note: "Published offerings" },
         { title: "Service Areas", value: areasCount > 0 ? String(areasCount) : "Not listed", note: "Coverage locations" },
@@ -794,17 +1529,73 @@
       ].forEach(function(cardData) {
         var card = document.createElement("article");
         card.className = "overview-card fx-card";
+
         var h3 = document.createElement("h3");
         h3.textContent = cardData.title;
+
         var value = document.createElement("p");
-        value.innerHTML = "<strong>" + escapeHTML(cardData.value) + "</strong>";
+        var strong = document.createElement("strong");
+        strong.textContent = cardData.value;
+        value.appendChild(strong);
+
         var note = document.createElement("p");
         note.textContent = cardData.note;
+
         card.appendChild(h3);
         card.appendChild(value);
         card.appendChild(note);
         cardsHost.appendChild(card);
       });
+    }
+
+    function renderReputationPanel(data) {
+      var host = document.getElementById("reputationPanel");
+      host.textContent = "";
+
+      var reputationScore = Number(data.reputation_score || 0);
+      var reviewCount = Number(data.rating_count || data.reviews_count || data.review_count || 0);
+      var avgRating = Number(data.rating_avg || data.average_rating || data.rating || 0);
+      var displayScore = reputationScore > 0 ? Math.round(reputationScore) : (reviewCount > 0 ? Math.round((avgRating / 5) * 100) : 0);
+      var label = displayScore >= 85 ? "Excellent" : (displayScore >= 70 ? "Strong" : (displayScore > 0 ? "Developing" : "Neutral"));
+
+      var wrap = document.createElement("div");
+      wrap.style.display = "grid";
+      wrap.style.gridTemplateColumns = "110px 1fr";
+      wrap.style.gap = "16px";
+      wrap.style.alignItems = "center";
+
+      var circle = document.createElement("div");
+      circle.style.width = "104px";
+      circle.style.height = "104px";
+      circle.style.borderRadius = "999px";
+      circle.style.display = "grid";
+      circle.style.placeItems = "center";
+      circle.style.background = "conic-gradient(var(--fl-green) " + Math.max(0, Math.min(100, displayScore)) + "%, #EAECF0 0)";
+      circle.style.boxShadow = "inset 0 0 0 12px #fff";
+
+      var score = document.createElement("strong");
+      score.style.fontSize = "34px";
+      score.style.fontWeight = "950";
+      score.textContent = displayScore > 0 ? String(displayScore) : "—";
+      circle.appendChild(score);
+
+      var text = document.createElement("div");
+      var h3 = document.createElement("h3");
+      h3.textContent = label;
+      h3.style.color = displayScore >= 70 ? "var(--fl-green-dark)" : "var(--fl-black)";
+
+      var p = document.createElement("p");
+      p.className = "muted";
+      p.textContent = displayScore > 0
+        ? "Reputation score based on reviews, reliability, trust signals, and customer satisfaction."
+        : "Reputation score will appear once enough trust signals are available.";
+
+      text.appendChild(h3);
+      text.appendChild(p);
+
+      wrap.appendChild(circle);
+      wrap.appendChild(text);
+      host.appendChild(wrap);
     }
 
     function toServiceSlug(value) {
@@ -819,20 +1610,26 @@
     function renderSeoAreaLinks(data) {
       var host = document.getElementById("seoAreaLinks");
       host.textContent = "";
+
       var services = Array.isArray(data.services) ? data.services.filter(Boolean) : [];
       var areas = Array.isArray(data.marketplace_service_areas) ? data.marketplace_service_areas : [];
+
       if (!services.length || !areas.length) return;
+
       areas.slice(0, 2).forEach(function(area) {
         var city = safeText(area.city, "");
         var state = safeText(area.state, "");
         if (!city || !state) return;
+
         var service = services[0];
         var link = document.createElement("a");
+
         link.setAttribute("href", "/service-area.html?" + new URLSearchParams({
           service: toServiceSlug(service),
           city: city,
           state: state
         }).toString());
+
         link.textContent = service + " in " + city + ", " + state;
         host.appendChild(link);
       });
@@ -848,32 +1645,42 @@
     async function loadActivity(companyId) {
       var host = document.getElementById("activityFeed");
       host.innerHTML = "<div class='skeleton' style='height:72px;'></div><div class='skeleton' style='height:72px;'></div>";
+
       if (!companyId) {
         setEmptyState(host, "Activity is not available.");
         return;
       }
+
       try {
         const res = await fetch(API_BASE + "/companies/public/" + encodeURIComponent(companyId) + "/activity");
         const data = await res.json().catch(function(){ return {}; });
+
         if (!res.ok) throw new Error(data.error || "Unable to load activity.");
+
         const items = Array.isArray(data.items) ? data.items : [];
         host.textContent = "";
+
         if (!items.length) {
           setEmptyState(host, "No recent public activity yet.");
           return;
         }
+
         items.slice(0, 6).forEach(function(item) {
           var card = document.createElement("article");
           card.className = "activity-card fx-card";
+
           var title = document.createElement("h3");
           title.className = "activity-title";
           title.textContent = safeText(item.title, "Activity update");
+
           var detail = document.createElement("p");
           detail.className = "activity-meta";
           detail.textContent = safeText(item.detail, "Public update");
+
           var when = document.createElement("p");
           when.className = "activity-meta";
           when.textContent = formatActivityTime(item.occurred_at);
+
           card.appendChild(title);
           card.appendChild(detail);
           card.appendChild(when);
@@ -888,30 +1695,53 @@
       var reviewStats = document.getElementById("reviewStats");
       var reviewList = document.getElementById("reviewsPreview");
       var breakdownHost = document.getElementById("ratingBreakdown");
+
       reviewStats.textContent = "";
       reviewList.textContent = "";
       breakdownHost.textContent = "";
+
       if (!companyId) {
         breakdownHost.innerHTML = '<div class="empty-state">Rating breakdown is unavailable.</div>';
         setEmptyState(reviewList, "Reviews are not available.");
         return;
       }
+
       try {
         const [summaryRes, reviewsRes] = await Promise.all([
           fetch(API_BASE + "/companies/" + encodeURIComponent(companyId) + "/reviews/summary"),
           fetch(API_BASE + "/companies/" + encodeURIComponent(companyId) + "/reviews")
         ]);
+
         const summary = await summaryRes.json().catch(function(){ return {}; });
         const reviews = await reviewsRes.json().catch(function(){ return []; });
+
         var avg = Number(summary.average_rating || 0).toFixed(1);
         var count = Number(summary.total_reviews || 0);
 
         var avgStat = document.createElement("div");
         avgStat.className = "stat fx-stat";
-        avgStat.innerHTML = "<strong>" + escapeHTML(avg) + " / 5</strong><span>Average rating</span>";
+
+        var avgStrong = document.createElement("strong");
+        avgStrong.textContent = avg + " / 5";
+
+        var avgLabel = document.createElement("span");
+        avgLabel.textContent = "Average rating";
+
+        avgStat.appendChild(avgStrong);
+        avgStat.appendChild(avgLabel);
+
         var countStat = document.createElement("div");
         countStat.className = "stat fx-stat";
-        countStat.innerHTML = "<strong>" + escapeHTML(String(count)) + "</strong><span>Public reviews</span>";
+
+        var countStrong = document.createElement("strong");
+        countStrong.textContent = String(count);
+
+        var countLabel = document.createElement("span");
+        countLabel.textContent = "Public reviews";
+
+        countStat.appendChild(countStrong);
+        countStat.appendChild(countLabel);
+
         reviewStats.appendChild(avgStat);
         reviewStats.appendChild(countStat);
 
@@ -920,29 +1750,56 @@
           setEmptyState(reviewList, "No public reviews yet.");
           return;
         }
+
         var counts = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+
         reviews.slice(0, 3).forEach(function(review) {
           var card = document.createElement("article");
           card.className = "review-card fx-card";
+
           var meta = document.createElement("p");
           meta.className = "review-meta";
           meta.textContent = (Number(review.rating || 0).toFixed(1)) + " stars";
+
           var text = document.createElement("p");
           text.className = "review-text";
           text.textContent = safeText(review.review_text, "Customer left a rating.");
+
           var stars = Math.max(1, Math.min(5, Math.round(Number(review.rating || 0))));
           counts[stars] = (counts[stars] || 0) + 1;
+
           card.appendChild(meta);
           card.appendChild(text);
           reviewList.appendChild(card);
         });
+
         var total = Number(summary.total_reviews || 0) || reviews.length;
+
         [5, 4, 3, 2, 1].forEach(function(star) {
-          var count = Number(counts[star] || 0);
-          var pct = total > 0 ? Math.round((count / total) * 100) : 0;
+          var starCount = Number(counts[star] || 0);
+          var pct = total > 0 ? Math.round((starCount / total) * 100) : 0;
+
           var row = document.createElement("div");
           row.className = "breakdown-row";
-          row.innerHTML = '<span>' + star + ' star</span><div class="breakdown-track"><div class="breakdown-fill" style="width:' + pct + '%;"></div></div><strong>' + count + '</strong>';
+
+          var label = document.createElement("span");
+          label.textContent = star + " star";
+
+          var track = document.createElement("div");
+          track.className = "breakdown-track";
+
+          var fill = document.createElement("div");
+          fill.className = "breakdown-fill";
+          fill.style.width = pct + "%";
+
+          var strong = document.createElement("strong");
+          strong.textContent = String(starCount);
+
+          track.appendChild(fill);
+          row.appendChild(label);
+          row.appendChild(track);
+          row.appendChild(strong);
+
           breakdownHost.appendChild(row);
         });
       } catch (_) {
@@ -965,14 +1822,19 @@
       var key = String(data.public_slug || data.id || data.name || "");
       var map = getSavedMap();
       var saved = !!map[key];
+
       var heroSave = document.getElementById("saveCompanyBtn");
       var stickySave = document.getElementById("stickySaveBtn");
+      var topSave = document.getElementById("topSaveCompanyBtn");
+
       if (heroSave) heroSave.textContent = saved ? "Saved" : "Save Company";
       if (stickySave) stickySave.textContent = saved ? "Saved" : "Save Company";
+      if (topSave) topSave.textContent = saved ? "✓ Saved" : "♡ Save";
     }
 
     function bindSaveButtons(data) {
       var key = String(data.public_slug || data.id || data.name || "");
+
       function toggleSaved() {
         var map = getSavedMap();
         map[key] = !map[key];
@@ -980,28 +1842,63 @@
         localStorage.setItem(SAVED_KEY, JSON.stringify(map));
         updateSaveButtons(data);
       }
+
       var heroSave = document.getElementById("saveCompanyBtn");
       var stickySave = document.getElementById("stickySaveBtn");
-      if (heroSave) heroSave.addEventListener("click", toggleSaved);
-      if (stickySave) stickySave.addEventListener("click", toggleSaved);
+      var topSave = document.getElementById("topSaveCompanyBtn");
+
+      if (heroSave) heroSave.onclick = toggleSaved;
+      if (stickySave) stickySave.onclick = toggleSaved;
+      if (topSave) topSave.onclick = toggleSaved;
+    }
+
+    function renderRatingHero(data) {
+      var host = document.getElementById("ratingHero");
+      host.textContent = "";
+
+      var reviewCount = Number(data.rating_count || data.reviews_count || data.review_count || 0);
+      var avgRating = Number(data.rating_avg || data.average_rating || data.rating || 0);
+
+      if (!reviewCount) {
+        var noRating = document.createElement("div");
+        noRating.innerHTML = "<span>★</span> New";
+        var small = document.createElement("small");
+        small.textContent = "No reviews yet";
+        noRating.appendChild(small);
+        host.appendChild(noRating);
+        return;
+      }
+
+      var wrap = document.createElement("div");
+      wrap.textContent = "★ " + avgRating.toFixed(1);
+
+      var small = document.createElement("small");
+      small.textContent = "(" + reviewCount + " reviews)";
+
+      wrap.prepend(document.createElement("span"));
+      wrap.querySelector("span").textContent = "★";
+      wrap.appendChild(small);
+      host.appendChild(wrap);
     }
 
     function renderCompany(data) {
+      currentCompanyData = data;
       setSeo(data);
+
+      var trust = data && data.trust ? data.trust : {};
+      var reputationScore = Number(data.reputation_score || 0);
+
       document.getElementById("companyName").textContent = data.name || "Company";
       document.getElementById("description").textContent = data.public_description || "No public description available yet.";
 
       const logo = document.getElementById("logo");
       logo.textContent = "";
+
       if (data.logo_url) {
         var logoImg = buildImage(data.logo_url, data.name || "Company logo");
-        if (logoImg) {
-          logo.appendChild(logoImg);
-        }
-      } else {
-        const initials = String(data.name || "CO").split(/\s+/).map((p) => p[0]).join("").slice(0, 2).toUpperCase() || "CO";
-        logo.textContent = initials;
+        if (logoImg) logo.appendChild(logoImg);
       }
+
       if (!logo.textContent && !logo.querySelector("img")) {
         const initials = String(data.name || "CO").split(/\s+/).map((p) => p[0]).join("").slice(0, 2).toUpperCase() || "CO";
         logo.textContent = initials;
@@ -1009,29 +1906,31 @@
 
       const cover = document.getElementById("cover");
       cover.textContent = "";
+
       if (data.cover_image_url) {
         var coverImg = buildImage(data.cover_image_url, (data.name || "Company") + " cover image");
-        if (coverImg) {
-          cover.appendChild(coverImg);
-        }
-      } else {
-        cover.textContent = data.name || "Company Profile";
+        if (coverImg) cover.appendChild(coverImg);
       }
+
       if (!cover.textContent && !cover.querySelector("img")) {
         cover.textContent = data.name || "Company Profile";
       }
 
+      renderRatingHero(data);
       renderHeroCoverage(data);
       renderServices(data);
       renderOverview(data);
+      renderReputationPanel(data);
+
       const trustHost = document.getElementById("trustBadges");
       trustHost.textContent = "";
-      const trust = data && data.trust ? data.trust : {};
+
       const insuranceStatus = String(trust.insurance_status || "").toLowerCase();
       const licenseStatus = String(trust.license_status || "").toLowerCase();
       const insuranceVerified = insuranceStatus === "verified";
       const licenseVerified = licenseStatus === "verified";
       const identityVerified = String((trust && trust.identity_status) || "").toLowerCase() === "verified";
+
       function addBadge(text, className){
         var el = document.createElement("span");
         var tone = className === "badge-green" ? "fx-badge--success" : (className === "badge-warn" ? "fx-badge--warning" : "fx-badge--info");
@@ -1039,6 +1938,7 @@
         el.textContent = text;
         trustHost.appendChild(el);
       }
+
       if (trust.verification_status === "verified") {
         addBadge("Verified Company", "badge-green");
       } else if (trust.verification_status === "pending") {
@@ -1046,55 +1946,65 @@
       } else {
         addBadge("Not Yet Verified", "badge-warn");
       }
-      if (insuranceVerified && trust.insurance_expired !== true) {
-        addBadge("Insured", "badge-blue");
-      }
-      if (licenseVerified && trust.license_expired !== true) {
-        addBadge("Licensed", "badge-blue");
-      }
-      if (identityVerified) {
-        addBadge("Identity Verified", "badge-blue");
-      }
+
+      if (insuranceVerified && trust.insurance_expired !== true) addBadge("Insured", "badge-blue");
+      if (licenseVerified && trust.license_expired !== true) addBadge("Licensed", "badge-blue");
+      if (identityVerified) addBadge("Identity Verified", "badge-blue");
+
       var trustLink = document.createElement("a");
       trustLink.className = "chip badge-slate fx-badge fx-badge--neutral";
       trustLink.setAttribute("href", "/trust.html");
       trustLink.textContent = "About trust badges";
       trustHost.appendChild(trustLink);
+
       var quickBadge = document.getElementById("heroQuickBadge");
       quickBadge.textContent = "";
+
       var quickVerified = document.createElement("span");
       quickVerified.className = "chip fx-badge " + (trust.verification_status === "verified" ? "fx-badge--success badge-green" : "fx-badge--warning badge-warn");
       quickVerified.textContent = trust.verification_status === "verified"
-        ? "Verified Business"
-        : (trust.verification_status === "pending" ? "Verification Pending" : "Not Yet Verified");
+        ? "Verified"
+        : (trust.verification_status === "pending" ? "Pending" : "Not Verified");
+
       quickBadge.appendChild(quickVerified);
+
       var summaryHost = document.getElementById("heroTrustSummary");
       summaryHost.textContent = "";
+
       var reviewCount = Number(data.rating_count || data.reviews_count || data.review_count || 0);
       var avgRating = Number(data.rating_avg || data.average_rating || data.rating || 0);
       var responseMinutes = Number(data.response_time_minutes || trust.response_time_minutes || 0);
       var completedJobs = Number(data.completed_jobs || data.completedJobs || data.jobs_completed || 0);
       var areasCount = Array.isArray(data.marketplace_service_areas) ? data.marketplace_service_areas.length : 0;
-      var reputationTier = reputationScore >= 85 ? "Excellent" : (reputationScore >= 70 ? "Strong" : (reputationScore > 0 ? "Developing" : "Neutral"));
+
       [
-        { label: "Rating", value: reviewCount > 0 ? (avgRating.toFixed(1) + "/5") : "No rating yet" },
-        { label: "Reviews", value: reviewCount > 0 ? String(reviewCount) : "No reviews" },
-        { label: "Response Time", value: responseMinutes > 0 ? ("~" + responseMinutes + " min") : "Not published" },
-        { label: "Completed Jobs", value: completedJobs > 0 ? String(completedJobs) : "Not published" },
-        { label: "Service Areas", value: areasCount > 0 ? String(areasCount) : "Not published" },
-        { label: "Reputation", value: reputationScore > 0 ? reputationScore.toFixed(2) : "Neutral" },
-        { label: "Reputation Tier", value: reputationTier }
+        { icon: "🛡️", label: "Trust", value: trust.verification_status === "verified" ? "Verified Company" : "Verification Pending" },
+        { icon: "★", label: "Rating", value: reviewCount > 0 ? (avgRating.toFixed(1) + " average") : "No rating yet" },
+        { icon: "⏱️", label: "Response Time", value: responseMinutes > 0 ? ("~" + responseMinutes + " min") : "Not published" },
+        { icon: "✓", label: "Completed Jobs", value: completedJobs > 0 ? String(completedJobs) : "Not published" },
+        { icon: "⌖", label: "Service Areas", value: areasCount > 0 ? String(areasCount) : "Not published" }
       ].forEach(function(item) {
         var card = document.createElement("article");
         card.className = "hero-trust-card fx-stat";
+
+        var icon = document.createElement("div");
+        icon.className = "hero-trust-icon";
+        icon.textContent = item.icon;
+
+        var text = document.createElement("div");
         var label = document.createElement("span");
         label.textContent = item.label;
+
         var value = document.createElement("strong");
         value.textContent = item.value;
-        card.appendChild(label);
-        card.appendChild(value);
+
+        text.appendChild(label);
+        text.appendChild(value);
+        card.appendChild(icon);
+        card.appendChild(text);
         summaryHost.appendChild(card);
       });
+
       renderCoverage(data);
       renderTrustDetails(data);
       renderCtas(data);
@@ -1106,6 +2016,7 @@
       const hours = document.getElementById("hours");
       const hoursList = Array.isArray(data.business_hours) ? data.business_hours : [];
       hours.textContent = "";
+
       if (hoursList.length) {
         hoursList.forEach(function(line) {
           var row = document.createElement("p");
@@ -1123,40 +2034,52 @@
       const contact = data.contact || {};
       var contactEl = document.getElementById("contact");
       contactEl.textContent = "";
+
       function appendKv(label, value) {
         var row = document.createElement("p");
         row.className = "kv";
+
         var strong = document.createElement("strong");
         strong.textContent = label + ":";
+
         row.appendChild(strong);
         row.appendChild(document.createTextNode(" " + safeText(value, "Not listed")));
         contactEl.appendChild(row);
       }
+
       function appendLink(label, value) {
         if (!isSafeHttpUrl(value)) return false;
+
         var row = document.createElement("p");
         row.className = "kv";
+
         var strong = document.createElement("strong");
         strong.textContent = label + ":";
+
         var link = document.createElement("a");
         link.className = "link";
         link.setAttribute("href", String(value));
         link.setAttribute("target", "_blank");
         link.setAttribute("rel", "noopener noreferrer");
         link.textContent = safeText(value, "");
+
         row.appendChild(strong);
         row.appendChild(document.createTextNode(" "));
         row.appendChild(link);
         contactEl.appendChild(row);
+
         return true;
       }
+
       appendKv("Phone", contact.phone);
       appendKv("Email", contact.email);
       appendKv("Address", contact.address);
+
       var hasLinks = false;
       hasLinks = appendLink("Website", data.website_url) || hasLinks;
       hasLinks = appendLink("Facebook", data.facebook_url) || hasLinks;
       hasLinks = appendLink("Instagram", data.instagram_url) || hasLinks;
+
       if (!hasLinks) {
         var noLinks = document.createElement("p");
         noLinks.className = "muted";
@@ -1167,14 +2090,14 @@
       const gallery = document.getElementById("gallery");
       const images = Array.isArray(data.gallery_urls) ? data.gallery_urls.filter(Boolean) : [];
       gallery.textContent = "";
+
       if (images.length) {
         images.forEach(function(url) {
           var image = buildImage(url, safeText(data.name, "Company") + " gallery image");
-          if (image) {
-            gallery.appendChild(image);
-          }
+          if (image) gallery.appendChild(image);
         });
       }
+
       if (!gallery.children.length) {
         var noGallery = document.createElement("p");
         noGallery.className = "muted";
@@ -1183,19 +2106,25 @@
       }
 
       loadReviews(data.id);
+
       var stickyRequestBtn = document.getElementById("stickyRequestBtn");
-      if (stickyRequestBtn) stickyRequestBtn.setAttribute("href", "/marketplace.html?company=" + encodeURIComponent(String(data.public_slug || "")));
+      if (stickyRequestBtn) {
+        stickyRequestBtn.setAttribute("href", "/marketplace.html?company=" + encodeURIComponent(String(data.public_slug || "")));
+      }
+
       var reportBtn = document.getElementById("reportCompanyBtn");
-      if (reportBtn) {
-        reportBtn.addEventListener("click", async function(){
-          try {
-            await submitCompanyReport(data.id);
-          } catch (err) {
-            alert(err && err.message ? err.message : "Unable to submit report.");
-          }
+      var topReportBtn = document.getElementById("topReportCompanyBtn");
+
+      function reportHandler(){
+        submitCompanyReport(data.id).catch(function(err) {
+          alert(err && err.message ? err.message : "Unable to submit report.");
         });
       }
-      setStatus("Public profile loaded.", "");
+
+      if (reportBtn) reportBtn.onclick = reportHandler;
+      if (topReportBtn) topReportBtn.onclick = reportHandler;
+
+      setStatus("");
     }
 
     async function loadProfile() {
@@ -1206,14 +2135,17 @@
 
       setLoadingState();
       setStatus("Loading public company profile...", "");
+
       try {
         const res = await fetch(API_BASE + "/companies/public/" + encodeURIComponent(slug));
         const data = await res.json().catch(() => ({}));
+
         if (!res.ok) throw new Error(data.error || "Unable to load company profile.");
+
         renderCompany(data);
       } catch (err) {
         setStatus(err.message || "Unable to load company profile.", "error");
-        setEmptyState(document.getElementById("services"), "Company profile is unavailable right now.");
+        setEmptyState(document.getElementById("servicesList"), "Company profile is unavailable right now.");
         setEmptyState(document.getElementById("serviceAreas"), "Coverage information is unavailable.");
         setEmptyState(document.getElementById("reviewsPreview"), "Reviews could not be loaded.");
         setEmptyState(document.getElementById("activityFeed"), "Activity feed is unavailable.");

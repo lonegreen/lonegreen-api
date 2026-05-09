@@ -620,6 +620,11 @@ if (!storedPassword) {
     }
 
     if (shouldUpgradePasswordHash) {
+      logger.warn("LOGIN_PASSWORD_PLAINTEXT_ROW", {
+        userId: user.id,
+        companyId: user.company_id != null ? user.company_id : null,
+        note: "users.password was not bcrypt; legacy compare succeeded and will be rehashed"
+      });
       try {
         const upgradedHash = await bcrypt.hash(String(password), 10);
         await pool.query(

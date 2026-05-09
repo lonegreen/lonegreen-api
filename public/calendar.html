@@ -1,23 +1,26 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Calendar</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="stylesheet" href="/css/brand.css">
-  <link rel="stylesheet" href="/app-shell.css">
+  <meta charset="UTF-8" />
+  <title>Calendar | FairLinx</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <link rel="stylesheet" href="/css/brand.css" />
+  <link rel="stylesheet" href="/app-shell.css" />
 
   <style>
     :root {
-      --bg: #f6f8f7;
-      --card: #ffffff;
-      --text: #17211b;
-      --muted: #6b7280;
-      --border: #e5e7eb;
-      --green: var(--brand-primary);
-      --green-dark: var(--brand-primary-hover);
-      --soft-green: #fff3e8;
-      --shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
-      --radius: 16px;
+      --fl-orange: #ff5a00;
+      --fl-orange-dark: #e64a00;
+      --fl-orange-soft: #fff1e8;
+      --fl-black: #111111;
+      --fl-gray: #2b2b2b;
+      --fl-muted: #6b7280;
+      --fl-border: #e5e7eb;
+      --fl-bg: #f6f7f8;
+      --fl-white: #ffffff;
+      --fl-shadow: 0 18px 48px rgba(17, 17, 17, 0.08);
+      --fl-radius: 18px;
     }
 
     * {
@@ -25,151 +28,291 @@
     }
 
     body {
-      font-family: Arial, Helvetica, sans-serif;
       margin: 0;
-      background: var(--bg);
-      color: var(--text);
+      font-family: Inter, Arial, Helvetica, sans-serif;
+      background: var(--fl-bg);
+      color: var(--fl-black);
     }
 
-    .topbar {
+    button {
+      font: inherit;
+    }
+
+    .page-shell {
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: 260px minmax(0, 1fr);
+      background: var(--fl-bg);
+    }
+
+    .sidebar {
+      background: var(--fl-white);
+      border-right: 1px solid var(--fl-border);
+      padding: 26px 22px;
+      display: flex;
+      flex-direction: column;
+      gap: 28px;
+    }
+
+    .brand {
       display: flex;
       align-items: center;
       gap: 12px;
-      padding: 16px 20px;
-      background: rgba(255,255,255,0.92);
-      border-bottom: 1px solid var(--border);
+      font-size: 24px;
+      font-weight: 900;
+      letter-spacing: -0.06em;
+    }
+
+    .brand-mark {
+      width: 44px;
+      height: 44px;
+      display: grid;
+      place-items: center;
+      border-radius: 14px;
+      background: linear-gradient(135deg, var(--fl-orange), var(--fl-orange-dark));
+      color: #fff;
+      font-weight: 950;
+      transform: skew(-8deg);
+      box-shadow: 0 14px 30px rgba(255, 90, 0, 0.24);
+    }
+
+    .brand strong {
+      color: var(--fl-orange);
+    }
+
+    .side-nav {
+      display: grid;
+      gap: 8px;
+    }
+
+    .side-nav a {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-height: 48px;
+      padding: 0 14px;
+      border-radius: 14px;
+      color: var(--fl-black);
+      text-decoration: none;
+      font-weight: 750;
+      font-size: 14px;
+    }
+
+    .side-nav a.active {
+      color: var(--fl-orange);
+      background: linear-gradient(90deg, rgba(255, 90, 0, 0.14), rgba(255, 90, 0, 0.04));
+      box-shadow: inset 3px 0 0 var(--fl-orange);
+    }
+
+    .side-nav svg {
+      width: 20px;
+      height: 20px;
+      flex: 0 0 auto;
+    }
+
+    .side-user {
+      margin-top: auto;
+      padding-top: 18px;
+      border-top: 1px solid var(--fl-border);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .avatar {
+      width: 42px;
+      height: 42px;
+      border-radius: 999px;
+      background: linear-gradient(135deg, var(--fl-orange), #111);
+      color: #fff;
+      display: grid;
+      place-items: center;
+      font-weight: 900;
+    }
+
+    .side-user b {
+      display: block;
+      font-size: 14px;
+    }
+
+    .side-user span {
+      color: var(--fl-muted);
+      font-size: 12px;
+    }
+
+    .main {
+      min-width: 0;
+    }
+
+    .topbar {
+      height: 112px;
+      background: rgba(255, 255, 255, 0.92);
+      border-bottom: 1px solid var(--fl-border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      padding: 0 38px;
       position: sticky;
       top: 0;
-      z-index: 10;
-      backdrop-filter: blur(12px);
+      z-index: 20;
+      backdrop-filter: blur(16px);
     }
 
     .topbar h2 {
       margin: 0;
-      flex: 1;
-      font-size: 22px;
-      font-weight: 800;
-      letter-spacing: -0.03em;
+      font-size: 30px;
+      letter-spacing: -0.05em;
     }
 
     .topbar .sub {
       display: block;
-      margin-top: 3px;
-      font-size: 12px;
-      color: var(--muted);
-      font-weight: 500;
+      margin-top: 6px;
+      color: var(--fl-muted);
+      font-size: 14px;
+      font-weight: 600;
       letter-spacing: normal;
     }
 
+    .top-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .btn,
     .topbar button {
-      padding: 9px 13px;
-      border: 1px solid var(--border);
+      min-height: 44px;
+      padding: 0 18px;
       border-radius: 12px;
+      border: 1px solid var(--fl-border);
+      background: #fff;
+      color: var(--fl-black);
       cursor: pointer;
-      background: white;
-      color: var(--text);
-      font-weight: 700;
+      font-weight: 850;
       transition: 0.18s ease;
       white-space: nowrap;
     }
 
+    .btn:hover,
     .topbar button:hover {
       transform: translateY(-1px);
-      box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08);
+      box-shadow: 0 10px 24px rgba(17, 17, 17, 0.08);
     }
 
+    .btn.primary,
     .topbar button.primary {
-      background: var(--green);
-      color: white;
-      border-color: var(--green);
+      color: #fff;
+      border-color: transparent;
+      background: linear-gradient(135deg, var(--fl-orange), var(--fl-orange-dark));
+      box-shadow: 0 14px 28px rgba(255, 90, 0, 0.22);
     }
 
-    .topbar button.primary:hover { background: var(--green-dark); }
-
-    .page {
-      padding: 18px;
+    .content {
+      padding: 26px 38px 34px;
     }
 
     .calendar-shell {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
+      background: var(--fl-white);
+      border: 1px solid var(--fl-border);
+      border-radius: var(--fl-radius);
+      box-shadow: var(--fl-shadow);
       overflow: hidden;
     }
 
     .calendar-toolbar {
+      min-height: 88px;
+      padding: 18px 22px;
+      border-bottom: 1px solid var(--fl-border);
       display: flex;
       align-items: center;
       justify-content: space-between;
+      gap: 18px;
+      background: linear-gradient(180deg, #fff, #fbfbfb);
+    }
+
+    .calendar-left,
+    .calendar-right {
+      display: flex;
+      align-items: center;
       gap: 12px;
-      padding: 14px 16px;
-      border-bottom: 1px solid var(--border);
-      background: linear-gradient(180deg, #ffffff, #fbfdfc);
+      flex-wrap: wrap;
     }
 
     .calendar-title {
-      font-size: 14px;
-      font-weight: 800;
-    }
-
-    .calendar-note {
-      font-size: 12px;
-      color: var(--muted);
-      margin-top: 3px;
+      min-width: 230px;
+      text-align: center;
+      font-size: 22px;
+      font-weight: 900;
+      letter-spacing: -0.04em;
     }
 
     .legend {
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 12px;
       flex-wrap: wrap;
       justify-content: flex-end;
     }
 
     .legend span {
-      font-size: 11px;
-      color: var(--muted);
-      background: #f9fafb;
-      border: 1px solid var(--border);
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      color: var(--fl-gray);
+      font-size: 13px;
+      font-weight: 750;
+    }
+
+    .dot {
+      width: 11px;
+      height: 11px;
       border-radius: 999px;
-      padding: 5px 8px;
+      background: var(--fl-orange);
+    }
+
+    .dot.confirmed { background: #16a34a; }
+    .dot.progress { background: #2563eb; }
+    .dot.done { background: #047857; }
+
+    .calendar-state {
+      padding: 24px;
+      text-align: center;
+      border-bottom: 1px solid var(--fl-border);
+      background: #fff;
+      color: var(--fl-muted);
+    }
+
+    .calendar-state strong {
+      display: block;
+      margin-bottom: 4px;
+      color: var(--fl-black);
+    }
+
+    .hidden {
+      display: none;
     }
 
     .calendar-wrap {
-      overflow-x: auto;
       width: 100%;
-      position: relative;
+      overflow: auto;
     }
 
     .grid {
       display: grid;
-      grid-template-columns: 82px repeat(7, minmax(145px, 1fr));
-      min-width: 1120px;
-    }
-
-    .cell {
-      border-right: 1px solid var(--border);
-      border-bottom: 1px solid var(--border);
-      min-height: 94px;
-      position: relative;
-      background: white;
-      padding: 5px;
-    }
-
-    .cell:hover {
-      background: #fbfdfc;
+      grid-template-columns: 96px repeat(7, minmax(172px, 1fr));
+      min-width: 1320px;
     }
 
     .header {
-      background: #f9fafb;
-      color: var(--text);
+      min-height: 76px;
+      padding: 16px 10px;
+      border-right: 1px solid var(--fl-border);
+      border-bottom: 1px solid var(--fl-border);
+      background: #fff;
       text-align: center;
-      padding: 12px 8px;
-      font-weight: 800;
-      min-height: 60px;
-      border-right: 1px solid var(--border);
-      border-bottom: 1px solid var(--border);
+      font-weight: 950;
+      font-size: 18px;
       position: sticky;
       top: 0;
       z-index: 2;
@@ -178,38 +321,64 @@
     .header small {
       display: block;
       margin-top: 4px;
-      font-weight: 600;
-      color: var(--muted);
-      opacity: 1;
+      color: var(--fl-muted);
+      font-size: 13px;
+      font-weight: 700;
     }
 
-    .header.today { background: var(--soft-green); color: var(--green); }
+    .header.today {
+      color: var(--fl-orange);
+      background: linear-gradient(180deg, var(--fl-orange-soft), #fff);
+      box-shadow: inset 0 3px 0 var(--fl-orange);
+    }
+
+    .cell {
+      min-height: 78px;
+      padding: 8px;
+      border-right: 1px solid var(--fl-border);
+      border-bottom: 1px dashed var(--fl-border);
+      background: #fff;
+      position: relative;
+    }
+
+    .cell:hover {
+      background: #fffaf6;
+    }
 
     .time {
-      text-align: center;
-      padding-top: 34px;
-      font-weight: 800;
-      font-size: 12px;
-      color: var(--muted);
-      background: #f9fafb;
       position: sticky;
       left: 0;
       z-index: 1;
+      background: #fbfbfb;
+      text-align: center;
+      padding-top: 22px;
+      color: var(--fl-black);
+      font-size: 14px;
+      font-weight: 900;
+      border-bottom: 1px solid var(--fl-border);
     }
 
     .job {
       position: relative;
       display: block;
-      margin-bottom: 5px;
-      padding: 8px;
-      color: white;
+      margin-bottom: 7px;
+      padding: 11px 12px;
       border-radius: 12px;
+      color: #fff;
       cursor: grab;
       font-size: 12px;
       line-height: 1.35;
-      box-shadow: 0 6px 15px rgba(15, 23, 42, 0.16);
+      box-shadow: 0 12px 24px rgba(17, 17, 17, 0.18);
       user-select: none;
       overflow: hidden;
+    }
+
+    .job::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(255,255,255,0.2), transparent 45%);
+      pointer-events: none;
     }
 
     .job:active {
@@ -217,69 +386,83 @@
     }
 
     .job b {
-      font-size: 12.5px;
+      display: block;
+      margin-bottom: 4px;
+      font-size: 13px;
+      font-weight: 950;
     }
 
     .muted {
-      opacity: 0.92;
+      margin-top: 4px;
+      opacity: 0.94;
       font-size: 11px;
-      margin-top: 3px;
+      font-weight: 700;
     }
 
-    .scheduled { background: #f59e0b; }
-    .confirmed { background: var(--brand-primary); }
-    .assigned { background: var(--brand-primary-light); }
-    .en_route { background: var(--brand-primary-light); }
-    .arrived { background: var(--brand-primary-light); }
-    .in_progress { background: var(--brand-primary-light); }
-    .completed { background: #16a34a; }
-    .rescheduled { background: #0891b2; }
-    .cancelled { background: #dc2626; }
-    .skipped { background: #6b7280; }
-    .no_access { background: #b91c1c; }
-    .no_show { background: #be123c; }
-    .weather_delay { background: var(--brand-primary-hover); }
-    .needs_followup { background: #c2410c; }
-    .needs_rework { background: #7c2d12; }
-    .draft { background: #6b7280; }
-    .quoted { background: #d97706; }
-    .approved { background: #15803d; }
-    .rejected { background: #991b1b; }
+    .scheduled { background: linear-gradient(135deg, #fb923c, #f97316); }
+    .confirmed { background: linear-gradient(135deg, #22c55e, #15803d); }
+    .assigned { background: linear-gradient(135deg, #14b8a6, #0f766e); }
+    .en_route { background: linear-gradient(135deg, #3b82f6, #1d4ed8); }
+    .arrived { background: linear-gradient(135deg, #8b5cf6, #6d28d9); }
+    .in_progress { background: linear-gradient(135deg, #2563eb, #1d4ed8); }
+    .completed { background: linear-gradient(135deg, #16a34a, #047857); }
+    .rescheduled { background: linear-gradient(135deg, #0891b2, #0e7490); }
+    .cancelled { background: linear-gradient(135deg, #ef4444, #dc2626); }
+    .skipped { background: linear-gradient(135deg, #737373, #404040); }
+    .no_access { background: linear-gradient(135deg, #b91c1c, #7f1d1d); }
+    .no_show { background: linear-gradient(135deg, #e11d48, #be123c); }
+    .weather_delay { background: linear-gradient(135deg, #06b6d4, #0e7490); }
+    .needs_followup { background: linear-gradient(135deg, #ff5a00, #dc2626); }
+    .needs_rework { background: linear-gradient(135deg, #92400e, #7c2d12); }
+    .draft { background: linear-gradient(135deg, #9ca3af, #6b7280); }
+    .quoted { background: linear-gradient(135deg, #f59e0b, #d97706); }
+    .approved { background: linear-gradient(135deg, #22c55e, #15803d); }
+    .rejected { background: linear-gradient(135deg, #ef4444, #991b1b); }
 
-    .calendar-state {
-      padding: 24px;
-      text-align: center;
-      color: var(--muted);
-      font-size: 14px;
-      border-bottom: 1px solid var(--border);
-      background: white;
+    .status-strip {
+      display: flex;
+      gap: 18px;
+      flex-wrap: wrap;
+      padding: 18px 24px;
+      border-top: 1px solid var(--fl-border);
+      background: #fff;
     }
 
-    .calendar-state strong {
-      display: block;
-      color: var(--text);
-      font-size: 15px;
-      margin-bottom: 4px;
+    .status-strip span {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      font-size: 12px;
+      color: var(--fl-gray);
+      font-weight: 750;
     }
 
-    .hidden {
-      display: none;
-    }
+    @media (max-width: 1080px) {
+      .page-shell {
+        grid-template-columns: 1fr;
+      }
 
-    @media (max-width: 760px) {
+      .sidebar {
+        display: none;
+      }
+
       .topbar {
-        padding: 12px;
-        flex-wrap: wrap;
+        height: auto;
+        padding: 18px;
+        flex-direction: column;
+        align-items: stretch;
       }
 
-      .topbar h2 {
-        order: -1;
+      .top-actions {
         width: 100%;
-        flex: none;
       }
 
-      .page {
-        padding: 10px;
+      .top-actions .btn {
+        flex: 1;
+      }
+
+      .content {
+        padding: 14px;
       }
 
       .calendar-toolbar {
@@ -287,395 +470,483 @@
         flex-direction: column;
       }
 
-      .legend {
-        justify-content: flex-start;
+      .calendar-title {
+        text-align: left;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .calendar-left,
+      .calendar-right,
+      .top-actions {
+        flex-direction: column;
+        align-items: stretch;
       }
 
+      .btn,
       .topbar button {
-        flex: 1;
+        width: 100%;
       }
     }
   </style>
+
   <script src="/js/role-guard.js"></script>
 </head>
 
 <body>
   <script>
-(function(){
-  const token = localStorage.getItem("token");
-  let user = null;
+    (function(){
+      const token = localStorage.getItem("token");
+      let user = null;
 
-  try {
-    user = JSON.parse(localStorage.getItem("user") || "null");
-  } catch {
-    user = null;
-  }
-
-  if (!token || !user) {
-    window.top.location.href = "/login.html";
-    return;
-  }
-
-  const role = String(user.role || "").toLowerCase();
-
-  if (role === "worker") {
-    window.top.location.href = "/control.html";
-    return;
-  }
-})();
-</script>
-  
-
-<script>
-const API = "";
-
-function getToken(){
-  return localStorage.getItem("token");
-}
-
-function getUser(){
-  try {
-    return JSON.parse(localStorage.getItem("user"));
-  } catch(e){
-    return null;
-  }
-}
-
-const token = getToken();
-const user = getUser();
-
-if(!token || !user || !user.company_id){
-  localStorage.setItem("redirectAfterLogin", "calendar.html");
-  window.location.href = "/login.html";
-}
-
-function formatDateLocal(date){
-  return date.getFullYear() + "-" +
-    String(date.getMonth() + 1).padStart(2, "0") + "-" +
-    String(date.getDate()).padStart(2, "0");
-}
-
-async function apiFetch(url, options = {}){
-  const res = await fetch(url, {
-    ...options,
-    headers: {
-      ...(options.headers || {}),
-      Authorization: "Bearer " + token
-    }
-  });
-
-  if(res.status === 401){
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-    localStorage.setItem("redirectAfterLogin", "calendar.html");
-    window.location.href = "/login.html";
-    throw new Error("Unauthorized");
-  }
-
-  return res;
-}
-
-let draggedJob = null;
-let currentDate = new Date();
-
-const days = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
-const DEFAULT_START_HOUR = 7;
-const DEFAULT_END_HOUR = 19;
-
-function getJobHour(job) {
-  const raw = job && job.start_time ? String(job.start_time) : "";
-  const hour = parseInt(raw.split(":")[0], 10);
-  return Number.isFinite(hour) ? hour : null;
-}
-
-function getSmartHours(jobs) {
-  let startHour = DEFAULT_START_HOUR;
-  let endHour = DEFAULT_END_HOUR;
-
-  (Array.isArray(jobs) ? jobs : []).forEach(job => {
-    const hour = getJobHour(job);
-
-    if (hour === null) return;
-
-    startHour = Math.min(startHour, hour);
-    endHour = Math.max(endHour, Math.min(hour + 1, 23));
-  });
-
-  return Array.from(
-    { length: endHour - startHour + 1 },
-    (_, i) => startHour + i
-  );
-}
-
-function formatHourLabel(hour) {
-  return new Date(2000, 0, 1, hour, 0).toLocaleTimeString("en-US", {
-    hour: "numeric",
-    hour12: true
-  });
-}
-
-function normalizeDateString(dateValue){
-  if(!dateValue) return "";
-  const d = new Date(dateValue);
-  if(Number.isNaN(d.getTime())) return "";
-  return formatDateLocal(d);
-}
-
-function escapeHtml(value){
-  return String(value || "")
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
-}
-
-function safeStatusClass(status){
-  return String(status || "scheduled")
-    .toLowerCase()
-    .replace(/[^a-z0-9_]/g, "_");
-}
-
-function getWeekStart(){
-  const date = new Date(currentDate);
-  date.setDate(currentDate.getDate() - currentDate.getDay());
-  return date;
-}
-
-function updateWeekLabel(){
-  const start = getWeekStart();
-  const end = new Date(start);
-  end.setDate(start.getDate() + 6);
-
-  const label = document.getElementById("weekLabel");
-  if(label){
-    label.textContent = formatDateLocal(start) + " to " + formatDateLocal(end);
-  }
-}
-
-function setState(type, title, message){
-  const state = document.getElementById("calendarState");
-  if(!state) return;
-
-  if(!type){
-    state.classList.add("hidden");
-    state.innerHTML = "";
-    return;
-  }
-
-  state.classList.remove("hidden");
-  state.innerHTML = `
-    <strong>${escapeHtml(title)}</strong>
-    <span>${escapeHtml(message)}</span>
-  `;
-}
-
-function buildJobHtml(j){
-  const workerText = j.worker_name || (j.worker_id ? "#" + j.worker_id : "No Worker");
-  const status = j.status || "scheduled";
-  const statusClass = safeStatusClass(status);
-  const jobId = Number(j.id);
-
-  return `
-    <div class="job ${statusClass}" draggable="true" data-job-id="${jobId}">
-      <div><b>${escapeHtml(j.client_name || "No Client")}</b></div>
-      <div>${escapeHtml(j.service || "")}</div>
-      <div class="muted">${escapeHtml(status)} • ${escapeHtml(workerText)}</div>
-    </div>
-  `;
-}
-
-async function load(){
-  updateWeekLabel();
-  setState("loading", "Loading calendar", "Please wait while jobs are being loaded.");
-
-  try {
-    const res = await apiFetch(API + "/ops/calendar");
-
-    if(!res.ok){
-      const text = await res.text();
-      setState("error", "Error loading calendar", text || "The calendar could not be loaded.");
-      return;
-    }
-
-    const data = await res.json();
-    const jobs = Array.isArray(data) ? data : (Array.isArray(data.jobs) ? data.jobs : []);
-    const smartHours = getSmartHours(jobs);
-
-    const grid = document.getElementById("calendar");
-    grid.innerHTML = "";
-
-    const empty = document.createElement("div");
-    empty.className = "header";
-    grid.appendChild(empty);
-
-    const todayStr = formatDateLocal(new Date());
-
-    days.forEach((d, i) => {
-      const date = getWeekStart();
-      date.setDate(date.getDate() + i);
-
-      const dateStr = formatDateLocal(date);
-
-      const header = document.createElement("div");
-      header.className = "header" + (dateStr === todayStr ? " today" : "");
-      header.innerHTML = `
-        ${escapeHtml(d)}<br>
-        <small>${escapeHtml(dateStr)}</small>
-      `;
-      grid.appendChild(header);
-    });
-
-    smartHours.forEach(h => {
-      const timeCell = document.createElement("div");
-      timeCell.className = "cell time";
-      timeCell.textContent = formatHourLabel(h);
-      grid.appendChild(timeCell);
-
-      for(let d = 0; d < 7; d++){
-        const date = getWeekStart();
-        date.setDate(date.getDate() + d);
-
-        const dateStr = formatDateLocal(date);
-
-        const cellJobs = jobs.filter(j => {
-          if(!j.date || !j.start_time) return false;
-
-          const jobDate = normalizeDateString(j.date);
-          const jobHour = parseInt(String(j.start_time).split(":")[0], 10);
-
-          return jobDate === dateStr && jobHour === h;
-        });
-
-        const cell = document.createElement("div");
-        cell.className = "cell";
-        cell.ondragover = allowDrop;
-        cell.ondrop = (e) => drop(e, dateStr, h);
-
-        cell.innerHTML = cellJobs.map(buildJobHtml).join("");
-        cell.querySelectorAll(".job[data-job-id]").forEach((jobEl) => {
-          jobEl.addEventListener("dragstart", () => {
-            drag(Number(jobEl.dataset.jobId));
-          });
-        });
-        grid.appendChild(cell);
+      try {
+        user = JSON.parse(localStorage.getItem("user") || "null");
+      } catch {
+        user = null;
       }
-    });
 
-    if(jobs.length === 0){
-      setState("empty", "No jobs found", "There are no jobs available on the calendar yet.");
-    } else {
-      setState(null);
+      if (!token || !user) {
+        window.top.location.href = "/login.html";
+        return;
+      }
+
+      const role = String(user.role || "").toLowerCase();
+
+      if (role === "worker") {
+        window.top.location.href = "/control.html";
+        return;
+      }
+    })();
+  </script>
+
+  <script>
+    const API = "";
+
+    function getToken(){
+      return localStorage.getItem("token");
     }
 
-  } catch(err){
-    console.log("CALENDAR LOAD ERROR:", err);
-    setState("error", "Failed to load calendar", "Check the server connection and try again.");
-  }
-}
-
-function drag(id){
-  draggedJob = id;
-}
-
-function allowDrop(e){
-  e.preventDefault();
-}
-
-async function drop(e, date, hour){
-  e.preventDefault();
-
-  if(!draggedJob) return;
-
-  const start = hour.toString().padStart(2, "0") + ":00";
-  const endHour = Math.min(hour + 1, 23);
-  const end = endHour.toString().padStart(2, "0") + ":00";
-
-  try {
-    const res = await apiFetch(API + "/workflow/jobs/" + draggedJob, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        date,
-        start_time: start,
-        end_time: end
-      })
-    });
-
-    if(!res.ok){
-      const text = await res.text();
-      alert("Update failed: " + text);
-      return;
+    function getUser(){
+      try {
+        return JSON.parse(localStorage.getItem("user"));
+      } catch(e){
+        return null;
+      }
     }
 
-    draggedJob = null;
-    load();
-  } catch(err){
-    console.log("DROP UPDATE ERROR:", err);
-    alert("Failed to move job");
-  }
-}
+    const token = getToken();
+    const user = getUser();
 
-function prevWeek(){
-  currentDate.setDate(currentDate.getDate() - 7);
-  load();
-}
+    if(!token || !user || !user.company_id){
+      localStorage.setItem("redirectAfterLogin", "calendar.html");
+      window.location.href = "/login.html";
+    }
 
-function nextWeek(){
-  currentDate.setDate(currentDate.getDate() + 7);
-  load();
-}
+    function formatDateLocal(date){
+      return date.getFullYear() + "-" +
+        String(date.getMonth() + 1).padStart(2, "0") + "-" +
+        String(date.getDate()).padStart(2, "0");
+    }
 
-function today(){
-  currentDate = new Date();
-  load();
-}
+    async function apiFetch(url, options = {}){
+      const res = await fetch(url, {
+        ...options,
+        headers: {
+          ...(options.headers || {}),
+          Authorization: "Bearer " + token
+        }
+      });
 
-document.addEventListener("DOMContentLoaded", function(){
-  document.getElementById("calPrevWeek").addEventListener("click", prevWeek);
-  document.getElementById("calToday").addEventListener("click", today);
-  document.getElementById("calNextWeek").addEventListener("click", nextWeek);
-  load();
-});
-</script>
+      if(res.status === 401){
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+        localStorage.setItem("redirectAfterLogin", "calendar.html");
+        window.location.href = "/login.html";
+        throw new Error("Unauthorized");
+      }
 
-<div class="topbar fx-toolbar">
-  <button type="button" class="fx-btn fx-btn--secondary" id="calPrevWeek">⬅ Prev</button>
+      return res;
+    }
 
-  <h2>
-    Calendar
-    <span class="sub" id="weekLabel">Loading week...</span>
-  </h2>
+    let draggedJob = null;
+    let currentDate = new Date();
 
-  <button type="button" class="fx-btn fx-btn--secondary" id="calToday">Today</button>
-  <button type="button" class="primary fx-btn fx-btn--primary" id="calNextWeek">Next ➡</button>
-</div>
+    const days = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
+    const DEFAULT_START_HOUR = 7;
+    const DEFAULT_END_HOUR = 19;
 
-<div class="page fx-layout-public">
-  <div class="calendar-shell fx-card">
-    <div class="calendar-toolbar fx-toolbar">
-      <div>
-        <div class="calendar-title">Weekly Schedule</div>
-        <div class="calendar-note">Calendar adjusts automatically based on scheduled jobs.</div>
+    function getJobHour(job) {
+      const raw = job && job.start_time ? String(job.start_time) : "";
+      const hour = parseInt(raw.split(":")[0], 10);
+      return Number.isFinite(hour) ? hour : null;
+    }
+
+    function getSmartHours(jobs) {
+      let startHour = DEFAULT_START_HOUR;
+      let endHour = DEFAULT_END_HOUR;
+
+      (Array.isArray(jobs) ? jobs : []).forEach(job => {
+        const hour = getJobHour(job);
+        if (hour === null) return;
+
+        startHour = Math.min(startHour, hour);
+        endHour = Math.max(endHour, Math.min(hour + 1, 23));
+      });
+
+      return Array.from(
+        { length: endHour - startHour + 1 },
+        (_, i) => startHour + i
+      );
+    }
+
+    function formatHourLabel(hour) {
+      return new Date(2000, 0, 1, hour, 0).toLocaleTimeString("en-US", {
+        hour: "numeric",
+        hour12: true
+      });
+    }
+
+    function normalizeDateString(dateValue){
+      if(!dateValue) return "";
+      const d = new Date(dateValue);
+      if(Number.isNaN(d.getTime())) return "";
+      return formatDateLocal(d);
+    }
+
+    function escapeHtml(value){
+      return String(value || "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    function safeStatusClass(status){
+      return String(status || "scheduled")
+        .toLowerCase()
+        .replace(/[^a-z0-9_]/g, "_");
+    }
+
+    function getWeekStart(){
+      const date = new Date(currentDate);
+      const day = date.getDay();
+      const diff = day === 0 ? -6 : 1 - day;
+      date.setDate(date.getDate() + diff);
+      date.setHours(0, 0, 0, 0);
+      return date;
+    }
+
+    function updateWeekLabel(){
+      const start = getWeekStart();
+      const end = new Date(start);
+      end.setDate(start.getDate() + 6);
+
+      const label = document.getElementById("weekLabel");
+      if(label){
+        label.textContent = formatDateLocal(start) + " to " + formatDateLocal(end);
+      }
+
+      const title = document.getElementById("calendarRangeTitle");
+      if(title){
+        title.textContent = start.toLocaleDateString("en-US", {
+          month: "short",
+          day: "numeric"
+        }) + " – " + end.toLocaleDateString("en-US", {
+          month: "short",
+          day: "numeric",
+          year: "numeric"
+        });
+      }
+    }
+
+    function setState(type, title, message){
+      const state = document.getElementById("calendarState");
+      if(!state) return;
+
+      if(!type){
+        state.classList.add("hidden");
+        state.innerHTML = "";
+        return;
+      }
+
+      state.classList.remove("hidden");
+      state.innerHTML = `
+        <strong>${escapeHtml(title)}</strong>
+        <span>${escapeHtml(message)}</span>
+      `;
+    }
+
+    function buildJobHtml(j){
+      const workerText = j.worker_name || (j.worker_id ? "#" + j.worker_id : "No Worker");
+      const status = j.status || "scheduled";
+      const statusClass = safeStatusClass(status);
+      const jobId = Number(j.id);
+      const timeText = j.start_time ? String(j.start_time).slice(0, 5) : "";
+
+      return `
+        <div class="job ${statusClass}" draggable="true" data-job-id="${jobId}">
+          <b>${escapeHtml(timeText)} ${escapeHtml(j.service || "Scheduled Job")}</b>
+          <div>${escapeHtml(j.client_name || "No Client")}</div>
+          <div class="muted">${escapeHtml(status)} • ${escapeHtml(workerText)} • #${escapeHtml(jobId)}</div>
+        </div>
+      `;
+    }
+
+    async function load(){
+      updateWeekLabel();
+      setState("loading", "Loading calendar", "Please wait while jobs are being loaded.");
+
+      try {
+        const res = await apiFetch(API + "/ops/calendar");
+
+        if(!res.ok){
+          const text = await res.text();
+          setState("error", "Error loading calendar", text || "The calendar could not be loaded.");
+          return;
+        }
+
+        const data = await res.json();
+        const jobs = Array.isArray(data) ? data : (Array.isArray(data.jobs) ? data.jobs : []);
+        const smartHours = getSmartHours(jobs);
+
+        const grid = document.getElementById("calendar");
+        grid.innerHTML = "";
+
+        const empty = document.createElement("div");
+        empty.className = "header";
+        empty.innerHTML = "Time<small>Local</small>";
+        grid.appendChild(empty);
+
+        const todayStr = formatDateLocal(new Date());
+
+        days.forEach((d, i) => {
+          const date = getWeekStart();
+          date.setDate(date.getDate() + i);
+
+          const dateStr = formatDateLocal(date);
+
+          const header = document.createElement("div");
+          header.className = "header" + (dateStr === todayStr ? " today" : "");
+          header.innerHTML = `
+            ${escapeHtml(d)}
+            <small>${escapeHtml(date.toLocaleDateString("en-US", { month: "short", day: "numeric" }))}</small>
+          `;
+          grid.appendChild(header);
+        });
+
+        smartHours.forEach(h => {
+          const timeCell = document.createElement("div");
+          timeCell.className = "cell time";
+          timeCell.textContent = formatHourLabel(h);
+          grid.appendChild(timeCell);
+
+          for(let d = 0; d < 7; d++){
+            const date = getWeekStart();
+            date.setDate(date.getDate() + d);
+
+            const dateStr = formatDateLocal(date);
+
+            const cellJobs = jobs.filter(j => {
+              if(!j.date || !j.start_time) return false;
+
+              const jobDate = normalizeDateString(j.date);
+              const jobHour = parseInt(String(j.start_time).split(":")[0], 10);
+
+              return jobDate === dateStr && jobHour === h;
+            });
+
+            const cell = document.createElement("div");
+            cell.className = "cell";
+            cell.ondragover = allowDrop;
+            cell.ondrop = (e) => drop(e, dateStr, h);
+
+            cell.innerHTML = cellJobs.map(buildJobHtml).join("");
+            cell.querySelectorAll(".job[data-job-id]").forEach((jobEl) => {
+              jobEl.addEventListener("dragstart", () => {
+                drag(Number(jobEl.dataset.jobId));
+              });
+            });
+
+            grid.appendChild(cell);
+          }
+        });
+
+        if(jobs.length === 0){
+          setState("empty", "No jobs found", "There are no jobs available on the calendar yet.");
+        } else {
+          setState(null);
+        }
+
+      } catch(err){
+        console.log("CALENDAR LOAD ERROR:", err);
+        setState("error", "Failed to load calendar", "Check the server connection and try again.");
+      }
+    }
+
+    function drag(id){
+      draggedJob = id;
+    }
+
+    function allowDrop(e){
+      e.preventDefault();
+    }
+
+    async function drop(e, date, hour){
+      e.preventDefault();
+
+      if(!draggedJob) return;
+
+      const start = hour.toString().padStart(2, "0") + ":00";
+      const endHour = Math.min(hour + 1, 23);
+      const end = endHour.toString().padStart(2, "0") + ":00";
+
+      try {
+        const res = await apiFetch(API + "/workflow/jobs/" + draggedJob, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            date,
+            start_time: start,
+            end_time: end
+          })
+        });
+
+        if(!res.ok){
+          const text = await res.text();
+          alert("Update failed: " + text);
+          return;
+        }
+
+        draggedJob = null;
+        load();
+      } catch(err){
+        console.log("DROP UPDATE ERROR:", err);
+        alert("Failed to move job");
+      }
+    }
+
+    function prevWeek(){
+      currentDate.setDate(currentDate.getDate() - 7);
+      load();
+    }
+
+    function nextWeek(){
+      currentDate.setDate(currentDate.getDate() + 7);
+      load();
+    }
+
+    function today(){
+      currentDate = new Date();
+      load();
+    }
+
+    document.addEventListener("DOMContentLoaded", function(){
+      document.getElementById("calPrevWeek").addEventListener("click", prevWeek);
+      document.getElementById("calToday").addEventListener("click", today);
+      document.getElementById("calNextWeek").addEventListener("click", nextWeek);
+      load();
+    });
+  </script>
+
+  <div class="page-shell">
+    <aside class="sidebar">
+      <div class="brand">
+        <span class="brand-mark">FL</span>
+        <span>Fair<strong>Linx</strong></span>
       </div>
 
-      <div class="legend">
-        <span>Scheduled</span>
-        <span>Assigned</span>
-        <span>In Progress</span>
-        <span>Completed</span>
+      <nav class="side-nav" aria-label="Sidebar navigation">
+        <a href="/dashboard.html">⌂ Dashboard</a>
+        <a href="/jobs.html">▦ Jobs</a>
+        <a href="/messages.html">✉ Inbox</a>
+        <a href="/clients.html">◎ Customers</a>
+        <a href="/calendar.html" class="active">▣ Calendar</a>
+        <a href="/invoices.html">▤ Invoices</a>
+        <a href="/estimates.html">▧ Estimates</a>
+        <a href="/reviews.html">☆ Reviews</a>
+        <a href="/workers.html">◉ Team</a>
+        <a href="/analytics.html">▥ Reports</a>
+        <a href="/settings.html">⚙ Settings</a>
+      </nav>
+
+      <div class="side-user">
+        <div class="avatar">FL</div>
+        <div>
+          <b>FairLinx</b>
+          <span>Operations</span>
+        </div>
       </div>
-    </div>
+    </aside>
 
-    <div id="calendarState" class="calendar-state hidden"></div>
+    <main class="main">
+      <div class="topbar fx-toolbar">
+        <div>
+          <h2>
+            Calendar
+            <span class="sub" id="weekLabel">Loading week...</span>
+          </h2>
+        </div>
 
-    <div class="calendar-wrap">
-      <div id="calendar" class="grid"></div>
-    </div>
+        <div class="top-actions">
+          <a class="btn" href="/jobs.html">Go to Jobs Board</a>
+          <a class="btn primary" href="/jobs.html">+ New Job</a>
+        </div>
+      </div>
+
+      <div class="content fx-layout-public">
+        <div class="calendar-shell fx-card">
+          <div class="calendar-toolbar fx-toolbar">
+            <div class="calendar-left">
+              <button type="button" class="btn fx-btn fx-btn--secondary" id="calPrevWeek">‹ Previous Week</button>
+              <button type="button" class="btn fx-btn fx-btn--secondary" id="calToday">Today</button>
+              <button type="button" class="btn fx-btn fx-btn--secondary" id="calNextWeek">Next Week ›</button>
+            </div>
+
+            <div class="calendar-title" id="calendarRangeTitle">Loading...</div>
+
+            <div class="calendar-right">
+              <div class="legend">
+                <span><i class="dot"></i> Scheduled</span>
+                <span><i class="dot confirmed"></i> Confirmed</span>
+                <span><i class="dot progress"></i> In Progress</span>
+                <span><i class="dot done"></i> Completed</span>
+              </div>
+            </div>
+          </div>
+
+          <div id="calendarState" class="calendar-state hidden"></div>
+
+          <div class="calendar-wrap">
+            <div id="calendar" class="grid"></div>
+          </div>
+
+          <div class="status-strip">
+            <span><i class="dot"></i> Scheduled</span>
+            <span><i class="dot confirmed"></i> Confirmed</span>
+            <span><i class="dot" style="background:#14b8a6"></i> Assigned</span>
+            <span><i class="dot progress"></i> En Route</span>
+            <span><i class="dot" style="background:#8b5cf6"></i> Arrived</span>
+            <span><i class="dot progress"></i> In Progress</span>
+            <span><i class="dot done"></i> Completed</span>
+            <span><i class="dot" style="background:#0891b2"></i> Rescheduled</span>
+            <span><i class="dot" style="background:#dc2626"></i> Cancelled</span>
+            <span><i class="dot" style="background:#6b7280"></i> Skipped</span>
+            <span><i class="dot" style="background:#b91c1c"></i> No Access</span>
+            <span><i class="dot" style="background:#be123c"></i> No Show</span>
+            <span><i class="dot" style="background:#06b6d4"></i> Weather Delay</span>
+            <span><i class="dot" style="background:#ff5a00"></i> Needs Follow-up</span>
+            <span><i class="dot" style="background:#92400e"></i> Needs Rework</span>
+            <span><i class="dot" style="background:#9ca3af"></i> Draft</span>
+            <span><i class="dot" style="background:#f59e0b"></i> Quoted</span>
+            <span><i class="dot confirmed"></i> Approved</span>
+            <span><i class="dot" style="background:#ef4444"></i> Rejected</span>
+          </div>
+        </div>
+      </div>
+    </main>
   </div>
-</div>
-
 </body>
 </html>
