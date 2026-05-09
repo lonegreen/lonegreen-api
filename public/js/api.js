@@ -9,20 +9,28 @@
     };
   }
 
-  function handleUnauthorized(){
-    if(window.AppAuth){
+  function clearStaleAuthSession(){
+    if(window.AppAuth && typeof window.AppAuth.clearSession === "function"){
       window.AppAuth.clearSession();
-      window.AppAuth.redirectToLogin();
     } else {
       localStorage.removeItem("token");
       localStorage.removeItem("customerToken");
       localStorage.removeItem("user");
       localStorage.removeItem("currentPage");
+    }
+  }
+
+  function handleUnauthorized(){
+    clearStaleAuthSession();
+    if(window.AppAuth && typeof window.AppAuth.redirectToLogin === "function"){
+      window.AppAuth.redirectToLogin();
+    } else {
       window.top.location.href = "/login.html";
     }
   }
 
   function handleForbidden(){
+    clearStaleAuthSession();
     if(window.AppUI && window.AppUI.showForbidden){
       window.AppUI.showForbidden("You do not have permission to access this area.");
     } else if(window.AppUI && window.AppUI.showToast){
@@ -247,6 +255,7 @@
     authHeaders,
     fetch: apiFetch,
     safeFetch,
+    clearStaleAuthSession,
     handleForbidden,
     handleUnauthorized,
     getBillingMe,

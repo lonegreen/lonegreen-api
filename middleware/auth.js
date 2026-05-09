@@ -143,6 +143,108 @@ function verifyCustomerBearerToken(header) {
   return parseCustomerPrincipal(decoded);
 }
 
+async function validateStaffTokenAgainstDatabase(decoded, tokenRole) {
+  const userId = toPositiveInteger(decoded && decoded.id);
+  if (!userId) {
+    const err = new Error("Invalid token payload");
+    err.status = 401;
+    throw err;
+  }
+
+  if (tokenRole === "platform_owner") {
+    const result = await pool.query(
+      `
+      SELECT id, role
+      FROM users
+      WHERE id = $1
+      LIMIT 1
+      `,
+      [userId]
+    );
+    const row = result.rows[0];
+    if (!row || normalizeRole(row.role) !== "platform_owner") {
+      const err = new Error("Forbidden");
+      err.status = 403;
+      throw err;
+    }
+    return;
+  }
+
+  let result;
+  try {
+    result = await pool.query(
+      `
+      SELECT id, role, company_id, worker_id,
+             COALESCE(active, TRUE) AS active
+      FROM users
+      WHERE id = $1
+      LIMIT 1
+      `,
+      [userId]
+    );
+  } catch (err) {
+    if (!err || err.code !== "42703") {
+      throw err;
+    }
+    result = await pool.query(
+      `
+      SELECT id, role, company_id, worker_id
+      FROM users
+      WHERE id = $1
+      LIMIT 1
+      `,
+      [userId]
+    );
+  }
+
+  const row = result.rows[0];
+  if (!row) {
+    const err = new Error("Invalid token");
+    err.status = 401;
+    throw err;
+  }
+
+  const dbRole = normalizeRole(row.role);
+  if (!dbRole || dbRole !== tokenRole) {
+    const err = new Error("Forbidden");
+    err.status = 403;
+    throw err;
+  }
+
+  const activeVal = row.active;
+  if (activeVal === false) {
+    const err = new Error("Forbidden");
+    err.status = 403;
+    throw err;
+  }
+
+  const tokenCompanyId = toPositiveInteger(decoded && decoded.company_id);
+  const dbCompanyId = toPositiveInteger(row.company_id);
+  if (tokenCompanyId && !dbCompanyId) {
+    const err = new Error("Forbidden");
+    err.status = 403;
+    throw err;
+  }
+  if (tokenCompanyId && dbCompanyId && tokenCompanyId !== dbCompanyId) {
+    const err = new Error("Forbidden");
+    err.status = 403;
+    throw err;
+  }
+
+  const tokenWorkerId = toPositiveInteger(decoded && (decoded.worker_id || decoded.workerId));
+  const dbWorkerId = toPositiveInteger(row.worker_id);
+  if (tokenWorkerId && !dbWorkerId) {
+    const err = new Error("Forbidden");
+    err.status = 403;
+    throw err;
+  }
+  if (tokenWorkerId && dbWorkerId && tokenWorkerId !== dbWorkerId) {
+    const err = new Error("Forbidden");
+    err.status = 403;
+    throw err;
+  }
+}
+
 async function loadActiveCustomerAccount(customer) {
   const customerAccountId = toPositiveInteger(customer && customer.customer_account_id)
     || toPositiveInteger(customer && customer.id);
@@ -210,12 +312,39 @@ async function loadActiveCustomerAccount(customer) {
 async function verifyActiveCustomerBearerToken(header) {
   const customer = verifyCustomerBearerToken(header);
   const account = await loadActiveCustomerAccount(customer);
+
+  const clientRow = await pool.query(
+    `
+    SELECT id, company_id
+    FROM clients
+    WHERE id = $1
+    LIMIT 1
+    `,
+    [account.client_id]
+  );
+  if (!clientRow.rows.length) {
+    const err = new Error("Customer not found");
+    err.status = 403;
+    throw err;
+  }
+
+  const dbCompanyId = clientRow.rows[0].company_id != null
+    ? Number(clientRow.rows[0].company_id)
+    : null;
+  const tokenCompanyId = toPositiveInteger(customer && customer.company_id);
+  if (tokenCompanyId && dbCompanyId != null && tokenCompanyId !== dbCompanyId) {
+    const err = new Error("Forbidden");
+    err.status = 403;
+    throw err;
+  }
+
   return {
     customer: {
       ...customer,
       customer_account_id: account.id,
       customer_status: account.status,
-      customer_deactivated_at: account.deactivated_at || null
+      customer_deactivated_at: account.deactivated_at || null,
+      company_id: dbCompanyId != null && !Number.isNaN(dbCompanyId) ? dbCompanyId : customer.company_id
     },
     account
   };
@@ -241,39 +370,51 @@ function auth(req, res, next) {
     return res.status(401).json({ error: "Invalid authorization header" });
   }
 
+  let decoded;
   try {
-    const decoded = jwt.verify(token, SECRET);
-    const boundary = classifyTokenBoundary(decoded);
-    if (boundary.type === "mixed") {
-      return res.status(403).json({ error: "Mixed auth boundary token" });
-    }
-    if (boundary.type === "customer") {
-      return res.status(403).json({ error: "Forbidden" });
-    }
-
-    if (!decoded || !decoded.id || !decoded.role) {
-      return res.status(401).json({ error: "Invalid token payload" });
-    }
-
-    const role = boundary.role || normalizeRole(decoded.role);
-
-    if (!role || !STAFF_ROLES.has(role) || role === "customer") {
-      return res.status(403).json({ error: "Invalid role" });
-    }
-
-    if (role !== "platform_owner" && !toPositiveInteger(decoded.company_id)) {
-      return res.status(403).json({ error: "Invalid token payload" });
-    }
-
-    req.user = {
-      ...decoded,
-      role
-    };
-
-    return next();
+    decoded = jwt.verify(token, SECRET);
   } catch {
     return res.status(401).json({ error: "Invalid token" });
   }
+
+  const boundary = classifyTokenBoundary(decoded);
+  if (boundary.type === "mixed") {
+    return res.status(403).json({ error: "Mixed auth boundary token" });
+  }
+  if (boundary.type === "customer") {
+    return res.status(403).json({ error: "Forbidden" });
+  }
+
+  if (!decoded || !decoded.id || !decoded.role) {
+    return res.status(401).json({ error: "Invalid token payload" });
+  }
+
+  const role = boundary.role || normalizeRole(decoded.role);
+
+  if (!role || !STAFF_ROLES.has(role) || role === "customer") {
+    return res.status(403).json({ error: "Invalid role" });
+  }
+
+  if (role !== "platform_owner" && !toPositiveInteger(decoded.company_id)) {
+    return res.status(403).json({ error: "Invalid token payload" });
+  }
+
+  (async () => {
+    try {
+      await validateStaffTokenAgainstDatabase(decoded, role);
+      req.user = {
+        ...decoded,
+        role
+      };
+      next();
+    } catch (err) {
+      const status = Number(err && err.status);
+      if (status === 403) {
+        return res.status(403).json({ error: err.message || "Forbidden" });
+      }
+      return res.status(401).json({ error: err.message || "Invalid token" });
+    }
+  })();
 }
 
 function requireRole(...allowedRoles) {
@@ -375,3 +516,4 @@ module.exports.classifyTokenBoundary = classifyTokenBoundary;
 module.exports.verifyCustomerBearerToken = verifyCustomerBearerToken;
 module.exports.verifyActiveCustomerBearerToken = verifyActiveCustomerBearerToken;
 module.exports.requireActiveCustomer = requireActiveCustomer;
+module.exports.validateStaffTokenAgainstDatabase = validateStaffTokenAgainstDatabase;

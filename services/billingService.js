@@ -1,5 +1,47 @@
 const pool = require("../db/pool");
-const { BILLING_GRACE_PERIOD_DAYS } = require("../config/env");
+const logger = require("./logger");
+const {
+  BILLING_GRACE_PERIOD_DAYS,
+  NODE_ENV,
+  BILLING_LIFECYCLE_AUTOMATION
+} = require("../config/env");
+
+/** Structured readiness signals for ops / future launch gates (does not enable automation). */
+function getBillingLifecycleAutomationReadinessWarnings() {
+  const prod = String(NODE_ENV || "").toLowerCase() === "production";
+  if (prod && !BILLING_LIFECYCLE_AUTOMATION) {
+    return [{
+      code: "billing_lifecycle_automation_disabled",
+      severity: "high",
+      message: "BILLING_LIFECYCLE_AUTOMATION is false in production; scheduled past-due suspensions and period-end expiry are skipped"
+    }];
+  }
+  return [];
+}
+
+(function logBillingLifecycleAutomationStartupDiagnostics() {
+  const prod = String(NODE_ENV || "").toLowerCase() === "production";
+  logger.info("BILLING_LIFECYCLE_AUTOMATION_STATUS", {
+    env: NODE_ENV,
+    enabled: BILLING_LIFECYCLE_AUTOMATION,
+    unset_defaults_to:
+      prod ? "true_when_BILLING_LIFECYCLE_AUTOMATION_unset" : "false_when_unset_in_non_production"
+  });
+  if (!BILLING_LIFECYCLE_AUTOMATION) {
+    logger.warn("BILLING_LIFECYCLE_AUTOMATION_DISABLED", {
+      env: NODE_ENV,
+      scheduler_impact: "evaluatePastDueSuspensions_not_run_on_billing_lifecycle_cron",
+      readiness_warnings: getBillingLifecycleAutomationReadinessWarnings()
+    });
+  }
+  if (prod && !BILLING_LIFECYCLE_AUTOMATION) {
+    logger.error("LAUNCH_READINESS_BILLING_LIFECYCLE_AUTOMATION_OFF", {
+      severity: "production_configuration_risk",
+      message: "Automated billing lifecycle (past-due suspension, incomplete expiry, cancel-at-period-end) is disabled in production.",
+      remediation: "Set BILLING_LIFECYCLE_AUTOMATION=true after validating Stripe webhooks and suspension policy."
+    });
+  }
+})();
 
 const PLAN_LIMITS = {
   starter: {
@@ -1741,6 +1783,12 @@ async function markCompanySubscriptionCancelled(companyId, patch = {}) {
 }
 
 async function evaluatePastDueSuspensions() {
+  logger.info("BILLING_LIFECYCLE_EVALUATION_BEGIN", {
+    at: new Date().toISOString(),
+    automation_flag: BILLING_LIFECYCLE_AUTOMATION,
+    env: NODE_ENV
+  });
+
   const client = await pool.connect();
 
   try {
@@ -2075,6 +2123,7 @@ module.exports = {
   markCompanyPaymentFailed,
   markCompanySubscriptionCancelled,
   evaluatePastDueSuspensions,
+  getBillingLifecycleAutomationReadinessWarnings,
   computeTrialMeta,
   enrichBillingClientSummary,
   getPlatformBillingOverview,

@@ -1417,12 +1417,9 @@ router.post("/marketplace/requests/:id/dispute", marketplaceDisputeAuth, marketp
             )
             OR EXISTS (
               SELECT 1
-              FROM companies c
-              JOIN company_services cs
-                ON cs.company_id = c.id
-               AND cs.active = TRUE
-               AND cs.category_id = mr.category_id
-              WHERE c.id = $2
+              FROM marketplace_offers mo
+              WHERE mo.id = mr.accepted_offer_id
+                AND mo.company_id = $2
             )
           )
         LIMIT 1

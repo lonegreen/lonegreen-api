@@ -120,7 +120,8 @@ async function createNotification({ companyId = null, userId = null, customerId 
   const normalizedCompanyId = normalizeId(companyId);
   const normalizedUserId = normalizeId(userId);
   const normalizedCustomerId = normalizeId(customerId);
-  if (!normalizedUserId && !normalizedCustomerId) {
+  /* Company-wide rows use user_id NULL; listNotificationsForUser matches company_id + (user_id IS NULL OR user_id = $user). */
+  if (!normalizedUserId && !normalizedCustomerId && !normalizedCompanyId) {
     throw new Error("Notification recipient is required");
   }
   const result = await pool.query(
@@ -395,6 +396,22 @@ async function notifyMarketplaceRequestCreated({ companyId, customerId, requestI
   });
 }
 
+/** Customer-submitted workflow lead (estimates row); link targets leads UI, not marketplace_requests. */
+async function notifyCustomerServiceLeadCreated({ companyId, customerId, leadId, service }) {
+  const id = leadId != null ? Number(leadId) : null;
+  const linkUrl = Number.isInteger(id) && id > 0
+    ? `/estimates.html?view=leads&lead=${id}`
+    : "/estimates.html?view=leads";
+  return createNotification({
+    companyId,
+    customerId,
+    type: "system",
+    title: "New customer service request",
+    body: `${service || "Service request"} — a customer submitted a new lead.`,
+    linkUrl
+  });
+}
+
 async function notifyOfferReceived({ customerId, requestId, companyName }) {
   return createNotification({
     customerId,
@@ -459,6 +476,7 @@ module.exports = {
   createFinancialNotification,
   syncAlerts,
   notifyMarketplaceRequestCreated,
+  notifyCustomerServiceLeadCreated,
   notifyOfferReceived,
   notifySupportTicketCreated,
   notifyDisputeOpened,

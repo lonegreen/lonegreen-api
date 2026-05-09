@@ -488,6 +488,57 @@ const checks = [
       ORDER BY id
       LIMIT 100
     `
+  },
+  {
+    id: "customer_accounts_missing_client",
+    title: "customer_accounts referencing a missing clients row",
+    sql: `
+      SELECT ca.id, ca.client_id
+      FROM customer_accounts ca
+      WHERE ca.client_id IS NOT NULL
+        AND NOT EXISTS (SELECT 1 FROM clients c WHERE c.id = ca.client_id)
+      ORDER BY ca.id
+      LIMIT 100
+    `
+  },
+  {
+    id: "customer_accounts_client_missing_company",
+    title: "customer_accounts linked to a client with NULL company_id",
+    sql: `
+      SELECT ca.id, ca.client_id, c.company_id
+      FROM customer_accounts ca
+      INNER JOIN clients c ON c.id = ca.client_id
+      WHERE c.company_id IS NULL
+      ORDER BY ca.id
+      LIMIT 100
+    `
+  },
+  {
+    id: "job_photos_orphan_job_reference",
+    title: "job_photos rows referencing a missing job for the same company",
+    sql: `
+      SELECT jp.id, jp.job_id, jp.company_id
+      FROM job_photos jp
+      LEFT JOIN jobs j ON j.id = jp.job_id AND j.company_id = jp.company_id
+      WHERE jp.job_id IS NOT NULL
+        AND j.id IS NULL
+      ORDER BY jp.id
+      LIMIT 100
+    `
+  },
+  {
+    id: "duplicate_background_jobs_same_payload",
+    title: "Duplicate pending/retry/running queue jobs with identical type and payload",
+    sql: `
+      SELECT type, payload::text AS payload_text, COUNT(*)::int AS duplicate_count,
+             ARRAY_AGG(id ORDER BY id) AS job_ids
+      FROM background_jobs
+      WHERE status IN ('pending', 'retry', 'running')
+      GROUP BY type, payload::text
+      HAVING COUNT(*) > 1
+      ORDER BY duplicate_count DESC, type
+      LIMIT 100
+    `
   }
 ];
 

@@ -335,14 +335,36 @@ async function tryClaimEvent(eventId, eventType) {
           [eventId, eventType, leaseMarker]
         );
       } catch (err) {
+        if (err && err.code === "23505") {
+          await client.query("ROLLBACK");
+          logger.info("STRIPE_WEBHOOK_CLAIM_RACE_DUPLICATE", {
+            stripe_event_id: eventId,
+            event_type: eventType,
+            detail: "unique_violation_on_insert_treated_as_already_claimed"
+          });
+          return false;
+        }
         if (!err || err.code !== "42703") throw err;
-        await client.query(
-          `
-          INSERT INTO stripe_events (stripe_event_id, event_type, processed_at)
-          VALUES ($1, $2, NULL)
-          `,
-          [eventId, eventType]
-        );
+        try {
+          await client.query(
+            `
+            INSERT INTO stripe_events (stripe_event_id, event_type, processed_at)
+            VALUES ($1, $2, NULL)
+            `,
+            [eventId, eventType]
+          );
+        } catch (err2) {
+          if (err2 && err2.code === "23505") {
+            await client.query("ROLLBACK");
+            logger.info("STRIPE_WEBHOOK_CLAIM_RACE_DUPLICATE", {
+              stripe_event_id: eventId,
+              event_type: eventType,
+              detail: "legacy_insert_unique_violation_treated_as_already_claimed"
+            });
+            return false;
+          }
+          throw err2;
+        }
       }
       await client.query("COMMIT");
       return true;

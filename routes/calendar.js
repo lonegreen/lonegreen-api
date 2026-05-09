@@ -49,6 +49,18 @@ const {
 
 const router = express.Router();
 
+/** platform_owner without a concrete tenant company_id must not use company-scoped legacy routes. */
+function rejectPlatformOwnerWithoutTenantContext(req, res, next) {
+  if (normalizeRole(req.user && req.user.role) === "platform_owner") {
+    const raw = req.user && req.user.company_id;
+    const companyId = raw != null && raw !== "" ? Number(raw) : NaN;
+    if (!Number.isInteger(companyId) || companyId <= 0) {
+      return res.status(403).json({ error: "Forbidden" });
+    }
+  }
+  next();
+}
+
 /* ================= CALENDAR / DASHBOARD / MONEY ================= */
 
 async function fetchCalendarJobs(req, res) {
@@ -74,9 +86,9 @@ async function fetchCalendarJobs(req, res) {
   }
 }
 
-router.get("/calendar", auth, requireMinimumRole("manager"), fetchCalendarJobs);
+router.get("/calendar", auth, rejectPlatformOwnerWithoutTenantContext, requireMinimumRole("manager"), fetchCalendarJobs);
 
-router.get("/dashboard", auth, requireMinimumRole("admin"), async (req, res) => {
+router.get("/dashboard", auth, rejectPlatformOwnerWithoutTenantContext, requireMinimumRole("admin"), async (req, res) => {
   try {
     warnDeprecatedRoute("/dashboard", "legacy summary route");
     const company_id = req.user.company_id;
@@ -115,7 +127,7 @@ router.get("/dashboard", auth, requireMinimumRole("admin"), async (req, res) => 
   }
 });
 
-router.get("/money", auth, requireMinimumRole("admin"), async (req, res) => {
+router.get("/money", auth, rejectPlatformOwnerWithoutTenantContext, requireMinimumRole("admin"), async (req, res) => {
   try {
     warnDeprecatedRoute("/money", "legacy revenue route");
     await ensureSubscriptionBillingSchema();
@@ -239,7 +251,7 @@ router.get("/money", auth, requireMinimumRole("admin"), async (req, res) => {
 });
 
 
-router.get("/ops/calendar", auth, requireMinimumRole("manager"), async (req, res) => {
+router.get("/ops/calendar", auth, rejectPlatformOwnerWithoutTenantContext, requireMinimumRole("manager"), async (req, res) => {
   try {
     await ensureOperationsSchema();
     await syncAlerts(req.user.company_id);
@@ -276,7 +288,7 @@ router.get("/ops/calendar", auth, requireMinimumRole("manager"), async (req, res
   }
 });
 
-router.get("/operations/calendar", auth, requireMinimumRole("manager"), async (req, res) => {
+router.get("/operations/calendar", auth, rejectPlatformOwnerWithoutTenantContext, requireMinimumRole("manager"), async (req, res) => {
   try {
     warnDeprecatedRoute("/operations/calendar", "/ops/calendar");
     await ensureOperationsSchema();

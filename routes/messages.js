@@ -3,7 +3,12 @@ const jwt = require("jsonwebtoken");
 const rateLimit = require("express-rate-limit");
 const pool = require("../db/pool");
 const { SECRET } = require("../config/env");
-const { classifyTokenBoundary, normalizeRole, verifyActiveCustomerBearerToken } = require("../middleware/auth");
+const {
+  classifyTokenBoundary,
+  normalizeRole,
+  verifyActiveCustomerBearerToken,
+  validateStaffTokenAgainstDatabase
+} = require("../middleware/auth");
 const { validateMessageContent } = require("../middleware/abuseGuards");
 const { sendSafeServerError } = require("../services/safeServerError");
 const { sendOperationalEmailSafe } = require("../services/emailService");
@@ -40,11 +45,33 @@ function parseBearerToken(header) {
 
 async function resolveCustomerActor(decoded) {
   const clientId = Number(decoded && decoded.client_id);
-  const tokenCompanyId = decoded && decoded.company_id ? Number(decoded.company_id) : null;
+  const tokenCompanyRaw = decoded && decoded.company_id != null ? Number(decoded.company_id) : null;
   if (!Number.isInteger(clientId) || clientId <= 0) {
     return null;
   }
-  if (tokenCompanyId !== null && (!Number.isInteger(tokenCompanyId) || tokenCompanyId <= 0)) {
+  if (tokenCompanyRaw !== null && (!Number.isInteger(tokenCompanyRaw) || tokenCompanyRaw <= 0)) {
+    return null;
+  }
+
+  const clientLookup = await pool.query(
+    `
+    SELECT id, company_id
+    FROM clients
+    WHERE id = $1
+    LIMIT 1
+    `,
+    [clientId]
+  );
+  if (!clientLookup.rows.length) {
+    return null;
+  }
+  const canonicalCompanyId = clientLookup.rows[0].company_id != null
+    ? Number(clientLookup.rows[0].company_id)
+    : null;
+  if (canonicalCompanyId == null || Number.isNaN(canonicalCompanyId)) {
+    return null;
+  }
+  if (tokenCompanyRaw != null && tokenCompanyRaw !== canonicalCompanyId) {
     return null;
   }
 
@@ -52,26 +79,9 @@ async function resolveCustomerActor(decoded) {
   let scopes = accountId ? await loadPortalScopes(accountId) : [];
 
   if (!scopes.length) {
-    const clientResult = tokenCompanyId
-      ? await pool.query(
-        "SELECT id, company_id FROM clients WHERE id = $1 AND company_id = $2 LIMIT 1",
-        [clientId, tokenCompanyId]
-      )
-      : await pool.query(
-        "SELECT id, company_id FROM clients WHERE id = $1 LIMIT 1",
-        [clientId]
-      );
-    if (!clientResult.rows.length) {
-      return null;
-    }
-    const client = clientResult.rows[0];
-    const clientCompanyId = Number(client.company_id);
-    if (tokenCompanyId && tokenCompanyId !== clientCompanyId) {
-      return null;
-    }
     scopes = [{
-      company_id: clientCompanyId,
-      client_id: Number(client.id)
+      company_id: canonicalCompanyId,
+      client_id: Number(clientLookup.rows[0].id)
     }];
   } else if (!tokenClientBelongsToScopes(scopes, clientId)) {
     return null;
@@ -167,6 +177,8 @@ async function participantAuth(req, res, next) {
     if (!companyActor) {
       return res.status(403).json({ error: "Forbidden" });
     }
+    const tokenRole = boundary.role || normalizeRole(decoded && decoded.role);
+    await validateStaffTokenAgainstDatabase(decoded, tokenRole);
     req.participant = companyActor;
     return next();
   } catch (err) {

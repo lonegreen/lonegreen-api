@@ -50,6 +50,7 @@ const syntaxFiles = [
   "services/jobQueue.js",
   "middleware/auth.js",
   "middleware/requireCompanyBillingForMutations.js",
+  "routes/analytics.js",
   "scripts/integrity-audit.js",
   "scripts/repair-integrity-drift.js",
   "scripts/smoke-test.js"
@@ -257,7 +258,72 @@ const sourceExpectations = [
       "jobs_worker_company_mismatch",
       "subscriptions_worker_company_mismatch",
       "duplicate_subscription_visits",
-      "worker_zip_groups_worker_company_mismatch"
+      "worker_zip_groups_worker_company_mismatch",
+      "customer_accounts_missing_client",
+      "job_photos_orphan_job_reference",
+      "duplicate_background_jobs_same_payload"
+    ]
+  },
+  {
+    name: "staff auth validates JWT against live users row",
+    file: "middleware/auth.js",
+    patterns: [
+      "validateStaffTokenAgainstDatabase",
+      "SELECT id, role, company_id, worker_id",
+      "COALESCE(active, TRUE)"
+    ]
+  },
+  {
+    name: "customer portal resolves canonical company from DB",
+    file: "routes/customer.js",
+    patterns: [
+      "resolveCanonicalCustomerPrincipal",
+      "ensureCustomerCompanyIsolation",
+      "await resolveCanonicalCustomerPrincipal"
+    ]
+  },
+  {
+    name: "messages customer actor uses DB-resolved company_id",
+    file: "routes/messages.js",
+    patterns: [
+      "canonicalCompanyId",
+      "clientLookup",
+      "tokenCompanyRaw !== canonicalCompanyId"
+    ]
+  },
+  {
+    name: "analytics queries use defensive ensureQueryResult",
+    file: "routes/analytics.js",
+    patterns: [
+      "function ensureQueryResult",
+      "analytics_query_fallback",
+      "analytics_one"
+    ]
+  },
+  {
+    name: "upload service exposes orphan audit helpers",
+    file: "services/uploadService.js",
+    patterns: [
+      "findOrphanUploads",
+      "validateUploadOwnership",
+      "getUploadCleanupCandidates"
+    ]
+  },
+  {
+    name: "job queue logs claimed work and skip-locked guard",
+    file: "services/jobQueue.js",
+    patterns: [
+      "JOB_QUEUE_JOB_CLAIMED",
+      "FOR UPDATE SKIP LOCKED"
+    ]
+  },
+  {
+    name: "scheduler logs advisory lock acquisition and contention",
+    file: "services/schedulerService.js",
+    patterns: [
+      "SCHEDULER_ADVISORY_LOCK_ACQUIRED",
+      "SCHEDULER_TASK_SKIPPED_DISTRIBUTED_LOCK",
+      "pg_try_advisory_lock(hashtext($1))"
     ]
   },
   {

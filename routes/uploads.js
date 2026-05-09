@@ -9,7 +9,8 @@ const {
   publishUploadedFile,
   cleanupLocalTemp,
   deleteStoredFile,
-  assertUploadContentMatchesMime
+  assertUploadContentMatchesMime,
+  validateUploadOwnership
 } = require("../services/uploadService");
 const { ensureJobPhotoSchema, logActivity } = require("../services/routeHelpers");
 const { sendSafeServerError } = require("../services/safeServerError");
@@ -207,6 +208,15 @@ router.delete("/uploads/job/photos/:photoId", auth, requireCompanyBillingForMuta
     }
 
     const photo = current.rows[0];
+
+    const ownership = await validateUploadOwnership({
+      companyId: req.user.company_id,
+      jobId: photo.job_id,
+      imageUrl: photo.image_url
+    });
+    if (!ownership.ok) {
+      return res.status(403).json({ error: "Forbidden" });
+    }
 
     await pool.query(
       `DELETE FROM job_photos

@@ -60,10 +60,20 @@ async function runTask(status, handler) {
     );
     advisoryLockAcquired = Boolean(lockResult.rows[0] && lockResult.rows[0].acquired);
     if (!advisoryLockAcquired) {
-      logger.info("SCHEDULER_TASK_SKIPPED_DISTRIBUTED_LOCK", { task: status.name });
+      logger.info("SCHEDULER_TASK_SKIPPED_DISTRIBUTED_LOCK", {
+        task: status.name,
+        lock_key: lockName,
+        process_pid: process.pid,
+        detail: "another_instance_or_scheduler_tick_holds_pg_advisory_lock"
+      });
       status.last_error = null;
       return;
     }
+    logger.info("SCHEDULER_ADVISORY_LOCK_ACQUIRED", {
+      task: status.name,
+      lock_key: lockName,
+      process_pid: process.pid
+    });
     await handler();
     status.last_success = nowIso();
     status.last_error = null;

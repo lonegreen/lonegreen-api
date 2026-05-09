@@ -3,6 +3,7 @@ const path = require("path");
 const crypto = require("crypto");
 const multer = require("multer");
 const logger = require("./logger");
+const pool = require("../db/pool");
 
 const UPLOAD_DIR = path.join(__dirname, "..", "public", "uploads");
 const LOCAL_PUBLIC_URL_PREFIX = "/uploads/";
@@ -769,6 +770,80 @@ function getDeleteAdapter() {
   return getUploadAdapter();
 }
 
+/**
+ * Read-only: DB rows pointing at missing jobs (storage URLs may still exist — audit visibility only).
+ */
+async function findOrphanUploads(options = {}) {
+  const limit = Math.min(Math.max(Number(options.limit) || 200, 1), 500);
+  const candidates = [];
+  try {
+    const r = await pool.query(
+      `
+      SELECT jp.id AS job_photo_id, jp.job_id, jp.company_id, jp.image_url
+      FROM job_photos jp
+      LEFT JOIN jobs j ON j.id = jp.job_id AND j.company_id = jp.company_id
+      WHERE jp.job_id IS NOT NULL
+        AND j.id IS NULL
+      ORDER BY jp.id
+      LIMIT $1
+      `,
+      [limit]
+    );
+    for (const row of r.rows) {
+      candidates.push({
+        kind: "job_photo_missing_job",
+        job_photo_id: row.job_photo_id,
+        job_id: row.job_id,
+        company_id: row.company_id,
+        image_url: row.image_url
+      });
+    }
+  } catch (err) {
+    logger.warn("FIND_ORPHAN_UPLOADS_QUERY_SKIPPED", {
+      message: err && err.message ? String(err.message) : String(err)
+    });
+  }
+  return {
+    scanned_at: new Date().toISOString(),
+    candidate_count: candidates.length,
+    candidates
+  };
+}
+
+async function validateUploadOwnership({ companyId, jobId, imageUrl }) {
+  const cid = Number(companyId);
+  if (!Number.isInteger(cid) || cid <= 0 || !imageUrl) {
+    return { ok: false, reason: "invalid_input" };
+  }
+  const jid = jobId != null ? Number(jobId) : null;
+  const params = [String(imageUrl), cid];
+  let sql = `
+    SELECT jp.id
+    FROM job_photos jp
+    INNER JOIN jobs j ON j.id = jp.job_id AND j.company_id = jp.company_id
+    WHERE jp.image_url = $1
+      AND jp.company_id = $2
+  `;
+  if (jid != null && Number.isInteger(jid) && jid > 0) {
+    sql += ` AND jp.job_id = $3`;
+    params.push(jid);
+  }
+  sql += `
+    LIMIT 1
+  `;
+  try {
+    const r = await pool.query(sql, params);
+    return { ok: r.rows.length > 0 };
+  } catch (err) {
+    logger.warn("VALIDATE_UPLOAD_OWNERSHIP_ERROR", { message: err && err.message });
+    return { ok: false, reason: "query_error" };
+  }
+}
+
+async function getUploadCleanupCandidates(options) {
+  return findOrphanUploads(options);
+}
+
 module.exports = {
   UPLOAD_DIR,
   MAX_FILE_SIZE,
@@ -798,5 +873,8 @@ module.exports = {
   getUploadAdapter,
   getDeleteAdapter,
   validateStorageDriverEnv,
-  getStorageActivationStatus
+  getStorageActivationStatus,
+  findOrphanUploads,
+  validateUploadOwnership,
+  getUploadCleanupCandidates
 };

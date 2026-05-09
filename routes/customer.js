@@ -20,7 +20,7 @@ const {
   scopePairsInclude
 } = require("../services/customerPortalScope");
 const {
-  notifyMarketplaceRequestCreated
+  notifyCustomerServiceLeadCreated
 } = require("../services/notificationService");
 
 const router = express.Router();
@@ -129,11 +129,37 @@ function buildInvoicePdfFilename(invoice) {
   return `FairLinx-${numberPart}-${clientPart}.pdf`;
 }
 
+async function resolveCanonicalCustomerPrincipal(customer) {
+  const clientId = Number(customer && customer.client_id);
+  if (!Number.isInteger(clientId) || clientId <= 0) {
+    return customer;
+  }
+  const result = await pool.query(
+    `
+    SELECT id, company_id
+    FROM clients
+    WHERE id = $1
+    LIMIT 1
+    `,
+    [clientId]
+  );
+  const row = result.rows[0];
+  if (!row) {
+    return customer;
+  }
+  const dbCompanyId = row.company_id != null ? Number(row.company_id) : null;
+  return {
+    ...customer,
+    company_id: dbCompanyId != null && !Number.isNaN(dbCompanyId) ? dbCompanyId : customer.company_id
+  };
+}
+
 function customerAuth(req, res, next) {
   try {
     req.customer = verifyCustomerBearerToken(req.headers.authorization);
     return (async () => {
       try {
+        req.customer = await resolveCanonicalCustomerPrincipal(req.customer);
         const accountId = await resolveCustomerAccountId(req.customer);
         if (!accountId) {
           return res.status(403).json({ error: "Customer account not found" });
@@ -174,15 +200,16 @@ async function getClient(customer) {
 }
 
 async function getPortalContext(customer) {
-  const accountId = await resolveCustomerAccountId(customer);
+  const canonical = await resolveCanonicalCustomerPrincipal(customer);
+  const accountId = await resolveCustomerAccountId(canonical);
   let scopes = accountId ? await loadPortalScopes(accountId) : [];
-  if (!scopes.length && customer.client_id) {
+  if (!scopes.length && canonical.client_id) {
     const client = await pool.query(
       "SELECT id, company_id FROM clients WHERE id = $1 LIMIT 1",
-      [customer.client_id]
+      [canonical.client_id]
     );
     const row = client.rows[0];
-    if (row && row.company_id) {
+    if (row && row.company_id != null) {
       scopes = [{
         company_id: Number(row.company_id),
         client_id: Number(row.id)
@@ -192,14 +219,14 @@ async function getPortalContext(customer) {
   return { accountId, scopes };
 }
 
-function portalScopeAllows(customer, clientRow, scopes) {
+async function portalScopeAllows(customer, clientRow, scopes) {
   if (!clientRow) {
     return false;
   }
   if (scopes.length) {
     return scopePairsInclude(scopes, clientRow.company_id, clientRow.id);
   }
-  return ensureCustomerCompanyIsolation(customer, clientRow);
+  return await ensureCustomerCompanyIsolation(customer, clientRow);
 }
 
 async function hydrateInvoiceForScopes(scopes, invoiceId) {
@@ -216,10 +243,16 @@ async function hydrateInvoiceForScopes(scopes, invoiceId) {
   return null;
 }
 
-function ensureCustomerCompanyIsolation(customer, client) {
-  if (!client) return false;
-  if (!customer.company_id) return true;
-  return String(customer.company_id) === String(client.company_id);
+async function ensureCustomerCompanyIsolation(customer, client) {
+  if (!client || client.company_id == null) {
+    return false;
+  }
+  const canonical = await resolveCanonicalCustomerPrincipal(customer);
+  const canonCompany = canonical.company_id != null ? Number(canonical.company_id) : null;
+  if (canonCompany == null || Number.isNaN(canonCompany)) {
+    return false;
+  }
+  return canonCompany === Number(client.company_id);
 }
 
 async function getCustomerAccountByClient(clientId) {
@@ -379,8 +412,7 @@ async function updateCustomerEstimateStatus(req, res, status) {
 
     res.json({ ...result.rows[0], status: portalEstimateStatus(result.rows[0].status) });
   } catch (err) {
-    console.log("CUSTOMER ESTIMATE STATUS ERROR:", err);
-    res.status(500).json({ error: err.message });
+    sendSafeServerError(res, err, "CUSTOMER ESTIMATE STATUS ERROR");
   }
 }
 
@@ -476,7 +508,7 @@ router.get("/customer/me", customerAuth, async (req, res) => {
       return res.status(404).json({ error: "Customer not found" });
     }
 
-    if (!portalScopeAllows(req.customer, client, scopes)) {
+    if (!(await portalScopeAllows(req.customer, client, scopes))) {
       return res.status(403).json({ error: "Forbidden" });
     }
 
@@ -506,7 +538,7 @@ router.get("/customer/me", customerAuth, async (req, res) => {
     if (!account) {
       account = await getCustomerAccountByClient(client.id);
     }
-    const companyId = req.customer.company_id || client.company_id || null;
+    const companyId = req.customer.company_id != null ? req.customer.company_id : client.company_id || null;
 
     return res.json({
       id: account ? account.id : null,
@@ -542,7 +574,7 @@ router.put("/customer/profile", customerAuth, async (req, res) => {
       return res.status(404).json({ error: "Customer not found" });
     }
 
-    if (!portalScopeAllows(req.customer, client, scopes)) {
+    if (!(await portalScopeAllows(req.customer, client, scopes))) {
       return res.status(403).json({ error: "Forbidden" });
     }
 
@@ -635,7 +667,7 @@ router.get("/customer/requests", customerAuth, async (req, res) => {
       return res.status(404).json({ error: "Customer not found" });
     }
 
-    if (!portalScopeAllows(req.customer, client, scopes)) {
+    if (!(await portalScopeAllows(req.customer, client, scopes))) {
       return res.status(403).json({ error: "Forbidden" });
     }
 
@@ -651,7 +683,7 @@ router.get("/customer/dashboard", customerAuth, async (req, res) => {
     const { scopes } = await getPortalContext(req.customer);
     const client = await getClient(req.customer);
     if (!client) return res.status(404).json({ error: "Customer not found" });
-    if (!portalScopeAllows(req.customer, client, scopes)) {
+    if (!(await portalScopeAllows(req.customer, client, scopes))) {
       return res.status(403).json({ error: "Forbidden" });
     }
 
@@ -677,8 +709,7 @@ router.get("/customer/dashboard", customerAuth, async (req, res) => {
       subscriptions
     });
   } catch (err) {
-    console.log("CUSTOMER DASHBOARD ERROR:", err);
-    res.status(500).json({ error: err.message });
+    sendSafeServerError(res, err, "CUSTOMER DASHBOARD ERROR");
   }
 });
 
@@ -687,7 +718,7 @@ router.get("/customer/estimates", customerAuth, async (req, res) => {
     const { scopes } = await getPortalContext(req.customer);
     res.json(await getEstimates(scopes));
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    sendSafeServerError(res, err, "CUSTOMER ESTIMATES LIST ERROR");
   }
 });
 
@@ -751,18 +782,17 @@ router.post("/customer/service-requests", customerAuth, async (req, res) => {
       }
     });
     try {
-      await notifyMarketplaceRequestCreated({
+      await notifyCustomerServiceLeadCreated({
         companyId: client.company_id,
         customerId: Number(req.customer && req.customer.client_id),
-        requestId: Number(result.rows[0] && result.rows[0].id),
+        leadId: Number(result.rows[0] && result.rows[0].id),
         service
       });
     } catch (_) {}
 
     res.status(201).json(result.rows[0]);
   } catch (err) {
-    console.log("CUSTOMER SERVICE REQUEST ERROR:", err);
-    res.status(500).json({ error: err.message });
+    sendSafeServerError(res, err, "CUSTOMER SERVICE REQUEST ERROR");
   }
 });
 
@@ -771,7 +801,7 @@ router.get("/customer/invoices", customerAuth, async (req, res) => {
     const { scopes } = await getPortalContext(req.customer);
     res.json(await getInvoices(scopes));
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    sendSafeServerError(res, err, "CUSTOMER INVOICES LIST ERROR");
   }
 });
 
@@ -787,7 +817,9 @@ router.get("/customer/invoices/:id", customerAuth, async (req, res) => {
       line_items: safeJsonParse(invoice.line_items, invoice.line_items || [])
     });
     res.json(payload);
-  } catch (err) { res.status(500).json({ error: err.message }); }
+  } catch (err) {
+    sendSafeServerError(res, err, "CUSTOMER INVOICE DETAIL ERROR");
+  }
 });
 
 router.get("/customer/invoices/:id/pdf", customerAuth, async (req, res) => {
@@ -815,8 +847,7 @@ router.get("/customer/invoices/:id/pdf", customerAuth, async (req, res) => {
     res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
     res.send(pdf);
   } catch (err) {
-    console.log("CUSTOMER INVOICE PDF ERROR:", err);
-    res.status(500).json({ error: err.message });
+    sendSafeServerError(res, err, "CUSTOMER INVOICE PDF ERROR");
   }
 });
 
@@ -846,8 +877,7 @@ router.get("/customer/estimates/:id/pdf", customerAuth, async (req, res) => {
     res.setHeader("Content-Disposition", `attachment; filename="estimate-${safeId}.pdf"`);
     res.send(pdf);
   } catch (err) {
-    console.log("CUSTOMER ESTIMATE PDF ERROR:", err);
-    res.status(500).json({ error: err.message });
+    sendSafeServerError(res, err, "CUSTOMER ESTIMATE PDF ERROR");
   }
 });
 
@@ -856,7 +886,7 @@ router.get("/customer/jobs", customerAuth, async (req, res) => {
     const { scopes } = await getPortalContext(req.customer);
     res.json(await getJobs(scopes));
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    sendSafeServerError(res, err, "CUSTOMER JOBS LIST ERROR");
   }
 });
 
@@ -865,7 +895,7 @@ router.get("/customer/subscriptions", customerAuth, async (req, res) => {
     const { scopes } = await getPortalContext(req.customer);
     res.json(await getSubscriptions(scopes));
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    sendSafeServerError(res, err, "CUSTOMER SUBSCRIPTIONS LIST ERROR");
   }
 });
 

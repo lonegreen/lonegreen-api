@@ -344,6 +344,12 @@ async function processNext() {
     }
 
     currentJob = { id: job.id, type: job.type, attempts: Number(job.attempts || 0) };
+    logger.info("JOB_QUEUE_JOB_CLAIMED", {
+      job_id: job.id,
+      job_type: job.type,
+      locked_by: WORKER_ID,
+      multi_node_guard: "FOR UPDATE SKIP LOCKED"
+    });
     const handler = handlers.get(job.type);
     if (typeof handler !== "function") {
       try {

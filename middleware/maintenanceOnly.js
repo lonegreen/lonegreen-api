@@ -1,13 +1,13 @@
 const jwt = require("jsonwebtoken");
 const { ALLOW_MAINTENANCE_ROUTES, SECRET } = require("../config/env");
-const { getBearerToken, normalizeRole } = require("./auth");
+const { getBearerToken, normalizeRole, validateStaffTokenAgainstDatabase } = require("./auth");
 const logger = require("../services/logger");
 
 function hideRoute(res) {
   return res.status(404).json({ error: "Route not found" });
 }
 
-function maintenanceOnly(req, res, next) {
+async function maintenanceOnly(req, res, next) {
   if (!ALLOW_MAINTENANCE_ROUTES) {
     logger.warn("MAINTENANCE_ROUTE_DISABLED_ACCESS_ATTEMPT", {
       method: req.method,
@@ -47,6 +47,20 @@ function maintenanceOnly(req, res, next) {
       ip: req.ip || req.socket?.remoteAddress || "unknown",
       user_id: decoded && decoded.id ? decoded.id : null,
       role: role || null
+    });
+    return hideRoute(res);
+  }
+
+  try {
+    await validateStaffTokenAgainstDatabase(decoded, role);
+  } catch (err) {
+    logger.warn("MAINTENANCE_ROUTE_DB_AUTH_FAILED", {
+      method: req.method,
+      path: req.originalUrl,
+      ip: req.ip || req.socket?.remoteAddress || "unknown",
+      user_id: decoded && decoded.id ? decoded.id : null,
+      status: err && err.status,
+      message: err && err.message ? err.message : String(err)
     });
     return hideRoute(res);
   }

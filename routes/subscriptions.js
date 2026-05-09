@@ -134,7 +134,6 @@ function lockDeprecatedLegacyMutations(req, res, next) {
   return next();
 }
 router.use(lockDeprecatedLegacyMutations);
-router.use(auth, billingLifecycleAuditOnlyMiddleware);
 
 function hasBodyField(req, field) {
   return Object.prototype.hasOwnProperty.call(req.body || {}, field);
@@ -164,7 +163,7 @@ async function resolveCompanyWorkerId(companyId, workerId, queryRunner = pool) {
 
 /* ================= SUBSCRIPTIONS ================= */
 
-router.post("/subscriptions", auth, requireCompanyBillingForMutations, requireMinimumRole("admin"), async (req, res) => {
+router.post("/subscriptions", auth, billingLifecycleAuditOnlyMiddleware, requireCompanyBillingForMutations, requireMinimumRole("admin"), async (req, res) => {
   try {
     warnDeprecatedRoute("/subscriptions", "/ops/subscriptions");
     await ensureSubscriptionBillingSchema();
@@ -250,7 +249,7 @@ router.post("/subscriptions", auth, requireCompanyBillingForMutations, requireMi
   }
 });
 
-router.get("/subscriptions", auth, requireCompanyBillingForMutations, requireMinimumRole("admin"), async (req, res) => {
+router.get("/subscriptions", auth, billingLifecycleAuditOnlyMiddleware, requireCompanyBillingForMutations, requireMinimumRole("admin"), async (req, res) => {
   try {
     warnDeprecatedRoute("/subscriptions", "/ops/subscriptions");
     await ensureSubscriptionBillingSchema();
@@ -294,7 +293,7 @@ router.get("/subscriptions", auth, requireCompanyBillingForMutations, requireMin
   }
 });
 
-router.get("/subscriptions/:id", auth, requireCompanyBillingForMutations, requireMinimumRole("admin"), async (req, res) => {
+router.get("/subscriptions/:id", auth, billingLifecycleAuditOnlyMiddleware, requireCompanyBillingForMutations, requireMinimumRole("admin"), async (req, res) => {
   try {
     await ensureSubscriptionBillingSchema();
     const id = req.params.id;
@@ -396,10 +395,10 @@ async function sendSubscriptionReminderEmailMutation(req, res) {
   }
 }
 
-router.post("/subscriptions/:id/send-reminder-email", auth, requireCompanyBillingForMutations, requireMinimumRole("admin"), sendSubscriptionReminderEmailMutation);
-router.post("/ops/subscriptions/:id/send-reminder-email", auth, requireCompanyBillingForMutations, requireMinimumRole("admin"), sendSubscriptionReminderEmailMutation);
+router.post("/subscriptions/:id/send-reminder-email", auth, billingLifecycleAuditOnlyMiddleware, requireCompanyBillingForMutations, requireMinimumRole("admin"), sendSubscriptionReminderEmailMutation);
+router.post("/ops/subscriptions/:id/send-reminder-email", auth, billingLifecycleAuditOnlyMiddleware, requireCompanyBillingForMutations, requireMinimumRole("admin"), sendSubscriptionReminderEmailMutation);
 
-router.put("/subscriptions/:id", auth, requireCompanyBillingForMutations, requireMinimumRole("admin"), async (req, res) => {
+router.put("/subscriptions/:id", auth, billingLifecycleAuditOnlyMiddleware, requireCompanyBillingForMutations, requireMinimumRole("admin"), async (req, res) => {
   const client = await pool.connect();
 
   try {
@@ -545,7 +544,7 @@ router.put("/subscriptions/:id", auth, requireCompanyBillingForMutations, requir
   }
 });
 
-router.put("/subscriptions/:id/status", auth, requireCompanyBillingForMutations, requireMinimumRole("admin"), async (req, res) => {
+router.put("/subscriptions/:id/status", auth, billingLifecycleAuditOnlyMiddleware, requireCompanyBillingForMutations, requireMinimumRole("admin"), async (req, res) => {
   try {
     warnDeprecatedRoute("/subscriptions/:id/status", "/ops/subscriptions/:id/status");
     await ensureSubscriptionBillingSchema();
@@ -651,7 +650,7 @@ router.put("/subscriptions/:id/status", auth, requireCompanyBillingForMutations,
   }
 });
 
-router.put("/subscriptions/:id/mark-paid", auth, requireCompanyBillingForMutations, requireMinimumRole("admin"), async (req, res) => {
+router.put("/subscriptions/:id/mark-paid", auth, billingLifecycleAuditOnlyMiddleware, requireCompanyBillingForMutations, requireMinimumRole("admin"), async (req, res) => {
   try {
     warnDeprecatedRoute("/subscriptions/:id/mark-paid", "/ops/subscriptions/:id/mark-paid");
     await ensureSubscriptionBillingSchema();
@@ -867,7 +866,7 @@ router.put("/subscriptions/:id/mark-paid", auth, requireCompanyBillingForMutatio
   }
 });
 
-router.delete("/subscriptions/:id", auth, requireCompanyBillingForMutations, requireMinimumRole("admin"), async (req, res) => {
+router.delete("/subscriptions/:id", auth, billingLifecycleAuditOnlyMiddleware, requireCompanyBillingForMutations, requireMinimumRole("admin"), async (req, res) => {
   try {
     const id = Number(req.params.id);
     if (!Number.isInteger(id) || id <= 0) {
@@ -892,7 +891,7 @@ router.delete("/subscriptions/:id", auth, requireCompanyBillingForMutations, req
   }
 });
 
-router.delete("/ops/subscriptions/:id/permanent", auth, requireCompanyBillingForMutations, requireMinimumRole("owner"), async (req, res) => {
+router.delete("/ops/subscriptions/:id/permanent", auth, billingLifecycleAuditOnlyMiddleware, requireCompanyBillingForMutations, requireMinimumRole("owner"), async (req, res) => {
   try {
     await ensureSubscriptionBillingSchema();
     const id = Number(req.params.id);
@@ -978,7 +977,7 @@ router.delete("/ops/subscriptions/:id/permanent", auth, requireCompanyBillingFor
 });
 
 
-router.get("/ops/subscriptions", auth, requireCompanyBillingForMutations, requireMinimumRole("admin"), async (req, res) => {
+router.get("/ops/subscriptions", auth, billingLifecycleAuditOnlyMiddleware, requireCompanyBillingForMutations, requireMinimumRole("admin"), async (req, res) => {
   try {
     await ensureOperationsSchema();
     const { limit, offset } = parsePagination(req.query);
@@ -1038,7 +1037,7 @@ router.get("/ops/subscriptions", auth, requireCompanyBillingForMutations, requir
   }
 });
 
-router.post("/ops/subscriptions", auth, requireCompanyBillingForMutations, requireMinimumRole("admin"), async (req, res) => {
+router.post("/ops/subscriptions", auth, billingLifecycleAuditOnlyMiddleware, requireCompanyBillingForMutations, requireMinimumRole("admin"), async (req, res) => {
   try {
     await ensureOperationsSchema();
     const {
@@ -1145,7 +1144,7 @@ router.post("/ops/subscriptions", auth, requireCompanyBillingForMutations, requi
   }
 });
 
-router.put("/ops/subscriptions/:id", auth, requireCompanyBillingForMutations, requireMinimumRole("manager"), async (req, res) => {
+router.put("/ops/subscriptions/:id", auth, billingLifecycleAuditOnlyMiddleware, requireCompanyBillingForMutations, requireMinimumRole("manager"), async (req, res) => {
   try {
     await ensureOperationsSchema();
     const {
@@ -1236,7 +1235,7 @@ router.put("/ops/subscriptions/:id", auth, requireCompanyBillingForMutations, re
   }
 });
 
-router.put("/ops/subscriptions/:id/status", auth, requireCompanyBillingForMutations, requireMinimumRole("manager"), async (req, res) => {
+router.put("/ops/subscriptions/:id/status", auth, billingLifecycleAuditOnlyMiddleware, requireCompanyBillingForMutations, requireMinimumRole("manager"), async (req, res) => {
   try {
     const { status, pause_reason, cancel_reason } = req.body;
     const allowedStatuses = ["active", "paused", "cancelled"];
@@ -1342,7 +1341,7 @@ router.put("/ops/subscriptions/:id/status", auth, requireCompanyBillingForMutati
   }
 });
 
-router.put("/ops/subscriptions/:id/mark-paid", auth, requireCompanyBillingForMutations, requireMinimumRole("admin"), async (req, res) => {
+router.put("/ops/subscriptions/:id/mark-paid", auth, billingLifecycleAuditOnlyMiddleware, requireCompanyBillingForMutations, requireMinimumRole("admin"), async (req, res) => {
   try {
     await ensureOperationsSchema();
     const companyId = req.user.company_id;

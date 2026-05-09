@@ -11,9 +11,30 @@ function num(value) {
   return Number(value || 0);
 }
 
+/** Normalize pg-style { rows } results; avoids crashes if a query handle is missing. */
+function ensureQueryResult(result, queryLabel) {
+  if (result && typeof result === "object" && Array.isArray(result.rows)) {
+    return result;
+  }
+  const reason =
+    result === undefined ? "undefined_result" :
+      result === null ? "null_result" :
+        typeof result !== "object" ? "non_object_result" :
+          !Array.isArray(result.rows) ? "missing_or_invalid_rows" :
+            "unknown";
+  console.log(JSON.stringify({
+    level: "warn",
+    event: "analytics_query_fallback",
+    query: queryLabel,
+    reason
+  }));
+  return { rows: [] };
+}
+
 async function one(sql, params) {
   const result = await pool.query(sql, params);
-  return result.rows[0] || {};
+  const safe = ensureQueryResult(result, "analytics_one");
+  return safe.rows[0] || {};
 }
 
 /** Lifetime net collected: payments minus refunds (read-model). Falls back if refunds table missing. */
@@ -79,7 +100,7 @@ async function unpaidAmountOpenStatuses(companyId) {
 /** Rolling 12 calendar months of net revenue (payments in month minus refunds issued in month). */
 async function monthlyNetRevenueSeries(companyId) {
   try {
-    return await pool.query(`
+    const result = await pool.query(`
       SELECT
         to_char(gs.month_bucket, 'YYYY-MM') AS month,
         (COALESCE(pay.pay_amt, 0)::numeric - COALESCE(ref.ref_amt, 0)::numeric) AS revenue
@@ -102,9 +123,10 @@ async function monthlyNetRevenueSeries(companyId) {
       ) ref ON ref.mb = gs.month_bucket
       ORDER BY gs.month_bucket ASC
     `, [companyId]);
+    return ensureQueryResult(result, "monthlyNetRevenueSeries");
   } catch (err) {
     if (err && err.code === "42P01") {
-      return pool.query(`
+      const fallback = await pool.query(`
         SELECT
           to_char(gs.month_bucket, 'YYYY-MM') AS month,
           COALESCE(pay.pay_amt, 0)::numeric AS revenue
@@ -121,6 +143,7 @@ async function monthlyNetRevenueSeries(companyId) {
         ) pay ON pay.mb = gs.month_bucket
         ORDER BY gs.month_bucket ASC
       `, [companyId]);
+      return ensureQueryResult(fallback, "monthlyNetRevenueSeries_fallback");
     }
     throw err;
   }
@@ -207,7 +230,7 @@ async function proRevenueMetrics(companyId) {
 
 async function proMonthlyNetTrends(companyId) {
   try {
-    return await pool.query(`
+    const result = await pool.query(`
       SELECT
         to_char(gs.mb, 'YYYY-MM') AS month,
         (COALESCE(pay.pay_amt, 0)::numeric - COALESCE(ref.ref_amt, 0)::numeric) AS revenue
@@ -230,9 +253,10 @@ async function proMonthlyNetTrends(companyId) {
       ) ref ON ref.m = gs.mb
       ORDER BY gs.mb ASC
     `, [companyId]);
+    return ensureQueryResult(result, "proMonthlyNetTrends");
   } catch (err) {
     if (err && err.code === "42P01") {
-      return pool.query(`
+      const fallback = await pool.query(`
         SELECT to_char(months.month, 'YYYY-MM') AS month,
                COALESCE(SUM(payments.amount), 0)::numeric AS revenue
         FROM generate_series(
@@ -246,6 +270,7 @@ async function proMonthlyNetTrends(companyId) {
         GROUP BY months.month
         ORDER BY months.month ASC
       `, [companyId]);
+      return ensureQueryResult(fallback, "proMonthlyNetTrends_fallback");
     }
     throw err;
   }
@@ -280,7 +305,26 @@ router.get("/analytics/overview", ownerAdmin, async (req, res) => {
 router.get("/analytics/revenue", ownerAdmin, async (req, res) => {
   try {
     const companyId = req.user.company_id;
-    const [totalRevenue, unpaid, monthly, invoiceTotals, paymentTotals, billingMetrics, invoiceAlerts, agingBuckets, recentPayments, recentRefunds] = await Promise.all([
+    let totalRevenue;
+    let unpaid;
+    let monthly;
+    let invoiceTotals;
+    let paymentTotals;
+    let billingMetrics;
+    let invoiceAlerts;
+    let recentPayments;
+    let recentRefunds;
+    [
+      totalRevenue,
+      unpaid,
+      monthly,
+      invoiceTotals,
+      paymentTotals,
+      billingMetrics,
+      invoiceAlerts,
+      recentPayments,
+      recentRefunds
+    ] = await Promise.all([
       netCollectedLifetime(companyId),
       unpaidAmountOpenStatuses(companyId),
       monthlyNetRevenueSeries(companyId),
@@ -397,6 +441,13 @@ router.get("/analytics/revenue", ownerAdmin, async (req, res) => {
       `, [companyId])
     ]);
 
+    monthly = ensureQueryResult(monthly, "monthlyNetRevenueSeries");
+    invoiceTotals = ensureQueryResult(invoiceTotals, "invoice_totals");
+    paymentTotals = ensureQueryResult(paymentTotals, "payment_totals");
+    invoiceAlerts = ensureQueryResult(invoiceAlerts, "invoice_alerts");
+    recentPayments = ensureQueryResult(recentPayments, "recent_payments");
+    recentRefunds = ensureQueryResult(recentRefunds, "recent_refunds");
+
     const today = new Date();
     const todayKey = today.toISOString().slice(0, 10);
     const sevenDays = new Date(today);
@@ -454,7 +505,7 @@ router.get("/analytics/revenue", ownerAdmin, async (req, res) => {
 
     let statusChanges = [];
     try {
-      const statusRows = await pool.query(`
+      let statusRows = await pool.query(`
         SELECT created_at, details
         FROM activity_log
         WHERE company_id = $1
@@ -462,6 +513,7 @@ router.get("/analytics/revenue", ownerAdmin, async (req, res) => {
         ORDER BY created_at DESC, id DESC
         LIMIT 10
       `, [companyId]);
+      statusRows = ensureQueryResult(statusRows, "analytics_revenue_activity_log");
       statusChanges = statusRows.rows.map(row => {
         let details = {};
         try { details = JSON.parse(row.details || "{}"); } catch (_err) { details = {}; }
@@ -538,14 +590,19 @@ router.get("/analytics/revenue", ownerAdmin, async (req, res) => {
       }
     });
   } catch (err) {
-    console.log("ANALYTICS REVENUE ERROR:", err);
+    console.log(JSON.stringify({
+      level: "error",
+      event: "analytics_revenue_error",
+      message: err && err.message ? String(err.message) : "unknown_error",
+      code: err && err.code ? String(err.code) : null
+    }));
     res.status(500).json({ error: err.message });
   }
 });
 
 router.get("/analytics/workers", ownerAdmin, async (req, res) => {
   try {
-    const result = await pool.query(`
+    let result = await pool.query(`
       SELECT
         workers.id,
         workers.name,
@@ -559,6 +616,7 @@ router.get("/analytics/workers", ownerAdmin, async (req, res) => {
       ORDER BY workers.name ASC, workers.id ASC
     `, [req.user.company_id]);
 
+    result = ensureQueryResult(result, "analytics_workers");
     res.json(result.rows.map(row => {
       const assigned = num(row.jobs_assigned);
       const completed = num(row.jobs_completed);
@@ -646,6 +704,7 @@ router.get("/analytics/clients", ownerAdmin, async (req, res) => {
       }
     }
 
+    result = ensureQueryResult(result, "analytics_clients");
     res.json(result.rows.map(row => ({
       id: row.id,
       name: row.name,
@@ -666,7 +725,17 @@ router.get("/analytics/pro", ownerAdmin, async (req, res) => {
   try {
     const companyId = req.user.company_id;
 
-    const [
+    let revenue;
+    let jobs;
+    let clients;
+    let subscriptions;
+    let workers;
+    let topWorkers;
+    let monthlyRevenue;
+    let monthlyJobs;
+    let monthlyNewClients;
+    let alerts;
+    [
       revenue,
       jobs,
       clients,
@@ -779,6 +848,11 @@ router.get("/analytics/pro", ownerAdmin, async (req, res) => {
           (SELECT COUNT(*) FROM invoices WHERE company_id = $1 AND (status = 'overdue' OR (status IN ('draft','unpaid') AND due_date < CURRENT_DATE)))::int AS overdue_invoices
       `, [companyId])
     ]);
+
+    topWorkers = ensureQueryResult(topWorkers, "analytics_pro_top_workers");
+    monthlyRevenue = ensureQueryResult(monthlyRevenue, "analytics_pro_monthly_revenue");
+    monthlyJobs = ensureQueryResult(monthlyJobs, "analytics_pro_monthly_jobs");
+    monthlyNewClients = ensureQueryResult(monthlyNewClients, "analytics_pro_monthly_new_clients");
 
     const totalJobs = num(jobs.total_jobs);
     const completedJobs = num(jobs.completed_jobs);

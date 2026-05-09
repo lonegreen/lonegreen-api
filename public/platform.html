@@ -906,33 +906,6 @@
           </div>
           <div id="verificationDetail" class="state">Select a company from Verification Engine.</div>
         </div>
-        <div class="panel">
-          <div class="section-head">
-            <h2>Trust Moderation Queue</h2>
-            <span class="count-pill" id="verificationCount">0 pending</span>
-          </div>
-          <div id="verificationsList" class="list">
-            <div class="state">Loading verification queue...</div>
-          </div>
-        </div>
-        <div class="panel">
-          <div class="section-head">
-            <h2>Reports Queue</h2>
-            <span class="count-pill" id="reportsCount">0 reports</span>
-          </div>
-          <div id="reportsList" class="list">
-            <div class="state">Loading reports...</div>
-          </div>
-        </div>
-        <div class="panel">
-          <div class="section-head">
-            <h2>Report Details</h2>
-            <span class="count-pill" id="reportDetailPill">None selected</span>
-          </div>
-          <div id="reportDetails" class="state">
-            Select a report from the queue.
-          </div>
-        </div>
       </section>
 
       <section id="customersSection" class="section">
@@ -1243,9 +1216,6 @@ let backupStatusData = null;
 let storageReadinessData = null;
 let monitoringReadinessData = null;
 let backupReadinessData = null;
-let verificationRows = [];
-let reportRows = [];
-let selectedReport = null;
 let trustKpis = null;
 let verificationCompanies = [];
 let selectedVerificationCompany = null;
@@ -1382,7 +1352,11 @@ function showSection(section){
   if(currentSection === "activity") renderActivity();
   if(currentSection === "users") renderPlatformUsers();
   if(currentSection === "settings") renderSettings();
-  if(currentSection === "verifications") renderVerifications();
+  if(currentSection === "verifications") {
+    renderVerificationCompanies();
+    renderVerificationDetail();
+    renderTrustKpis();
+  }
   if(currentSection === "customers") renderCustomers();
   if(currentSection === "support") renderSupport();
   if(currentSection === "moderation") renderModeration();
@@ -1927,159 +1901,6 @@ function renderSettings(){
     (notes.length ? '<div class="state">' + notes.map(esc).join("<br>") + '</div>' : '');
 }
 
-function renderVerifications(){
-  const host = document.getElementById("verificationsList");
-  const count = document.getElementById("verificationCount");
-  const rows = Array.isArray(verificationRows) ? verificationRows : [];
-  count.textContent = rows.length + (rows.length === 1 ? " pending" : " pending");
-  if(!rows.length){
-    host.innerHTML = '<div class="state">No trust submissions are pending review.</div>';
-    return;
-  }
-  host.innerHTML = rows.map(row =>
-    '<article class="panel" style="box-shadow:none;margin:0;padding:12px;">' +
-      '<div class="section-head" style="margin-bottom:10px;">' +
-        '<h3 style="margin:0;">' + esc(row.name || ("Company #" + row.id)) + '</h3>' +
-        '<span class="count-pill">Company #' + esc(row.id) + '</span>' +
-      '</div>' +
-      '<div class="mini-grid">' +
-        metric("Verification", titleCase(row.verification_status || "pending")) +
-        metric("Insurance", titleCase(row.insurance_status || "pending")) +
-        metric("License", titleCase(row.license_status || "pending")) +
-        metric("Submitted", date(row.verification_submitted_at)) +
-      '</div>' +
-      '<div class="list" style="margin-top:10px;">' +
-        listRow("Insurance Provider", text(row.insurance_provider)) +
-        listRow("Insurance Expiry", text(row.insurance_expiry_date)) +
-        listRow("Insurance Document", text(row.insurance_document_url)) +
-        listRow("License Number", text(row.license_number)) +
-        listRow("License State", text(row.license_state)) +
-        listRow("License Expiry", text(row.license_expiry_date)) +
-        listRow("License Document", text(row.license_document_url)) +
-        listRow("Notes", text(row.verification_notes)) +
-      '</div>' +
-      '<div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">' +
-        '<button class="btn" type="button" data-verification-action="approve" data-company-id="' + esc(String(row.id)) + '">Approve</button>' +
-        '<button class="btn secondary" type="button" data-verification-action="reject" data-company-id="' + esc(String(row.id)) + '">Reject</button>' +
-        '<button class="btn secondary" type="button" data-verification-action="notes" data-company-id="' + esc(String(row.id)) + '">Update Notes</button>' +
-        '<button class="btn secondary" type="button" data-verification-action="suspend" data-company-id="' + esc(String(row.id)) + '">Suspend Company</button>' +
-      '</div>' +
-    '</article>'
-  ).join("");
-}
-
-async function loadVerifications(){
-  try {
-    const [verificationData, reportsData] = await Promise.all([
-      apiFetch("/platform/verifications"),
-      apiFetch("/platform/reports")
-    ]);
-    verificationRows = verificationData;
-    reportRows = reportsData;
-    if(!Array.isArray(verificationRows)) verificationRows = [];
-    if(!Array.isArray(reportRows)) reportRows = [];
-    renderVerifications();
-    renderReports();
-  } catch (err) {
-    verificationRows = [];
-    reportRows = [];
-    document.getElementById("verificationsList").innerHTML = '<div class="state error">' + esc(err.message || "Unable to load verifications.") + '</div>';
-  }
-}
-
-async function moderateVerification(companyId, action){
-  const notes = window.prompt("Optional moderation notes:", "") || "";
-  try {
-    await apiFetch("/platform/verifications/" + encodeURIComponent(companyId) + "/" + encodeURIComponent(action), {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ verification_notes: notes.trim() || null })
-    });
-    let message = "Verification updated.";
-    if(action === "approve") message = "Verification approved.";
-    if(action === "reject") message = "Verification rejected.";
-    if(action === "notes") message = "Verification notes updated.";
-    if(action === "suspend") message = "Company suspended from trust moderation.";
-    showToast(message);
-    await loadVerifications();
-  } catch (err) {
-    reportUiError(err, "Unable to moderate verification.");
-  }
-}
-
-function renderReports(){
-  const host = document.getElementById("reportsList");
-  const count = document.getElementById("reportsCount");
-  const rows = Array.isArray(reportRows) ? reportRows : [];
-  count.textContent = rows.length + (rows.length === 1 ? " report" : " reports");
-  if(!rows.length){
-    host.innerHTML = '<div class="state">No reports in queue.</div>';
-    return;
-  }
-  host.innerHTML = rows.map(row =>
-    '<div class="list-row">' +
-      '<span><strong>Report #' + esc(row.id) + '</strong><div class="sub">' + esc((row.company_name || ("Company #" + row.company_id)) + " | " + titleCase(row.report_type || "general") + " | " + titleCase(row.status || "open")) + '</div></span>' +
-      '<strong><button class="btn secondary" type="button" data-report-view="' + esc(String(row.id)) + '">View</button></strong>' +
-    '</div>'
-  ).join("");
-}
-
-async function viewReport(reportId){
-  try {
-    selectedReport = await apiFetch("/platform/reports/" + encodeURIComponent(reportId));
-    renderReportDetails();
-  } catch (err) {
-    reportUiError(err, "Unable to load report details.");
-  }
-}
-
-function renderReportDetails(){
-  const pill = document.getElementById("reportDetailPill");
-  const host = document.getElementById("reportDetails");
-  if(!selectedReport){
-    pill.textContent = "None selected";
-    host.className = "state";
-    host.innerHTML = "Select a report from the queue.";
-    return;
-  }
-  pill.textContent = "Report #" + selectedReport.id;
-  host.className = "list";
-  host.innerHTML =
-    listRow("Company", (selectedReport.company_name || ("Company #" + selectedReport.company_id))) +
-    listRow("Type", titleCase(selectedReport.report_type || "general")) +
-    listRow("Status", titleCase(selectedReport.status || "open")) +
-    listRow("Created", date(selectedReport.created_at)) +
-    listRow("Customer ID", text(selectedReport.customer_id)) +
-    listRow("Reason", text(selectedReport.reason)) +
-    listRow("Reviewed", text(selectedReport.reviewed_at)) +
-    listRow("Reviewed By", text(selectedReport.reviewed_by_user_id)) +
-    listRow("Resolution Notes", text(selectedReport.resolution_notes)) +
-    '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;">' +
-      '<button class="btn" type="button" data-report-resolve="resolved">Resolve</button>' +
-      '<button class="btn secondary" type="button" data-report-resolve="dismissed">Dismiss</button>' +
-    '</div>';
-}
-
-async function resolveReport(status){
-  if(!selectedReport || !selectedReport.id) return;
-  const notes = window.prompt("Resolution notes:", selectedReport.resolution_notes || "") || "";
-  try {
-    selectedReport = await apiFetch("/platform/reports/" + encodeURIComponent(selectedReport.id) + "/resolve", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        status: status,
-        resolution_notes: notes.trim() || null
-      })
-    });
-    showToast("Report updated.");
-    await loadVerifications();
-    renderReportDetails();
-  } catch (err) {
-    reportUiError(err, "Unable to resolve report.");
-  }
-}
-
 function renderTrustKpis(){
   const host = document.getElementById("trustKpiGrid");
   const k = trustKpis;
@@ -2210,7 +2031,7 @@ async function syncExpiredTrustStatusesManual(){
   try {
     const result = await apiFetch("/platform/trust/sync-expired", { method: "POST" });
     showToast("Trust expiry sync complete: " + num(result.updated_count) + " company record(s) updated.");
-    await Promise.all([loadTrustKpis(), loadVerifications()]);
+    await Promise.all([loadTrustKpis(), loadVerificationCompanies(), loadModerationReports()]);
   } catch (err) {
     reportUiError(err, "Unable to sync expired trust statuses.");
   }
@@ -3157,7 +2978,7 @@ async function loadCurrentSection(){
       await loadSettings();
     }
     if(currentSection === "verifications"){
-      await Promise.all([loadVerifications(), loadTrustKpis(), loadVerificationCompanies()]);
+      await Promise.all([loadTrustKpis(), loadVerificationCompanies()]);
       renderVerificationDetail();
     }
     if(currentSection === "customers"){
@@ -3259,15 +3080,6 @@ function initPlatformEventBindings(){
     }
   });
 
-  document.getElementById("verificationsList").addEventListener("click", function(e){
-    const btn = e.target.closest("[data-verification-action]");
-    if(!btn) return;
-    const companyId = Number(btn.getAttribute("data-company-id"));
-    const action = btn.getAttribute("data-verification-action");
-    if(!companyId || !action) return;
-    moderateVerification(companyId, action);
-  });
-
   document.getElementById("verificationSearchInput").addEventListener("input", function(){
     loadVerificationCompanies().catch(err => reportUiError(err, "Unable to load verification companies."));
   });
@@ -3286,21 +3098,6 @@ function initPlatformEventBindings(){
     const companyId = Number(btn.getAttribute("data-verification-company-view"));
     if(!companyId) return;
     viewVerificationCompany(companyId);
-  });
-
-  document.getElementById("reportsList").addEventListener("click", function(e){
-    const btn = e.target.closest("[data-report-view]");
-    if(!btn) return;
-    const reportId = Number(btn.getAttribute("data-report-view"));
-    if(!reportId) return;
-    viewReport(reportId);
-  });
-
-  document.getElementById("reportDetails").addEventListener("click", function(e){
-    const btn = e.target.closest("[data-report-resolve]");
-    if(!btn) return;
-    const status = btn.getAttribute("data-report-resolve");
-    resolveReport(status);
   });
 
   document.getElementById("syncTrustExpiredBtn").addEventListener("click", function(){

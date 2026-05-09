@@ -1401,25 +1401,52 @@ router.post("/customer-forgot-password", passwordResetLimiter, async (req, res) 
           reset_token_expires = $3,
           updated_at = CURRENT_TIMESTAMP
       WHERE LOWER(email) = LOWER($1)
-      RETURNING id
+      RETURNING id, email
       `,
       [email, resetTokenHash, expiresAt.toISOString()]
     );
 
     if (updateResult.rows.length) {
+      const accountRow = updateResult.rows[0];
+      const mailTo = cleanEmail(accountRow.email);
+
       await logCustomerResetActivity({
-        accountId: updateResult.rows[0].id,
+        accountId: accountRow.id,
         action: "customer_password_reset_requested",
         details: {
-          reset_delivery: "customer_email"
+          reset_delivery: mailTo ? "customer_email" : "none"
         }
       });
+
+      if (mailTo) {
+        const mailResult = await sendPasswordResetVerificationEmail({
+          to: mailTo,
+          code: resetToken,
+          username: mailTo
+        });
+        if (!mailResult.ok) {
+          logger.warn("CUSTOMER_PASSWORD_RESET_EMAIL_FAILED", {
+            customer_account_id: accountRow.id,
+            skipped: mailResult.skipped,
+            error: mailResult.error
+          });
+          if (process.env.NODE_ENV !== "production") {
+            console.log("CUSTOMER RESET EMAIL FAILED - DEV CODE:", resetToken);
+          }
+        }
+      } else if (process.env.NODE_ENV !== "production") {
+        console.log(
+          "CUSTOMER RESET: no customer email on file for delivery — DEV CODE:",
+          resetToken
+        );
+      }
     }
 
-    return res.json({
-      success: true,
-      reset_token: process.env.NODE_ENV === "production" ? undefined : resetToken
-    });
+    const payload = { success: true };
+    if (process.env.NODE_ENV !== "production") {
+      payload.reset_token = resetToken;
+    }
+    return res.json(payload);
   } catch (err) {
     sendSafeServerError(res, err, "CUSTOMER FORGOT PASSWORD ERROR");
   }
