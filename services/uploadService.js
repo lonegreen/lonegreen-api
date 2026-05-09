@@ -222,12 +222,36 @@ async function r2DeleteObject(key) {
 /**
  * Cloud drivers other than R2 are scaffold-only. Prevent silent prod boot with
  * an unfinished driver. R2 is allowed in production once env vars are present.
+ * Local-disk uploads must NOT silently boot in production: object storage is
+ * required for durability. Operators may opt-in to a non-durable boot via the
+ * explicit ALLOW_LOCAL_UPLOADS_IN_PRODUCTION=true override (used only for
+ * narrowly scoped break-glass / single-host scenarios).
  * Throws synchronously at module load (called from maybeWarnEphemeralLocalUploads).
  */
 function assertCloudDriverNotActiveInProduction() {
   const driver = getUploadStorageDriver();
   const isProduction = String(process.env.NODE_ENV || "").toLowerCase() === "production";
-  if (!isProduction || driver === "local") {
+  if (!isProduction) {
+    return;
+  }
+  if (driver === "local") {
+    const allowLocal = String(process.env.ALLOW_LOCAL_UPLOADS_IN_PRODUCTION || "")
+      .trim()
+      .toLowerCase() === "true";
+    if (!allowLocal) {
+      const err = new Error(
+        "UPLOAD_STORAGE_DRIVER='local' is not allowed in production. " +
+        LOCAL_PROD_DURABILITY_WARNING + " " +
+        "Configure UPLOAD_STORAGE_DRIVER=r2 (with R2_* env vars) or set " +
+        "ALLOW_LOCAL_UPLOADS_IN_PRODUCTION=true to explicitly accept the " +
+        "non-durable storage risk for this boot."
+      );
+      err.code = "UPLOAD_DRIVER_NOT_READY";
+      throw err;
+    }
+    logger.warn("UPLOAD_LOCAL_STORAGE_PRODUCTION_OVERRIDE", {
+      detail: "ALLOW_LOCAL_UPLOADS_IN_PRODUCTION=true: booting with non-durable local upload storage."
+    });
     return;
   }
   if (driver === "r2") {

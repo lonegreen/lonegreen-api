@@ -139,6 +139,29 @@ function hasBodyField(req, field) {
   return Object.prototype.hasOwnProperty.call(req.body || {}, field);
 }
 
+/**
+ * Tenant-context guard for subscription/visit producers.
+ *
+ * Subscription visit jobs (jobs.type='subscription_visit') must always be
+ * tenant-scoped. The `auth` middleware already requires a positive
+ * company_id for non-platform_owner tokens, but this defensive guard
+ * fails fast with 403 if a request ever reaches a visit-producing route
+ * without a usable company_id (e.g., an upstream middleware regression
+ * or a future role expansion). Returns the validated positive integer or
+ * null if a 403 response was already written.
+ */
+function requireTenantCompanyId(req, res) {
+  const companyId = Number(req.user && req.user.company_id);
+  if (!Number.isInteger(companyId) || companyId <= 0) {
+    res.status(403).json({
+      error: "Tenant company context required",
+      code: "TENANT_COMPANY_REQUIRED"
+    });
+    return null;
+  }
+  return companyId;
+}
+
 async function resolveCompanyWorkerId(companyId, workerId, queryRunner = pool) {
   if (workerId === undefined || workerId === null || String(workerId).trim() === "") {
     return { ok: true, workerId: null };
@@ -167,8 +190,9 @@ router.post("/subscriptions", auth, billingLifecycleAuditOnlyMiddleware, require
   try {
     warnDeprecatedRoute("/subscriptions", "/ops/subscriptions");
     await ensureSubscriptionBillingSchema();
+    const company_id = requireTenantCompanyId(req, res);
+    if (company_id === null) return;
     const { client_id, service, frequency, next_date, price, worker_id } = req.body;
-    const company_id = req.user.company_id;
 
     if (!client_id || !service || !frequency || !next_date) {
       return res.status(400).json({ error: "Missing data" });
@@ -223,14 +247,15 @@ router.post("/subscriptions", auth, billingLifecycleAuditOnlyMiddleware, require
           INSERT INTO jobs
           (client_id, service, type, date, start_time, end_time, status, worker_id, price, company_id, source_subscription_id, payment_status)
           SELECT $1,$2,'subscription_visit',$3,'08:00','09:00','scheduled',$4,0,$5,$6,'included'
-          WHERE NOT EXISTS (
-            SELECT 1
-            FROM jobs
-            WHERE source_subscription_id = $6
-              AND date = $3
-              AND type = 'subscription_visit'
-              AND company_id = $5
-          )
+          WHERE $5 IS NOT NULL
+            AND NOT EXISTS (
+              SELECT 1
+              FROM jobs
+              WHERE source_subscription_id = $6
+                AND date = $3
+                AND type = 'subscription_visit'
+                AND company_id = $5
+            )
         `, [
           client_id,
           service,
@@ -403,8 +428,9 @@ router.put("/subscriptions/:id", auth, billingLifecycleAuditOnlyMiddleware, requ
 
   try {
     await ensureSubscriptionBillingSchema();
+    const company_id = requireTenantCompanyId(req, res);
+    if (company_id === null) return;
     const id = req.params.id;
-    const company_id = req.user.company_id;
     const {
       client_id,
       service,
@@ -514,14 +540,15 @@ router.put("/subscriptions/:id", auth, billingLifecycleAuditOnlyMiddleware, requ
           INSERT INTO jobs
           (client_id, service, type, date, start_time, end_time, status, worker_id, price, company_id, source_subscription_id, payment_status)
           SELECT $1,$2,'subscription_visit',$3,'08:00','09:00','scheduled',$4,0,$5,$6,'included'
-          WHERE NOT EXISTS (
-            SELECT 1
-            FROM jobs
-            WHERE source_subscription_id = $6
-              AND date = $3
-              AND type = 'subscription_visit'
-              AND company_id = $5
-          )
+          WHERE $5 IS NOT NULL
+            AND NOT EXISTS (
+              SELECT 1
+              FROM jobs
+              WHERE source_subscription_id = $6
+                AND date = $3
+                AND type = 'subscription_visit'
+                AND company_id = $5
+            )
         `, [
           client_id,
           service,
@@ -548,8 +575,9 @@ router.put("/subscriptions/:id/status", auth, billingLifecycleAuditOnlyMiddlewar
   try {
     warnDeprecatedRoute("/subscriptions/:id/status", "/ops/subscriptions/:id/status");
     await ensureSubscriptionBillingSchema();
+    const company_id = requireTenantCompanyId(req, res);
+    if (company_id === null) return;
     const id = req.params.id;
-    const company_id = req.user.company_id;
     const { status, pause_reason, cancel_reason } = req.body;
 
     const allowedStatuses = [
@@ -623,14 +651,15 @@ router.put("/subscriptions/:id/status", auth, billingLifecycleAuditOnlyMiddlewar
             INSERT INTO jobs
             (client_id, service, type, date, start_time, end_time, status, worker_id, price, company_id, source_subscription_id, payment_status)
             SELECT $1,$2,'subscription_visit',$3,'08:00','09:00','scheduled',$4,0,$5,$6,'included'
-            WHERE NOT EXISTS (
-              SELECT 1
-              FROM jobs
-              WHERE source_subscription_id = $6
-                AND date = $3
-                AND type = 'subscription_visit'
-                AND company_id = $5
-            )
+            WHERE $5 IS NOT NULL
+              AND NOT EXISTS (
+                SELECT 1
+                FROM jobs
+                WHERE source_subscription_id = $6
+                  AND date = $3
+                  AND type = 'subscription_visit'
+                  AND company_id = $5
+              )
           `, [
             current.client_id,
             current.service,
@@ -1040,6 +1069,8 @@ router.get("/ops/subscriptions", auth, billingLifecycleAuditOnlyMiddleware, requ
 router.post("/ops/subscriptions", auth, billingLifecycleAuditOnlyMiddleware, requireCompanyBillingForMutations, requireMinimumRole("admin"), async (req, res) => {
   try {
     await ensureOperationsSchema();
+    const company_id = requireTenantCompanyId(req, res);
+    if (company_id === null) return;
     const {
       client_id,
       service,
@@ -1055,14 +1086,14 @@ router.post("/ops/subscriptions", auth, billingLifecycleAuditOnlyMiddleware, req
 
     const client = await pool.query(
       "SELECT id FROM clients WHERE id=$1 AND company_id=$2 AND COALESCE(archived, FALSE)=FALSE LIMIT 1",
-      [client_id, req.user.company_id]
+      [client_id, company_id]
     );
 
     if (client.rows.length === 0) {
       return res.status(400).json({ error: "Client is archived or not found" });
     }
 
-    const workerLookup = await resolveCompanyWorkerId(req.user.company_id, worker_id);
+    const workerLookup = await resolveCompanyWorkerId(company_id, worker_id);
     if (!workerLookup.ok) {
       return res.status(400).json({ error: "Worker not found in this company" });
     }
@@ -1079,7 +1110,7 @@ router.post("/ops/subscriptions", auth, billingLifecycleAuditOnlyMiddleware, req
       next_date,
       price || 0,
       workerLookup.workerId,
-      req.user.company_id,
+      company_id,
       next_date,
       next_date
     ]);
@@ -1097,34 +1128,35 @@ router.post("/ops/subscriptions", auth, billingLifecycleAuditOnlyMiddleware, req
           AND type = 'subscription_visit'
           AND company_id = $3
         LIMIT 1
-      `, [createdSubscription.id, visitDate, req.user.company_id]);
+      `, [createdSubscription.id, visitDate, company_id]);
 
       if (existingJob.rows.length === 0) {
         await pool.query(`
           INSERT INTO jobs
           (client_id, service, type, date, start_time, end_time, status, worker_id, price, company_id, source_subscription_id, payment_status)
           SELECT $1,$2,'subscription_visit',$3,'08:00','09:00','scheduled',$4,0,$5,$6,'included'
-          WHERE NOT EXISTS (
-            SELECT 1
-            FROM jobs
-            WHERE source_subscription_id = $6
-              AND date = $3
-              AND type = 'subscription_visit'
-              AND company_id = $5
-          )
+          WHERE $5 IS NOT NULL
+            AND NOT EXISTS (
+              SELECT 1
+              FROM jobs
+              WHERE source_subscription_id = $6
+                AND date = $3
+                AND type = 'subscription_visit'
+                AND company_id = $5
+            )
         `, [
           client_id,
           service,
           visitDate,
           workerLookup.workerId,
-          req.user.company_id,
+          company_id,
           createdSubscription.id
         ]);
       }
     }
 
     await logActivity({
-      companyId: req.user.company_id,
+      companyId: company_id,
       userId: req.user.id,
       action: "subscription_created",
       entityType: "subscription",
@@ -1237,6 +1269,8 @@ router.put("/ops/subscriptions/:id", auth, billingLifecycleAuditOnlyMiddleware, 
 
 router.put("/ops/subscriptions/:id/status", auth, billingLifecycleAuditOnlyMiddleware, requireCompanyBillingForMutations, requireMinimumRole("manager"), async (req, res) => {
   try {
+    const company_id = requireTenantCompanyId(req, res);
+    if (company_id === null) return;
     const { status, pause_reason, cancel_reason } = req.body;
     const allowedStatuses = ["active", "paused", "cancelled"];
 
@@ -1249,7 +1283,7 @@ router.put("/ops/subscriptions/:id/status", auth, billingLifecycleAuditOnlyMiddl
       FROM subscriptions
       WHERE id = $1 AND company_id = $2
       LIMIT 1
-    `, [req.params.id, req.user.company_id]);
+    `, [req.params.id, company_id]);
 
     if (before.rows.length === 0) {
       return res.status(404).json({ error: "Subscription not found" });
@@ -1268,7 +1302,7 @@ router.put("/ops/subscriptions/:id/status", auth, billingLifecycleAuditOnlyMiddl
       pause_reason || "",
       cancel_reason || "",
       req.params.id,
-      req.user.company_id
+      company_id
     ]);
 
     if (result.rows.length === 0) {
@@ -1286,27 +1320,28 @@ router.put("/ops/subscriptions/:id/status", auth, billingLifecycleAuditOnlyMiddl
             AND company_id = $2
             AND type = 'subscription_visit'
             AND date = $3
-        `, [current.id, req.user.company_id, visitDate]);
+        `, [current.id, company_id, visitDate]);
 
         if (exists.rows.length === 0) {
           await pool.query(`
             INSERT INTO jobs
             (client_id, service, type, date, start_time, end_time, status, worker_id, price, company_id, source_subscription_id, payment_status)
             SELECT $1,$2,'subscription_visit',$3,'08:00','09:00','scheduled',$4,0,$5,$6,'included'
-            WHERE NOT EXISTS (
-              SELECT 1
-              FROM jobs
-              WHERE source_subscription_id = $6
-                AND date = $3
-                AND type = 'subscription_visit'
-                AND company_id = $5
-            )
+            WHERE $5 IS NOT NULL
+              AND NOT EXISTS (
+                SELECT 1
+                FROM jobs
+                WHERE source_subscription_id = $6
+                  AND date = $3
+                  AND type = 'subscription_visit'
+                  AND company_id = $5
+              )
           `, [
             current.client_id,
             current.service,
             visitDate,
             current.worker_id || null,
-            req.user.company_id,
+            company_id,
             current.id
           ]);
         }
@@ -1314,7 +1349,7 @@ router.put("/ops/subscriptions/:id/status", auth, billingLifecycleAuditOnlyMiddl
 
     }
     await logChange({
-      companyId: req.user.company_id,
+      companyId: company_id,
       userId: req.user.id,
       action: `subscription_${status}`,
       entityType: "subscription",

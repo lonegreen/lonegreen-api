@@ -803,33 +803,166 @@ router.post("/workflow/jobs", auth, requireCompanyBillingForMutations, enforceJo
   try {
     await ensureWorkflowSchema();
     const companyId = req.user.company_id;
-    let clientId = req.body.client_id || null;
-    let estimateId = req.body.estimate_id || null;
-    let estimate = null;
+    const estimateId = req.body.estimate_id || null;
 
     if (estimateId) {
-      estimate = await getEstimate(companyId, estimateId);
-      if (!estimate) {
-        return res.status(404).json({ error: "Estimate not found" });
+      const txClient = await pool.connect();
+      try {
+        await txClient.query("BEGIN");
+
+        const estimateResult = await txClient.query(
+          `SELECT *
+           FROM estimates
+           WHERE id = $1 AND company_id = $2 AND record_type = 'estimate'
+           LIMIT 1
+           FOR UPDATE`,
+          [estimateId, companyId]
+        );
+        const estimate = estimateResult.rows[0] || null;
+
+        if (!estimate) {
+          await txClient.query("ROLLBACK");
+          return res.status(404).json({ error: "Estimate not found" });
+        }
+
+        const existingEstimateJob = await txClient.query(
+          `SELECT *
+           FROM jobs
+           WHERE company_id = $1
+             AND (estimate_id = $2 OR id = $3)
+           ORDER BY id DESC
+           LIMIT 1`,
+          [companyId, estimate.id, estimate.converted_job_id || 0]
+        );
+
+        if (existingEstimateJob.rows.length > 0) {
+          await txClient.query("COMMIT");
+          return res.json(existingEstimateJob.rows[0]);
+        }
+
+        const normalizedEstimateStatus = String(estimate.status || "").trim().toLowerCase();
+        if (normalizedEstimateStatus !== "approved") {
+          await txClient.query("ROLLBACK");
+          return res.status(400).json({
+            error: "Estimate must be approved before it can be converted to a job",
+            code: "ESTIMATE_NOT_APPROVED",
+            estimate_status: normalizedEstimateStatus || null
+          });
+        }
+
+        const clientId = req.body.client_id || estimate.client_id || null;
+        if (!clientId) {
+          await txClient.query("ROLLBACK");
+          return res.status(400).json({ error: "Client is required" });
+        }
+
+        const client = await txClient.query(
+          "SELECT id FROM clients WHERE id=$1 AND company_id=$2 AND COALESCE(archived, FALSE)=FALSE LIMIT 1",
+          [clientId, companyId]
+        );
+        if (client.rows.length === 0) {
+          await txClient.query("ROLLBACK");
+          return res.status(400).json({ error: "Client is archived or not found" });
+        }
+
+        if (req.body.worker_id) {
+          const workerCheck = await txClient.query(
+            "SELECT id FROM workers WHERE id=$1 AND company_id=$2 LIMIT 1",
+            [req.body.worker_id, companyId]
+          );
+          if (workerCheck.rows.length === 0) {
+            await txClient.query("ROLLBACK");
+            return res.status(400).json({
+              error: "Worker not found in this company"
+            });
+          }
+        }
+
+        const result = await txClient.query(
+          `
+          INSERT INTO jobs
+          (client_id, service, type, date, start_time, end_time, status, worker_id, price, company_id, payment_status, internal_notes, status_reason, estimate_id)
+          VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)
+          RETURNING *
+        `,
+          [
+            clientId,
+            req.body.service,
+            req.body.type || "one_time_job",
+            req.body.date,
+            req.body.start_time || "08:00",
+            req.body.end_time || "09:00",
+            normalizeJobStatus(req.body.status || "scheduled"),
+            req.body.worker_id || null,
+            req.body.type === "subscription_visit" ? 0 : req.body.price || 0,
+            companyId,
+            normalizePaymentStatus(
+              req.body.payment_status,
+              req.body.type || "one_time_job"
+            ),
+            req.body.internal_notes || "",
+            req.body.status_reason || "",
+            estimateId
+          ]
+        );
+
+        await txClient.query(
+          `
+          UPDATE estimates
+          SET client_id = $1,
+              converted_client_id = $1,
+              converted_job_id = $2,
+              status = 'converted',
+              converted_at = CURRENT_TIMESTAMP
+          WHERE id = $3 AND company_id = $4 AND record_type = 'estimate'
+        `,
+          [clientId, result.rows[0].id, estimate.id, companyId]
+        );
+
+        await txClient.query("COMMIT");
+
+        await logActivity({
+          companyId,
+          userId: req.user.id,
+          action: "estimate_converted_to_job",
+          entityType: "estimate",
+          entityId: estimate.id,
+          details: {
+            job_id: result.rows[0].id,
+            created_from: "jobs_page"
+          }
+        });
+
+        await logActivity({
+          companyId,
+          userId: req.user.id,
+          action: "job_created",
+          entityType: "job",
+          entityId: result.rows[0].id,
+          details: {
+            client_id: clientId,
+            estimate_id: estimateId,
+            service: result.rows[0].service,
+            type: result.rows[0].type,
+            status: result.rows[0].status,
+            worker_id: result.rows[0].worker_id,
+            date: result.rows[0].date,
+            start_time: result.rows[0].start_time,
+            end_time: result.rows[0].end_time,
+            price: result.rows[0].price
+          }
+        });
+
+        return res.json(result.rows[0]);
+      } catch (txErr) {
+        try { await txClient.query("ROLLBACK"); } catch (_) {}
+        throw txErr;
+      } finally {
+        txClient.release();
       }
-
-      const existingEstimateJob = await pool.query(
-        `SELECT *
-         FROM jobs
-         WHERE company_id = $1
-           AND (estimate_id = $2 OR id = $3)
-         ORDER BY id DESC
-         LIMIT 1`,
-        [companyId, estimate.id, estimate.converted_job_id || 0]
-      );
-
-      if (existingEstimateJob.rows.length > 0) {
-        return res.json(existingEstimateJob.rows[0]);
-      }
-
-      clientId = clientId || estimate.client_id || null;
     }
 
+    const clientId = req.body.client_id || null;
     if (!clientId) {
       return res.status(400).json({ error: "Client is required" });
     }
@@ -880,36 +1013,9 @@ router.post("/workflow/jobs", auth, requireCompanyBillingForMutations, enforceJo
         ),
         req.body.internal_notes || "",
         req.body.status_reason || "",
-        estimateId || null
+        null
       ]
     );
-
-    if (estimate) {
-      await pool.query(
-        `
-        UPDATE estimates
-        SET client_id = $1,
-            converted_client_id = $1,
-            converted_job_id = $2,
-            status = 'converted',
-            converted_at = CURRENT_TIMESTAMP
-        WHERE id = $3 AND company_id = $4 AND record_type = 'estimate'
-      `,
-        [clientId, result.rows[0].id, estimate.id, companyId]
-      );
-
-      await logActivity({
-        companyId,
-        userId: req.user.id,
-        action: "estimate_converted_to_job",
-        entityType: "estimate",
-        entityId: estimate.id,
-        details: {
-          job_id: result.rows[0].id,
-          created_from: "jobs_page"
-        }
-      });
-    }
 
     await logActivity({
       companyId,
@@ -919,7 +1025,7 @@ router.post("/workflow/jobs", auth, requireCompanyBillingForMutations, enforceJo
       entityId: result.rows[0].id,
       details: {
         client_id: clientId,
-        estimate_id: estimateId || null,
+        estimate_id: null,
         service: result.rows[0].service,
         type: result.rows[0].type,
         status: result.rows[0].status,

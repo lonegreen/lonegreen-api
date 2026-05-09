@@ -22,6 +22,8 @@ const {
 const {
   notifyCustomerServiceLeadCreated
 } = require("../services/notificationService");
+const { getStaffMutationBillingBlock } = require("../services/billingService");
+const { getStaffMutationPlatformBlock } = require("../services/platformControlService");
 
 const router = express.Router();
 
@@ -761,6 +763,35 @@ router.post("/customer/service-requests", customerAuth, async (req, res) => {
     if (!client.company_id) return res.status(403).json({ error: "Forbidden" });
     if (req.customer.company_id && String(req.customer.company_id) !== String(client.company_id)) {
       return res.status(403).json({ error: "Forbidden" });
+    }
+
+    const platformBlock = await getStaffMutationPlatformBlock(client.company_id);
+    if (platformBlock) {
+      logger.warn("PLATFORM_MUTATION_BLOCKED", {
+        company_id: client.company_id,
+        actor: "customer",
+        http_status: platformBlock.httpStatus,
+        path: req.originalUrl,
+        method: req.method
+      });
+      return res.status(platformBlock.httpStatus).json(platformBlock.payload);
+    }
+
+    const billingBlock = await getStaffMutationBillingBlock(client.company_id, {
+      method: req.method,
+      path: req.originalUrl || req.url || ""
+    });
+    if (billingBlock) {
+      logger.warn("BILLING_MUTATION_BLOCKED", {
+        company_id: client.company_id,
+        actor: "customer",
+        http_status: billingBlock.httpStatus,
+        action_required: billingBlock.payload && billingBlock.payload.action_required,
+        billing_status: billingBlock.payload && billingBlock.payload.billing_status,
+        path: req.originalUrl,
+        method: req.method
+      });
+      return res.status(billingBlock.httpStatus).json(billingBlock.payload);
     }
 
     const service = String(req.body.service || "").trim();

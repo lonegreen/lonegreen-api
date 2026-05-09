@@ -53,8 +53,15 @@ async function runTask(status, handler) {
     run_count: status.run_count
   });
 
+  // PostgreSQL session-level advisory locks are per-connection. Acquiring
+  // and releasing on different pooled connections produces a no-op release
+  // and silently lets another instance acquire the lock. We dedicate one
+  // checked-out client to the entire acquire/run/release lifecycle so the
+  // lock truly serializes the task across processes.
+  let lockClient = null;
   try {
-    const lockResult = await pool.query(
+    lockClient = await pool.connect();
+    const lockResult = await lockClient.query(
       "SELECT pg_try_advisory_lock(hashtext($1)) AS acquired",
       [lockName]
     );
@@ -90,13 +97,23 @@ async function runTask(status, handler) {
     });
   }
   finally {
-    if (advisoryLockAcquired) {
+    if (lockClient) {
+      if (advisoryLockAcquired) {
+        try {
+          await lockClient.query("SELECT pg_advisory_unlock(hashtext($1))", [lockName]);
+        } catch (unlockErr) {
+          logger.error("SCHEDULER_TASK_UNLOCK_ERROR", {
+            task: status.name,
+            error: unlockErr
+          });
+        }
+      }
       try {
-        await pool.query("SELECT pg_advisory_unlock(hashtext($1))", [lockName]);
-      } catch (unlockErr) {
-        logger.error("SCHEDULER_TASK_UNLOCK_ERROR", {
+        lockClient.release();
+      } catch (releaseErr) {
+        logger.warn("SCHEDULER_TASK_LOCK_CLIENT_RELEASE_NOTE", {
           task: status.name,
-          error: unlockErr
+          error: releaseErr && releaseErr.message ? releaseErr.message : String(releaseErr)
         });
       }
     }

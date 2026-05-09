@@ -1045,7 +1045,19 @@ router.post("/estimates/:id/convert-to-subscription", auth, requireCompanyBillin
     await ensureSubscriptionBillingSchema();
     const id = req.params.id;
     const { frequency, next_date, worker_id, price, start_date } = req.body;
-    const company_id = req.user.company_id;
+    // Defensive tenant-context guard: subscription + subscription_visit
+    // rows must be tenant-scoped. Auth middleware enforces a positive
+    // company_id for non-platform_owner tokens; this fail-fast guard
+    // protects against any future regression that lets a request reach
+    // here without a usable tenant id.
+    const company_id = Number(req.user && req.user.company_id);
+    if (!Number.isInteger(company_id) || company_id <= 0) {
+      clientTx.release();
+      return res.status(403).json({
+        error: "Tenant company context required",
+        code: "TENANT_COMPANY_REQUIRED"
+      });
+    }
 
     await clientTx.query("BEGIN");
     const estimate = await clientTx.query(`
@@ -1146,10 +1158,14 @@ router.post("/estimates/:id/convert-to-subscription", auth, requireCompanyBillin
       `, [createdSub.id, visitDate, company_id]);
 
       if (exists.rows.length === 0) {
+        // SQL-level backstop: refuse to materialize a subscription_visit
+        // row whose tenant ($5) is NULL. The application-side guard above
+        // already prevents this; this is defense-in-depth.
         await clientTx.query(`
           INSERT INTO jobs
           (client_id, service, type, date, start_time, end_time, status, worker_id, price, company_id, source_subscription_id, payment_status)
-          VALUES ($1,$2,'subscription_visit',$3,'08:00','09:00','scheduled',$4,0,$5,$6,'included')
+          SELECT $1,$2,'subscription_visit',$3,'08:00','09:00','scheduled',$4,0,$5,$6,'included'
+          WHERE $5 IS NOT NULL
         `, [
           resolvedClientId,
           e.service,

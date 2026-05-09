@@ -402,16 +402,28 @@ router.delete("/workflow/leads/:id", auth, requireCompanyBillingForMutations, re
 });
 
 router.post("/workflow/leads/:id/convert-to-client", auth, requireCompanyBillingForMutations, requireMinimumRole("manager"), async (req, res) => {
+  const txClient = await pool.connect();
   try {
     await ensureWorkflowSchema();
-    const lead = await getLead(req.user.company_id, req.params.id);
+    await txClient.query("BEGIN");
+
+    const leadResult = await txClient.query(
+      `SELECT *
+       FROM estimates
+       WHERE id = $1 AND company_id = $2 AND record_type = 'lead'
+       LIMIT 1
+       FOR UPDATE`,
+      [req.params.id, req.user.company_id]
+    );
+    const lead = leadResult.rows[0] || null;
 
     if (!lead) {
+      await txClient.query("ROLLBACK");
       return res.status(404).json({ error: "Lead not found" });
     }
 
     if (lead.converted_job_id) {
-      const existingJob = await pool.query(
+      const existingJob = await txClient.query(
         `SELECT *
          FROM jobs
          WHERE id = $1 AND company_id = $2
@@ -420,36 +432,71 @@ router.post("/workflow/leads/:id/convert-to-client", auth, requireCompanyBilling
       );
 
       if (existingJob.rows.length > 0) {
-        const existingClient = existingJob.rows[0].client_id
-          ? await getClientById(req.user.company_id, existingJob.rows[0].client_id)
+        const existingClientRow = existingJob.rows[0].client_id
+          ? (await txClient.query(
+              `SELECT * FROM clients WHERE id = $1 AND company_id = $2 LIMIT 1`,
+              [existingJob.rows[0].client_id, req.user.company_id]
+            )).rows[0] || null
           : null;
 
-        return res.json({ client: existingClient, job: existingJob.rows[0] });
+        await txClient.query("COMMIT");
+        return res.json({ client: existingClientRow, job: existingJob.rows[0] });
       }
     }
 
-    let client = lead.client_id ? await getClientById(req.user.company_id, lead.client_id) : null;
-    if (client && client.archived === true) {
-      return res.status(400).json({ error: "Client is archived or not found" });
-    }
-    if (!client) {
-      client = await createClientFromContact(req.user.company_id, {
-        name: lead.customer_name,
-        phone: lead.phone,
-        address: lead.address,
-        zip: lead.zip,
-        notes: lead.notes
-      });
+    if (lead.converted_client_id) {
+      const existingConvertedClient = await txClient.query(
+        `SELECT * FROM clients WHERE id = $1 AND company_id = $2 LIMIT 1`,
+        [lead.converted_client_id, req.user.company_id]
+      );
+      if (existingConvertedClient.rows.length > 0) {
+        await txClient.query("COMMIT");
+        return res.json(existingConvertedClient.rows[0]);
+      }
     }
 
-    await pool.query(`
-      UPDATE estimates
-      SET client_id = $1,
-          converted_client_id = $1,
-          status = 'converted',
-          converted_at = CURRENT_TIMESTAMP
-      WHERE id = $2 AND company_id = $3 AND record_type = 'lead'
-    `, [client.id, lead.id, req.user.company_id]);
+    let clientRow = null;
+    if (lead.client_id) {
+      const existingClientResult = await txClient.query(
+        `SELECT * FROM clients WHERE id = $1 AND company_id = $2 LIMIT 1`,
+        [lead.client_id, req.user.company_id]
+      );
+      clientRow = existingClientResult.rows[0] || null;
+    }
+
+    if (clientRow && clientRow.archived === true) {
+      await txClient.query("ROLLBACK");
+      return res.status(400).json({ error: "Client is archived or not found" });
+    }
+
+    if (!clientRow) {
+      const insertedClient = await txClient.query(
+        `INSERT INTO clients (name, phone, address, zip, notes, company_id)
+         VALUES ($1,$2,$3,$4,$5,$6)
+         RETURNING *`,
+        [
+          lead.customer_name || "New Client",
+          lead.phone || "",
+          lead.address || "",
+          lead.zip || "",
+          lead.notes || "",
+          req.user.company_id
+        ]
+      );
+      clientRow = insertedClient.rows[0];
+    }
+
+    await txClient.query(
+      `UPDATE estimates
+       SET client_id = $1,
+           converted_client_id = $1,
+           status = 'converted',
+           converted_at = CURRENT_TIMESTAMP
+       WHERE id = $2 AND company_id = $3 AND record_type = 'lead'`,
+      [clientRow.id, lead.id, req.user.company_id]
+    );
+
+    await txClient.query("COMMIT");
 
     await logActivity({
       companyId: req.user.company_id,
@@ -459,15 +506,18 @@ router.post("/workflow/leads/:id/convert-to-client", auth, requireCompanyBilling
       entityId: lead.id,
       details: {
         source_lead_id: lead.id,
-        client_id: client.id,
+        client_id: clientRow.id,
         customer_name: lead.customer_name
       }
     });
 
-    res.json(client);
+    res.json(clientRow);
   } catch (err) {
+    try { await txClient.query("ROLLBACK"); } catch (_) {}
     console.log("LEAD TO CLIENT ERROR:", err);
     sendSafeServerError(res, err, "routes/leads");
+  } finally {
+    txClient.release();
   }
 });
 

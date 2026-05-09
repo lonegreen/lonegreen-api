@@ -453,6 +453,37 @@ process.on("unhandledRejection", (reason) => {
       }
       await assertProductionSchemaReady();
       logger.info("PRODUCTION_SCHEMA_READY");
+
+      if (envReadiness.status === "critical_missing" || envReadiness.status === "launch_blockers") {
+        logger.error("PRODUCTION_STARTUP_BLOCKED_ENV_READINESS", envReadiness);
+        throw new Error(
+          "Production startup blocked: environment readiness is '" +
+          envReadiness.status + "'. Missing critical=" +
+          (envReadiness.missing_critical || []).join(",") +
+          " missing_launch_required=" +
+          (envReadiness.missing_launch_required || []).join(",")
+        );
+      }
+
+      const productionReadiness = await getHealthReadiness();
+      const launchBlockers = productionReadiness && productionReadiness.launch_blockers;
+      if (launchBlockers && launchBlockers.status !== "ready") {
+        logger.error("PRODUCTION_STARTUP_BLOCKED_LAUNCH_BLOCKERS", {
+          launch_blockers: launchBlockers,
+          storage_activation: productionReadiness.storage_activation,
+          monitoring_activation: productionReadiness.monitoring_activation,
+          backup_scheduling: productionReadiness.backup_scheduling,
+          launch_docs: productionReadiness.launch_docs
+        });
+        throw new Error(
+          "Production startup blocked: launch_blockers present (" +
+          (launchBlockers.items || []).join(", ") + "). Resolve before booting."
+        );
+      }
+      logger.info("PRODUCTION_LAUNCH_GATE_PASSED", {
+        env_status: envReadiness.status,
+        launch_blockers: launchBlockers && launchBlockers.status
+      });
     } else {
       logger.info("STARTUP_MIGRATIONS_ENABLED", {
         production: false

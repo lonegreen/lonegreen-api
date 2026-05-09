@@ -59,9 +59,15 @@ async function processSubscriptions() {
       lock_acquired: true
     });
 
+    // Tenant-isolation guard: a subscription with NULL/invalid company_id or
+    // client_id has no owning tenant and MUST NOT produce subscription_visit
+    // jobs. Filtering at the SELECT layer prevents downstream INSERTs from
+    // ever materializing a job with company_id = NULL.
     const subs = await client.query(`
       SELECT * FROM subscriptions
       WHERE status = 'active'
+        AND company_id IS NOT NULL
+        AND client_id IS NOT NULL
     `);
 
     const limitDate = new Date();
@@ -72,6 +78,30 @@ async function processSubscriptions() {
 
     for (const subscription of subs.rows) {
       if (!subscription.next_date) continue;
+
+      // Defense-in-depth: even after the SELECT-side filter, refuse to act on
+      // any subscription row whose company_id failed to resolve to a positive
+      // integer. Without a resolved tenant we cannot insert a tenant-scoped
+      // job; skipping is strictly safer than producing an orphan visit.
+      const subscriptionCompanyId = Number(subscription.company_id);
+      if (!Number.isInteger(subscriptionCompanyId) || subscriptionCompanyId <= 0) {
+        logger.warn("SUBSCRIPTION_ENGINE_SKIP_MISSING_COMPANY_ID", {
+          subscription_id: subscription.id,
+          client_id: subscription.client_id,
+          raw_company_id: subscription.company_id
+        });
+        continue;
+      }
+
+      const subscriptionClientId = Number(subscription.client_id);
+      if (!Number.isInteger(subscriptionClientId) || subscriptionClientId <= 0) {
+        logger.warn("SUBSCRIPTION_ENGINE_SKIP_MISSING_CLIENT_ID", {
+          subscription_id: subscription.id,
+          company_id: subscriptionCompanyId,
+          raw_client_id: subscription.client_id
+        });
+        continue;
+      }
 
       let currentDate = new Date(subscription.next_date);
       currentDate.setHours(0, 0, 0, 0);
@@ -89,39 +119,43 @@ async function processSubscriptions() {
             AND date = $2
             AND type = 'subscription_visit'
             AND company_id = $3
-        `, [subscription.id, dateStr, subscription.company_id]);
+        `, [subscription.id, dateStr, subscriptionCompanyId]);
 
         if (exists.rows.length === 0) {
           const assignedWorkerId = subscription.worker_id || await suggestWorkerForSubscription(subscription, client);
 
+          // SQL-level guard: refuse to materialize a row whose tenant ($5)
+          // is NULL or non-positive. The application-side guards above
+          // already prevent this; this is the final backstop.
           const inserted = await client.query(`
             INSERT INTO jobs
             (client_id, service, type, date, start_time, end_time, status, worker_id, price, company_id, source_subscription_id, payment_status)
             SELECT $1,$2,'subscription_visit',$3,'08:00','09:00','scheduled',$4,0,$5,$6,'included'
-            WHERE NOT EXISTS (
-              SELECT 1
-              FROM jobs
-              WHERE source_subscription_id = $6
-                AND date = $3
-                AND type = 'subscription_visit'
-                AND company_id = $5
-            )
+            WHERE $5 IS NOT NULL
+              AND NOT EXISTS (
+                SELECT 1
+                FROM jobs
+                WHERE source_subscription_id = $6
+                  AND date = $3
+                  AND type = 'subscription_visit'
+                  AND company_id = $5
+              )
             RETURNING id
           `, [
-            subscription.client_id,
+            subscriptionClientId,
             subscription.service,
             dateStr,
             assignedWorkerId,
-            subscription.company_id,
+            subscriptionCompanyId,
             subscription.id
           ]);
 
           if (inserted.rows.length > 0) {
             logger.info("Subscription visit created", {
-              client_id: subscription.client_id,
+              client_id: subscriptionClientId,
               date: dateStr,
               subscription_id: subscription.id,
-              company_id: subscription.company_id
+              company_id: subscriptionCompanyId
             });
           }
         }

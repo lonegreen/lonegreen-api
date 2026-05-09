@@ -989,7 +989,7 @@
       <a class="back-link" href="/companies.html">← Back to companies</a>
 
       <div class="profile-actions">
-        <button class="small-action" type="button" onclick="navigator.clipboard && navigator.clipboard.writeText(window.location.href)">↗ Share</button>
+        <button class="small-action" type="button" id="topShareCompanyBtn">↗ Share</button>
         <button class="small-action" type="button" id="topSaveCompanyBtn">♡ Save</button>
         <button class="small-action" type="button" id="topReportCompanyBtn">⚐ Report</button>
       </div>
@@ -2150,6 +2150,15 @@
         setEmptyState(document.getElementById("reviewsPreview"), "Reviews could not be loaded.");
         setEmptyState(document.getElementById("activityFeed"), "Activity feed is unavailable.");
       }
+    }
+
+    var topShareBtn = document.getElementById("topShareCompanyBtn");
+    if (topShareBtn) {
+      topShareBtn.addEventListener("click", function () {
+        if (navigator.clipboard) {
+          navigator.clipboard.writeText(window.location.href);
+        }
+      });
     }
 
     loadProfile();

@@ -152,17 +152,39 @@ async function validateStaffTokenAgainstDatabase(decoded, tokenRole) {
   }
 
   if (tokenRole === "platform_owner") {
-    const result = await pool.query(
-      `
-      SELECT id, role
-      FROM users
-      WHERE id = $1
-      LIMIT 1
-      `,
-      [userId]
-    );
+    let result;
+    try {
+      result = await pool.query(
+        `
+        SELECT id, role,
+               COALESCE(active, TRUE) AS active
+        FROM users
+        WHERE id = $1
+        LIMIT 1
+        `,
+        [userId]
+      );
+    } catch (err) {
+      if (!err || err.code !== "42703") {
+        throw err;
+      }
+      result = await pool.query(
+        `
+        SELECT id, role
+        FROM users
+        WHERE id = $1
+        LIMIT 1
+        `,
+        [userId]
+      );
+    }
     const row = result.rows[0];
     if (!row || normalizeRole(row.role) !== "platform_owner") {
+      const err = new Error("Forbidden");
+      err.status = 403;
+      throw err;
+    }
+    if (row.active === false) {
       const err = new Error("Forbidden");
       err.status = 403;
       throw err;

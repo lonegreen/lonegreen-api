@@ -5,7 +5,7 @@ const pool = require("../db/pool");
 const companyAuth = require("../middleware/auth");
 const requireCompanyBillingForMutations = require("../middleware/requireCompanyBillingForMutations");
 const { SECRET } = require("../config/env");
-const { requireMinimumRole, requireActiveCustomer, getBearerToken, classifyTokenBoundary, normalizeRole, verifyActiveCustomerBearerToken } = require("../middleware/auth");
+const { requireMinimumRole, requireActiveCustomer, getBearerToken, classifyTokenBoundary, normalizeRole, verifyActiveCustomerBearerToken, validateStaffTokenAgainstDatabase } = require("../middleware/auth");
 const {
   marketplaceCustomerRequestCreateLimiter,
   marketplaceOfferAcceptLimiter,
@@ -234,6 +234,7 @@ async function marketplaceDisputeAuth(req, res, next) {
     if (role !== "platform_owner" && (!Number.isInteger(companyId) || companyId <= 0)) {
       return res.status(403).json({ error: "Forbidden" });
     }
+    await validateStaffTokenAgainstDatabase(decoded, role);
     req.disputeActor = {
       actor_type: role === "platform_owner" ? "platform" : "company",
       user_id: userId,
