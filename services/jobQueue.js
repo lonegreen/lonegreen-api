@@ -4,7 +4,6 @@ const logger = require("./logger");
 const DEFAULT_MAX_QUEUE_SIZE = Number(process.env.JOB_QUEUE_MAX_SIZE || 500);
 const MAX_ATTEMPTS = Number(process.env.JOB_QUEUE_MAX_ATTEMPTS || 3);
 const BASE_BACKOFF_MS = Number(process.env.JOB_QUEUE_BASE_BACKOFF_MS || 1000);
-const UNKNOWN_HANDLER_RETRY_MS = Number(process.env.JOB_QUEUE_UNKNOWN_HANDLER_RETRY_MS || 15000);
 const MIN_DB_BACKOFF_MS = Number(process.env.JOB_QUEUE_DB_MIN_BACKOFF_MS || 5000);
 const MAX_DB_BACKOFF_MS = Number(process.env.JOB_QUEUE_DB_MAX_BACKOFF_MS || 60000);
 const DB_CIRCUIT_FAILURE_THRESHOLD = Number(process.env.JOB_QUEUE_DB_CIRCUIT_FAILURES || 5);
@@ -236,20 +235,6 @@ async function claimNextJob() {
   return result.rows[0] || null;
 }
 
-async function requeueJobForUnknownHandler(job) {
-  await pool.query(`
-    UPDATE background_jobs
-    SET
-      status = 'retry',
-      run_at = CURRENT_TIMESTAMP + ($2::int * INTERVAL '1 millisecond'),
-      locked_at = NULL,
-      locked_by = NULL,
-      updated_at = CURRENT_TIMESTAMP,
-      last_error = 'No registered handler for job type'
-    WHERE id = $1
-  `, [job.id, UNKNOWN_HANDLER_RETRY_MS]);
-}
-
 async function completeJob(jobId) {
   await pool.query(`
     UPDATE background_jobs
@@ -353,14 +338,14 @@ async function processNext() {
     const handler = handlers.get(job.type);
     if (typeof handler !== "function") {
       try {
-        await requeueJobForUnknownHandler(job);
+        await failOrRetryJob(job, Object.assign(new Error("No registered handler for job type"), { code: "UNKNOWN_HANDLER" }));
       } catch (err) {
         nextDelay = registerDbFailure(err);
         return;
       }
       currentJob = null;
       await refreshPendingCount();
-      nextDelay = 1000;
+      nextDelay = 0;
       return;
     }
 

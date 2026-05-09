@@ -3022,11 +3022,12 @@ async function loadData(){
   renderCustomers();
 }
 
-async function loadCurrentSection(){
+async function loadCurrentSection(opts){
+  const forceReload = opts && opts.force;
   if(!requirePlatform()) return;
 
   try {
-    if(!booted || ["overview", "companies", "billing"].includes(currentSection)){
+    if((!booted || forceReload) && ["overview", "companies", "billing"].includes(currentSection)){
       await loadData();
     }
     if(currentSection === "overview"){
@@ -3086,7 +3087,7 @@ function initPlatformEventBindings(){
     const top = e.target.closest("[data-top-action]");
     if(!top) return;
     const action = top.getAttribute("data-top-action");
-    if(action === "refresh" || action === "refresh-platform") loadCurrentSection();
+    if(action === "refresh" || action === "refresh-platform") loadCurrentSection({ force: true });
     else if(action === "nav-billing") navigateSection("billing");
     else if(action === "nav-customers") navigateSection("customers");
     else if(action === "nav-verifications") navigateSection("verifications");

@@ -601,6 +601,14 @@ async function handleStripeCheckoutSession(req, res) {
       });
     }
 
+    if (err && err.type === "StripeInvalidRequestError") {
+      return res.status(400).json({
+        error: err.message || "Stripe rejected this checkout request (verify Price IDs and billing mode).",
+        code: err.code || "STRIPE_INVALID_REQUEST",
+        warning_mode: true
+      });
+    }
+
     if (err && (err.code === "INVALID_PLAN" || err.code === "COMPANY_NOT_FOUND")) {
       return res.status(400).json({
         error: err.message || "Invalid checkout request",

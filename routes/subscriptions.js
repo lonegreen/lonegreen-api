@@ -222,17 +222,18 @@ router.post("/subscriptions", auth, billingLifecycleAuditOnlyMiddleware, require
     }
 
     const safePrice = normalizeSubscriptionPrice(price);
+    const boundPrice = Number(safePrice);
     const subResult = await pool.query(`
       INSERT INTO subscriptions 
       (client_id, service, frequency, next_date, price, worker_id, status, company_id, start_date, next_billing_date)
-      VALUES ($1::integer,$2::text,$3::text,$4::date,$5::numeric,$6::integer,'active',$7::integer,$8::date,$9::date)
+      VALUES ($1::integer,$2::text,$3::text,$4::date,$5,$6::integer,'active',$7::integer,$8::date,$9::date)
       RETURNING *
     `, [
       client_id,
       service,
       frequency,
       next_date,
-      safePrice,
+      boundPrice,
       workerLookup.workerId,
       company_id,
       next_date,
@@ -1109,17 +1110,18 @@ router.post("/ops/subscriptions", auth, billingLifecycleAuditOnlyMiddleware, req
     }
 
     const safePrice = normalizeSubscriptionPrice(price);
+    const boundPrice = Number(safePrice);
     const result = await pool.query(`
       INSERT INTO subscriptions
       (client_id, service, frequency, next_date, price, worker_id, status, company_id, start_date, next_billing_date)
-      VALUES ($1::integer,$2::text,$3::text,$4::date,$5::numeric,$6::integer,'active',$7::integer,$8::date,$9::date)
+      VALUES ($1::integer,$2::text,$3::text,$4::date,$5,$6::integer,'active',$7::integer,$8::date,$9::date)
       RETURNING *
     `, [
       client_id,
       service,
       frequency,
       next_date,
-      safePrice,
+      boundPrice,
       workerLookup.workerId,
       company_id,
       next_date,

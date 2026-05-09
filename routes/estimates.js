@@ -96,6 +96,17 @@ async function resolveCompanyWorkerId(companyId, workerId) {
   return { ok: true, workerId: parsedWorkerId };
 }
 
+function normalizeQuotedPrice(value) {
+  if (value === undefined || value === null || value === "") {
+    return 0;
+  }
+  const n = typeof value === "number" ? value : Number(String(value).replace(/,/g, ""));
+  if (!Number.isFinite(n)) {
+    return 0;
+  }
+  return Number(n.toFixed(2));
+}
+
 router.get("/workflow/estimates", auth, requireCompanyBillingForMutations, requireMinimumRole("manager"), async (req, res) => {
   try {
     await ensureWorkflowSchema();
@@ -229,7 +240,7 @@ router.put("/workflow/estimates/:id", auth, requireCompanyBillingForMutations, r
       payload.zip,
       payload.service,
       payload.visit_date,
-      payload.quoted_price || 0,
+      normalizeQuotedPrice(payload.quoted_price),
       payload.notes || "",
       payload.status,
       req.params.id,
@@ -577,7 +588,7 @@ router.post("/workflow/estimates/:id/convert-to-job", auth, requireCompanyBillin
         req.body.end_time || "09:00",
         normalizeJobStatus(req.body.status || "scheduled"),
         workerLookup.workerId,
-        req.body.price || estimate.quoted_price || 0,
+        normalizeQuotedPrice(req.body.price || estimate.quoted_price || 0),
         req.user.company_id,
         normalizePaymentStatus(req.body.payment_status, "one_time_job"),
         req.body.internal_notes || estimate.notes || "",
@@ -739,7 +750,7 @@ router.post("/estimates", auth, requireCompanyBillingForMutations, requireMinimu
       leadZip || "",
       service,
       status || "new",
-      quoted_price || 0,
+      normalizeQuotedPrice(quoted_price),
       visit_date,
       notes || "",
       company_id
@@ -852,7 +863,7 @@ router.put("/estimates/:id", auth, requireCompanyBillingForMutations, requireMin
       leadAddress,
       leadZip || "",
       service,
-      quoted_price || 0,
+      normalizeQuotedPrice(quoted_price),
       visit_date,
       status,
       notes || "",
@@ -1055,7 +1066,7 @@ router.post("/estimates/:id/convert-to-job", auth, requireCompanyBillingForMutat
       start_time || "08:00",
       end_time || "09:00",
       workerLookup.workerId,
-      price || e.quoted_price || 0,
+      normalizeQuotedPrice(price || e.quoted_price || 0),
       company_id,
       e.notes || "",
       id
@@ -1176,14 +1187,14 @@ router.post("/estimates/:id/convert-to-subscription", auth, requireCompanyBillin
     const subResult = await clientTx.query(`
       INSERT INTO subscriptions
       (client_id, service, frequency, next_date, price, worker_id, status, company_id, start_date, next_billing_date)
-      VALUES ($1,$2,$3,$4,$5,$6,'active',$7,$8,$9)
+      VALUES ($1,$2,$3,$4,$5::numeric,$6,'active',$7,$8,$9)
       RETURNING *
     `, [
       resolvedClientId,
       e.service,
       frequency,
       next_date,
-      price || e.quoted_price || 0,
+      normalizeQuotedPrice(price || e.quoted_price || 0),
       workerLookup.workerId,
       company_id,
       start_date || next_date,

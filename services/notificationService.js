@@ -27,7 +27,7 @@ function cleanType(value) {
 
 function shapeNotificationRow(row) {
   const readAt = row.read_at || null;
-  const body = row.body || "";
+  const body = row.body || row.message || "";
   return {
     id: Number(row.id),
     company_id: row.company_id == null ? null : Number(row.company_id),
@@ -90,6 +90,15 @@ async function ensureNotificationsSchema() {
           ALTER COLUMN title SET NOT NULL
       `);
       await pool.query(`
+        ALTER TABLE notifications
+          ADD COLUMN IF NOT EXISTS message TEXT
+      `);
+      await pool.query(`
+        UPDATE notifications
+        SET message = COALESCE(NULLIF(TRIM(message), ''), body, '')
+        WHERE COALESCE(NULLIF(TRIM(message), ''), '') = ''
+      `);
+      await pool.query(`
         CREATE INDEX IF NOT EXISTS idx_notifications_company_id ON notifications(company_id);
         CREATE INDEX IF NOT EXISTS idx_notifications_user_id ON notifications(user_id);
         CREATE INDEX IF NOT EXISTS idx_notifications_customer_id ON notifications(customer_id);
@@ -115,7 +124,8 @@ async function createNotification({ companyId = null, userId = null, customerId 
   if (!cleanTitle) {
     throw new Error("Notification title is required");
   }
-  const cleanBody = cleanText(body != null ? body : message, 4000) || null;
+  const cleanBody = cleanText(body != null ? body : message, 4000);
+  const persistedBody = cleanBody !== "" ? cleanBody : "";
   const cleanLink = cleanText(linkUrl, 1024) || null;
   const normalizedCompanyId = normalizeId(companyId);
   const normalizedUserId = normalizeId(userId);
@@ -127,12 +137,12 @@ async function createNotification({ companyId = null, userId = null, customerId 
   const result = await pool.query(
     `
     INSERT INTO notifications (
-      company_id, user_id, customer_id, type, title, body, link_url, read_at
+      company_id, user_id, customer_id, type, title, body, message, link_url, read_at
     )
-    VALUES ($1, $2, $3, $4, $5, $6, $7, NULL)
+    VALUES ($1, $2, $3, $4, $5, $6, $6, $7, NULL)
     RETURNING id, company_id, user_id, customer_id, type, title, body, link_url, read_at, created_at
     `,
-    [normalizedCompanyId, normalizedUserId, normalizedCustomerId, cleanNotificationType, cleanTitle, cleanBody, cleanLink]
+    [normalizedCompanyId, normalizedUserId, normalizedCustomerId, cleanNotificationType, cleanTitle, persistedBody, cleanLink]
   );
   return shapeNotificationRow(result.rows[0]);
 }

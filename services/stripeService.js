@@ -211,7 +211,7 @@ async function createStripeCustomerForCompany(companyId) {
       [customer.id, companyId]
     );
 
-    await client.query(
+    const csUpdate = await client.query(
       `
       UPDATE company_subscriptions
       SET stripe_customer_id = $1,
@@ -221,7 +221,41 @@ async function createStripeCustomerForCompany(companyId) {
       [customer.id, companyId]
     ).catch((err) => {
       if (err && err.code !== "42P01" && err.code !== "42703") throw err;
+      return { rowCount: 0 };
     });
+    if (!csUpdate || !csUpdate.rowCount) {
+      await client.query(
+        `
+        INSERT INTO company_subscriptions (
+          company_id,
+          plan,
+          status,
+          billing_status,
+          billing_cycle,
+          price_monthly,
+          stripe_customer_id,
+          created_at,
+          updated_at
+        )
+        SELECT
+          $1,
+          'starter',
+          'trialing',
+          'trialing',
+          'monthly',
+          0,
+          $2,
+          CURRENT_TIMESTAMP,
+          CURRENT_TIMESTAMP
+        WHERE NOT EXISTS (
+          SELECT 1 FROM company_subscriptions WHERE company_id = $1
+        )
+        `,
+        [companyId, customer.id]
+      ).catch((err) => {
+        if (err && err.code !== "42P01" && err.code !== "42703" && err.code !== "23505") throw err;
+      });
+    }
 
     await client.query("COMMIT");
     return customer.id;

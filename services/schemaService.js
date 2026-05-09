@@ -1,5 +1,6 @@
 const pool = require("../db/pool");
 
+let moneyColumnTypesReadyPromise = null;
 let estimateSchemaReadyPromise = null;
 let jobPhotoSchemaReadyPromise = null;
 let subscriptionBillingSchemaReadyPromise = null;
@@ -26,6 +27,29 @@ async function requireTables(tableNames) {
   }
 }
 
+async function ensureMoneyColumnTypes() {
+  if (!moneyColumnTypesReadyPromise) {
+    moneyColumnTypesReadyPromise = (async () => {
+      const statements = [
+        `ALTER TABLE subscriptions ALTER COLUMN price TYPE NUMERIC(12,2) USING (ROUND(COALESCE(price::numeric, 0), 2))`,
+        `ALTER TABLE estimates ALTER COLUMN quoted_price TYPE NUMERIC(12,2) USING (ROUND(COALESCE(quoted_price::numeric, 0), 2))`,
+        `ALTER TABLE jobs ALTER COLUMN price TYPE NUMERIC(12,2) USING (ROUND(COALESCE(price::numeric, 0), 2))`
+      ];
+      for (const sql of statements) {
+        try {
+          await pool.query(sql);
+        } catch (_) {
+          /* Idempotent: column missing, wrong phase, or already compatible numeric type. */
+        }
+      }
+    })().catch((err) => {
+      moneyColumnTypesReadyPromise = null;
+      throw err;
+    });
+  }
+  return moneyColumnTypesReadyPromise;
+}
+
 async function ensureEstimateSchema() {
   if (!estimateSchemaReadyPromise) {
     estimateSchemaReadyPromise = requireTables(["estimates"]).catch(err => {
@@ -50,10 +74,12 @@ async function ensureJobPhotoSchema() {
 
 async function ensureSubscriptionBillingSchema() {
   if (!subscriptionBillingSchemaReadyPromise) {
-    subscriptionBillingSchemaReadyPromise = requireTables(["subscriptions", "subscription_billings", "invoices", "payments"]).catch(err => {
-      subscriptionBillingSchemaReadyPromise = null;
-      throw err;
-    });
+    subscriptionBillingSchemaReadyPromise = requireTables(["subscriptions", "subscription_billings", "invoices", "payments"])
+      .then(() => ensureMoneyColumnTypes())
+      .catch(err => {
+        subscriptionBillingSchemaReadyPromise = null;
+        throw err;
+      });
   }
 
   return subscriptionBillingSchemaReadyPromise;
@@ -72,10 +98,12 @@ async function ensureClientLifecycleSchema() {
 
 async function ensureWorkflowSchema() {
   if (!workflowSchemaReadyPromise) {
-    workflowSchemaReadyPromise = requireTables(["clients", "jobs", "estimates", "invoices", "payments"]).catch(err => {
-      workflowSchemaReadyPromise = null;
-      throw err;
-    });
+    workflowSchemaReadyPromise = requireTables(["clients", "jobs", "estimates", "invoices", "payments"])
+      .then(() => ensureMoneyColumnTypes())
+      .catch(err => {
+        workflowSchemaReadyPromise = null;
+        throw err;
+      });
   }
 
   return workflowSchemaReadyPromise;
