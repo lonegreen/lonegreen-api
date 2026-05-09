@@ -19,6 +19,7 @@ const { getBackupReadiness, validateBackupScheduleReadiness, validateBackupReten
 const { refreshCompanyReputation } = require("../services/reputationService");
 const { notifyVerificationApproved, notifyBillingWarning } = require("../services/notificationService");
 const growthFoundationService = require("../services/growthFoundationService");
+const trustReputationService = require("../services/trustReputationService");
 
 const router = express.Router();
 const platformOnly = [auth, requirePlatformOwner];
@@ -667,6 +668,35 @@ router.get("/platform/metrics/foundation", platformOnly, async (req, res) => {
     res.json(payload);
   } catch (err) {
     sendSafeServerError(res, err, "PLATFORM METRICS FOUNDATION ERROR");
+  }
+});
+
+router.post("/platform/trust/recompute-scores", platformOnly, async (req, res) => {
+  try {
+    const raw = req.body && req.body.company_id;
+    const singleId = raw !== undefined && raw !== null && raw !== "" ? Number(raw) : null;
+    if (singleId != null && Number.isInteger(singleId) && singleId > 0) {
+      const snapshot = await trustReputationService.persistCompanyTrustScores(singleId);
+      return res.json({
+        mode: "single",
+        company_id: singleId,
+        snapshot
+      });
+    }
+
+    const limit = Number(req.body && req.body.limit);
+    const processed = await trustReputationService.recomputeAllCompanyTrustScores(
+      Number.isInteger(limit) && limit > 0 ? limit : undefined
+    );
+    res.json({
+      mode: "all",
+      ...processed
+    });
+  } catch (err) {
+    if (err && err.code === "COMPANY_NOT_FOUND") {
+      return res.status(404).json({ error: "Company not found" });
+    }
+    sendSafeServerError(res, err, "PLATFORM TRUST RECOMPUTE ERROR");
   }
 });
 

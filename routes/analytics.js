@@ -10,6 +10,7 @@ const ownerAdmin = [auth, requireMinimumRole("admin")];
 const growthFoundationAccess = [auth, requireMinimumRole("manager")];
 
 const growthFoundationService = require("../services/growthFoundationService");
+const trustReputationService = require("../services/trustReputationService");
 
 function num(value) {
   return Number(value || 0);
@@ -943,6 +944,36 @@ router.get("/analytics/growth-foundation", growthFoundationAccess, async (req, r
     });
   } catch (err) {
     sendSafeServerError(res, err, "ANALYTICS GROWTH FOUNDATION ERROR");
+  }
+});
+
+router.get("/analytics/trust-reputation", growthFoundationAccess, async (req, res) => {
+  try {
+    const companyId = req.user && req.user.company_id;
+    if (!companyId) {
+      return res.status(403).json({ error: "Forbidden" });
+    }
+
+    const profile = await trustReputationService.buildCompanyTrustProfile(companyId, { detail: true });
+    const gf = await growthFoundationService.getCompanyMetrics(companyId).catch(() => null);
+
+    res.json({
+      company_id: companyId,
+      generated_at: profile.generated_at,
+      trust_score: profile.trust_score,
+      reputation_score: profile.reputation_score,
+      verified: profile.verified,
+      badges: profile.badges,
+      rating_summary: profile.rating_summary,
+      components: profile.components,
+      detail: profile.detail,
+      growth_foundation_metrics: gf
+    });
+  } catch (err) {
+    if (err && err.code === "COMPANY_NOT_FOUND") {
+      return res.status(404).json({ error: "Company not found" });
+    }
+    sendSafeServerError(res, err, "ANALYTICS TRUST REPUTATION ERROR");
   }
 });
 

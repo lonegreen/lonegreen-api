@@ -17,6 +17,7 @@ const {
 const { sendSafeServerError } = require("../services/safeServerError");
 const { sendOperationalEmailSafe } = require("../services/emailService");
 const { refreshCompanyReputation } = require("../services/reputationService");
+const trustReputationService = require("../services/trustReputationService");
 
 const router = express.Router();
 const companyReportLimiter = rateLimit({
@@ -714,6 +715,39 @@ router.get("/companies/public/:slug", async (req, res) => {
     res.json(payload);
   } catch (err) {
     sendSafeServerError(res, err, "COMPANY PUBLIC DETAIL ERROR");
+  }
+});
+
+router.get("/companies/public/:slug/trust-profile", async (req, res) => {
+  try {
+    const slug = cleanSlug(req.params.slug);
+    if (!slug) {
+      return res.status(400).json({ error: "Invalid slug" });
+    }
+
+    const found = await pool.query(
+      `
+      SELECT id
+      FROM companies
+      WHERE is_public = TRUE
+        AND LOWER(public_slug) = LOWER($1)
+      LIMIT 1
+      `,
+      [slug]
+    );
+
+    if (!found.rows.length) {
+      return res.status(404).json({ error: "Company not found" });
+    }
+
+    const companyId = found.rows[0].id;
+    const full = await trustReputationService.buildCompanyTrustProfile(companyId, { detail: false });
+    res.json(trustReputationService.buildPublicTrustProfile(full));
+  } catch (err) {
+    if (err && err.code === "COMPANY_NOT_FOUND") {
+      return res.status(404).json({ error: "Company not found" });
+    }
+    sendSafeServerError(res, err, "PUBLIC TRUST PROFILE ERROR");
   }
 });
 
@@ -1477,6 +1511,31 @@ router.post("/companies/reputation/refresh", auth, requireMinimumRole("admin"), 
     });
   } catch (err) {
     return sendSafeServerError(res, err, "COMPANY REPUTATION REFRESH ERROR");
+  }
+});
+
+router.get("/companies/:id/trust-profile", auth, requireMinimumRole("manager"), async (req, res) => {
+  try {
+    const targetId = Number(req.params.id);
+    if (!Number.isInteger(targetId) || targetId <= 0) {
+      return res.status(400).json({ error: "Invalid company id" });
+    }
+
+    const role = normalizeRole(req.user && req.user.role);
+    const requesterCompany = Number(req.user && req.user.company_id);
+    if (role !== "platform_owner") {
+      if (!Number.isInteger(requesterCompany) || requesterCompany !== targetId) {
+        return res.status(403).json({ error: "Forbidden" });
+      }
+    }
+
+    const profile = await trustReputationService.buildCompanyTrustProfile(targetId, { detail: true });
+    res.json(profile);
+  } catch (err) {
+    if (err && err.code === "COMPANY_NOT_FOUND") {
+      return res.status(404).json({ error: "Company not found" });
+    }
+    sendSafeServerError(res, err, "COMPANY TRUST PROFILE ERROR");
   }
 });
 
