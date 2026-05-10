@@ -588,6 +588,63 @@ router.get("/customer/me", customerAuth, async (req, res) => {
   }
 });
 
+router.get("/customer/profile", customerAuth, async (req, res) => {
+  try {
+    const { scopes } = await getPortalContext(req.customer);
+    const client = await getClient(req.customer);
+    if (!client) {
+      return res.status(404).json({ error: "Customer not found" });
+    }
+
+    if (!(await portalScopeAllows(req.customer, client, scopes))) {
+      return res.status(403).json({ error: "Forbidden" });
+    }
+
+    const accountId = await resolveCustomerAccountId(req.customer);
+    let account = null;
+    if (accountId) {
+      const accountResult = await pool.query(
+        "SELECT id, client_id, email, first_name, last_name, phone, address, is_verified, created_at, updated_at FROM customer_accounts WHERE id = $1 LIMIT 1",
+        [accountId]
+      );
+      account = accountResult.rows[0] || null;
+    }
+    if (!account) {
+      account = await getCustomerAccountByClient(client.id);
+    }
+    if (!account) {
+      return res.status(404).json({ error: "Customer account not found" });
+    }
+
+    return res.json({
+      profile: {
+        id: account.id,
+        client_id: account.client_id,
+        email: account.email,
+        first_name: account.first_name,
+        last_name: account.last_name,
+        phone: account.phone,
+        address: account.address || "",
+        is_verified: account.is_verified,
+        created_at: account.created_at,
+        updated_at: account.updated_at,
+        role: "customer",
+        company_id: client.company_id || null,
+        customer: {
+          id: client.id,
+          name: client.name || "",
+          phone: client.phone || "",
+          email: client.email || null,
+          address: client.address || "",
+          zip: client.zip || ""
+        }
+      }
+    });
+  } catch (err) {
+    sendSafeServerError(res, err, "CUSTOMER PROFILE READ ERROR");
+  }
+});
+
 router.put("/customer/profile", customerAuth, async (req, res) => {
   try {
     const { scopes } = await getPortalContext(req.customer);

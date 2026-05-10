@@ -782,6 +782,15 @@ if(!getToken() || !getUser() || !getUser().company_id){
 
 const apiFetch = AppAPI.fetch;
 
+function openInControl(page){
+  const cleanPage = String(page || "").replace(/^\/+/, "");
+  if(window.parent && window.parent !== window){
+    window.parent.postMessage({ type: "openPage", page: cleanPage }, window.location.origin);
+    return;
+  }
+  window.location.href = "/" + cleanPage;
+}
+
 function escapeHtml(value){
   return String(value ?? "")
     .replaceAll("&", "&amp;")
@@ -1348,7 +1357,7 @@ async function convertLeadToClient(id, ev){
     await loadData();
 
     if(data && data.id){
-      window.top.location.href = "/client.html?id=" + encodeURIComponent(data.id);
+      openInControl("client.html?id=" + encodeURIComponent(data.id));
     } else {
       alert("Lead converted, but client ID was not returned.");
     }
@@ -1407,7 +1416,7 @@ async function submitConvertToJob(ev){
     await loadData();
 
     if(data && data.client && data.client.id){
-      window.top.location.href = "/client.html?id=" + encodeURIComponent(data.client.id);
+      openInControl("client.html?id=" + encodeURIComponent(data.client.id));
     } else {
       alert("Job created, but client ID was not returned.");
     }
@@ -1457,7 +1466,7 @@ async function convertEstimateToClient(id, ev){
     await loadData();
 
     if(data && data.client && data.client.id){
-      window.top.location.href = "/client.html?id=" + encodeURIComponent(data.client.id);
+      openInControl("client.html?id=" + encodeURIComponent(data.client.id));
     } else {
       alert("Estimate converted, but client ID was not returned.");
     }
@@ -1595,7 +1604,7 @@ document.getElementById("list").addEventListener("click", function(e){
     case "convert-lead-to-client": void convertLeadToClient(Number(id), e); break;
     case "navigate-client": {
       const cid = btn.getAttribute("data-est-client-id");
-      if(cid) window.top.location.href = "/client.html?id=" + encodeURIComponent(cid);
+      if(cid) openInControl("client.html?id=" + encodeURIComponent(cid));
       break;
     }
     case "delete-lead": deleteLead(Number(id)); break;
@@ -1606,7 +1615,7 @@ document.getElementById("list").addEventListener("click", function(e){
     case "convert-estimate-job": openConvertEstimateJob(Number(id)); break;
     case "navigate-job": {
       const jid = btn.getAttribute("data-est-job-id");
-      if(jid) window.top.location.href = "/jobs.html?job_id=" + encodeURIComponent(jid);
+      if(jid) openInControl("jobs.html?job_id=" + encodeURIComponent(jid));
       break;
     }
     case "delete-estimate": deleteEstimate(Number(id)); break;

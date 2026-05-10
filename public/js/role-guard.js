@@ -30,7 +30,6 @@
 
   const PLATFORM_OWNER_PAGES = [
     "admin-marketplace.html",
-    "health.html",
     "marketplace-analytics.html",
     "platform.html",
     "support.html"
