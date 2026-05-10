@@ -1,76 +1,223 @@
+/* =============================================================================
+   FAIRLINX DESIGN SYSTEM — fx-tokens.css
+   SECTIONS: Tokens · Base
+   ============================================================================= */
+
+/* -----------------------------------------------------------------------------
+   TOKENS — Primitives & semantic aliases (shared with app-shell via :root)
+   ----------------------------------------------------------------------------- */
+
 :root {
-  /* Semantic aliases for system consumption */
-  --fx-color-primary: var(--interactive-primary, #FF5A00);
-  --fx-color-primary-hover: var(--interactive-primary-hover, #E64A00);
-  --fx-color-primary-light: var(--interactive-primary-light, #FF8A33);
-  --fx-color-text: var(--text-primary, #111111);
-  --fx-color-text-secondary: var(--text-secondary, #2b2b2b);
-  --fx-color-muted: var(--text-muted, #646b73);
-  --fx-color-inverse: var(--text-inverse, #ffffff);
-  --fx-color-bg: var(--surface-page, #F5F5F5);
-  --fx-color-surface: var(--surface-card, #FFFFFF);
-  --fx-color-surface-soft: var(--surface-soft, #fafafa);
-  --fx-color-border: var(--border-default, #D9D9D9);
-  --fx-color-border-strong: var(--border-strong, #c9c9c9);
-  --fx-color-border-subtle: var(--border-subtle, #ececec);
+  /* —— Color primitives (dark SaaS / emerald) —— */
+  --fx-canvas: #07110d;
+  --fx-canvas-elevated: #0b1711;
+  --fx-surface: #0f1f17;
+  --fx-surface-soft: #14261d;
+  --fx-border: rgba(255, 255, 255, 0.08);
+  --fx-border-strong: rgba(255, 255, 255, 0.14);
+  --fx-border-subtle: rgba(255, 255, 255, 0.05);
 
-  --fx-font-sans: var(--font-sans, Inter, Arial, sans-serif);
-  --fx-text-xs: var(--font-size-xs, 12px);
-  --fx-text-sm: var(--font-size-sm, 14px);
-  --fx-text-md: var(--font-size-md, 16px);
-  --fx-text-lg: var(--font-size-lg, 18px);
-  --fx-text-xl: var(--font-size-xl, 20px);
-  --fx-text-2xl: var(--font-size-2xl, 24px);
-  --fx-text-3xl: var(--font-size-3xl, 32px);
-  --fx-line-tight: var(--line-height-tight, 1.2);
-  --fx-line-normal: var(--line-height-normal, 1.45);
-  --fx-line-relaxed: var(--line-height-relaxed, 1.65);
+  --fx-text: #f4fff8;
+  --fx-text-secondary: #a7b8ae;
+  --fx-text-muted: #738077;
+  --fx-text-inverse: #07110d;
 
-  --fx-space-1: var(--space-1, 4px);
-  --fx-space-2: var(--space-2, 8px);
-  --fx-space-3: var(--space-3, 12px);
-  --fx-space-4: var(--space-4, 16px);
-  --fx-space-5: var(--space-5, 20px);
-  --fx-space-6: var(--space-6, 24px);
-  --fx-space-7: var(--space-7, 28px);
-  --fx-space-8: var(--space-8, 32px);
-  --fx-space-9: var(--space-9, 40px);
-  --fx-space-10: var(--space-10, 48px);
+  --fx-primary: #22c55e;
+  --fx-primary-hover: #16a34a;
+  --fx-primary-soft: rgba(34, 197, 94, 0.14);
+  --fx-success: #22c55e;
+  --fx-warning: #f59e0b;
+  --fx-danger: #ef4444;
+  --fx-info: #38bdf8;
 
-  --fx-radius-sm: var(--radius-sm, 8px);
-  --fx-radius-md: var(--radius-md, 12px);
-  --fx-radius-lg: var(--radius-lg, 16px);
-  --fx-radius-xl: var(--radius-xl, 20px);
-  --fx-radius-round: var(--radius-round, 999px);
+  /* Cross-token semantic names (used by pages / app-shell fallbacks) */
+  --surface-page: var(--fx-canvas);
+  --surface-elevated: var(--fx-canvas-elevated);
+  --surface-card: var(--fx-surface);
+  --surface-soft: var(--fx-surface-soft);
+  --text-primary: var(--fx-text);
+  --text-secondary: var(--fx-text-secondary);
+  --text-muted: var(--fx-text-muted);
+  --text-inverse: var(--fx-text-inverse);
+  --border-default: var(--fx-border);
+  --border-strong: var(--fx-border-strong);
+  --border-subtle: var(--fx-border-subtle);
+  --interactive-primary: var(--fx-primary);
+  --interactive-primary-hover: var(--fx-primary-hover);
+  --interactive-primary-light: #4ade80;
 
-  --fx-shadow-sm: var(--shadow-sm, 0 4px 12px rgba(17, 17, 17, 0.06));
-  --fx-shadow-md: var(--shadow-md, 0 10px 28px rgba(17, 17, 17, 0.09));
-  --fx-shadow-lg: var(--shadow-lg, 0 18px 42px rgba(17, 17, 17, 0.12));
+  /* fx-* semantic aliases */
+  --fx-color-primary: var(--interactive-primary, var(--fx-primary));
+  --fx-color-primary-hover: var(--interactive-primary-hover, var(--fx-primary-hover));
+  --fx-color-primary-light: var(--interactive-primary-light, #4ade80);
+  --fx-color-text: var(--text-primary, var(--fx-text));
+  --fx-color-text-secondary: var(--text-secondary, var(--fx-text-secondary));
+  --fx-color-muted: var(--text-muted, var(--fx-text-muted));
+  --fx-color-inverse: var(--text-inverse, var(--fx-text-inverse));
+  --fx-color-bg: var(--surface-page, var(--fx-canvas));
+  --fx-color-surface: var(--surface-card, var(--fx-surface));
+  --fx-color-surface-elevated: var(--surface-elevated, var(--fx-canvas-elevated));
+  --fx-color-surface-soft: var(--surface-soft, var(--fx-surface-soft));
+  --fx-color-border: var(--border-default, var(--fx-border));
+  --fx-color-border-strong: var(--border-strong, var(--fx-border-strong));
+  --fx-color-border-subtle: var(--border-subtle, var(--fx-border-subtle));
 
-  --fx-ease: var(--ease-standard, cubic-bezier(0.2, 0, 0, 1));
-  --fx-motion-fast: var(--motion-fast, 120ms);
-  --fx-motion-base: var(--motion-base, 180ms);
-  --fx-motion-slow: var(--motion-slow, 280ms);
+  /* —— Typography —— */
+  --font-sans: Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  --letter-spacing-heading: -0.02em;
+  --fx-font-sans: var(--font-sans);
 
-  --fx-state-success-bg: var(--state-success-bg, #edf8f0);
-  --fx-state-success-fg: var(--state-success-fg, #1f7a46);
-  --fx-state-success-border: var(--state-success-border, #cde7d7);
-  --fx-state-warning-bg: var(--state-warning-bg, #fff7ea);
-  --fx-state-warning-fg: var(--state-warning-fg, #a15f0a);
-  --fx-state-warning-border: var(--state-warning-border, #f2d6aa);
-  --fx-state-danger-bg: var(--state-danger-bg, #fff2f3);
-  --fx-state-danger-fg: var(--state-danger-fg, #b93836);
-  --fx-state-danger-border: var(--state-danger-border, #f1cbcf);
-  --fx-state-info-bg: var(--state-info-bg, #eef4ff);
-  --fx-state-info-fg: var(--state-info-fg, #2e4f8f);
-  --fx-state-info-border: var(--state-info-border, #d2def5);
+  --font-size-xs: 0.8125rem;
+  --font-size-sm: 0.875rem;
+  --font-size-md: 1rem;
+  --font-size-lg: 1.125rem;
+  --font-size-xl: 1.25rem;
+  --font-size-2xl: 1.5rem;
+  --font-size-3xl: 2rem;
 
-  /* Component composition tokens */
+  --fx-text-xs: var(--font-size-xs);
+  --fx-text-sm: var(--font-size-sm);
+  --fx-text-md: var(--font-size-md);
+  --fx-text-lg: var(--font-size-lg);
+  --fx-text-xl: var(--font-size-xl);
+  --fx-text-2xl: var(--font-size-2xl);
+  --fx-text-3xl: var(--font-size-3xl);
+
+  --line-height-tight: 1.2;
+  --line-height-normal: 1.45;
+  --line-height-relaxed: 1.65;
+  --fx-line-tight: var(--line-height-tight);
+  --fx-line-normal: var(--line-height-normal);
+  --fx-line-relaxed: var(--line-height-relaxed);
+
+  /* —— Spacing scale —— */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-7: 28px;
+  --space-8: 32px;
+  --space-9: 40px;
+  --space-10: 48px;
+
+  --fx-space-1: var(--space-1);
+  --fx-space-2: var(--space-2);
+  --fx-space-3: var(--space-3);
+  --fx-space-4: var(--space-4);
+  --fx-space-5: var(--space-5);
+  --fx-space-6: var(--space-6);
+  --fx-space-7: var(--space-7);
+  --fx-space-8: var(--space-8);
+  --fx-space-9: var(--space-9);
+  --fx-space-10: var(--space-10);
+
+  /* —— Radius —— */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --radius-round: 999px;
+
+  --fx-radius-sm: var(--radius-sm);
+  --fx-radius-md: var(--radius-md);
+  --fx-radius-lg: var(--radius-lg);
+  --fx-radius-xl: var(--radius-xl);
+  --fx-radius-round: var(--radius-round);
+
+  /* —— Shadows (subtle lift on dark UI) —— */
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.35);
+  --shadow-md: 0 12px 32px rgba(0, 0, 0, 0.45);
+  --shadow-lg: 0 22px 56px rgba(0, 0, 0, 0.55);
+
+  --fx-shadow-sm: var(--shadow-sm);
+  --fx-shadow-md: var(--shadow-md);
+  --fx-shadow-lg: var(--shadow-lg);
+
+  /* —— Focus rings (visible, WCAG-friendly on dark) —— */
+  --focus-ring: 0 0 0 3px rgba(34, 197, 94, 0.45);
+  --focus-ring-inset: inset 0 0 0 3px rgba(34, 197, 94, 0.35);
+  --fx-outline-ring: var(--focus-ring);
+
+  /* —— Z-index scale —— */
+  --fx-z-base: 0;
+  --fx-z-sticky: 100;
+  --fx-z-dropdown: 200;
+  --fx-z-overlay: 500;
+  --fx-z-modal-backdrop: 1000;
+  --fx-z-modal: 1100;
+  --fx-z-popover: 1150;
+  --fx-z-toast: 1200;
+
+  /* —— Motion —— */
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --motion-fast: 120ms;
+  --motion-base: 180ms;
+  --motion-slow: 280ms;
+
+  --fx-ease: var(--ease-standard);
+  --fx-motion-fast: var(--motion-fast);
+  --fx-motion-base: var(--motion-base);
+  --fx-motion-slow: var(--motion-slow);
+
+  /* —— State surfaces (dark-tinted; readable with colored text) —— */
+  --state-success-bg: rgba(34, 197, 94, 0.12);
+  --state-success-fg: #4ade80;
+  --state-success-border: rgba(34, 197, 94, 0.35);
+
+  --state-warning-bg: rgba(245, 158, 11, 0.12);
+  --state-warning-fg: #fbbf24;
+  --state-warning-border: rgba(245, 158, 11, 0.35);
+
+  --state-danger-bg: rgba(239, 68, 68, 0.12);
+  --state-danger-fg: #fca5a5;
+  --state-danger-border: rgba(239, 68, 68, 0.35);
+
+  --state-info-bg: rgba(56, 189, 248, 0.12);
+  --state-info-fg: #7dd3fc;
+  --state-info-border: rgba(56, 189, 248, 0.35);
+
+  --fx-state-success-bg: var(--state-success-bg);
+  --fx-state-success-fg: var(--state-success-fg);
+  --fx-state-success-border: var(--state-success-border);
+  --fx-state-warning-bg: var(--state-warning-bg);
+  --fx-state-warning-fg: var(--state-warning-fg);
+  --fx-state-warning-border: var(--state-warning-border);
+  --fx-state-danger-bg: var(--state-danger-bg);
+  --fx-state-danger-fg: var(--state-danger-fg);
+  --fx-state-danger-border: var(--state-danger-border);
+  --fx-state-info-bg: var(--state-info-bg);
+  --fx-state-info-fg: var(--state-info-fg);
+  --fx-state-info-border: var(--state-info-border);
+
+  /* —— Layout: container widths —— */
+  --fx-container-sm: 640px;
+  --fx-container-md: 768px;
+  --fx-container-lg: 960px;
+  --fx-container-xl: 1180px;
+  --fx-container-2xl: 1320px;
+
+  /* —— Layout: breakpoints (reference — use px in @media below) —— */
+  --fx-bp-xs: 480px;
+  --fx-bp-sm: 640px;
+  --fx-bp-md: 768px;
+  --fx-bp-lg: 900px;
+  --fx-bp-xl: 1200px;
+
+  /* Component composition */
   --fx-control-height: 40px;
   --fx-control-height-sm: 34px;
   --fx-control-height-lg: 46px;
-  --fx-outline-ring: var(--focus-ring, 0 0 0 4px rgba(255, 90, 0, 0.16));
   --fx-divider: var(--fx-color-border-subtle);
+}
+
+/* -----------------------------------------------------------------------------
+   BASE — Document defaults & type utilities
+   ----------------------------------------------------------------------------- */
+
+html {
+  color-scheme: dark;
 }
 
 html,
@@ -80,16 +227,42 @@ body {
   background: var(--fx-color-bg);
 }
 
+::selection {
+  background: var(--fx-primary-soft);
+  color: var(--fx-color-text);
+}
+
 .fx-h1,
 .fx-h2,
 .fx-h3 {
   margin: 0;
   color: var(--fx-color-text);
-  letter-spacing: var(--letter-spacing-heading, -0.02em);
+  letter-spacing: var(--letter-spacing-heading);
 }
 
-.fx-h1 { font-size: clamp(var(--fx-text-2xl), 2.4vw, var(--fx-text-3xl)); line-height: var(--fx-line-tight); }
-.fx-h2 { font-size: clamp(var(--fx-text-xl), 1.9vw, var(--fx-text-2xl)); line-height: var(--fx-line-tight); }
-.fx-h3 { font-size: var(--fx-text-lg); line-height: var(--fx-line-tight); }
-.fx-body { font-size: var(--fx-text-md); line-height: var(--fx-line-relaxed); color: var(--fx-color-text-secondary); }
-.fx-caption { font-size: var(--fx-text-sm); line-height: var(--fx-line-normal); color: var(--fx-color-muted); }
+.fx-h1 {
+  font-size: clamp(var(--fx-text-2xl), 2.4vw, var(--fx-text-3xl));
+  line-height: var(--fx-line-tight);
+}
+
+.fx-h2 {
+  font-size: clamp(var(--fx-text-xl), 1.9vw, var(--fx-text-2xl));
+  line-height: var(--fx-line-tight);
+}
+
+.fx-h3 {
+  font-size: var(--fx-text-lg);
+  line-height: var(--fx-line-tight);
+}
+
+.fx-body {
+  font-size: var(--fx-text-md);
+  line-height: var(--fx-line-relaxed);
+  color: var(--fx-color-text-secondary);
+}
+
+.fx-caption {
+  font-size: var(--fx-text-sm);
+  line-height: var(--fx-line-normal);
+  color: var(--fx-color-muted);
+}

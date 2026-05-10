@@ -2,48 +2,63 @@
 @import url("/css/fx-components.css");
 @import url("/css/fx-layouts.css");
 
-/* FairLinx App Shell
-   Safe global bridge for legacy pages + new fx-* system.
-   Brand: Black / White / Orange
-*/
+/* =============================================================================
+   FAIRLINX APP SHELL — app-shell.css
+   Bridges legacy classnames to the fx-* design system (dark SaaS / emerald).
+   SECTION MAP:
+   · Tokens (app & legacy fallbacks)
+   · Base
+   · Forms
+   · Legacy buttons
+   · Layout & surfaces
+   · Text primitives
+   · Badges & status
+   · Tables
+   · Legacy bridges (.grid, …)
+   · Control shell
+   · Phase 2 internal pages
+   · Page shell utilities
+   · Responsive rules
+   · Animations
+   ============================================================================= */
 
 :root {
-  /* Brand fallbacks */
-  --fl-orange: #ff5a00;
-  --fl-orange-hover: #e64a00;
-  --fl-orange-soft: #fff3e8;
-  --fl-black: #111111;
-  --fl-dark: #2b2b2b;
-  --fl-gray: #667085;
-  --fl-gray-soft: #8a94a6;
-  --fl-border: #d9d9d9;
-  --fl-bg: #f5f5f5;
+  /* Brand fallbacks — names retained for legacy HTML; values match DS v1 */
+  --fl-orange: #22c55e;
+  --fl-orange-hover: #16a34a;
+  --fl-orange-soft: rgba(34, 197, 94, 0.14);
+  --fl-black: #f4fff8;
+  --fl-dark: #a7b8ae;
+  --fl-gray: #738077;
+  --fl-gray-soft: #a7b8ae;
+  --fl-border: rgba(255, 255, 255, 0.08);
+  --fl-bg: #07110d;
   --fl-white: #ffffff;
 
-  --fl-red-bg: #fff1f2;
-  --fl-red-text: #c13d39;
-  --fl-red-border: #f7d0d3;
+  --fl-red-bg: rgba(239, 68, 68, 0.12);
+  --fl-red-text: #fca5a5;
+  --fl-red-border: rgba(239, 68, 68, 0.35);
 
-  --fl-green-bg: #edf8f0;
-  --fl-green-text: #25804f;
-  --fl-green-border: #d3eadb;
+  --fl-green-bg: rgba(34, 197, 94, 0.12);
+  --fl-green-text: #4ade80;
+  --fl-green-border: rgba(34, 197, 94, 0.35);
 
-  --fl-blue-bg: #edf4ff;
-  --fl-blue-text: #2563eb;
-  --fl-blue-border: #d3e1ff;
+  --fl-blue-bg: rgba(56, 189, 248, 0.12);
+  --fl-blue-text: #7dd3fc;
+  --fl-blue-border: rgba(56, 189, 248, 0.35);
 
-  --fl-amber-bg: #fff6ea;
-  --fl-amber-text: #c46b10;
-  --fl-amber-border: #f4d6b2;
+  --fl-amber-bg: rgba(245, 158, 11, 0.12);
+  --fl-amber-text: #fbbf24;
+  --fl-amber-border: rgba(245, 158, 11, 0.35);
 
   /* App semantic tokens */
   --app-bg-base: var(--brand-bg, var(--fl-bg));
-  --app-surface-base: rgba(255, 255, 255, 0.96);
-  --app-surface-strong-base: #ffffff;
-  --app-surface-soft-base: #fafafa;
+  --app-surface-base: rgba(15, 31, 23, 0.96);
+  --app-surface-strong-base: #0f1f17;
+  --app-surface-soft-base: #14261d;
   --app-border-base: var(--brand-border, var(--fl-border));
   --app-text-base: var(--brand-black, var(--fl-black));
-  --app-muted-base: #667085;
+  --app-muted-base: #738077;
 
   --app-bg: var(--surface-page, var(--app-bg-base));
   --app-bg-soft: var(--surface-soft, var(--app-bg-base));
@@ -62,9 +77,9 @@
   --app-primary-soft: var(--fl-orange-soft);
   --app-gradient-brand: var(--gradient-brand, linear-gradient(135deg, var(--app-primary), var(--app-primary-hover)));
 
-  --app-shadow-sm: var(--shadow-sm, 0 10px 24px rgba(17, 17, 17, 0.05));
-  --app-shadow: var(--shadow-md, 0 18px 42px rgba(17, 17, 17, 0.07));
-  --app-shadow-lg: var(--shadow-lg, 0 24px 52px rgba(17, 17, 17, 0.12));
+  --app-shadow-sm: var(--shadow-sm, 0 2px 8px rgba(0, 0, 0, 0.35));
+  --app-shadow: var(--shadow-md, 0 12px 32px rgba(0, 0, 0, 0.45));
+  --app-shadow-lg: var(--shadow-lg, 0 22px 56px rgba(0, 0, 0, 0.55));
 
   --app-radius-sm: var(--radius-sm, 12px);
   --app-radius: var(--radius-md, 16px);
@@ -164,9 +179,9 @@ textarea {
 input:focus,
 select:focus,
 textarea:focus {
-  border-color: rgba(255, 90, 0, 0.55);
-  box-shadow: 0 0 0 4px rgba(255, 90, 0, 0.14);
-  background: #fff;
+  border-color: rgba(34, 197, 94, 0.55);
+  box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.35);
+  background: var(--app-surface-strong);
 }
 
 textarea {
@@ -271,14 +286,14 @@ button[disabled],
 .action-btn,
 .btn.primary {
   background: var(--app-gradient-brand) !important;
-  color: #fff !important;
+  color: #f4fff8 !important;
   border: 1px solid transparent !important;
-  box-shadow: 0 14px 28px rgba(230, 74, 0, 0.18) !important;
+  box-shadow: 0 14px 28px rgba(34, 197, 94, 0.22) !important;
 }
 
 .btn.blue,
 .blue {
-  background: linear-gradient(180deg, var(--fl-blue-bg), #e6efff) !important;
+  background: linear-gradient(180deg, rgba(56, 189, 248, 0.14), rgba(56, 189, 248, 0.06)) !important;
   color: var(--app-blue-700) !important;
   border: 1px solid var(--fl-blue-border) !important;
   box-shadow: none !important;
@@ -287,7 +302,7 @@ button[disabled],
 .btn.orange,
 .orange,
 .pause {
-  background: linear-gradient(180deg, var(--fl-amber-bg), #ffefdc) !important;
+  background: linear-gradient(180deg, rgba(245, 158, 11, 0.14), rgba(245, 158, 11, 0.06)) !important;
   color: var(--app-orange-700) !important;
   border: 1px solid var(--fl-amber-border) !important;
   box-shadow: none !important;
@@ -310,18 +325,18 @@ button[disabled],
 .delete,
 .btn.red,
 .btn.delete {
-  background: linear-gradient(180deg, var(--fl-red-bg), #ffecee) !important;
+  background: linear-gradient(180deg, rgba(239, 68, 68, 0.16), rgba(239, 68, 68, 0.06)) !important;
   color: var(--app-red-700) !important;
-  border: 1px solid #f6c8cb !important;
+  border: 1px solid var(--fl-red-border) !important;
   box-shadow: none !important;
 }
 
 .btn.success,
 .success,
 .activate {
-  background: linear-gradient(180deg, var(--fl-green-bg), #e6f4eb) !important;
+  background: linear-gradient(180deg, rgba(34, 197, 94, 0.18), rgba(34, 197, 94, 0.06)) !important;
   color: var(--app-success-700) !important;
-  border: 1px solid #cfe8d8 !important;
+  border: 1px solid var(--fl-green-border) !important;
   box-shadow: none !important;
 }
 
@@ -451,9 +466,9 @@ button[disabled],
 .status-new,
 .status-contacted,
 .status-inactive {
-  background: #eff3f0 !important;
-  border-color: #d9e3dc !important;
-  color: #5b6e64 !important;
+  background: rgba(255, 255, 255, 0.06) !important;
+  border-color: var(--app-border-strong) !important;
+  color: var(--app-muted-soft) !important;
 }
 
 .status-assigned,
@@ -461,8 +476,8 @@ button[disabled],
 .status-blue,
 .active-tab,
 .tab.active {
-  background: rgba(255, 90, 0, 0.12) !important;
-  border-color: rgba(255, 90, 0, 0.32) !important;
+  background: rgba(34, 197, 94, 0.12) !important;
+  border-color: rgba(34, 197, 94, 0.35) !important;
   color: var(--app-primary) !important;
 }
 
@@ -499,6 +514,15 @@ button[disabled],
 
 /* Tables */
 
+/* -----------------------------------------------------------------------------
+   LEGACY BRIDGES — legacy utility names (minimal; avoid breaking page-specific CSS)
+   ----------------------------------------------------------------------------- */
+
+.grid {
+  display: grid;
+  gap: var(--app-space-4);
+}
+
 .table-wrap {
   border: 1px solid var(--app-border) !important;
   border-radius: var(--app-radius) !important;
@@ -514,16 +538,16 @@ table {
 /* Empty / Error */
 
 .empty {
-  border: 1px dashed var(--app-border) !important;
+  border: 1px dashed var(--app-border-strong) !important;
   border-radius: var(--app-radius-lg) !important;
   background: linear-gradient(180deg, var(--app-surface-strong) 0%, var(--app-surface-soft) 100%) !important;
   padding: var(--app-space-5) !important;
 }
 
 .error-box {
-  border: 1px solid #f7c4c0 !important;
+  border: 1px solid var(--fl-red-border) !important;
   border-radius: var(--app-radius) !important;
-  background: #fff3f2 !important;
+  background: var(--fl-red-bg) !important;
   color: var(--app-red-700) !important;
   padding: var(--app-space-4) !important;
 }
@@ -557,7 +581,7 @@ body.control-shell .sidebar button:focus-visible,
 body.control-shell .topbar button:focus-visible,
 body.control-shell .dropdown button:focus-visible {
   outline: none;
-  box-shadow: var(--focus-ring, 0 0 0 4px rgba(255, 90, 0, 0.18)) !important;
+  box-shadow: var(--focus-ring, 0 0 0 3px rgba(34, 197, 94, 0.45)) !important;
 }
 
 body.control-shell .shell-quick-action {
@@ -683,8 +707,8 @@ body.phase2-internal .filter-chip {
 body.phase2-internal .filter-chip.active,
 body.phase2-internal .tab.active,
 body.phase2-internal .active-tab {
-  border-color: rgba(255, 90, 0, 0.32) !important;
-  background: rgba(255, 90, 0, 0.12) !important;
+  border-color: rgba(34, 197, 94, 0.35) !important;
+  background: rgba(34, 197, 94, 0.12) !important;
   color: var(--app-primary) !important;
 }
 
@@ -704,7 +728,7 @@ body.phase2-internal table {
 
 body.phase2-internal table th,
 body.phase2-internal table td {
-  border-bottom: 1px solid var(--border-subtle, #ececec);
+  border-bottom: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.05));
   padding: 10px 12px;
   text-align: left;
 }
@@ -724,11 +748,22 @@ body.phase2-internal .form-grid > div {
 }
 
 body.phase2-internal .empty,
-body.phase2-internal .page-empty,
-body.phase2-internal .error-box {
+body.phase2-internal .page-empty {
   border: 1px dashed var(--border-default, var(--app-border)) !important;
   border-radius: var(--radius-lg, var(--app-radius-lg)) !important;
-  background: linear-gradient(180deg, var(--surface-card, #fff) 0%, var(--surface-soft, #fafafa) 100%) !important;
+  background: linear-gradient(
+    180deg,
+    var(--surface-card, var(--app-surface-strong)) 0%,
+    var(--surface-soft, var(--app-surface-soft)) 100%
+  ) !important;
+  padding: var(--space-5, var(--app-space-5)) !important;
+}
+
+body.phase2-internal .error-box {
+  border: 1px solid var(--fl-red-border) !important;
+  border-radius: var(--radius-lg, var(--app-radius-lg)) !important;
+  background: var(--fl-red-bg) !important;
+  color: var(--app-red-700) !important;
   padding: var(--space-5, var(--app-space-5)) !important;
 }
 
@@ -764,30 +799,31 @@ body.phase2-internal .modal-box {
   pointer-events: auto;
   padding: 13px 16px;
   border-radius: 14px;
-  box-shadow: 0 16px 34px rgba(17, 17, 17, 0.12);
+  box-shadow: var(--app-shadow);
   font-size: 14px;
   font-weight: 600;
-  border: 1px solid transparent;
-  background: white;
+  border: 1px solid var(--app-border);
+  background: var(--app-surface-strong);
+  color: var(--app-text);
   animation: pageToastIn 0.22s ease;
 }
 
 .page-toast.success {
   background: var(--fl-green-bg);
-  border-color: #b7e3c3;
-  color: #166534;
+  border-color: var(--fl-green-border);
+  color: var(--app-success-700);
 }
 
 .page-toast.error {
-  background: #fff3f2;
-  border-color: #f7c4c0;
+  background: var(--fl-red-bg);
+  border-color: var(--fl-red-border);
   color: var(--app-red-700);
 }
 
 .page-toast.info {
   background: var(--app-primary-soft);
-  border-color: rgba(255, 90, 0, 0.24);
-  color: var(--app-primary-hover);
+  border-color: rgba(34, 197, 94, 0.35);
+  color: var(--app-primary);
 }
 
 .page-loader {
@@ -796,9 +832,9 @@ body.phase2-internal .modal-box {
   display: none;
   align-items: center;
   justify-content: center;
-  background: rgba(245, 245, 245, 0.72);
+  background: rgba(7, 17, 13, 0.72);
   backdrop-filter: blur(6px);
-  z-index: 1200;
+  z-index: var(--fx-z-toast, 1200);
 }
 
 .page-loader.visible {
@@ -811,9 +847,9 @@ body.phase2-internal .modal-box {
   gap: 12px;
   padding: 14px 18px;
   border-radius: 16px;
-  background: white;
-  border: 1px solid var(--app-border);
-  box-shadow: var(--app-shadow);
+  background: var(--app-surface-strong);
+  border: 1px solid var(--app-border-strong);
+  box-shadow: var(--app-shadow-lg);
   color: var(--app-primary);
   font-weight: 700;
 }
@@ -821,16 +857,16 @@ body.phase2-internal .modal-box {
 .page-spinner {
   width: 18px;
   height: 18px;
-  border: 3px solid #f2d2bd;
+  border: 3px solid rgba(34, 197, 94, 0.25);
   border-top-color: var(--app-primary);
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }
 
 .page-empty {
-  border: 1px dashed var(--app-border);
+  border: 1px dashed var(--app-border-strong);
   border-radius: 18px;
-  background: linear-gradient(180deg, #ffffff 0%, #fafafa 100%);
+  background: linear-gradient(180deg, var(--app-surface-strong) 0%, var(--app-surface-soft) 100%);
   padding: 24px;
 }
 
@@ -857,9 +893,9 @@ body.phase2-internal .modal-box {
   margin-bottom: 18px;
   padding: 16px 18px;
   border-radius: 18px;
-  border: 1px solid rgba(255, 90, 0, 0.18);
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.96), rgba(255, 243, 232, 0.96));
-  box-shadow: 0 12px 28px rgba(17, 17, 17, 0.05);
+  border: 1px solid rgba(34, 197, 94, 0.28);
+  background: linear-gradient(135deg, var(--app-surface-strong), rgba(34, 197, 94, 0.08));
+  box-shadow: var(--app-shadow-sm);
 }
 
 .page-hint strong {
@@ -886,7 +922,7 @@ body.phase2-internal .modal-box {
   flex-wrap: wrap;
   margin-top: 18px;
   padding-top: 14px;
-  border-top: 1px solid rgba(217, 217, 217, 0.8);
+  border-top: 1px solid var(--app-border);
 }
 
 .frame-loading {
@@ -903,8 +939,8 @@ body.phase2-internal .modal-box {
   margin: 18px 0;
   padding: 16px 18px;
   border-radius: 16px;
-  border: 1px solid #f7c4c0;
-  background: #fff3f2;
+  border: 1px solid var(--fl-red-border);
+  background: var(--fl-red-bg);
   color: var(--app-red-700);
   font-weight: 700;
 }

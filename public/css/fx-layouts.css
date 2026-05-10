@@ -1,3 +1,116 @@
+/* =============================================================================
+   FAIRLINX DESIGN SYSTEM — fx-layouts.css
+   SECTIONS: Layouts · Legacy-compatible layouts · Responsive rules
+   ============================================================================= */
+
+/* -----------------------------------------------------------------------------
+   LAYOUTS — Page shell & container
+   ----------------------------------------------------------------------------- */
+
+.fx-page {
+  width: 100%;
+  min-height: 100%;
+  display: grid;
+  gap: var(--fx-space-6);
+  align-content: start;
+}
+
+.fx-container {
+  width: min(var(--fx-container-xl), 100%);
+  margin-inline: auto;
+  padding-inline: var(--fx-space-6);
+}
+
+.fx-container--narrow {
+  width: min(var(--fx-container-md), 100%);
+}
+
+.fx-container--wide {
+  width: min(var(--fx-container-2xl), 100%);
+}
+
+/* -----------------------------------------------------------------------------
+   LAYOUTS — Grid & clusters
+   ----------------------------------------------------------------------------- */
+
+.fx-grid {
+  display: grid;
+  gap: var(--fx-space-4);
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+}
+
+.fx-grid-2 {
+  display: grid;
+  gap: var(--fx-space-4);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.fx-grid-3 {
+  display: grid;
+  gap: var(--fx-space-4);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.fx-grid-4 {
+  display: grid;
+  gap: var(--fx-space-4);
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.fx-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--fx-space-4);
+  min-width: 0;
+}
+
+.fx-cluster {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--fx-space-3);
+  min-width: 0;
+}
+
+/* -----------------------------------------------------------------------------
+   LAYOUTS — App patterns
+   ----------------------------------------------------------------------------- */
+
+.fx-sidebar-layout {
+  display: grid;
+  grid-template-columns: minmax(220px, 280px) minmax(0, 1fr);
+  gap: var(--fx-space-6);
+  align-items: start;
+}
+
+.fx-dashboard-layout {
+  display: grid;
+  gap: var(--fx-space-6);
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.fx-detail-layout {
+  display: grid;
+  gap: var(--fx-space-6);
+  grid-template-columns: minmax(0, 1.25fr) minmax(260px, 0.75fr);
+  align-items: start;
+}
+
+.fx-form-grid {
+  display: grid;
+  gap: var(--fx-space-4);
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.fx-form-grid > .wide,
+.fx-form-grid > .full {
+  grid-column: 1 / -1;
+}
+
+/* -----------------------------------------------------------------------------
+   LEGACY-COMPATIBLE LAYOUTS — Existing page wrappers (do not remove)
+   ----------------------------------------------------------------------------- */
+
 .fx-layout-public,
 .fx-layout-dashboard,
 .fx-layout-admin {
@@ -27,7 +140,7 @@
   padding: var(--fx-space-7);
   border-radius: var(--fx-radius-xl);
   border: 1px solid var(--fx-color-border);
-  background: var(--fx-color-surface);
+  background: var(--fx-color-surface-elevated);
 }
 
 .fx-hero-grid {
@@ -43,30 +156,19 @@
   gap: var(--fx-space-3);
 }
 
-.fx-toolbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--fx-space-3);
-  flex-wrap: wrap;
-  padding: var(--fx-space-4);
-  border: 1px solid var(--fx-color-border);
-  border-radius: var(--fx-radius-lg);
-  background: var(--fx-color-surface);
-}
-.fx-toolbar:focus-within {
-  border-color: var(--fx-color-border-strong);
-  box-shadow: var(--fx-shadow-sm);
-}
-
 .fx-content-grid {
   display: grid;
   gap: var(--fx-space-4);
   grid-template-columns: repeat(12, minmax(0, 1fr));
 }
 
-.fx-content-main { grid-column: span 8; }
-.fx-content-side { grid-column: span 4; }
+.fx-content-main {
+  grid-column: span 8;
+}
+
+.fx-content-side {
+  grid-column: span 4;
+}
 
 .fx-admin-toolbar {
   display: grid;
@@ -74,7 +176,7 @@
   padding: var(--fx-space-4);
   border: 1px solid var(--fx-color-border);
   border-radius: var(--fx-radius-lg);
-  background: var(--fx-color-surface);
+  background: var(--fx-color-surface-elevated);
 }
 
 .fx-admin-split {
@@ -92,23 +194,39 @@
   padding: var(--fx-space-3);
 }
 
+/* -----------------------------------------------------------------------------
+   RESPONSIVE — Layouts
+   ----------------------------------------------------------------------------- */
+
 @media (max-width: 1200px) {
   .fx-layout-public,
   .fx-layout-dashboard,
   .fx-layout-admin {
     padding: var(--fx-space-5);
   }
+
+  .fx-container {
+    padding-inline: var(--fx-space-5);
+  }
 }
 
 @media (max-width: 900px) {
   .fx-hero-grid,
-  .fx-admin-split {
+  .fx-admin-split,
+  .fx-sidebar-layout,
+  .fx-detail-layout {
     grid-template-columns: 1fr;
   }
 
   .fx-content-main,
   .fx-content-side {
     grid-column: span 12;
+  }
+
+  .fx-grid-2,
+  .fx-grid-3,
+  .fx-grid-4 {
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   }
 }
 
@@ -119,10 +237,19 @@
     padding: var(--fx-space-4);
   }
 
+  .fx-container {
+    padding-inline: var(--fx-space-4);
+  }
+
   .fx-hero,
-  .fx-toolbar,
   .fx-admin-toolbar {
     padding: var(--fx-space-4);
     border-radius: var(--fx-radius-md);
+  }
+
+  .fx-grid-2,
+  .fx-grid-3,
+  .fx-grid-4 {
+    grid-template-columns: 1fr;
   }
 }
