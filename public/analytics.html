@@ -465,6 +465,8 @@
     <button type="button" class="tab fx-badge fx-badge--neutral" data-analytics-tab="workers">Workers</button>
     <button type="button" class="tab fx-badge fx-badge--neutral" data-analytics-tab="clients">Clients</button>
     <button type="button" class="tab fx-badge fx-badge--neutral" data-analytics-tab="growth">Growth OS</button>
+    <button type="button" class="tab fx-badge fx-badge--neutral" data-analytics-tab="growthLoops">Growth Loops</button>
+    <button type="button" class="tab fx-badge fx-badge--neutral" data-analytics-tab="reputationExpansion">Reputation</button>
     <button type="button" class="tab fx-badge fx-badge--neutral" data-analytics-tab="trustGraph">Trust Graph</button>
     <button type="button" class="tab fx-badge fx-badge--neutral" data-analytics-tab="referralEngine">Referrals</button>
   </div>
@@ -577,6 +579,36 @@
     <div class="panel fx-card">
       <h3 class="chart-title">Service affinity</h3>
       <div id="trustGraphServicesBlock" class="compact-list"></div>
+    </div>
+  </div>
+
+  <div id="reputationExpansion" class="section">
+    <div class="panel fx-card">
+      <h3 class="chart-title">Reputation expansion</h3>
+      <div id="reputationExpansionSummaryBlock" class="kpi-grid"></div>
+    </div>
+    <div class="panel fx-card">
+      <h3 class="chart-title">Badge candidates</h3>
+      <div id="reputationExpansionBadgesBlock" class="compact-list"></div>
+    </div>
+    <div class="panel fx-card">
+      <h3 class="chart-title">Risk signals</h3>
+      <div id="reputationExpansionRisksBlock" class="compact-list"></div>
+    </div>
+    <div class="panel fx-card">
+      <h3 class="chart-title">Operational signals</h3>
+      <div id="reputationExpansionOperationsBlock" class="compact-list"></div>
+    </div>
+  </div>
+
+  <div id="growthLoops" class="section">
+    <div class="panel fx-card">
+      <h3 class="chart-title">Growth loops</h3>
+      <div id="growthLoopsSummaryBlock" class="kpi-grid"></div>
+    </div>
+    <div class="panel fx-card">
+      <h3 class="chart-title">Top opportunities</h3>
+      <div id="growthLoopsListBlock" class="compact-list"></div>
     </div>
   </div>
 
@@ -1072,6 +1104,128 @@ async function loadTrustGraphSections(){
   }
 }
 
+async function loadReputationExpansionSections(){
+  const role = String(getUser().role || "").toLowerCase();
+  if(!["owner","admin","manager"].includes(role)){
+    setHtml("reputationExpansionSummaryBlock", emptyState("Unavailable", "Reputation expansion requires manager access."));
+    setHtml("reputationExpansionBadgesBlock", "");
+    setHtml("reputationExpansionRisksBlock", "");
+    setHtml("reputationExpansionOperationsBlock", "");
+    return;
+  }
+
+  const settled = await Promise.allSettled([
+    loadJson("/analytics/reputation-expansion").catch(function(e){ throw e; }),
+    loadJson("/analytics/reputation-expansion/badges").catch(function(e){ throw e; }),
+    loadJson("/analytics/reputation-expansion/risks").catch(function(e){ throw e; }),
+    loadJson("/analytics/reputation-expansion/operations").catch(function(e){ throw e; })
+  ]);
+
+  const summary = settled[0].status === "fulfilled" ? settled[0].value : null;
+  const badges = settled[1].status === "fulfilled" ? settled[1].value : null;
+  const risks = settled[2].status === "fulfilled" ? settled[2].value : null;
+  const ops = settled[3].status === "fulfilled" ? settled[3].value : null;
+
+  if(summary){
+    setHtml("reputationExpansionSummaryBlock", [
+      kpi("Expansion score", summary.reputation_expansion_score != null ? summary.reputation_expansion_score : "—"),
+      kpi("Risk level", summary.reputation_risk_level || "unknown"),
+      kpi("Badge candidates", Array.isArray(summary.reputation_badge_candidates) ? summary.reputation_badge_candidates.length : 0)
+    ].join(""));
+  } else {
+    renderEndpointError("reputationExpansionSummaryBlock", "Reputation expansion", settled[0].reason && settled[0].reason.message);
+  }
+
+  if(badges && Array.isArray(badges.badge_candidates)){
+    const lines = badges.badge_candidates.map(function(row){
+      return '<div class="compact-row"><span>' + esc(row.label || row.key || "Badge") + '</span><strong>' + esc(String(row.strength || 0)) + '</strong></div>';
+    });
+    setHtml("reputationExpansionBadgesBlock", lines.length ? lines.join("") : emptyState("Badges", "No candidates detected yet."));
+  } else {
+    setHtml("reputationExpansionBadgesBlock", errorState("Badge candidates", settled[1].reason && settled[1].reason.message));
+  }
+
+  if(risks){
+    const counts = risks.counts || {};
+    const signals = Array.isArray(risks.signals) ? risks.signals.join(", ") : "";
+    setHtml("reputationExpansionRisksBlock", [
+      compactRow("Risk level", risks.risk_level || "unknown"),
+      compactRow("Risk score", risks.risk_score != null ? risks.risk_score : "0"),
+      compactRow("Signals", signals || "None"),
+      compactRow("Cancelled jobs", counts.cancelled_jobs != null ? counts.cancelled_jobs : 0),
+      compactRow("Open disputes", counts.open_disputes != null ? counts.open_disputes : 0),
+      compactRow("Open complaints", counts.open_complaints != null ? counts.open_complaints : 0)
+    ].join(""));
+  } else {
+    setHtml("reputationExpansionRisksBlock", errorState("Risk signals", settled[2].reason && settled[2].reason.message));
+  }
+
+  if(ops && ops.signals){
+    const s = ops.signals;
+    setHtml("reputationExpansionOperationsBlock", [
+      compactRow("Completed jobs", s.completed_jobs_count != null ? s.completed_jobs_count : 0),
+      compactRow("Repeat clients", s.repeat_clients_count != null ? s.repeat_clients_count : 0),
+      compactRow("Paid invoices", s.paid_invoices_count != null ? s.paid_invoices_count : 0),
+      compactRow("Response consistency", pctDisplay(s.response_consistency)),
+      compactRow("Review average", s.review_average != null ? s.review_average : 0),
+      compactRow("Active subscriptions", s.active_subscriptions != null ? s.active_subscriptions : 0),
+      compactRow("Referral conversions", s.referral_conversions != null ? s.referral_conversions : 0)
+    ].join(""));
+  } else {
+    setHtml("reputationExpansionOperationsBlock", errorState("Operational signals", settled[3].reason && settled[3].reason.message));
+  }
+}
+
+function renderGrowthLoopRows(payload){
+  const loops = payload && payload.loops ? payload.loops : {};
+  const rows = [];
+  Object.keys(loops).forEach(function(type){
+    const list = Array.isArray(loops[type]) ? loops[type] : [];
+    list.slice(0, 4).forEach(function(item){
+      rows.push({
+        type: type,
+        label: item.client_name || item.title || item.service || item.code || (type + " #" + item.opportunity_id),
+        reason: item.reason || "",
+        score: item.priority_score || 0,
+        id: item.opportunity_id
+      });
+    });
+  });
+  rows.sort(function(a, b){ return Number(b.score || 0) - Number(a.score || 0); });
+  return rows.slice(0, 18);
+}
+
+async function loadGrowthLoopsSections(){
+  const role = String(getUser().role || "").toLowerCase();
+  if(!["owner","admin","manager"].includes(role)){
+    setHtml("growthLoopsSummaryBlock", emptyState("Unavailable", "Growth loops require manager access."));
+    setHtml("growthLoopsListBlock", "");
+    return;
+  }
+  try {
+    const data = await loadJson("/analytics/growth-loops");
+    const counts = data.counts || {};
+    setHtml("growthLoopsSummaryBlock", [
+      kpi("Total opportunities", data.total_opportunities != null ? data.total_opportunities : 0),
+      kpi("Win-back", counts["win-back"] || 0),
+      kpi("Reactivation", counts.reactivation || 0),
+      kpi("Abandoned estimates", counts["abandoned-estimates"] || 0),
+      kpi("Unfinished bookings", counts["unfinished-bookings"] || 0),
+      kpi("Review requests", counts["review-requests"] || 0),
+      kpi("Referral follow-ups", counts["referral-follow-ups"] || 0),
+      kpi("Subscription upgrades", counts["subscription-upgrades"] || 0)
+    ].join(""));
+
+    const rows = renderGrowthLoopRows(data);
+    setHtml("growthLoopsListBlock", rows.length ? rows.map(function(row){
+      return '<div class="compact-row"><span>' + esc(row.type.replace(/-/g, " ") + ": " + row.label) + '<br><small>' + esc(row.reason) + '</small></span><strong>' + esc(String(row.score)) + '</strong></div>';
+    }).join("") : emptyState("No opportunities", "No growth loop candidates detected right now."));
+  } catch(err) {
+    renderEndpointError("growthLoopsSummaryBlock", "Growth loops", err && err.message);
+    setHtml("growthLoopsListBlock", "");
+  }
+}
+
 async function loadGrowthOsSections(){
   const role = String(getUser().role || "").toLowerCase();
   if(!["owner","admin","manager"].includes(role)){
@@ -1239,6 +1393,14 @@ async function load(){
 
     await loadTrustGraphSections().catch(function(){
       AppUI.showToast("Trust graph sections could not fully load.", "error");
+    });
+
+    await loadReputationExpansionSections().catch(function(){
+      AppUI.showToast("Reputation sections could not fully load.", "error");
+    });
+
+    await loadGrowthLoopsSections().catch(function(){
+      AppUI.showToast("Growth loops sections could not fully load.", "error");
     });
 
     await loadReferralEngineSections().catch(function(){

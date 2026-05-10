@@ -5,6 +5,7 @@
 const pool = require("../db/pool");
 const activityLogService = require("./activityLogService");
 const trustReputationService = require("./trustReputationService");
+const reputationExpansionService = require("./reputationExpansionService");
 
 function clamp100(value) {
   const n = Number(value);
@@ -112,6 +113,25 @@ async function calculateCompanyRanking(companyId) {
     growthNorm = clamp100(Math.min(100, 12 + total * 1.5));
   }
 
+  let expansion = null;
+  try {
+    expansion = await reputationExpansionService.buildCompanyReputationExpansion(id);
+  } catch (err) {
+    if (err && err.code !== "42P01" && err.code !== "42703") {
+      throw err;
+    }
+    expansion = null;
+  }
+
+  const expansionScore = expansion ? Number(expansion.reputation_expansion_score || 0) : null;
+  const expansionNorm = expansionScore != null && Number.isFinite(expansionScore) ? clamp100(expansionScore) : 62;
+  const riskLevel = expansion ? String(expansion.reputation_risk_level || "low") : "unknown";
+  const riskPenalty = riskLevel === "high" ? 8 : riskLevel === "medium" ? 3.5 : 0;
+  const badgeCount = expansion && Array.isArray(expansion.reputation_badge_candidates)
+    ? expansion.reputation_badge_candidates.length
+    : 0;
+  const badgeBonus = Math.min(5, badgeCount * 0.9);
+
   const ranking_score = round2(
     0.26 * trust +
       0.26 * rep +
@@ -121,7 +141,10 @@ async function calculateCompanyRanking(companyId) {
       0.06 * repeatNorm +
       0.06 * winNorm +
       0.04 * subscriptionNorm +
-      0.02 * growthNorm
+      0.02 * growthNorm +
+      0.08 * expansionNorm -
+      riskPenalty +
+      badgeBonus
   );
 
   const components = {
@@ -134,6 +157,14 @@ async function calculateCompanyRanking(companyId) {
     marketplace_win_rate_norm: winNorm,
     subscription_norm: subscriptionNorm,
     growth_activity_norm: growthNorm,
+    reputation_expansion_score: expansionScore,
+    reputation_expansion_norm: expansionNorm,
+    reputation_expansion_risk_level: riskLevel,
+    reputation_expansion_risk_penalty: riskPenalty,
+    reputation_expansion_badge_bonus: badgeBonus,
+    reputation_expansion_badges: expansion && Array.isArray(expansion.reputation_badge_candidates)
+      ? expansion.reputation_badge_candidates.map((badge) => badge.key).filter(Boolean)
+      : [],
     billing_status: billingStatus,
     review_count: rc,
     marketplace_offers_terminal: terminal,
@@ -363,6 +394,14 @@ async function getMarketplaceRankingPublic(companyId) {
   }
 
   const mini = await trustReputationService.buildCompanyTrustProfile(id, { detail: false });
+  let expansionPublic = null;
+  try {
+    expansionPublic = await reputationExpansionService.buildCompanyReputationExpansion(id);
+  } catch (err) {
+    if (err && err.code !== "42P01" && err.code !== "42703") {
+      throw err;
+    }
+  }
 
   return {
     company_id: id,
@@ -372,7 +411,10 @@ async function getMarketplaceRankingPublic(companyId) {
     marketplace_rank,
     trust_score: mini.trust_score,
     reputation_score: mini.reputation_score,
-    trust_badges: mini.badges
+    trust_badges: mini.badges,
+    reputation_expansion_score: expansionPublic ? expansionPublic.reputation_expansion_score : null,
+    reputation_badge_candidates: expansionPublic ? expansionPublic.reputation_badge_candidates : [],
+    reputation_risk_level: expansionPublic ? expansionPublic.reputation_risk_level : "unknown"
   };
 }
 

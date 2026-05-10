@@ -1057,6 +1057,15 @@
           </div>
           <div id="clientRetentionInsightsBody" class="muted">Loading…</div>
         </div>
+        <div id="clientGrowthLoopHints" class="panel section fx-card" style="display:none;margin-top:14px;">
+          <div class="section-head">
+            <div>
+              <h2 style="font-size:18px;">Growth loop hints</h2>
+              <div class="section-copy">Internal opportunity matches for this client. No customer message is sent.</div>
+            </div>
+          </div>
+          <div id="clientGrowthLoopHintsBody" class="muted">Loading...</div>
+        </div>
         <div id="timelineList" class="list"></div>
         <div style="margin-top:18px;">
           <div class="section-head">
@@ -2048,6 +2057,45 @@ async function loadClientRetentionInsights(){
   }
 }
 
+async function loadClientGrowthLoopHints(){
+  const wrap = document.getElementById("clientGrowthLoopHints");
+  const body = document.getElementById("clientGrowthLoopHintsBody");
+  if(!wrap || !body) return;
+  const role = String((currentUser && currentUser.role) || "").toLowerCase();
+  if(!["owner","admin","manager"].includes(role)){
+    wrap.style.display = "none";
+    return;
+  }
+  try {
+    const res = await apiFetch(API + "/analytics/growth-loops");
+    const data = await readJsonSafe(res, {});
+    if(!res.ok || !data || !data.loops){
+      wrap.style.display = "none";
+      return;
+    }
+    const cid = Number(clientId);
+    const matches = [];
+    Object.keys(data.loops || {}).forEach(function(type){
+      const list = Array.isArray(data.loops[type]) ? data.loops[type] : [];
+      list.forEach(function(item){
+        if(Number(item.client_id) === cid){
+          matches.push({ type: type, item: item });
+        }
+      });
+    });
+    wrap.style.display = "block";
+    if(!matches.length){
+      body.innerHTML = "No active growth loop hints are matched to this client.";
+      return;
+    }
+    body.innerHTML = matches.slice(0, 6).map(function(match){
+      return '<div style="margin-bottom:10px;"><strong>' + escapeHtml(match.type.replace(/-/g, " ")) + '</strong><div>' + escapeHtml(match.item.reason || "") + '</div></div>';
+    }).join("");
+  } catch (_) {
+    wrap.style.display = "none";
+  }
+}
+
 async function load(){
   clientId = new URLSearchParams(window.location.search).get("id");
 
@@ -2095,6 +2143,7 @@ async function load(){
     fillInvoiceJobOptions();
     showTab(currentTab);
     await loadClientRetentionInsights();
+    await loadClientGrowthLoopHints();
   } catch(err){
     console.log("CLIENT PROFILE LOAD ERROR:", err);
     renderLoadError("Server connection failed while loading this client.");

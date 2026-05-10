@@ -14,6 +14,8 @@ const trustReputationService = require("../services/trustReputationService");
 const growthOsService = require("../services/growthOsService");
 const customerRetentionService = require("../services/customerRetentionService");
 const trustGraphService = require("../services/trustGraphService");
+const reputationExpansionService = require("../services/reputationExpansionService");
+const growthLoopsService = require("../services/growthLoopsService");
 
 function num(value) {
   return Number(value || 0);
@@ -1188,6 +1190,198 @@ router.get("/analytics/trust-reputation", growthFoundationAccess, async (req, re
       return res.status(404).json({ error: "Company not found" });
     }
     sendSafeServerError(res, err, "ANALYTICS TRUST REPUTATION ERROR");
+  }
+});
+
+router.get("/analytics/reputation-expansion", growthFoundationAccess, async (req, res) => {
+  try {
+    const companyId = req.user && req.user.company_id;
+    if (!companyId) {
+      return res.status(403).json({ error: "Forbidden" });
+    }
+    const data = await reputationExpansionService.buildCompanyReputationExpansion(companyId, {
+      logActivity: true,
+      userId: req.user && req.user.id
+    });
+    res.json(data);
+  } catch (err) {
+    sendSafeServerError(res, err, "ANALYTICS REPUTATION EXPANSION ERROR");
+  }
+});
+
+router.get("/analytics/reputation-expansion/streaks", growthFoundationAccess, async (req, res) => {
+  try {
+    const companyId = req.user && req.user.company_id;
+    if (!companyId) {
+      return res.status(403).json({ error: "Forbidden" });
+    }
+    res.json(await reputationExpansionService.getReputationQualityStreaks(companyId));
+  } catch (err) {
+    sendSafeServerError(res, err, "ANALYTICS REPUTATION STREAKS ERROR");
+  }
+});
+
+router.get("/analytics/reputation-expansion/risks", growthFoundationAccess, async (req, res) => {
+  try {
+    const companyId = req.user && req.user.company_id;
+    if (!companyId) {
+      return res.status(403).json({ error: "Forbidden" });
+    }
+    res.json(await reputationExpansionService.getReputationRiskSignals(companyId));
+  } catch (err) {
+    sendSafeServerError(res, err, "ANALYTICS REPUTATION RISKS ERROR");
+  }
+});
+
+router.get("/analytics/reputation-expansion/badges", growthFoundationAccess, async (req, res) => {
+  try {
+    const companyId = req.user && req.user.company_id;
+    if (!companyId) {
+      return res.status(403).json({ error: "Forbidden" });
+    }
+    res.json(await reputationExpansionService.getReputationBadgeCandidates(companyId));
+  } catch (err) {
+    sendSafeServerError(res, err, "ANALYTICS REPUTATION BADGES ERROR");
+  }
+});
+
+router.get("/analytics/reputation-expansion/operations", growthFoundationAccess, async (req, res) => {
+  try {
+    const companyId = req.user && req.user.company_id;
+    if (!companyId) {
+      return res.status(403).json({ error: "Forbidden" });
+    }
+    res.json(await reputationExpansionService.getReputationOperationalSignals(companyId));
+  } catch (err) {
+    sendSafeServerError(res, err, "ANALYTICS REPUTATION OPERATIONS ERROR");
+  }
+});
+
+router.get("/analytics/growth-loops", growthFoundationAccess, async (req, res) => {
+  try {
+    const companyId = req.user && req.user.company_id;
+    if (!companyId) {
+      return res.status(403).json({ error: "Forbidden" });
+    }
+    res.json(await growthLoopsService.buildGrowthLoopsOverview(companyId, {
+      logActivity: true,
+      userId: req.user && req.user.id
+    }));
+  } catch (err) {
+    sendSafeServerError(res, err, "ANALYTICS GROWTH LOOPS ERROR");
+  }
+});
+
+router.get("/analytics/growth-loops/win-back", growthFoundationAccess, async (req, res) => {
+  try {
+    const companyId = req.user && req.user.company_id;
+    if (!companyId) return res.status(403).json({ error: "Forbidden" });
+    res.json({ company_id: companyId, generated_at: new Date().toISOString(), opportunities: await growthLoopsService.getWinBackOpportunities(companyId) });
+  } catch (err) {
+    sendSafeServerError(res, err, "ANALYTICS GROWTH LOOPS WIN BACK ERROR");
+  }
+});
+
+router.get("/analytics/growth-loops/reactivation", growthFoundationAccess, async (req, res) => {
+  try {
+    const companyId = req.user && req.user.company_id;
+    if (!companyId) return res.status(403).json({ error: "Forbidden" });
+    res.json({ company_id: companyId, generated_at: new Date().toISOString(), opportunities: await growthLoopsService.getReactivationOpportunities(companyId) });
+  } catch (err) {
+    sendSafeServerError(res, err, "ANALYTICS GROWTH LOOPS REACTIVATION ERROR");
+  }
+});
+
+router.get("/analytics/growth-loops/abandoned-estimates", growthFoundationAccess, async (req, res) => {
+  try {
+    const companyId = req.user && req.user.company_id;
+    if (!companyId) return res.status(403).json({ error: "Forbidden" });
+    res.json({ company_id: companyId, generated_at: new Date().toISOString(), opportunities: await growthLoopsService.getAbandonedEstimateOpportunities(companyId) });
+  } catch (err) {
+    sendSafeServerError(res, err, "ANALYTICS GROWTH LOOPS ABANDONED ESTIMATES ERROR");
+  }
+});
+
+router.get("/analytics/growth-loops/unfinished-bookings", growthFoundationAccess, async (req, res) => {
+  try {
+    const companyId = req.user && req.user.company_id;
+    if (!companyId) return res.status(403).json({ error: "Forbidden" });
+    res.json({ company_id: companyId, generated_at: new Date().toISOString(), opportunities: await growthLoopsService.getUnfinishedBookingOpportunities(companyId) });
+  } catch (err) {
+    sendSafeServerError(res, err, "ANALYTICS GROWTH LOOPS UNFINISHED BOOKINGS ERROR");
+  }
+});
+
+router.get("/analytics/growth-loops/review-requests", growthFoundationAccess, async (req, res) => {
+  try {
+    const companyId = req.user && req.user.company_id;
+    if (!companyId) return res.status(403).json({ error: "Forbidden" });
+    res.json({ company_id: companyId, generated_at: new Date().toISOString(), opportunities: await growthLoopsService.getReviewRequestOpportunities(companyId) });
+  } catch (err) {
+    sendSafeServerError(res, err, "ANALYTICS GROWTH LOOPS REVIEW REQUESTS ERROR");
+  }
+});
+
+router.get("/analytics/growth-loops/referral-follow-ups", growthFoundationAccess, async (req, res) => {
+  try {
+    const companyId = req.user && req.user.company_id;
+    if (!companyId) return res.status(403).json({ error: "Forbidden" });
+    res.json({ company_id: companyId, generated_at: new Date().toISOString(), opportunities: await growthLoopsService.getReferralFollowUpOpportunities(companyId) });
+  } catch (err) {
+    sendSafeServerError(res, err, "ANALYTICS GROWTH LOOPS REFERRAL FOLLOW UPS ERROR");
+  }
+});
+
+router.get("/analytics/growth-loops/subscription-upgrades", growthFoundationAccess, async (req, res) => {
+  try {
+    const companyId = req.user && req.user.company_id;
+    if (!companyId) return res.status(403).json({ error: "Forbidden" });
+    res.json({ company_id: companyId, generated_at: new Date().toISOString(), opportunities: await growthLoopsService.getSubscriptionUpgradeOpportunities(companyId) });
+  } catch (err) {
+    sendSafeServerError(res, err, "ANALYTICS GROWTH LOOPS SUBSCRIPTION UPGRADES ERROR");
+  }
+});
+
+router.post("/analytics/growth-loops/:type/:id/dismiss", growthFoundationAccess, async (req, res) => {
+  try {
+    const companyId = req.user && req.user.company_id;
+    if (!companyId) return res.status(403).json({ error: "Forbidden" });
+    const result = await growthLoopsService.logGrowthLoopAction({
+      companyId,
+      userId: req.user && req.user.id,
+      type: req.params.type,
+      opportunityId: req.params.id,
+      action: "growth_loop_opportunity_dismissed",
+      details: { reason: String((req.body && req.body.reason) || "").slice(0, 200) }
+    });
+    res.json(result);
+  } catch (err) {
+    if (err && (err.code === "INVALID_LOOP_TYPE" || err.code === "INVALID_OPPORTUNITY_ID")) {
+      return res.status(400).json({ error: err.message });
+    }
+    sendSafeServerError(res, err, "ANALYTICS GROWTH LOOP DISMISS ERROR");
+  }
+});
+
+router.post("/analytics/growth-loops/:type/:id/snooze", growthFoundationAccess, async (req, res) => {
+  try {
+    const companyId = req.user && req.user.company_id;
+    if (!companyId) return res.status(403).json({ error: "Forbidden" });
+    const snoozedUntil = String((req.body && req.body.snoozed_until) || "").slice(0, 40);
+    const result = await growthLoopsService.logGrowthLoopAction({
+      companyId,
+      userId: req.user && req.user.id,
+      type: req.params.type,
+      opportunityId: req.params.id,
+      action: "growth_loop_opportunity_snoozed",
+      details: { snoozed_until: snoozedUntil || null }
+    });
+    res.json(result);
+  } catch (err) {
+    if (err && (err.code === "INVALID_LOOP_TYPE" || err.code === "INVALID_OPPORTUNITY_ID")) {
+      return res.status(400).json({ error: err.message });
+    }
+    sendSafeServerError(res, err, "ANALYTICS GROWTH LOOP SNOOZE ERROR");
   }
 });
 

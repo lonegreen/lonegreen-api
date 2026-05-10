@@ -1098,6 +1098,7 @@
         }
         try {
           var payload = await fetchWithToken("/analytics/trust-reputation", state.companyToken);
+          var expansion = await fetchWithToken("/analytics/reputation-expansion", state.companyToken).catch(function() { return null; });
           els.trustSnap.style.display = "block";
           var ts = payload.trust_score != null ? payload.trust_score : "—";
           var rs = payload.reputation_score != null ? payload.reputation_score : "—";
@@ -1106,7 +1107,16 @@
               return typeof b === "string" ? b : (b && (b.label || b.name)) || "";
             }).filter(Boolean).join(", ")
             : "";
-          els.trustSnapBody.innerHTML =
+          var candidateBadges = expansion && Array.isArray(expansion.reputation_badge_candidates)
+            ? expansion.reputation_badge_candidates.slice(0, 3).map(function(b) {
+              return (b && (b.label || b.key)) || "";
+            }).filter(Boolean).join(", ")
+            : "";
+          var expansionHtml =
+            '<div class="marketplace-kpi"><span>Expansion score</span><strong>' + esc(expansion && expansion.reputation_expansion_score != null ? expansion.reputation_expansion_score : "n/a") + "</strong></div>" +
+            '<div class="marketplace-kpi"><span>Risk level</span><strong>' + esc(expansion && expansion.reputation_risk_level ? expansion.reputation_risk_level : "unknown") + "</strong></div>" +
+            '<div class="marketplace-kpi"><span>Badge candidates</span><strong>' + esc(candidateBadges || "n/a") + "</strong></div>";
+          els.trustSnapBody.innerHTML = expansionHtml +
             '<div class="marketplace-kpi"><span>Trust score</span><strong>' + esc(ts) + "</strong></div>" +
             '<div class="marketplace-kpi"><span>Reputation</span><strong>' + esc(rs) + "</strong></div>" +
             '<div class="marketplace-kpi"><span>Badges</span><strong>' + esc(badges || "—") + "</strong></div>";

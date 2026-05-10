@@ -459,6 +459,7 @@
   </div>
 
   <div id="subsRetentionInsights" class="panel fx-card" style="display:none;" role="region" aria-label="Renewal insights"></div>
+  <div id="subsUpgradeCandidates" class="panel fx-card" style="display:none;" role="region" aria-label="Subscription upgrade candidates"></div>
 
   <div id="earn" class="panel earn fx-stat">Loading...</div>
   <div id="list"></div>
@@ -862,6 +863,36 @@ async function loadRetentionInsights(){
   }
 }
 
+async function loadSubscriptionUpgradeCandidates(){
+  const insightEl = document.getElementById("subsUpgradeCandidates");
+  if(!insightEl) return;
+  if(!["owner","admin","manager"].includes(currentRole())){
+    insightEl.style.display = "none";
+    return;
+  }
+  try {
+    const res = await apiFetch(API + "/analytics/growth-loops/subscription-upgrades");
+    const data = await safeJson(res);
+    if(!res.ok){
+      insightEl.style.display = "none";
+      return;
+    }
+    const cands = Array.isArray(data && data.opportunities) ? data.opportunities : [];
+    insightEl.style.display = "block";
+    const rows = cands.slice(0, 5).map(function(item){
+      const metrics = item.metrics || {};
+      return '<div class="muted" style="margin-top:8px;"><strong>' + escapeHtml(item.client_name || ("Client #" + item.client_id)) + '</strong> - ' +
+        escapeHtml(String(metrics.completed_jobs_90d || 0)) + ' completed jobs in 90 days.</div>';
+    }).join("");
+    insightEl.innerHTML =
+      "<strong>Subscription upgrade candidates</strong>" +
+      '<div class="muted" style="margin-top:8px;line-height:1.5;">Repeat clients without active subscriptions. Review manually before creating any subscription.</div>' +
+      (rows || '<div class="muted" style="margin-top:8px;">No upgrade candidates detected right now.</div>');
+  } catch (_) {
+    insightEl.style.display = "none";
+  }
+}
+
 function renderLoading(){
   document.getElementById("earn").textContent = "Loading subscription summary...";
   document.getElementById("list").innerHTML = `<div class="panel empty fx-empty"><strong class="fx-empty__title">Loading subscriptions...</strong><span class="fx-empty__text">Please wait while the latest subscription data is loaded.</span></div>`;
@@ -913,6 +944,7 @@ async function load(button){
 
     renderData();
     await loadRetentionInsights();
+    await loadSubscriptionUpgradeCandidates();
   } catch(err){
     console.log("SUBSCRIPTIONS LOAD ERROR:", err);
     subscriptions = [];

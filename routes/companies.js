@@ -20,6 +20,7 @@ const { refreshCompanyReputation } = require("../services/reputationService");
 const trustReputationService = require("../services/trustReputationService");
 const marketplaceRankingService = require("../services/marketplaceRankingService");
 const discoveryService = require("../services/discoveryService");
+const reputationExpansionService = require("../services/reputationExpansionService");
 
 const router = express.Router();
 const companyReportLimiter = rateLimit({
@@ -198,6 +199,13 @@ async function shapePublicCompany(row) {
     getPublicAvailability(row.id)
   ]);
 
+  let reputationExpansion = null;
+  try {
+    reputationExpansion = await reputationExpansionService.buildCompanyReputationExpansion(row.id);
+  } catch (_) {
+    reputationExpansion = null;
+  }
+
   const marketplaceRankingSnapshot =
     row.marketplace_ranking_calculated_at || row.marketplace_ranking_components
       ? {
@@ -237,6 +245,9 @@ async function shapePublicCompany(row) {
     trust_badges: Array.isArray(row.trust_badges) ? row.trust_badges : [],
     ranking_score: Number(row.ranking_score || 0),
     reputation_score: Number(row.reputation_score || 0),
+    reputation_expansion_score: reputationExpansion ? reputationExpansion.reputation_expansion_score : null,
+    reputation_badge_candidates: reputationExpansion ? reputationExpansion.reputation_badge_candidates : [],
+    reputation_risk_level: reputationExpansion ? reputationExpansion.reputation_risk_level : "unknown",
     marketplace_rank: row.marketplace_rank != null ? Number(row.marketplace_rank) : null,
     marketplace_ranking: marketplaceRankingSnapshot,
     rating_summary: {
@@ -840,6 +851,9 @@ router.get("/companies/public/search", async (req, res) => {
       is_verified: company.is_verified,
       rating_summary: company.rating_summary,
       ranking_score: company.ranking_score,
+      reputation_expansion_score: company.reputation_expansion_score,
+      reputation_badge_candidates: company.reputation_badge_candidates,
+      reputation_risk_level: company.reputation_risk_level,
       trust_badges: company.trust_badges
     }));
 
@@ -963,6 +977,9 @@ router.get("/companies/public/:slug", async (req, res) => {
       payload.reputation_score = snap.reputation_score;
       payload.trust_score = snap.trust_score;
       payload.trust_badges = snap.trust_badges;
+      payload.reputation_expansion_score = snap.reputation_expansion_score;
+      payload.reputation_badge_candidates = snap.reputation_badge_candidates;
+      payload.reputation_risk_level = snap.reputation_risk_level;
       payload.marketplace_rank = snap.marketplace_rank;
       payload.marketplace_ranking = {
         ranking_score: snap.ranking_score,

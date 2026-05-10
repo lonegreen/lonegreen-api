@@ -923,6 +923,22 @@
     <div id="trustGraphSummaryGrid" class="kpi-grid"></div>
   </div>
 
+  <div id="reputationExpansionPanel" class="panel section fx-card" style="display:none;">
+    <div class="section-head fx-section-head">
+      <h3>Reputation expansion</h3>
+      <div class="section-note">Internal quality, retention, response, referral, and risk signals (manager+).</div>
+    </div>
+    <div id="reputationExpansionGrid" class="kpi-grid"></div>
+  </div>
+
+  <div id="growthLoopsPanel" class="panel section fx-card" style="display:none;">
+    <div class="section-head fx-section-head">
+      <h3>Growth loops</h3>
+      <div class="section-note">Internal opportunity loops for follow-up planning. No messages are sent automatically.</div>
+    </div>
+    <div id="growthLoopsGrid" class="kpi-grid"></div>
+  </div>
+
   <div id="referralSummaryPanel" class="panel section fx-card" style="display:none;">
     <div class="section-head fx-section-head">
       <h3>Referral engine</h3>
@@ -1370,6 +1386,59 @@ async function loadTrustGraphSummary(){
   if(net.average_lifecycle_value != null) parts.push(growthPulseCard("Avg lifecycle value", formatMoney(net.average_lifecycle_value), "Paid invoice totals averaged per paying client"));
   if(net.subscription_retention_ratio != null) parts.push(growthPulseCard("Subscription retention ratio", pctLabel(net.subscription_retention_ratio), "Active vs tracked subscription rows"));
   grid.innerHTML = parts.length ? parts.join("") : '<div class="muted fx-empty__text" style="grid-column:1/-1;">No trust graph metrics yet.</div>';
+}
+
+async function loadReputationExpansionSnapshot(){
+  const panel = document.getElementById("reputationExpansionPanel");
+  const grid = document.getElementById("reputationExpansionGrid");
+  if(!panel || !grid) return;
+  const role = String((user && user.role) || "").toLowerCase();
+  if(!["owner","admin","manager"].includes(role)){
+    panel.style.display = "none";
+    return;
+  }
+  panel.style.display = "block";
+  grid.innerHTML = '<div class="muted fx-empty__text" style="grid-column:1/-1;">Loading reputation expansion...</div>';
+  const rep = await fetchDashboardJson("/analytics/reputation-expansion", null);
+  if(!rep || typeof rep !== "object"){
+    grid.innerHTML = '<div class="muted fx-empty__text" style="grid-column:1/-1;">Reputation expansion unavailable.</div>';
+    return;
+  }
+  const badges = Array.isArray(rep.reputation_badge_candidates)
+    ? rep.reputation_badge_candidates.slice(0, 3).map(function(b){ return b.label || b.key || ""; }).filter(Boolean).join(", ")
+    : "";
+  const ops = rep.operations && rep.operations.signals ? rep.operations.signals : {};
+  grid.innerHTML = [
+    growthPulseCard("Expansion score", rep.reputation_expansion_score != null ? rep.reputation_expansion_score : "—", "Composite internal reputation signal"),
+    growthPulseCard("Risk level", rep.reputation_risk_level || "unknown", "Cancellation, dispute, and support risk"),
+    growthPulseCard("Badge candidates", badges || "—", "Detected public reputation candidates"),
+    growthPulseCard("Repeat clients", ops.repeat_clients_count != null ? ops.repeat_clients_count : "0", "Clients with 2+ completed jobs")
+  ].join("");
+}
+
+async function loadGrowthLoopsSnapshot(){
+  const panel = document.getElementById("growthLoopsPanel");
+  const grid = document.getElementById("growthLoopsGrid");
+  if(!panel || !grid) return;
+  const role = String((user && user.role) || "").toLowerCase();
+  if(!["owner","admin","manager"].includes(role)){
+    panel.style.display = "none";
+    return;
+  }
+  panel.style.display = "block";
+  grid.innerHTML = '<div class="muted fx-empty__text" style="grid-column:1/-1;">Loading growth loops...</div>';
+  const data = await fetchDashboardJson("/analytics/growth-loops", null);
+  if(!data || typeof data !== "object"){
+    grid.innerHTML = '<div class="muted fx-empty__text" style="grid-column:1/-1;">Growth loops unavailable.</div>';
+    return;
+  }
+  const counts = data.counts || {};
+  grid.innerHTML = [
+    growthPulseCard("Total opportunities", data.total_opportunities != null ? data.total_opportunities : "0", "All growth loops combined"),
+    growthPulseCard("Win-back", counts["win-back"] != null ? counts["win-back"] : "0", "Idle completed-job clients"),
+    growthPulseCard("Review requests", counts["review-requests"] != null ? counts["review-requests"] : "0", "Completed jobs without reviews"),
+    growthPulseCard("Subscription upgrades", counts["subscription-upgrades"] != null ? counts["subscription-upgrades"] : "0", "Repeat clients without active subscriptions")
+  ].join("");
 }
 
 async function loadOperationalInsights(){
@@ -2391,7 +2460,7 @@ async function init(){
     renderRecentBillingActivity(safeMoney.recent_billing_activity || {});
 
     await loadDashNotifications();
-    await Promise.all([loadGrowthPulse(), loadTrustGraphSummary(), loadReferralSummaryCard(), loadOperationalInsights()]);
+    await Promise.all([loadGrowthPulse(), loadTrustGraphSummary(), loadReputationExpansionSnapshot(), loadGrowthLoopsSnapshot(), loadReferralSummaryCard(), loadOperationalInsights()]);
 
   } catch(err){
     console.log("DASHBOARD LOAD ERROR:", err);

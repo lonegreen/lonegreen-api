@@ -378,9 +378,9 @@ async function gatherTrustInputs(companyId) {
       `
       SELECT
         COUNT(*)::int AS marketplace_offers_total,
-        COUNT(*) FILTER (WHERE LOWER(TRIM(status)) IN ('accepted', 'rejected'))::int AS marketplace_offers_terminal,
-        COUNT(*) FILTER (WHERE LOWER(TRIM(status)) = 'accepted')::int AS marketplace_offers_accepted,
-        COUNT(*) FILTER (WHERE LOWER(TRIM(status)) = 'rejected')::int AS marketplace_offers_rejected,
+        COUNT(*) FILTER (WHERE LOWER(TRIM(mo.status)) IN ('accepted', 'rejected'))::int AS marketplace_offers_terminal,
+        COUNT(*) FILTER (WHERE LOWER(TRIM(mo.status)) = 'accepted')::int AS marketplace_offers_accepted,
+        COUNT(*) FILTER (WHERE LOWER(TRIM(mo.status)) = 'rejected')::int AS marketplace_offers_rejected,
         AVG(EXTRACT(EPOCH FROM (mo.created_at - mr.created_at)))::numeric AS avg_response_seconds
       FROM marketplace_offers mo
       INNER JOIN marketplace_requests mr ON mr.id = mo.request_id
