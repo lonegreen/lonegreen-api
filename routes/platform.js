@@ -20,6 +20,7 @@ const { refreshCompanyReputation } = require("../services/reputationService");
 const { notifyVerificationApproved, notifyBillingWarning } = require("../services/notificationService");
 const growthFoundationService = require("../services/growthFoundationService");
 const trustReputationService = require("../services/trustReputationService");
+const referralEngineService = require("../services/referralEngineService");
 
 const router = express.Router();
 const platformOnly = [auth, requirePlatformOwner];
@@ -1894,6 +1895,51 @@ router.patch("/platform/verification/companies/:id", platformOnly, async (req, r
     return res.json(result.rows[0]);
   } catch (err) {
     return sendSafeServerError(res, err, "PLATFORM VERIFICATION COMPANY UPDATE ERROR");
+  }
+});
+
+router.get("/platform/referrals", platformOnly, async (req, res) => {
+  try {
+    const { limit, offset } = parsePagination(req.query);
+    const summary = await referralEngineService.getPlatformReferralSummary();
+    const referrals = await referralEngineService.listPlatformReferrals({ limit, offset });
+    res.json({
+      summary,
+      referrals,
+      limit,
+      offset
+    });
+  } catch (err) {
+    sendSafeServerError(res, err, "PLATFORM REFERRALS ERROR");
+  }
+});
+
+router.put("/platform/referrals/:id/status", platformOnly, async (req, res) => {
+  try {
+    const referralId = Number(req.params.id);
+    if (!Number.isInteger(referralId) || referralId <= 0) {
+      return res.status(400).json({ error: "Invalid referral id" });
+    }
+
+    const status = req.body && req.body.status;
+    const qualificationEvent = req.body && req.body.qualification_event;
+    const reward = req.body && req.body.reward;
+
+    const row = await referralEngineService.updateReferralStatusByPlatform({
+      referralId,
+      status,
+      qualificationEvent,
+      rewardPayload: reward,
+      actorUserId: req.user && req.user.id
+    });
+
+    res.json(row);
+  } catch (err) {
+    const msg = err && err.message ? String(err.message) : "";
+    if (msg.includes("not found") || msg.includes("Invalid")) {
+      return res.status(400).json({ error: msg });
+    }
+    sendSafeServerError(res, err, "PLATFORM REFERRAL STATUS ERROR");
   }
 });
 

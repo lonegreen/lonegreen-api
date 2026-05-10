@@ -25,6 +25,7 @@ const {
 const { getStaffMutationBillingBlock } = require("../services/billingService");
 const { getStaffMutationPlatformBlock } = require("../services/platformControlService");
 const customerRetentionService = require("../services/customerRetentionService");
+const referralEngineService = require("../services/referralEngineService");
 
 const router = express.Router();
 
@@ -1045,6 +1046,71 @@ router.post("/customer/rebook", customerAuth, async (req, res) => {
       return res.status(400).json({ error: msg });
     }
     sendSafeServerError(res, err, "CUSTOMER REBOOK INTENT ERROR");
+  }
+});
+
+router.get("/customer/referrals", customerAuth, async (req, res) => {
+  try {
+    const accountId = await resolveCustomerAccountId(req.customer);
+    if (!accountId) {
+      return res.status(403).json({ error: "Forbidden" });
+    }
+
+    const { scopes } = await getPortalContext(req.customer);
+    const client = await getClient(req.customer);
+    if (!client) {
+      return res.status(404).json({ error: "Customer not found" });
+    }
+    if (!(await portalScopeAllows(req.customer, client, scopes))) {
+      return res.status(403).json({ error: "Forbidden" });
+    }
+
+    const limit = req.query.limit;
+    const offset = req.query.offset;
+    const [summary, referrals] = await Promise.all([
+      referralEngineService.getCustomerReferralSummary(accountId),
+      referralEngineService.listCustomerReferrals(accountId, { limit, offset })
+    ]);
+
+    res.json({
+      summary,
+      referrals
+    });
+  } catch (err) {
+    sendSafeServerError(res, err, "CUSTOMER REFERRALS ERROR");
+  }
+});
+
+router.post("/customer/referrals/code", customerAuth, async (req, res) => {
+  try {
+    const accountId = await resolveCustomerAccountId(req.customer);
+    if (!accountId) {
+      return res.status(403).json({ error: "Forbidden" });
+    }
+
+    const { scopes } = await getPortalContext(req.customer);
+    const client = await getClient(req.customer);
+    if (!client) {
+      return res.status(404).json({ error: "Customer not found" });
+    }
+    if (!(await portalScopeAllows(req.customer, client, scopes))) {
+      return res.status(403).json({ error: "Forbidden" });
+    }
+
+    const row = await referralEngineService.getOrCreateReferralCode({
+      ownerType: "customer",
+      ownerId: accountId,
+      customerAccountId: accountId
+    });
+
+    res.status(200).json({
+      code: row.code,
+      id: row.id,
+      status: row.status,
+      owner_type: row.owner_type
+    });
+  } catch (err) {
+    sendSafeServerError(res, err, "CUSTOMER REFERRAL CODE ERROR");
   }
 });
 

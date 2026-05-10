@@ -53,6 +53,7 @@ const { handleStripeWebhookRequest } = require("./routes/stripeWebhook");
 const { isStripeCheckoutConfigured } = require("./services/stripeService");
 const launchRoutes = require("./routes/launch");
 const trustRoutes = require("./routes/trust");
+const referralsRoutes = require("./routes/referrals");
 
 const { setupDatabase, assertProductionSchemaReady } = require("./db/setup");
 const pool = require("./db/pool");
@@ -295,6 +296,7 @@ app.use("/", servicesRoutes);
 app.use("/", supportRoutes);
 app.use("/", launchRoutes);
 app.use("/", trustRoutes);
+app.use("/", referralsRoutes);
 
 /* Setup DB route */
 app.get("/setup-db", maintenanceOnly, maintenanceLimiter, async (req, res) => {

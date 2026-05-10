@@ -13,6 +13,7 @@ const {
 } = require("../services/emailService");
 const logger = require("../services/logger");
 const { sendSafeServerError } = require("../services/safeServerError");
+const referralEngineService = require("../services/referralEngineService");
 
 const { normalizeRole } = auth;
 const router = express.Router();
@@ -417,6 +418,24 @@ router.post("/signup", async (req, res) => {
           privacy_version: LEGAL_PRIVACY_VERSION
         }
       });
+    }
+
+    const referralCodeSignup = String(req.body?.referral_code || req.body?.referralCode || "").trim();
+    if (referralCodeSignup) {
+      try {
+        await referralEngineService.createReferralSignup({
+          code: referralCodeSignup,
+          referredType: "company",
+          referredCompanyId: company_id,
+          referredCustomerAccountId: null,
+          metadata: { source: "auth_signup" }
+        });
+      } catch (refErr) {
+        logger.warn("REFERRAL_SIGNUP_TRACK_FAILED", {
+          message: refErr && refErr.message ? refErr.message : String(refErr),
+          code: refErr && refErr.code
+        });
+      }
     }
 
     return res.json({
@@ -922,6 +941,7 @@ router.post("/customer-signup", authAttemptLimiter, async (req, res) => {
     const providedClientId = Number(req.body?.client_id || 0);
     const inviteToken = String(req.body?.invite_token || "").trim();
     const ownershipVerificationCode = String(req.body?.ownership_verification_code || "").trim();
+    const referralCodeCustomer = String(req.body?.referral_code || req.body?.referralCode || "").trim();
 
     if (!firstName || !lastName || !email || !phone || !password) {
       return res.status(400).json({ error: "Missing required fields" });
@@ -1079,6 +1099,26 @@ router.post("/customer-signup", authAttemptLimiter, async (req, res) => {
       `,
       [client.id, email, hashedPassword, firstName, lastName, phone]
     );
+
+    if (referralCodeCustomer) {
+      try {
+        await referralEngineService.createReferralSignup({
+          code: referralCodeCustomer,
+          referredType: "customer",
+          referredCompanyId: null,
+          referredCustomerAccountId: accountResult.rows[0].id,
+          metadata: {
+            source: "auth_customer_signup",
+            claim_method: claimMethod
+          }
+        });
+      } catch (refErr) {
+        logger.warn("REFERRAL_CUSTOMER_SIGNUP_TRACK_FAILED", {
+          message: refErr && refErr.message ? refErr.message : String(refErr),
+          code: refErr && refErr.code
+        });
+      }
+    }
 
     return res.status(201).json({
       success: true,
