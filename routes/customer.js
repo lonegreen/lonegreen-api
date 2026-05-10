@@ -24,6 +24,7 @@ const {
 } = require("../services/notificationService");
 const { getStaffMutationBillingBlock } = require("../services/billingService");
 const { getStaffMutationPlatformBlock } = require("../services/platformControlService");
+const customerRetentionService = require("../services/customerRetentionService");
 
 const router = express.Router();
 
@@ -841,6 +842,209 @@ router.post("/customer/service-requests", customerAuth, async (req, res) => {
     res.status(201).json(result.rows[0]);
   } catch (err) {
     sendSafeServerError(res, err, "CUSTOMER SERVICE REQUEST ERROR");
+  }
+});
+
+router.get("/customer/saved-addresses", customerAuth, async (req, res) => {
+  try {
+    const { scopes } = await getPortalContext(req.customer);
+    const client = await getClient(req.customer);
+    if (!client) {
+      return res.status(404).json({ error: "Customer not found" });
+    }
+    if (!(await portalScopeAllows(req.customer, client, scopes))) {
+      return res.status(403).json({ error: "Forbidden" });
+    }
+    let companyId =
+      req.query.company_id != null && req.query.company_id !== ""
+        ? Number(req.query.company_id)
+        : client.company_id != null
+          ? Number(client.company_id)
+          : null;
+    if (!companyId || Number.isNaN(companyId)) {
+      return res.status(400).json({ error: "company_id is required" });
+    }
+    if (!scopePairsInclude(scopes, companyId, client.id)) {
+      return res.status(403).json({ error: "Forbidden" });
+    }
+    const rows = await customerRetentionService.listSavedAddresses({
+      companyId,
+      clientId: client.id
+    });
+    res.json(rows);
+  } catch (err) {
+    sendSafeServerError(res, err, "CUSTOMER SAVED ADDRESSES LIST ERROR");
+  }
+});
+
+router.post("/customer/saved-addresses", customerAuth, async (req, res) => {
+  try {
+    const { scopes } = await getPortalContext(req.customer);
+    const client = await getClient(req.customer);
+    if (!client) {
+      return res.status(404).json({ error: "Customer not found" });
+    }
+    if (!(await portalScopeAllows(req.customer, client, scopes))) {
+      return res.status(403).json({ error: "Forbidden" });
+    }
+
+    let companyId =
+      req.body && req.body.company_id != null && req.body.company_id !== ""
+        ? Number(req.body.company_id)
+        : client.company_id != null
+          ? Number(client.company_id)
+          : null;
+    if (!companyId || Number.isNaN(companyId)) {
+      return res.status(400).json({ error: "company_id is required" });
+    }
+    if (!scopePairsInclude(scopes, companyId, client.id)) {
+      return res.status(403).json({ error: "Forbidden" });
+    }
+
+    const platformBlock = await getStaffMutationPlatformBlock(companyId);
+    if (platformBlock) {
+      logger.warn("PLATFORM_MUTATION_BLOCKED", {
+        company_id: companyId,
+        actor: "customer",
+        http_status: platformBlock.httpStatus,
+        path: req.originalUrl,
+        method: req.method
+      });
+      return res.status(platformBlock.httpStatus).json(platformBlock.payload);
+    }
+
+    const billingBlock = await getStaffMutationBillingBlock(companyId, {
+      method: req.method,
+      path: req.originalUrl || req.url || ""
+    });
+    if (billingBlock) {
+      logger.warn("BILLING_MUTATION_BLOCKED", {
+        company_id: companyId,
+        actor: "customer",
+        http_status: billingBlock.httpStatus,
+        action_required: billingBlock.payload && billingBlock.payload.action_required,
+        billing_status: billingBlock.payload && billingBlock.payload.billing_status,
+        path: req.originalUrl,
+        method: req.method
+      });
+      return res.status(billingBlock.httpStatus).json(billingBlock.payload);
+    }
+
+    const accountId = await resolveCustomerAccountId(req.customer);
+
+    const payload = await customerRetentionService.upsertSavedAddress({
+      companyId,
+      clientId: client.id,
+      customerAccountId: accountId,
+      label: req.body && req.body.label,
+      address: req.body && req.body.address,
+      city: req.body && req.body.city,
+      state: req.body && req.body.state,
+      zip: req.body && req.body.zip,
+      isDefault: !!(req.body && req.body.is_default),
+      id: req.body && req.body.id != null ? Number(req.body.id) : null
+    });
+
+    res.status(payload.action === "saved_address_created" ? 201 : 200).json(payload);
+  } catch (err) {
+    const msg = err && err.message ? String(err.message) : "";
+    if (msg.includes("not found")) {
+      return res.status(404).json({ error: msg });
+    }
+    if (msg.includes("Invalid")) {
+      return res.status(400).json({ error: msg });
+    }
+    sendSafeServerError(res, err, "CUSTOMER SAVED ADDRESS UPSERT ERROR");
+  }
+});
+
+router.post("/customer/rebook", customerAuth, async (req, res) => {
+  try {
+    const { scopes } = await getPortalContext(req.customer);
+    const client = await getClient(req.customer);
+    if (!client) {
+      return res.status(404).json({ error: "Customer not found" });
+    }
+    if (!(await portalScopeAllows(req.customer, client, scopes))) {
+      return res.status(403).json({ error: "Forbidden" });
+    }
+
+    let companyId =
+      req.body && req.body.company_id != null && req.body.company_id !== ""
+        ? Number(req.body.company_id)
+        : client.company_id != null
+          ? Number(client.company_id)
+          : null;
+    if (!companyId || Number.isNaN(companyId)) {
+      return res.status(400).json({ error: "company_id is required" });
+    }
+    if (!scopePairsInclude(scopes, companyId, client.id)) {
+      return res.status(403).json({ error: "Forbidden" });
+    }
+
+    const platformBlock = await getStaffMutationPlatformBlock(companyId);
+    if (platformBlock) {
+      logger.warn("PLATFORM_MUTATION_BLOCKED", {
+        company_id: companyId,
+        actor: "customer",
+        http_status: platformBlock.httpStatus,
+        path: req.originalUrl,
+        method: req.method
+      });
+      return res.status(platformBlock.httpStatus).json(platformBlock.payload);
+    }
+
+    const billingBlock = await getStaffMutationBillingBlock(companyId, {
+      method: req.method,
+      path: req.originalUrl || req.url || ""
+    });
+    if (billingBlock) {
+      logger.warn("BILLING_MUTATION_BLOCKED", {
+        company_id: companyId,
+        actor: "customer",
+        http_status: billingBlock.httpStatus,
+        action_required: billingBlock.payload && billingBlock.payload.action_required,
+        billing_status: billingBlock.payload && billingBlock.payload.billing_status,
+        path: req.originalUrl,
+        method: req.method
+      });
+      return res.status(billingBlock.httpStatus).json(billingBlock.payload);
+    }
+
+    const sourceJobId =
+      req.body && req.body.source_job_id != null ? req.body.source_job_id : null;
+    const sourceRequestId =
+      req.body && req.body.source_marketplace_request_id != null
+        ? req.body.source_marketplace_request_id
+        : null;
+    const requestedDate =
+      req.body && req.body.requested_date != null ? req.body.requested_date : null;
+    const notes = req.body && req.body.notes != null ? req.body.notes : "";
+
+    const result = await customerRetentionService.createRebookRequest({
+      companyId,
+      clientId: client.id,
+      sourceJobId,
+      sourceRequestId,
+      requestedDate,
+      notes,
+      userId: null
+    });
+
+    res.status(201).json(result);
+  } catch (err) {
+    const msg = err && err.message ? String(err.message) : "";
+    if (
+      msg.includes("not found") ||
+      msg.includes("Source job") ||
+      msg.includes("Marketplace request")
+    ) {
+      return res.status(404).json({ error: msg });
+    }
+    if (msg.includes("Invalid")) {
+      return res.status(400).json({ error: msg });
+    }
+    sendSafeServerError(res, err, "CUSTOMER REBOOK INTENT ERROR");
   }
 });
 

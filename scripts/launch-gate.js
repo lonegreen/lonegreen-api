@@ -49,6 +49,7 @@ const syntaxFiles = [
   "services/growthFoundationService.js",
   "services/trustReputationService.js",
   "services/growthOsService.js",
+  "services/customerRetentionService.js",
   "services/backgroundTasks.js",
   "services/schedulerService.js",
   "services/jobQueue.js",

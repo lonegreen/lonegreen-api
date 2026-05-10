@@ -12,6 +12,7 @@ const growthFoundationAccess = [auth, requireMinimumRole("manager")];
 const growthFoundationService = require("../services/growthFoundationService");
 const trustReputationService = require("../services/trustReputationService");
 const growthOsService = require("../services/growthOsService");
+const customerRetentionService = require("../services/customerRetentionService");
 
 function num(value) {
   return Number(value || 0);
@@ -1017,6 +1018,58 @@ router.get("/analytics/growth-os/marketplace", growthOsHandlers, async (req, res
     res.json(data);
   } catch (err) {
     sendSafeServerError(res, err, "ANALYTICS GROWTH OS MARKETPLACE ERROR");
+  }
+});
+
+router.get("/analytics/customer-retention", growthOsHandlers, async (req, res) => {
+  try {
+    const data = await customerRetentionService.getRetentionOverview(req.user.company_id);
+    res.json(data);
+  } catch (err) {
+    sendSafeServerError(res, err, "ANALYTICS CUSTOMER RETENTION OVERVIEW ERROR");
+  }
+});
+
+router.get("/analytics/customer-retention/rebook-candidates", growthOsHandlers, async (req, res) => {
+  try {
+    const data = await customerRetentionService.getRebookCandidates(req.user.company_id);
+    res.json(data);
+  } catch (err) {
+    sendSafeServerError(res, err, "ANALYTICS REBOOK CANDIDATES ERROR");
+  }
+});
+
+router.get("/analytics/customer-retention/reactivation-candidates", growthOsHandlers, async (req, res) => {
+  try {
+    const data = await customerRetentionService.getReactivationCandidates(req.user.company_id);
+    res.json(data);
+  } catch (err) {
+    sendSafeServerError(res, err, "ANALYTICS REACTIVATION CANDIDATES ERROR");
+  }
+});
+
+router.get("/analytics/customer-retention/subscription-renewals", growthOsHandlers, async (req, res) => {
+  try {
+    const data = await customerRetentionService.getSubscriptionRenewalCandidates(req.user.company_id);
+    res.json(data);
+  } catch (err) {
+    sendSafeServerError(res, err, "ANALYTICS SUBSCRIPTION RENEWALS ERROR");
+  }
+});
+
+router.get("/analytics/customer-retention/saved-addresses", growthOsHandlers, async (req, res) => {
+  try {
+    const companyId = req.user.company_id;
+    const [summary, addresses] = await Promise.all([
+      customerRetentionService.getSavedAddressSummary(companyId),
+      customerRetentionService.listSavedAddressesForCompany(companyId)
+    ]);
+    res.json({
+      summary,
+      addresses
+    });
+  } catch (err) {
+    sendSafeServerError(res, err, "ANALYTICS SAVED ADDRESSES ERROR");
   }
 });
 
