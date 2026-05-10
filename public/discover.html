@@ -851,6 +851,19 @@
       function esc(v){ return String(v==null?"":v).replace(/[&<>"']/g,function(c){return({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"})[c];});}
       function txt(v,f){ return (v===null||v===undefined||v==="")?(f||""):String(v); }
 
+      function apiTrustBadgesHtml(c){
+        var raw = c && c.trust_badges;
+        var list = [];
+        if(Array.isArray(raw)) list = raw;
+        else if(raw && typeof raw === "string" && raw.trim()){
+          try { list = JSON.parse(raw); } catch(_) { list = []; }
+        }
+        if(!Array.isArray(list) || !list.length) return "";
+        return list.slice(0, 6).map(function(b){
+          return b && b.label ? '<span class="trust-pill info fx-badge fx-badge--neutral">'+esc(b.label)+"</span>" : "";
+        }).join("");
+      }
+
       function isSafeHttpUrl(value){
         const raw = String(value || "").trim();
         if(!raw) return false;
@@ -1026,6 +1039,7 @@
               (isInsured?'<span class="trust-pill info fx-badge fx-badge--info">Insured</span>':'')+
               '<span class="trust-pill info fx-badge fx-badge--info">Reviews: '+esc(String(rating.count))+'</span>'+
               '<span class="trust-pill fx-badge fx-badge--neutral">Response: '+esc(responsePreview)+'</span>'+
+              apiTrustBadgesHtml(c)+
               "</div></div></div>"+
               (isVerified?'<span class="badge verified fx-badge fx-badge--success">Verified</span>':'')+
             '</div><p class="summary">'+esc(txt(c.public_description,"No public company description available."))+'</p>'+
@@ -1040,7 +1054,7 @@
             '<div class="meta-group"><p class="meta-label">Service Areas</p><div class="chip-row">'+(areas.length?areas.map(function(v){return '<span class="chip">'+esc(v)+"</span>";}).join(""):'<span class="chip muted">No service areas listed</span>')+'</div></div>'+
             '<div class="meta-group"><p class="meta-label">Area Preview</p><div class="chip-row"><span class="chip">'+esc(areaPreview)+'</span></div></div>'+
             '<div class="meta-group"><p class="meta-label">Availability Preview</p><div class="chip-row">'+(avail.length?avail.map(function(v){return '<span class="chip">'+esc(v)+"</span>";}).join(""):'<span class="chip muted">No availability published</span>')+'</div></div>'+
-            '<div class="actions"><button class="btn secondary fx-btn fx-btn--secondary" type="button" data-favorite-id="'+esc(id)+'">'+(fav?"Saved":"Save/Favorite")+'</button><a class="profile-link fx-btn fx-btn--primary" href="'+esc(requestUrl)+'">Request Service</a></div>'+
+            '<div class="actions"><button class="btn secondary fx-btn fx-btn--secondary" type="button" data-favorite-id="'+esc(id)+'">'+(fav?"Saved":"Save/Favorite")+'</button><a class="profile-link fx-btn fx-btn--primary" href="'+esc(requestUrl)+'">Book now</a><a class="profile-link fx-btn fx-btn--secondary" href="'+esc(requestUrl)+'">Request quote</a></div>'+
             '<button class="btn secondary fx-btn fx-btn--secondary" type="button" data-report-company-id="'+esc(String(c.id||""))+'">Report Company</button>'+
             '<a class="profile-link fx-btn fx-btn--secondary" href="'+esc(href)+'"'+(c.public_slug?"":' aria-disabled="true"')+'>View Profile</a>'+
           "</article>";

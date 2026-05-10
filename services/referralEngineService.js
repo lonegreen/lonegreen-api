@@ -9,6 +9,16 @@ const OWNER_TYPES = new Set(["company", "customer", "user"]);
 const REFERRED_TYPES = new Set(["company", "customer"]);
 const REFERRAL_STATUSES = new Set(["pending", "qualified", "rejected", "rewarded"]);
 
+const JOURNEY_STATUSES = new Set([
+  "pending",
+  "visited",
+  "lead_created",
+  "request_created",
+  "converted",
+  "expired",
+  "cancelled"
+]);
+
 function normalizeCode(raw) {
   return String(raw || "")
     .trim()
@@ -41,12 +51,70 @@ async function ensureUniqueCode(candidate, attempts = 12) {
   throw new Error("Unable to allocate unique referral code");
 }
 
+function normalizeScopeCompanyId(scopeCompanyId) {
+  if (scopeCompanyId == null || scopeCompanyId === "") {
+    return null;
+  }
+  const n = Number(scopeCompanyId);
+  return Number.isInteger(n) && n > 0 ? n : null;
+}
+
+function resolveLogCompanyIdFromCodeRow(rc) {
+  if (!rc) {
+    return null;
+  }
+  if (rc.owner_type === "company" && rc.owner_company_id != null) {
+    return Number(rc.owner_company_id);
+  }
+  if (rc.owner_type === "customer" && rc.scope_company_id != null) {
+    return Number(rc.scope_company_id);
+  }
+  return null;
+}
+
+async function selectExistingReferralCode(client, { ot, oc, oca, ou, scopeCompanyId }) {
+  if (ot === "customer") {
+    const scope = normalizeScopeCompanyId(scopeCompanyId);
+    const result = await client.query(
+      `
+      SELECT *
+      FROM referral_codes
+      WHERE status = 'active'
+        AND owner_type = 'customer'
+        AND owner_customer_account_id = $1
+        AND COALESCE(scope_company_id, 0) = COALESCE($2::int, 0)
+      LIMIT 1
+      `,
+      [oca, scope]
+    );
+    return result.rows[0] || null;
+  }
+
+  const result = await client.query(
+    `
+    SELECT *
+    FROM referral_codes
+    WHERE status = 'active'
+      AND owner_type = $1
+      AND (
+        ($2::int IS NOT NULL AND owner_company_id = $2)
+        OR ($3::int IS NOT NULL AND owner_customer_account_id = $3)
+        OR ($4::int IS NOT NULL AND owner_user_id = $4)
+      )
+    LIMIT 1
+    `,
+    [ot, oc, oca, ou]
+  );
+  return result.rows[0] || null;
+}
+
 async function getOrCreateReferralCode({
   ownerType,
   ownerId,
   companyId = null,
   customerAccountId = null,
   userId = null,
+  scopeCompanyId = null,
   prefix = "FLX"
 }) {
   const ot = String(ownerType || "").trim().toLowerCase();
@@ -63,23 +131,17 @@ async function getOrCreateReferralCode({
   const uid =
     userId != null && Number.isInteger(Number(userId)) ? Number(userId) : null;
 
-  const existing = await pool.query(
-    `
-    SELECT *
-    FROM referral_codes
-    WHERE status = 'active'
-      AND owner_type = $1
-      AND (
-        ($2::int IS NOT NULL AND owner_company_id = $2)
-        OR ($3::int IS NOT NULL AND owner_customer_account_id = $3)
-        OR ($4::int IS NOT NULL AND owner_user_id = $4)
-      )
-    LIMIT 1
-    `,
-    [ot, cid, caid, uid]
-  );
-  if (existing.rows.length) {
-    return existing.rows[0];
+  const scope = normalizeScopeCompanyId(scopeCompanyId);
+
+  const existingOuter = await selectExistingReferralCode(pool, {
+    ot,
+    oc: cid,
+    oca: caid,
+    ou: uid,
+    scopeCompanyId: ot === "customer" ? scope : null
+  });
+  if (existingOuter) {
+    return existingOuter;
   }
 
   let oc = cid;
@@ -106,25 +168,19 @@ async function getOrCreateReferralCode({
   try {
     await dbClient.query("BEGIN");
 
-    const existingTxn = await dbClient.query(
-      `
-      SELECT *
-      FROM referral_codes
-      WHERE status = 'active'
-        AND owner_type = $1
-        AND (
-          ($2::int IS NOT NULL AND owner_company_id = $2)
-          OR ($3::int IS NOT NULL AND owner_customer_account_id = $3)
-          OR ($4::int IS NOT NULL AND owner_user_id = $4)
-        )
-      LIMIT 1
-      `,
-      [ot, oc, oca, ou]
-    );
-    if (existingTxn.rows.length) {
+    const existingTxn = await selectExistingReferralCode(dbClient, {
+      ot,
+      oc,
+      oca,
+      ou,
+      scopeCompanyId: ot === "customer" ? scope : null
+    });
+    if (existingTxn) {
       await dbClient.query("COMMIT");
-      return existingTxn.rows[0];
+      return existingTxn;
     }
+
+    const scopeInsert = ot === "customer" ? scope : null;
 
     let row;
     try {
@@ -136,34 +192,27 @@ async function getOrCreateReferralCode({
           owner_company_id,
           owner_customer_account_id,
           owner_user_id,
+          scope_company_id,
           status,
           created_at,
           updated_at
         )
-        VALUES ($1, $2, $3, $4, $5, 'active', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+        VALUES ($1, $2, $3, $4, $5, $6, 'active', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
         RETURNING *
         `,
-        [code, ot, oc, oca, ou]
+        [code, ot, oc, oca, ou, scopeInsert]
       );
       row = ins.rows[0];
     } catch (insertErr) {
       if (insertErr && insertErr.code === "23505") {
-        const again = await dbClient.query(
-          `
-          SELECT *
-          FROM referral_codes
-          WHERE status = 'active'
-            AND owner_type = $1
-            AND (
-              ($2::int IS NOT NULL AND owner_company_id = $2)
-              OR ($3::int IS NOT NULL AND owner_customer_account_id = $3)
-              OR ($4::int IS NOT NULL AND owner_user_id = $4)
-            )
-          LIMIT 1
-          `,
-          [ot, oc, oca, ou]
-        );
-        row = again.rows[0];
+        const again = await selectExistingReferralCode(dbClient, {
+          ot,
+          oc,
+          oca,
+          ou,
+          scopeCompanyId: ot === "customer" ? scope : null
+        });
+        row = again;
       } else {
         throw insertErr;
       }
@@ -175,12 +224,13 @@ async function getOrCreateReferralCode({
     }
 
     await insertReferralEvent(dbClient, null, row.id, "code_created", {
-      owner_type: ot
+      owner_type: ot,
+      scope_company_id: scopeInsert
     });
 
     await dbClient.query("COMMIT");
 
-    const logCompanyId = ot === "company" ? oc : null;
+    const logCompanyId = resolveLogCompanyIdFromCodeRow(row);
     await activityLogService.logActivity({
       companyId: logCompanyId,
       userId: ou || null,
@@ -191,7 +241,8 @@ async function getOrCreateReferralCode({
         owner_type: ot,
         owner_company_id: oc,
         owner_customer_account_id: oca,
-        owner_user_id: ou
+        owner_user_id: ou,
+        scope_company_id: scopeInsert
       }
     });
 
@@ -204,6 +255,24 @@ async function getOrCreateReferralCode({
   } finally {
     dbClient.release();
   }
+}
+
+async function getOrCreateCustomerReferralCode(customerAccountId, companyId) {
+  const aid = Number(customerAccountId);
+  const cid = Number(companyId);
+  if (!Number.isInteger(aid) || aid <= 0) {
+    throw new Error("Invalid customer account id");
+  }
+  if (!Number.isInteger(cid) || cid <= 0) {
+    throw new Error("Invalid company id");
+  }
+  return getOrCreateReferralCode({
+    ownerType: "customer",
+    ownerId: aid,
+    customerAccountId: aid,
+    scopeCompanyId: cid,
+    prefix: "FLX"
+  });
 }
 
 async function insertReferralEvent(clientOrPool, referralId, codeId, eventType, metadata) {
@@ -222,16 +291,35 @@ async function recordReferralVisit({ code, source = "", metadata = {} }) {
   if (!normalized) {
     return { ok: false, reason: "empty_code" };
   }
-  const row = await pool.query(
-    `
-    SELECT id, owner_type, status
-    FROM referral_codes
-    WHERE UPPER(code) = UPPER($1)
-    LIMIT 1
-    `,
-    [normalized]
-  );
-  const rc = row.rows[0];
+  let rcRow;
+  try {
+    const row = await pool.query(
+      `
+      SELECT id, owner_type, status, owner_company_id, scope_company_id
+      FROM referral_codes
+      WHERE UPPER(code) = UPPER($1)
+      LIMIT 1
+      `,
+      [normalized]
+    );
+    rcRow = row.rows[0];
+  } catch (err) {
+    if (err && err.code === "42703") {
+      const row = await pool.query(
+        `
+        SELECT id, owner_type, status, owner_company_id
+        FROM referral_codes
+        WHERE UPPER(code) = UPPER($1)
+        LIMIT 1
+        `,
+        [normalized]
+      );
+      rcRow = row.rows[0];
+    } else {
+      throw err;
+    }
+  }
+  const rc = rcRow;
   if (!rc || rc.status !== "active") {
     return { ok: false, reason: "invalid_or_inactive" };
   }
@@ -239,7 +327,377 @@ async function recordReferralVisit({ code, source = "", metadata = {} }) {
     source: String(source || "").slice(0, 200),
     ...metadata
   });
+
+  const logCompanyId = resolveLogCompanyIdFromCodeRow(rc);
+  await activityLogService.logActivity({
+    companyId: logCompanyId,
+    userId: null,
+    action: "referral_visit_tracked",
+    entityType: "referral_code",
+    entityId: rc.id,
+    details: {
+      source: String(source || "").slice(0, 120)
+    }
+  });
+
   return { ok: true, code_id: rc.id, owner_type: rc.owner_type };
+}
+
+async function trackReferralVisit(referralCode, metadata = {}) {
+  const safeCode = referralCode != null ? String(referralCode) : "";
+  const result = await recordReferralVisit({
+    code: safeCode,
+    source: metadata.source || metadata.page || "",
+    metadata
+  });
+  return { ok: result.ok, reason: result.reason };
+}
+
+function validateCodeMatchesTenantCompany(rc, companyId) {
+  const cid = Number(companyId);
+  if (!rc || !Number.isInteger(cid) || cid <= 0) {
+    return false;
+  }
+  if (rc.owner_type === "company") {
+    return Number(rc.owner_company_id) === cid;
+  }
+  if (rc.owner_type === "customer") {
+    if (rc.scope_company_id != null) {
+      return Number(rc.scope_company_id) === cid;
+    }
+    return true;
+  }
+  return false;
+}
+
+async function trackReferralLead(referralCode, leadId, metadata = {}) {
+  const normalized = normalizeCode(referralCode);
+  const eid = Number(leadId);
+  if (!normalized || !Number.isInteger(eid) || eid <= 0) {
+    return { ok: false, reason: "invalid_payload" };
+  }
+
+  const rcResult = await pool.query(
+    `
+    SELECT *
+    FROM referral_codes
+    WHERE UPPER(code) = UPPER($1) AND status = 'active'
+    LIMIT 1
+    `,
+    [normalized]
+  );
+  const rc = rcResult.rows[0];
+  if (!rc) {
+    return { ok: false, reason: "invalid_code" };
+  }
+
+  const est = await pool.query(
+    `
+    SELECT id, company_id, client_id
+    FROM estimates
+    WHERE id = $1
+    LIMIT 1
+    `,
+    [eid]
+  );
+  if (!est.rows.length) {
+    return { ok: false, reason: "lead_not_found" };
+  }
+  const companyId = Number(est.rows[0].company_id);
+  if (!validateCodeMatchesTenantCompany(rc, companyId)) {
+    return { ok: false, reason: "company_mismatch" };
+  }
+
+  await insertReferralEvent(pool, null, rc.id, "lead_created", {
+    estimate_id: eid,
+    ...metadata
+  });
+
+  await activityLogService.logActivity({
+    companyId,
+    userId: null,
+    action: "referral_lead_tracked",
+    entityType: "referral_code",
+    entityId: rc.id,
+    details: { estimate_id: eid }
+  });
+
+  return { ok: true };
+}
+
+async function trackReferralMarketplaceRequest(referralCode, marketplaceRequestId, metadata = {}) {
+  const normalized = normalizeCode(referralCode);
+  const rid = Number(marketplaceRequestId);
+  if (!normalized || !Number.isInteger(rid) || rid <= 0) {
+    return { ok: false, reason: "invalid_payload" };
+  }
+
+  const rcResult = await pool.query(
+    `
+    SELECT *
+    FROM referral_codes
+    WHERE UPPER(code) = UPPER($1) AND status = 'active'
+    LIMIT 1
+    `,
+    [normalized]
+  );
+  const rc = rcResult.rows[0];
+  if (!rc) {
+    return { ok: false, reason: "invalid_code" };
+  }
+
+  const mr = await pool.query(
+    `
+    SELECT mr.id, c.company_id
+    FROM marketplace_requests mr
+    INNER JOIN clients c ON c.id = mr.client_id
+    WHERE mr.id = $1
+    LIMIT 1
+    `,
+    [rid]
+  );
+  if (!mr.rows.length) {
+    return { ok: false, reason: "request_not_found" };
+  }
+  const companyId = Number(mr.rows[0].company_id);
+  if (!validateCodeMatchesTenantCompany(rc, companyId)) {
+    return { ok: false, reason: "company_mismatch" };
+  }
+
+  await insertReferralEvent(pool, null, rc.id, "request_created", {
+    marketplace_request_id: rid,
+    ...metadata
+  });
+
+  await activityLogService.logActivity({
+    companyId,
+    userId: null,
+    action: "referral_request_tracked",
+    entityType: "referral_code",
+    entityId: rc.id,
+    details: { marketplace_request_id: rid }
+  });
+
+  return { ok: true };
+}
+
+async function markReferralConverted(referralCode, clientId, sourceType, sourceId) {
+  const normalized = normalizeCode(referralCode);
+  const cid = Number(clientId);
+  const st = String(sourceType || "").trim().slice(0, 64);
+  const sid =
+    sourceId != null && Number.isInteger(Number(sourceId)) ? Number(sourceId) : null;
+  if (!normalized || !Number.isInteger(cid) || cid <= 0 || !st) {
+    return { ok: false, reason: "invalid_payload" };
+  }
+
+  const rcResult = await pool.query(
+    `
+    SELECT *
+    FROM referral_codes
+    WHERE UPPER(code) = UPPER($1) AND status = 'active'
+    LIMIT 1
+    `,
+    [normalized]
+  );
+  const rc = rcResult.rows[0];
+  if (!rc) {
+    return { ok: false, reason: "invalid_code" };
+  }
+
+  const clientRow = await pool.query(
+    `SELECT id, company_id FROM clients WHERE id = $1 LIMIT 1`,
+    [cid]
+  );
+  if (!clientRow.rows.length) {
+    return { ok: false, reason: "client_not_found" };
+  }
+  const companyId = Number(clientRow.rows[0].company_id);
+  if (!validateCodeMatchesTenantCompany(rc, companyId)) {
+    return { ok: false, reason: "company_mismatch" };
+  }
+
+  const accountLookup = await pool.query(
+    `SELECT id FROM customer_accounts WHERE client_id = $1 LIMIT 1`,
+    [cid]
+  );
+  const referredAccountId = accountLookup.rows[0] ? Number(accountLookup.rows[0].id) : null;
+
+  let referralId = null;
+  if (referredAccountId) {
+    const rFound = await pool.query(
+      `
+      SELECT id FROM referrals
+      WHERE code_id = $1 AND referred_type = 'customer'
+        AND referred_customer_account_id = $2
+      LIMIT 1
+      `,
+      [rc.id, referredAccountId]
+    );
+    referralId = rFound.rows[0] ? Number(rFound.rows[0].id) : null;
+  }
+
+  if (!referredAccountId) {
+    return { ok: false, reason: "customer_account_not_linked" };
+  }
+
+  const dbClient = await pool.connect();
+  try {
+    await dbClient.query("BEGIN");
+    if (!referralId && referredAccountId) {
+      const dup = await dbClient.query(
+        `
+        SELECT id FROM referrals
+        WHERE code_id = $1 AND referred_type = 'customer'
+          AND referred_customer_account_id = $2
+        LIMIT 1
+        `,
+        [rc.id, referredAccountId]
+      );
+      if (dup.rows.length) {
+        referralId = Number(dup.rows[0].id);
+      } else {
+        const ins = await dbClient.query(
+          `
+          INSERT INTO referrals (
+            code_id,
+            referred_type,
+            referred_customer_account_id,
+            status,
+            journey_status,
+            metadata,
+            created_at,
+            updated_at
+          )
+          VALUES ($1, 'customer', $2, 'pending', 'converted', '{}'::jsonb, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+          RETURNING id
+          `,
+          [rc.id, referredAccountId]
+        );
+        referralId = ins.rows[0] ? Number(ins.rows[0].id) : null;
+      }
+    }
+
+    if (referralId) {
+      await dbClient.query(
+        `
+        UPDATE referrals
+        SET journey_status = 'converted',
+            updated_at = CURRENT_TIMESTAMP
+        WHERE id = $1
+        `,
+        [referralId]
+      );
+
+      await dbClient.query(
+        `
+        INSERT INTO referral_conversions (referral_id, client_id, source_type, source_id, metadata)
+        VALUES ($1, $2, $3, $4, $5::jsonb)
+        `,
+        [
+          referralId,
+          cid,
+          st,
+          sid,
+          JSON.stringify({ referral_code: normalized })
+        ]
+      );
+
+      await insertReferralEvent(dbClient, referralId, rc.id, "converted", {
+        client_id: cid,
+        source_type: st,
+        source_id: sid
+      });
+    }
+
+    await dbClient.query("COMMIT");
+  } catch (err) {
+    try {
+      await dbClient.query("ROLLBACK");
+    } catch (_) {}
+    throw err;
+  } finally {
+    dbClient.release();
+  }
+
+  await activityLogService.logActivity({
+    companyId,
+    userId: null,
+    action: "referral_converted",
+    entityType: "referral_code",
+    entityId: rc.id,
+    details: {
+      client_id: cid,
+      source_type: st,
+      source_id: sid,
+      referral_id: referralId
+    }
+  });
+
+  return { ok: true, referral_id: referralId };
+}
+
+async function getCompanyReferralLeaderboard(companyId, { limit = 10 } = {}) {
+  const cid = Number(companyId);
+  const lim = Math.min(Math.max(Number(limit) || 10, 1), 100);
+  if (!Number.isInteger(cid) || cid <= 0) {
+    return [];
+  }
+
+  const result = await pool.query(
+    `
+    SELECT
+      rc.id AS referral_code_id,
+      rc.owner_type,
+      rc.owner_customer_account_id AS customer_account_id,
+      COUNT(conv.id)::int AS conversions
+    FROM referral_codes rc
+    INNER JOIN referrals r ON r.code_id = rc.id
+    INNER JOIN referral_conversions conv ON conv.referral_id = r.id
+    WHERE rc.owner_company_id = $1 OR rc.scope_company_id = $1
+    GROUP BY rc.id, rc.owner_type, rc.owner_customer_account_id
+    ORDER BY conversions DESC, rc.id ASC
+    LIMIT $2
+    `,
+    [cid, lim]
+  );
+
+  return result.rows.map((row) => ({
+    referral_code_id: Number(row.referral_code_id),
+    owner_type: row.owner_type || "",
+    customer_account_id:
+      row.customer_account_id != null ? Number(row.customer_account_id) : null,
+    conversions: Number(row.conversions || 0)
+  }));
+}
+
+async function listCompanyReferralEvents(companyId, { limit = 50, offset = 0 } = {}) {
+  const cid = Number(companyId);
+  const lim = Math.min(Math.max(Number(limit) || 50, 1), 200);
+  const off = Math.max(Number(offset) || 0, 0);
+  if (!Number.isInteger(cid) || cid <= 0) {
+    return [];
+  }
+
+  const result = await pool.query(
+    `
+    SELECT
+      re.id,
+      re.referral_id,
+      re.code_id,
+      re.event_type,
+      re.metadata,
+      re.created_at
+    FROM referral_events re
+    INNER JOIN referral_codes rc ON rc.id = re.code_id
+    WHERE rc.owner_company_id = $1
+       OR rc.scope_company_id = $1
+    ORDER BY re.created_at DESC, re.id DESC
+    LIMIT $2 OFFSET $3
+    `,
+    [cid, lim, off]
+  );
+  return result.rows;
 }
 
 async function createReferralSignup({
@@ -539,10 +997,30 @@ async function getCustomerReferralSummary(customerAccountId) {
     [aid]
   );
 
+  let conversion_count = 0;
+  try {
+    const conv = await pool.query(
+      `
+      SELECT COUNT(*)::int AS n
+      FROM referral_conversions conv
+      INNER JOIN referrals r ON r.id = conv.referral_id
+      INNER JOIN referral_codes rc ON rc.id = r.code_id
+      WHERE rc.owner_type = 'customer' AND rc.owner_customer_account_id = $1
+      `,
+      [aid]
+    );
+    conversion_count = conv.rows[0] ? Number(conv.rows[0].n) : 0;
+  } catch (err) {
+    if (!err || err.code !== "42P01") {
+      throw err;
+    }
+  }
+
   return {
     customer_account_id: aid,
     active_codes: codes.rows[0] ? codes.rows[0].n : 0,
-    referrals: referrals
+    referrals: referrals,
+    conversion_count
   };
 }
 
@@ -816,7 +1294,14 @@ async function updateReferralStatusByPlatform({
 module.exports = {
   generateReferralCode,
   getOrCreateReferralCode,
+  getOrCreateCustomerReferralCode,
   recordReferralVisit,
+  trackReferralVisit,
+  trackReferralLead,
+  trackReferralMarketplaceRequest,
+  markReferralConverted,
+  getCompanyReferralLeaderboard,
+  listCompanyReferralEvents,
   createReferralSignup,
   markReferralQualified,
   getCompanyReferralSummary,
@@ -827,5 +1312,6 @@ module.exports = {
   listPlatformReferrals,
   updateReferralStatusByPlatform,
   normalizeCode,
-  REFERRAL_STATUSES
+  REFERRAL_STATUSES,
+  JOURNEY_STATUSES
 };

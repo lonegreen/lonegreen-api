@@ -791,6 +791,12 @@
       </article>
     </section>
 
+    <section id="marketplaceTrustSnapshot" class="panel fx-card" style="display:none;" aria-label="Trust snapshot">
+      <h2>Trust &amp; reputation snapshot</h2>
+      <p class="subhead">Pulled from your company analytics when signed in as staff.</p>
+      <div id="marketplaceTrustSnapshotBody" class="marketplace-kpi-grid"></div>
+    </section>
+
     <section class="layout">
       <article class="panel fx-card">
         <h2>Quick Links</h2>
@@ -875,7 +881,9 @@
         kpiAcceptanceRate: document.getElementById("kpiAcceptanceRate"),
         kpiTotalRequests: document.getElementById("kpiTotalRequests"),
         kpiTotalOffers: document.getElementById("kpiTotalOffers"),
-        activityList: document.getElementById("activityList")
+        activityList: document.getElementById("activityList"),
+        trustSnap: document.getElementById("marketplaceTrustSnapshot"),
+        trustSnapBody: document.getElementById("marketplaceTrustSnapshotBody")
       };
 
       function setStatus(message, type) {
@@ -1083,6 +1091,30 @@
         });
       }
 
+      async function loadTrustSnapshot() {
+        if (!els.trustSnap || !els.trustSnapBody || !state.companyToken) {
+          if (els.trustSnap) els.trustSnap.style.display = "none";
+          return;
+        }
+        try {
+          var payload = await fetchWithToken("/analytics/trust-reputation", state.companyToken);
+          els.trustSnap.style.display = "block";
+          var ts = payload.trust_score != null ? payload.trust_score : "—";
+          var rs = payload.reputation_score != null ? payload.reputation_score : "—";
+          var badges = Array.isArray(payload.badges)
+            ? payload.badges.slice(0, 4).map(function(b) {
+              return typeof b === "string" ? b : (b && (b.label || b.name)) || "";
+            }).filter(Boolean).join(", ")
+            : "";
+          els.trustSnapBody.innerHTML =
+            '<div class="marketplace-kpi"><span>Trust score</span><strong>' + esc(ts) + "</strong></div>" +
+            '<div class="marketplace-kpi"><span>Reputation</span><strong>' + esc(rs) + "</strong></div>" +
+            '<div class="marketplace-kpi"><span>Badges</span><strong>' + esc(badges || "—") + "</strong></div>";
+        } catch (_) {
+          els.trustSnap.style.display = "none";
+        }
+      }
+
       async function loadDashboard() {
         if (!state.companyToken && !state.customerToken) {
           setStatus("Sign in first to view marketplace dashboard.", "error");
@@ -1107,6 +1139,7 @@
 
           deriveKpis();
           deriveActivity();
+          await loadTrustSnapshot();
 
           if (!state.requests.length && !state.offers.length && !state.opportunities.length) {
             setStatus("Connected, but no marketplace data is available for this session yet.", "");

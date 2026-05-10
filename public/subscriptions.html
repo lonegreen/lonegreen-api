@@ -458,6 +458,8 @@
     <button type="button" class="btn add fx-btn fx-btn--primary" id="subsBtnRefresh">Refresh</button>
   </div>
 
+  <div id="subsRetentionInsights" class="panel fx-card" style="display:none;" role="region" aria-label="Renewal insights"></div>
+
   <div id="earn" class="panel earn fx-stat">Loading...</div>
   <div id="list"></div>
 </div>
@@ -831,6 +833,35 @@ async function confirmDeleteSubscription(button){
   }, { loading: "Deleting..." });
 }
 
+async function loadRetentionInsights(){
+  const insightEl = document.getElementById("subsRetentionInsights");
+  if(!insightEl) return;
+  if(!["owner","admin","manager"].includes(currentRole())){
+    insightEl.style.display = "none";
+    return;
+  }
+  try {
+    const res = await apiFetch(API + "/analytics/customer-retention/subscription-renewals");
+    const data = await safeJson(res);
+    if(!res.ok){
+      insightEl.style.display = "none";
+      return;
+    }
+    const cands = data && data.candidates ? data.candidates : [];
+    const n = Array.isArray(cands) ? cands.length : 0;
+    insightEl.style.display = "block";
+    insightEl.innerHTML =
+      "<strong>Renewal &amp; billing signals</strong>" +
+      '<div class="muted" style="margin-top:8px;line-height:1.5;">' +
+      (n
+        ? escapeHtml(String(n)) + " subscription(s) flagged in renewal / pause / cancel follow-up lists. Next billing dates still appear on each card below."
+        : "No subscriptions in the current renewal candidate window.") +
+      ' Open <a href="/analytics.html">Analytics</a> → Growth OS for detail.</div>';
+  } catch (_) {
+    insightEl.style.display = "none";
+  }
+}
+
 function renderLoading(){
   document.getElementById("earn").textContent = "Loading subscription summary...";
   document.getElementById("list").innerHTML = `<div class="panel empty fx-empty"><strong class="fx-empty__title">Loading subscriptions...</strong><span class="fx-empty__text">Please wait while the latest subscription data is loaded.</span></div>`;
@@ -881,6 +912,7 @@ async function load(button){
     subscriptions = Array.isArray(subs) ? subs : [];
 
     renderData();
+    await loadRetentionInsights();
   } catch(err){
     console.log("SUBSCRIPTIONS LOAD ERROR:", err);
     subscriptions = [];

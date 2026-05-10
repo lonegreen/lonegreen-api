@@ -765,7 +765,9 @@
       </div>
 
       <div class="hero-actions fx-cta-row">
+        <a class="btn primary fx-btn fx-btn--primary" href="#create-request">Request quote</a>
         <a class="btn secondary fx-btn fx-btn--secondary" href="/discover.html">Find Services</a>
+        <a class="btn secondary fx-btn fx-btn--secondary" href="/messages.html">Contact</a>
         <button id="refreshAllBtn" class="btn secondary fx-btn fx-btn--secondary" type="button">Refresh</button>
       </div>
     </header>
@@ -773,17 +775,16 @@
     <div id="globalStatus" class="status-line fx-alert" role="status" aria-live="polite"></div>
 
     <section class="layout">
-      <aside class="panel fx-card">
+      <aside class="panel fx-card" id="create-request">
         <h2>Create Request</h2>
-        <p class="subhead">Complete 4 quick steps to send a clear service request.</p>
+        <p class="subhead">Complete 3 quick steps to send a clear service request.</p>
 
         <div class="stepper" aria-label="Request progress">
           <div class="progress-track"><div id="stepProgressFill" class="progress-fill"></div></div>
           <div class="step-list">
             <div id="stepPill1" class="step-pill active">1. Service Type</div>
-            <div id="stepPill2" class="step-pill">2. Location</div>
-            <div id="stepPill3" class="step-pill">3. Schedule</div>
-            <div id="stepPill4" class="step-pill">4. Job Details</div>
+            <div id="stepPill2" class="step-pill">2. Location &amp; schedule</div>
+            <div id="stepPill3" class="step-pill">3. Details &amp; submit</div>
           </div>
         </div>
 
@@ -836,12 +837,10 @@
                     <input id="state" class="fx-input" name="state" type="text" maxlength="2" placeholder="NY">
                   </div>
                 </div>
-              </section>
 
-              <section id="step3" class="step-panel" aria-label="Step 3 Schedule">
-                <div class="step-head">
-                  <h3>When do you need service?</h3>
-                  <p>Select your preferred date and urgency. Flexible scheduling helps with faster matches.</p>
+                <div class="step-head" style="margin-top:16px;">
+                  <h3 style="font-size:17px;">When do you need service?</h3>
+                  <p style="margin:0;">Optional — dates and urgency help companies respond faster.</p>
                 </div>
 
                 <div class="field-grid">
@@ -872,11 +871,15 @@
                 </label>
               </section>
 
-              <section id="step4" class="step-panel" aria-label="Step 4 Job details and review">
+              <section id="step3" class="step-panel" aria-label="Step 3 Job details and review">
                 <div class="step-head">
                   <h3>Job details and review</h3>
                   <p>Add details, confirm your contact and location, then submit.</p>
                 </div>
+
+                <p class="trust-microcopy" style="margin:0 0 12px;padding:12px 14px;border-radius:14px;background:rgba(22,101,52,0.07);border:1px solid rgba(22,101,52,0.18);font-size:13px;line-height:1.45;color:#3d5248;">
+                  FairLinx highlights verified pros and trust signals so you can book with confidence. Companies still respond directly to your request.
+                </p>
 
                 <div class="field fx-field">
                   <label for="description">Description</label>
@@ -966,6 +969,11 @@
         acceptingOfferId: null
       };
       let categories = [];
+      let referralFromUrl = "";
+      try {
+        const sp = new URLSearchParams(window.location.search);
+        referralFromUrl = String(sp.get("ref") || "").trim().slice(0, 160);
+      } catch (e) {}
 
       const els = {
         globalStatus: document.getElementById("globalStatus"),
@@ -987,7 +995,7 @@
         matchesList: document.getElementById("matchesList"),
         offersList: document.getElementById("offersList"),
         stepPanels: Array.from(document.querySelectorAll(".step-panel")),
-        stepPills: [1, 2, 3, 4].map(function(i) { return document.getElementById("stepPill" + i); }),
+        stepPills: [1, 2, 3].map(function(i) { return document.getElementById("stepPill" + i); }),
         stepProgressFill: document.getElementById("stepProgressFill"),
         nextStepBtn: document.getElementById("nextStepBtn"),
         backStepBtn: document.getElementById("backStepBtn"),
@@ -1050,6 +1058,33 @@
         const d = new Date(value);
         if (Number.isNaN(d.getTime())) return String(value);
         return d.toLocaleDateString([], { dateStyle: "medium" });
+      }
+
+      function normalizeTrustBadges(raw) {
+        if (Array.isArray(raw)) return raw;
+        try {
+          if (raw && typeof raw === "object") return Array.isArray(raw) ? raw : [];
+          if (typeof raw === "string" && raw.trim()) {
+            const j = JSON.parse(raw);
+            return Array.isArray(j) ? j : [];
+          }
+        } catch (e) {
+          return [];
+        }
+        return [];
+      }
+
+      function trustBadgesRowHtml(entity) {
+        if (!entity) return "";
+        const parts = [];
+        if (entity.is_verified === true) {
+          parts.push('<span class="fx-badge fx-badge--success">Verified</span>');
+        }
+        normalizeTrustBadges(entity.trust_badges).slice(0, 6).forEach(function(b) {
+          if (b && b.label) parts.push('<span class="fx-badge fx-badge--neutral">' + esc(b.label) + "</span>");
+        });
+        if (!parts.length) return "";
+        return '<div class="trust-pills" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;">' + parts.join("") + "</div>";
       }
 
       function authHeaders(extra) {
@@ -1162,16 +1197,18 @@
 
         els.matchesList.innerHTML = list.map(function(c) {
           const profileUrl = c.public_slug ? "/company-profile.html?slug=" + encodeURIComponent(c.public_slug) : "";
+          const mpUrl = c.public_slug ? "/marketplace.html?company=" + encodeURIComponent(c.public_slug) : "/marketplace.html";
           return (
             '<article class="card fx-card">' +
               '<div class="card-top">' +
                 "<h4>" + esc(niceText(c.name, "Company")) + "</h4>" +
                 '<span class="' + badgeClass(c.billing_status || "active") + ' fx-badge fx-badge--neutral">' + esc(prettyStatus(c.billing_status || "active")) + "</span>" +
               "</div>" +
+              trustBadgesRowHtml(c) +
               '<p>Email: ' + esc(niceText(c.email)) + "</p>" +
               '<p>Phone: ' + esc(niceText(c.phone)) + "</p>" +
               '<p>Address: ' + esc(niceText(c.address)) + "</p>" +
-              (profileUrl ? '<p><a href="' + esc(profileUrl) + '" target="_blank" rel="noopener">View public profile</a></p>' : "") +
+              (profileUrl ? '<p style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;"><a class="btn secondary fx-btn fx-btn--secondary" style="min-height:40px;padding:8px 14px;" href="' + esc(mpUrl) + '">Request quote</a><a href="' + esc(profileUrl) + '" target="_blank" rel="noopener">View profile</a></p>' : "") +
             "</article>"
           );
         }).join("");
@@ -1198,10 +1235,12 @@
         els.offersList.innerHTML = list.map(function(o) {
           const isAccepting = Number(state.acceptingOfferId) === Number(o.id);
           const canAccept = canAcceptOffer(o) && !isAccepting;
-          const buttonLabel = isAccepting ? "Accepting..." : "Accept Offer";
+          const primaryLabel = isAccepting
+            ? "Accepting..."
+            : (canAccept ? "Accept offer & book" : "Offer unavailable");
 
           return (
-            '<article class="card fx-card">' +
+            '<article class="card fx-card offer-card" data-offer-id="' + esc(o.id) + '">' +
               '<div class="card-top">' +
                 '<div>' +
                   "<h4>" + esc(niceText(o.company_name, "Company")) + "</h4>" +
@@ -1209,11 +1248,12 @@
                 "</div>" +
                 '<span class="' + badgeClass(o.status) + ' fx-badge fx-badge--neutral">' + esc(prettyStatus(o.status)) + "</span>" +
               "</div>" +
+              trustBadgesRowHtml(o) +
               '<div class="price">' + esc(money(o.price)) + "</div>" +
               '<p>Message: ' + esc(niceText(o.message, "No message provided.")) + "</p>" +
               '<p>Estimated Start: ' + esc(fmtDateOnly(o.estimated_start_date)) + "</p>" +
-              '<div class="actions">' +
-                '<button type="button" class="btn primary fx-btn fx-btn--primary" data-accept-offer-id="' + esc(o.id) + '" ' + (canAccept ? "" : "disabled") + ">" + esc(buttonLabel) + "</button>" +
+              '<div class="actions" style="flex-direction:column;align-items:stretch;">' +
+                '<button type="button" class="btn primary fx-btn fx-btn--primary" style="width:100%;min-height:48px;font-size:15px;" data-accept-offer-id="' + esc(o.id) + '" ' + (canAccept || isAccepting ? "" : "disabled") + ">" + esc(primaryLabel) + "</button>" +
               "</div>" +
             "</article>"
           );
@@ -1377,14 +1417,24 @@
 
         if (payload.state) payload.state = payload.state.toUpperCase().slice(0, 2);
         if (payload.zip_code) payload.zip_code = payload.zip_code.replace(/\D/g, "").slice(0, 5);
+        if (referralFromUrl) payload.referral_code = referralFromUrl;
         return payload;
       }
 
       function getStepFields(step) {
         if (step === 1) return [document.getElementById("categoryId"), document.getElementById("title")];
-        if (step === 2) return [document.getElementById("address"), document.getElementById("zipCode"), document.getElementById("city")];
-        if (step === 3) return [document.getElementById("requestedDate"), document.getElementById("urgencyLevel")];
-        if (step === 4) return [document.getElementById("description"), document.getElementById("contactConfirm")];
+        if (step === 2) {
+          return [
+            document.getElementById("address"),
+            document.getElementById("zipCode"),
+            document.getElementById("city"),
+            document.getElementById("state"),
+            document.getElementById("requestedDate"),
+            document.getElementById("requestedTime"),
+            document.getElementById("urgencyLevel")
+          ];
+        }
+        if (step === 3) return [document.getElementById("description"), document.getElementById("contactConfirm")];
         return [];
       }
 
@@ -1409,7 +1459,7 @@
           }
         }
 
-        if (step === 4 && !contactConfirm.checked) {
+        if (step === 3 && !contactConfirm.checked) {
           setLine(els.formStatus, "Please confirm your contact/location details before submitting.", "error");
           return false;
         }
@@ -1468,16 +1518,16 @@
           if (step === currentStep) pill.classList.add("active");
         });
 
-        var percent = (currentStep / 4) * 100;
+        var percent = (currentStep / 3) * 100;
         els.stepProgressFill.style.width = percent + "%";
         els.backStepBtn.disabled = currentStep === 1 || state.creatingRequest;
-        els.nextStepBtn.style.display = currentStep === 4 ? "none" : "inline-flex";
-        els.submitRequestBtn.style.display = currentStep === 4 ? "inline-flex" : "none";
-        if (currentStep === 4) updateReviewSummary();
+        els.nextStepBtn.style.display = currentStep === 3 ? "none" : "inline-flex";
+        els.submitRequestBtn.style.display = currentStep === 3 ? "inline-flex" : "none";
+        if (currentStep === 3) updateReviewSummary();
       }
 
       function setStep(step) {
-        currentStep = Math.max(1, Math.min(4, Number(step) || 1));
+        currentStep = Math.max(1, Math.min(3, Number(step) || 1));
         renderStepFlow();
       }
 
@@ -1485,13 +1535,13 @@
         event.preventDefault();
         if (state.creatingRequest) return;
 
-        if (currentStep < 4) {
+        if (currentStep < 3) {
           if (!validateStep(currentStep)) return;
           setStep(currentStep + 1);
           return;
         }
 
-        if (!validateStep(4)) return;
+        if (!validateStep(3)) return;
 
         const payload = createPayloadFromForm(els.form);
         if (!payload.category_id || !payload.title) {
@@ -1509,7 +1559,7 @@
             headers: authHeaders({ "Content-Type": "application/json" }),
             body: JSON.stringify(payload)
           });
-          setLine(els.formStatus, "Request created successfully.", "ok");
+          setLine(els.formStatus, "Request created successfully. Invite friends from Dashboard → Growth extras → referral code.", "ok");
           els.form.reset();
           if (els.flexibleSchedule) els.flexibleSchedule.checked = false;
           if (els.contactConfirm) els.contactConfirm.checked = false;
@@ -1537,7 +1587,7 @@
             body: JSON.stringify({})
           });
           setLine(els.offersStatus, "Offer accepted. Request is now matched.", "ok");
-          els.offersNextStep.innerHTML = 'Next step: track status on this request, open <a href="/customer-dashboard.html">Dashboard</a>, or message the company in <a href="/messages.html">Messages</a>.';
+          els.offersNextStep.innerHTML = '<strong>What\'s next</strong> — Track this request on your <a href="/customer-dashboard.html">Dashboard</a>, message in <a href="/messages.html">Messages</a>, or share FairLinx using your referral tools on Dashboard.';
           await loadRequests(state.selectedRequestId);
         } catch (err) {
           setLine(els.offersStatus, err.message || "Unable to accept offer.", "error");
@@ -1562,11 +1612,11 @@
         });
 
         els.form.addEventListener("input", function() {
-          if (currentStep === 4) updateReviewSummary();
+          if (currentStep === 3) updateReviewSummary();
         });
 
         els.form.addEventListener("change", function() {
-          if (currentStep === 4) updateReviewSummary();
+          if (currentStep === 3) updateReviewSummary();
         });
 
         els.refreshAllBtn.addEventListener("click", function() {
@@ -1593,9 +1643,18 @@
 
         els.offersList.addEventListener("click", function(event) {
           const button = event.target.closest("[data-accept-offer-id]");
-          if (!button) return;
-          const offerId = Number(button.getAttribute("data-accept-offer-id"));
-          if (offerId) handleAcceptOffer(offerId);
+          if (button) {
+            const offerId = Number(button.getAttribute("data-accept-offer-id"));
+            if (offerId) handleAcceptOffer(offerId);
+            return;
+          }
+          const card = event.target.closest(".offer-card[data-offer-id]");
+          if (!card || event.target.closest("a")) return;
+          const oid = Number(card.getAttribute("data-offer-id"));
+          const offer = state.offers.find(function(x) { return Number(x.id) === oid; });
+          if (offer && canAcceptOffer(offer) && !state.acceptingOfferId) {
+            handleAcceptOffer(oid);
+          }
         });
 
         if (customerLogoutLink) {

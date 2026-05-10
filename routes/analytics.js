@@ -13,6 +13,7 @@ const growthFoundationService = require("../services/growthFoundationService");
 const trustReputationService = require("../services/trustReputationService");
 const growthOsService = require("../services/growthOsService");
 const customerRetentionService = require("../services/customerRetentionService");
+const trustGraphService = require("../services/trustGraphService");
 
 function num(value) {
   return Number(value || 0);
@@ -1070,6 +1071,93 @@ router.get("/analytics/customer-retention/saved-addresses", growthOsHandlers, as
     });
   } catch (err) {
     sendSafeServerError(res, err, "ANALYTICS SAVED ADDRESSES ERROR");
+  }
+});
+
+router.get("/analytics/trust-graph", growthOsHandlers, async (req, res) => {
+  try {
+    const companyId = req.user && req.user.company_id;
+    const userId = req.user && req.user.id;
+    if (!companyId) {
+      return res.status(403).json({ error: "Forbidden" });
+    }
+    const graph = await trustGraphService.buildCompanyTrustGraph(companyId);
+    const network = await trustGraphService.getCompanyTrustNetwork(companyId);
+    await logActivity({
+      companyId,
+      userId: userId || null,
+      action: "trust_graph_built",
+      entityType: "company",
+      entityId: companyId,
+      details: { scope: "analytics_trust_graph" }
+    });
+    res.json({
+      company_id: companyId,
+      generated_at: graph.generated_at,
+      graph,
+      trust_network: network
+    });
+  } catch (err) {
+    sendSafeServerError(res, err, "ANALYTICS TRUST GRAPH ERROR");
+  }
+});
+
+router.get("/analytics/trust-graph/customers", growthOsHandlers, async (req, res) => {
+  try {
+    const companyId = req.user && req.user.company_id;
+    const userId = req.user && req.user.id;
+    if (!companyId) {
+      return res.status(403).json({ error: "Forbidden" });
+    }
+    const segments = await trustGraphService.getCompanyLoyalCustomerSegments(companyId);
+    if (Array.isArray(segments) && segments.length) {
+      await logActivity({
+        companyId,
+        userId: userId || null,
+        action: "loyal_customer_segment_detected",
+        entityType: "company",
+        entityId: companyId,
+        details: { segment_keys: segments.map((s) => s.segment_key).filter(Boolean) }
+      });
+    }
+    res.json({
+      company_id: companyId,
+      generated_at: new Date().toISOString(),
+      segments
+    });
+  } catch (err) {
+    sendSafeServerError(res, err, "ANALYTICS TRUST GRAPH CUSTOMERS ERROR");
+  }
+});
+
+router.get("/analytics/trust-graph/services", growthOsHandlers, async (req, res) => {
+  try {
+    const companyId = req.user && req.user.company_id;
+    if (!companyId) {
+      return res.status(403).json({ error: "Forbidden" });
+    }
+    const affinity = await trustGraphService.getCompanyServiceAffinity(companyId);
+    res.json({
+      company_id: companyId,
+      generated_at: new Date().toISOString(),
+      category_affinity: affinity.category_affinity,
+      service_patterns: affinity.service_patterns
+    });
+  } catch (err) {
+    sendSafeServerError(res, err, "ANALYTICS TRUST GRAPH SERVICES ERROR");
+  }
+});
+
+router.get("/analytics/trust-graph/network", growthOsHandlers, async (req, res) => {
+  try {
+    const companyId = req.user && req.user.company_id;
+    if (!companyId) {
+      return res.status(403).json({ error: "Forbidden" });
+    }
+    const trust_network = await trustGraphService.getCompanyTrustNetwork(companyId);
+    res.json(trust_network);
+  } catch (err) {
+    sendSafeServerError(res, err, "ANALYTICS TRUST GRAPH NETWORK ERROR");
   }
 });
 

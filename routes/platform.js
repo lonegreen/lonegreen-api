@@ -21,6 +21,7 @@ const { notifyVerificationApproved, notifyBillingWarning } = require("../service
 const growthFoundationService = require("../services/growthFoundationService");
 const trustReputationService = require("../services/trustReputationService");
 const referralEngineService = require("../services/referralEngineService");
+const marketplaceRankingService = require("../services/marketplaceRankingService");
 
 const router = express.Router();
 const platformOnly = [auth, requirePlatformOwner];
@@ -698,6 +699,41 @@ router.post("/platform/trust/recompute-scores", platformOnly, async (req, res) =
       return res.status(404).json({ error: "Company not found" });
     }
     sendSafeServerError(res, err, "PLATFORM TRUST RECOMPUTE ERROR");
+  }
+});
+
+router.post("/platform/marketplace/recompute-rankings", platformOnly, async (req, res) => {
+  try {
+    const raw = req.body && req.body.company_id;
+    const singleId = raw !== undefined && raw !== null && raw !== "" ? Number(raw) : null;
+    const userId = req.user && req.user.id ? Number(req.user.id) : null;
+
+    if (singleId != null && Number.isInteger(singleId) && singleId > 0) {
+      const snapshot = await marketplaceRankingService.refreshCompanyRanking(singleId, {
+        logActivity: true,
+        userId
+      });
+      return res.json({
+        mode: "single",
+        company_id: singleId,
+        ...snapshot
+      });
+    }
+
+    const limit = Number(req.body && req.body.limit);
+    const processed = await marketplaceRankingService.refreshAllRankings(
+      Number.isInteger(limit) && limit > 0 ? limit : undefined,
+      { userId }
+    );
+    res.json({
+      mode: "all",
+      ...processed
+    });
+  } catch (err) {
+    if (err && err.code === "COMPANY_NOT_FOUND") {
+      return res.status(404).json({ error: "Company not found" });
+    }
+    sendSafeServerError(res, err, "PLATFORM MARKETPLACE RANKING RECOMPUTE ERROR");
   }
 });
 

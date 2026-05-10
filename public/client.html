@@ -1048,6 +1048,15 @@
           </div>
         </div>
         <div id="overviewSummary" class="summary-grid"></div>
+        <div id="clientRetentionInsights" class="panel section fx-card" style="display:none;margin-top:14px;">
+          <div class="section-head">
+            <div>
+              <h2 style="font-size:18px;">Retention &amp; rebook hints</h2>
+              <div class="section-copy">Signals from Growth OS customer retention (manager+).</div>
+            </div>
+          </div>
+          <div id="clientRetentionInsightsBody" class="muted">Loading…</div>
+        </div>
         <div id="timelineList" class="list"></div>
         <div style="margin-top:18px;">
           <div class="section-head">
@@ -2009,6 +2018,36 @@ function renderLoadError(message){
   document.getElementById("invoicesList").innerHTML = `<div class="empty fx-empty">No invoice data loaded.</div>`;
 }
 
+async function loadClientRetentionInsights(){
+  const wrap = document.getElementById("clientRetentionInsights");
+  const body = document.getElementById("clientRetentionInsightsBody");
+  if(!wrap || !body) return;
+  const role = String((currentUser && currentUser.role) || "").toLowerCase();
+  if(!["owner","admin","manager"].includes(role)){
+    wrap.style.display = "none";
+    return;
+  }
+  try {
+    const res = await apiFetch(API + "/analytics/customer-retention/rebook-candidates");
+    const data = await readJsonSafe(res, {});
+    if(!res.ok){
+      wrap.style.display = "none";
+      return;
+    }
+    const list = data && data.candidates ? data.candidates : [];
+    const cid = Number(clientId);
+    const mine = Array.isArray(list) ? list.filter(function(c){ return Number(c.client_id) === cid; }) : [];
+    wrap.style.display = "block";
+    if(mine.length){
+      body.innerHTML = "<strong>Rebook insight</strong><div style=\"margin-top:8px;line-height:1.55;\">This client is on your company rebook candidate list (completed work + idle threshold). Review Analytics → Growth OS / retention for cohort context.</div>";
+    } else {
+      body.innerHTML = "<strong>Rebook insight</strong><div style=\"margin-top:8px;line-height:1.55;\">Not on the current rebook candidate list. Use Jobs and Subscriptions below for scheduling context.</div>";
+    }
+  } catch (_) {
+    wrap.style.display = "none";
+  }
+}
+
 async function load(){
   clientId = new URLSearchParams(window.location.search).get("id");
 
@@ -2055,6 +2094,7 @@ async function load(){
     fillEstimateOptions();
     fillInvoiceJobOptions();
     showTab(currentTab);
+    await loadClientRetentionInsights();
   } catch(err){
     console.log("CLIENT PROFILE LOAD ERROR:", err);
     renderLoadError("Server connection failed while loading this client.");

@@ -26,6 +26,7 @@ const { getStaffMutationBillingBlock } = require("../services/billingService");
 const { getStaffMutationPlatformBlock } = require("../services/platformControlService");
 const customerRetentionService = require("../services/customerRetentionService");
 const referralEngineService = require("../services/referralEngineService");
+const trustGraphService = require("../services/trustGraphService");
 
 const router = express.Router();
 
@@ -450,8 +451,8 @@ async function getJobs(scopes) {
     p += 2;
   }
   const result = await pool.query(
-    "SELECT jobs.id, jobs.client_id, jobs.service, jobs.type, jobs.date, jobs.start_time, jobs.end_time, jobs.status, jobs.price, jobs.payment_status, jobs.internal_notes, workers.name AS worker_name " +
-      "FROM jobs LEFT JOIN workers ON workers.id = jobs.worker_id AND workers.company_id = jobs.company_id WHERE (" +
+    "SELECT jobs.id, jobs.client_id, jobs.company_id, jobs.service, jobs.type, jobs.date, jobs.start_time, jobs.end_time, jobs.status, jobs.price, jobs.payment_status, jobs.internal_notes, workers.name AS worker_name, companies.public_slug AS company_public_slug " +
+      "FROM jobs LEFT JOIN workers ON workers.id = jobs.worker_id AND workers.company_id = jobs.company_id LEFT JOIN companies ON companies.id = jobs.company_id WHERE (" +
       parts.join(" OR ") +
       ") ORDER BY jobs.date DESC, jobs.start_time DESC, jobs.id DESC",
     params
@@ -1097,11 +1098,25 @@ router.post("/customer/referrals/code", customerAuth, async (req, res) => {
       return res.status(403).json({ error: "Forbidden" });
     }
 
-    const row = await referralEngineService.getOrCreateReferralCode({
-      ownerType: "customer",
-      ownerId: accountId,
-      customerAccountId: accountId
-    });
+    let companyId =
+      req.body && req.body.company_id != null ? Number(req.body.company_id) : null;
+    if (companyId != null && Number.isInteger(companyId) && companyId > 0) {
+      const allowed = scopes.some((s) => Number(s.company_id) === companyId);
+      if (!allowed) {
+        return res.status(403).json({ error: "Forbidden" });
+      }
+    } else if (client.company_id != null) {
+      companyId = Number(client.company_id);
+    }
+
+    const row =
+      companyId != null && Number.isInteger(companyId) && companyId > 0
+        ? await referralEngineService.getOrCreateCustomerReferralCode(accountId, companyId)
+        : await referralEngineService.getOrCreateReferralCode({
+            ownerType: "customer",
+            ownerId: accountId,
+            customerAccountId: accountId
+          });
 
     res.status(200).json({
       code: row.code,
@@ -1214,6 +1229,91 @@ router.get("/customer/subscriptions", customerAuth, async (req, res) => {
     res.json(await getSubscriptions(scopes));
   } catch (err) {
     sendSafeServerError(res, err, "CUSTOMER SUBSCRIPTIONS LIST ERROR");
+  }
+});
+
+router.get("/customer/trust-graph/preferences", customerAuth, async (req, res) => {
+  try {
+    const accountId = await resolveCustomerAccountId(req.customer);
+    if (!accountId) {
+      return res.status(403).json({ error: "Customer account not found" });
+    }
+    const { scopes } = await getPortalContext(req.customer);
+    const clientIds = scopes
+      .map((s) => Number(s.client_id))
+      .filter((id) => Number.isInteger(id) && id > 0);
+
+    if (!clientIds.length) {
+      return res.json({
+        preferred_companies: [],
+        preferred_services: [],
+        saved_patterns: []
+      });
+    }
+
+    const preferred_companies = await trustGraphService.getCustomerPreferredCompanies(accountId, {
+      clientIds
+    });
+    const preferred_services = await trustGraphService.getCustomerPreferredServices(accountId, {
+      clientIds
+    });
+
+    const saved_patterns = [];
+    for (const row of preferred_services) {
+      if (row.kind === "service_pattern") {
+        saved_patterns.push({
+          pattern_type: "completed_job_service",
+          label: row.label || row.pattern_key,
+          preference_score: row.preference_score
+        });
+      } else if (row.kind === "category") {
+        saved_patterns.push({
+          pattern_type: "marketplace_category",
+          label: row.category_name || row.slug,
+          slug: row.slug,
+          preference_score: row.preference_score
+        });
+      }
+    }
+
+    const scopeCompanyId =
+      scopes[0] && scopes[0].company_id != null ? Number(scopes[0].company_id) : null;
+
+    await logActivity({
+      companyId: scopeCompanyId,
+      userId: null,
+      action: "trust_graph_built",
+      entityType: "customer_account",
+      entityId: accountId,
+      details: { scope: "customer_portal_preferences" }
+    });
+
+    if (
+      (preferred_companies && preferred_companies.length) ||
+      (preferred_services && preferred_services.length)
+    ) {
+      await logActivity({
+        companyId: scopeCompanyId,
+        userId: null,
+        action: "trust_preference_detected",
+        entityType: "customer_account",
+        entityId: accountId,
+        details: {
+          top_company_ids: (preferred_companies || []).slice(0, 5).map((c) => c.company_id),
+          top_service_keys: (preferred_services || []).slice(0, 5).map((s) =>
+            s.category_id != null ? `category:${s.category_id}` : String(s.pattern_key || "")
+          )
+        }
+      });
+    }
+
+    res.json({
+      preferred_companies: (preferred_companies || []).slice(0, 24),
+      preferred_services: (preferred_services || []).slice(0, 24),
+      saved_patterns: saved_patterns.slice(0, 24)
+    });
+  } catch (err) {
+    sendSafeServerError(res, err, "CUSTOMER TRUST GRAPH PREFERENCES ERROR");
   }
 });
 

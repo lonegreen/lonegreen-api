@@ -1438,7 +1438,8 @@
       var ctaHost = document.getElementById("heroCtas");
       ctaHost.textContent = "";
 
-      ctaHost.appendChild(createButtonLink("Request Service", "/marketplace.html?company=" + encodeURIComponent(String(data.public_slug || "")), "primary"));
+      ctaHost.appendChild(createButtonLink("Book now", "/marketplace.html?company=" + encodeURIComponent(String(data.public_slug || "")), "primary"));
+      ctaHost.appendChild(createButtonLink("Request quote", "/marketplace.html?company=" + encodeURIComponent(String(data.public_slug || "")), "secondary"));
 
       var saveBtn = document.createElement("button");
       saveBtn.className = "btn secondary";
@@ -1458,7 +1459,8 @@
       var conversionHost = document.getElementById("conversionCtas");
       conversionHost.textContent = "";
 
-      conversionHost.appendChild(createButtonLink("Request Service", "/marketplace.html?company=" + encodeURIComponent(String(data.public_slug || "")), "primary"));
+      conversionHost.appendChild(createButtonLink("Book now", "/marketplace.html?company=" + encodeURIComponent(String(data.public_slug || "")), "primary"));
+      conversionHost.appendChild(createButtonLink("Request quote", "/marketplace.html?company=" + encodeURIComponent(String(data.public_slug || "")), "secondary"));
       conversionHost.appendChild(createButtonLink("Contact", "#contact", "secondary"));
       conversionHost.appendChild(createButtonLink("Find Services", "/discover.html?company=" + encodeURIComponent(String(data.public_slug || "")), "secondary"));
     }

@@ -18,11 +18,19 @@ const { sendSafeServerError } = require("../services/safeServerError");
 const { sendOperationalEmailSafe } = require("../services/emailService");
 const { refreshCompanyReputation } = require("../services/reputationService");
 const trustReputationService = require("../services/trustReputationService");
+const marketplaceRankingService = require("../services/marketplaceRankingService");
+const discoveryService = require("../services/discoveryService");
 
 const router = express.Router();
 const companyReportLimiter = rateLimit({
   windowMs: 10 * 60 * 1000,
   max: 20,
+  standardHeaders: true,
+  legacyHeaders: false
+});
+const discoveryClickLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 120,
   standardHeaders: true,
   legacyHeaders: false
 });
@@ -190,6 +198,18 @@ async function shapePublicCompany(row) {
     getPublicAvailability(row.id)
   ]);
 
+  const marketplaceRankingSnapshot =
+    row.marketplace_ranking_calculated_at || row.marketplace_ranking_components
+      ? {
+          ranking_score: Number(row.ranking_score || 0),
+          calculated_at: row.marketplace_ranking_calculated_at || null,
+          components:
+            row.marketplace_ranking_components && typeof row.marketplace_ranking_components === "object"
+              ? row.marketplace_ranking_components
+              : {}
+        }
+      : null;
+
   return {
     id: row.id,
     name: row.name || "",
@@ -213,8 +233,12 @@ async function shapePublicCompany(row) {
       insurance_expired: row.insurance_expired === true,
       license_expired: row.license_expired === true
     },
+    trust_score: Number(row.trust_score || 0),
+    trust_badges: Array.isArray(row.trust_badges) ? row.trust_badges : [],
     ranking_score: Number(row.ranking_score || 0),
     reputation_score: Number(row.reputation_score || 0),
+    marketplace_rank: row.marketplace_rank != null ? Number(row.marketplace_rank) : null,
+    marketplace_ranking: marketplaceRankingSnapshot,
     rating_summary: {
       average_rating: Number(row.average_rating || 0),
       review_count: Number(row.review_count || 0)
@@ -354,6 +378,14 @@ async function resolveReportActor(req) {
 
 router.get("/companies/public", async (req, res) => {
   try {
+    const discList = discoveryService.parseDiscoverySearchQuery(req.query);
+    let limitClause = "";
+    const listExtraParams = [];
+    if (discList.publicListLimit != null) {
+      limitClause = ` LIMIT $1 OFFSET $2`;
+      listExtraParams.push(discList.publicListLimit, discList.publicListOffset);
+    }
+
     const result = await pool.query(
       `
       SELECT
@@ -391,7 +423,11 @@ router.get("/companies/public", async (req, res) => {
         license_expired,
         ranking_score
         ,
-        reputation_score
+        reputation_score,
+        trust_score,
+        trust_badges,
+        marketplace_ranking_calculated_at,
+        marketplace_ranking_components
       FROM (
         SELECT
           c.id,
@@ -432,24 +468,36 @@ router.get("/companies/public", async (req, res) => {
             WHEN c.license_expiry_date IS NOT NULL AND c.license_expiry_date < CURRENT_DATE THEN TRUE
             ELSE FALSE
           END AS license_expired,
-          (
-            (COALESCE(rev.average_rating, 0) / 5.0) * 32 +
-            (LEAST(1, LN(1 + COALESCE(rev.review_count, 0)) / LN(51))) * 8 +
-            (GREATEST(0, LEAST(1, 1 - (COALESCE(resp.avg_response_seconds, 86400) / 86400.0)))) * 12 +
-            (COALESCE(acc.acceptance_rate, 0)) * 12 +
-            (COALESCE(comp.completion_rate, 0)) * 10 +
-            (CASE WHEN c.billing_status IN ('active', 'trialing') OR c.billing_status IS NULL THEN 1 ELSE 0 END) * 7 +
-            (CASE WHEN c.is_verified = TRUE THEN 1 ELSE 0 END) * 7 +
-            (LEAST(1, LN(1 + COALESCE(fav.favorites_count, 0)) / LN(51))) * 6 +
-            (LEAST(1, LN(1 + COALESCE(fol.follows_count, 0)) / LN(51))) * 6
-          )::numeric(10,4) AS ranking_score,
-          (
-            LEAST(
-              100,
-              GREATEST(0, COALESCE(rev.average_rating, 0) * 20)
+          COALESCE(
+            cmr.ranking_score,
+            (
+              (COALESCE(rev.average_rating, 0) / 5.0) * 32 +
+              (LEAST(1, LN(1 + COALESCE(rev.review_count, 0)) / LN(51))) * 8 +
+              (GREATEST(0, LEAST(1, 1 - (COALESCE(resp.avg_response_seconds, 86400) / 86400.0)))) * 12 +
+              (COALESCE(acc.acceptance_rate, 0)) * 12 +
+              (COALESCE(comp.completion_rate, 0)) * 10 +
+              (CASE WHEN c.billing_status IN ('active', 'trialing') OR c.billing_status IS NULL THEN 1 ELSE 0 END) * 7 +
+              (CASE WHEN c.is_verified = TRUE THEN 1 ELSE 0 END) * 7 +
+              (LEAST(1, LN(1 + COALESCE(fav.favorites_count, 0)) / LN(51))) * 6 +
+              (LEAST(1, LN(1 + COALESCE(fol.follows_count, 0)) / LN(51))) * 6
             )
-          )::numeric AS reputation_score
+          )::numeric(10,4) AS ranking_score,
+          COALESCE(
+            cts.reputation_score,
+            (
+              LEAST(
+                100,
+                GREATEST(0, COALESCE(rev.average_rating, 0) * 20)
+              )
+            )
+          )::numeric AS reputation_score,
+          COALESCE(cts.trust_score, 0)::numeric AS trust_score,
+          COALESCE(cts.badges, '[]'::jsonb) AS trust_badges,
+          cmr.calculated_at AS marketplace_ranking_calculated_at,
+          cmr.ranking_components AS marketplace_ranking_components
         FROM companies c
+        LEFT JOIN company_marketplace_rankings cmr ON cmr.company_id = c.id
+        LEFT JOIN company_trust_scores cts ON cts.company_id = c.id
         LEFT JOIN (
           SELECT
             company_id,
@@ -504,14 +552,58 @@ router.get("/companies/public", async (req, res) => {
         WHERE c.is_public = TRUE
           AND COALESCE(NULLIF(TRIM(c.public_slug), ''), '') <> ''
       ) ranked
-      ORDER BY ranking_score DESC, name ASC, id ASC
-      `
+      ORDER BY
+        ranking_score DESC,
+        COALESCE(trust_score, 50) DESC,
+        COALESCE(reputation_score, 0) DESC,
+        name ASC,
+        id ASC
+      ` +
+        limitClause +
+        `
+    `,
+      listExtraParams
     );
 
     const items = await Promise.all(result.rows.map(shapePublicCompany));
     res.json(items);
   } catch (err) {
     sendSafeServerError(res, err, "COMPANIES PUBLIC LIST ERROR");
+  }
+});
+
+router.post("/companies/public/discovery/click", discoveryClickLimiter, async (req, res) => {
+  try {
+    const companyId = Number(req.body && req.body.company_id);
+    if (!Number.isInteger(companyId) || companyId <= 0) {
+      return res.status(400).json({ error: "Invalid company id" });
+    }
+
+    let userId = null;
+    let customerAccountId = null;
+    try {
+      const active = await verifyActiveCustomerBearerToken(req.headers.authorization);
+      if (active && active.customer && active.customer.customer_account_id != null) {
+        customerAccountId = Number(active.customer.customer_account_id);
+      }
+    } catch (_) {
+      /* anonymous discovery click */
+    }
+
+    discoveryService.queueDiscoveryLog({
+      action: "discovery_click",
+      userId,
+      customerAccountId,
+      details: {
+        company_id: companyId,
+        context: cleanText(req.body && req.body.context),
+        referrer: cleanText(req.headers.referer || req.headers.referrer)
+      }
+    });
+
+    return res.status(204).send();
+  } catch (err) {
+    return sendSafeServerError(res, err, "DISCOVERY CLICK ERROR");
   }
 });
 
@@ -524,6 +616,10 @@ router.get("/companies/public/search", async (req, res) => {
     const serviceToken = cleanSearchToken(serviceRaw);
     const serviceSlug = cleanSlug(serviceRaw);
     const cityToken = cityRaw.toLowerCase();
+
+    const parsed = discoveryService.parseDiscoverySearchQuery(req.query);
+    const badgeJsonb =
+      parsed.badgeId ? JSON.stringify([{ id: parsed.badgeId }]) : null;
 
     const result = await pool.query(
       `
@@ -566,15 +662,32 @@ router.get("/companies/public/search", async (req, res) => {
         0::int AS follows_count,
         0::numeric AS billing_bonus,
         0::numeric AS verified_bonus,
-        0::numeric AS ranking_score
-        ,
-        (
-          LEAST(
-            100,
-            GREATEST(0, COALESCE(rev.average_rating, 0) * 20)
+        COALESCE(
+          cmr.ranking_score,
+          (
+            LEAST(
+              100,
+              GREATEST(0, COALESCE(rev.average_rating, 0) * 20)
+            )
           )
-        )::numeric AS reputation_score
+        )::numeric AS ranking_score
+        ,
+        COALESCE(
+          cts.reputation_score,
+          (
+            LEAST(
+              100,
+              GREATEST(0, COALESCE(rev.average_rating, 0) * 20)
+            )
+          )
+        )::numeric AS reputation_score,
+        COALESCE(cts.trust_score, 0)::numeric AS trust_score,
+        COALESCE(cts.badges, '[]'::jsonb) AS trust_badges,
+        cmr.calculated_at AS marketplace_ranking_calculated_at,
+        cmr.ranking_components AS marketplace_ranking_components
       FROM companies c
+      LEFT JOIN company_marketplace_rankings cmr ON cmr.company_id = c.id
+      LEFT JOIN company_trust_scores cts ON cts.company_id = c.id
       LEFT JOIN (
         SELECT
           company_id,
@@ -585,21 +698,65 @@ router.get("/companies/public/search", async (req, res) => {
       ) rev
         ON rev.company_id = c.id
       WHERE c.is_public = TRUE
+        AND c.platform_suspended_at IS NULL
         AND COALESCE(NULLIF(TRIM(c.public_slug), ''), '') <> ''
-        AND EXISTS (
-          SELECT 1
-          FROM company_services cs
-          JOIN service_categories sc
-            ON sc.id = cs.category_id
-          WHERE cs.company_id = c.id
-            AND cs.active = TRUE
-            AND sc.active = TRUE
-            AND (
-              $1 = ''
-              OR LOWER(sc.slug) = LOWER($2)
-              OR LOWER(sc.name) LIKE '%' || LOWER($1) || '%'
-              OR LOWER(cs.custom_name) LIKE '%' || LOWER($1) || '%'
+        AND (
+          (
+            $6::text = ''
+            AND EXISTS (
+              SELECT 1
+              FROM company_services cs
+              JOIN service_categories sc
+                ON sc.id = cs.category_id
+              WHERE cs.company_id = c.id
+                AND cs.active = TRUE
+                AND sc.active = TRUE
+                AND (
+                  $1 = ''
+                  OR LOWER(sc.slug) = LOWER($2)
+                  OR LOWER(sc.name) LIKE '%' || LOWER($1) || '%'
+                  OR LOWER(cs.custom_name) LIKE '%' || LOWER($1) || '%'
+                )
             )
+          )
+          OR (
+            $6::text <> ''
+            AND (
+              LOWER(c.name) LIKE '%' || $6 || '%'
+              OR LOWER(COALESCE(c.public_description, '')) LIKE '%' || $6 || '%'
+              OR EXISTS (
+                SELECT 1
+                FROM company_services cs
+                JOIN service_categories sc
+                  ON sc.id = cs.category_id
+                WHERE cs.company_id = c.id
+                  AND cs.active = TRUE
+                  AND sc.active = TRUE
+                  AND (
+                    LOWER(sc.name) LIKE '%' || $6 || '%'
+                    OR LOWER(COALESCE(cs.custom_name, '')) LIKE '%' || $6 || '%'
+                    OR LOWER(sc.slug) LIKE '%' || $6 || '%'
+                  )
+              )
+            )
+            AND (
+              $1::text = ''
+              OR EXISTS (
+                SELECT 1
+                FROM company_services cs
+                JOIN service_categories sc
+                  ON sc.id = cs.category_id
+                WHERE cs.company_id = c.id
+                  AND cs.active = TRUE
+                  AND sc.active = TRUE
+                  AND (
+                    LOWER(sc.slug) = LOWER($2)
+                    OR LOWER(sc.name) LIKE '%' || LOWER($1) || '%'
+                    OR LOWER(cs.custom_name) LIKE '%' || LOWER($1) || '%'
+                  )
+              )
+            )
+          )
         )
         AND EXISTS (
           SELECT 1
@@ -613,9 +770,61 @@ router.get("/companies/public/search", async (req, res) => {
               OR ($4 <> '' AND UPPER(csa.state) = UPPER($4))
             )
         )
-      ORDER BY c.is_verified DESC, COALESCE(rev.average_rating, 0) DESC, COALESCE(rev.review_count, 0) DESC, c.name ASC, c.id ASC
+        AND ($7::int IS NULL OR EXISTS (
+          SELECT 1
+          FROM company_services csf
+          WHERE csf.company_id = c.id
+            AND csf.active = TRUE
+            AND csf.category_id = $7::int
+        ))
+        AND ($8::text = '' OR EXISTS (
+          SELECT 1
+          FROM company_services csu
+          JOIN service_categories scu ON scu.id = csu.category_id
+          WHERE csu.company_id = c.id
+            AND csu.active = TRUE
+            AND scu.active = TRUE
+            AND LOWER(scu.slug) = LOWER($8::text)
+        ))
+        AND ($9::numeric IS NULL OR COALESCE(rev.average_rating, 0) >= $9::numeric)
+        AND (
+          $10::jsonb IS NULL
+          OR COALESCE(cts.badges, '[]'::jsonb) @> $10::jsonb
+        )
+        AND (
+          $11::int IS NULL
+          OR EXISTS (
+            SELECT 1
+            FROM company_availability ca
+            WHERE ca.company_id = c.id
+              AND ca.day_of_week = $11::int
+              AND ca.is_closed = FALSE
+          )
+        )
+      ORDER BY
+        COALESCE(cmr.ranking_score, 0) DESC,
+        COALESCE(cts.trust_score, 50) DESC,
+        COALESCE(cts.reputation_score, LEAST(100, COALESCE(rev.average_rating, 0) * 20)) DESC,
+        c.created_at DESC NULLS LAST,
+        c.name ASC,
+        c.id ASC
+      LIMIT $12 OFFSET $13
       `,
-      [serviceToken, serviceSlug, cityToken, stateRaw, zipRaw]
+      [
+        serviceToken,
+        serviceSlug,
+        cityToken,
+        stateRaw,
+        zipRaw,
+        parsed.qToken,
+        parsed.categoryId,
+        parsed.categorySlug || "",
+        parsed.minRating,
+        badgeJsonb,
+        parsed.availabilityDay,
+        parsed.searchLimit,
+        parsed.searchOffset
+      ]
     );
 
     const shaped = await Promise.all(result.rows.map(shapePublicCompany));
@@ -629,15 +838,50 @@ router.get("/companies/public/search", async (req, res) => {
       service_areas: company.service_areas,
       trust: company.trust,
       is_verified: company.is_verified,
-      rating_summary: company.rating_summary
+      rating_summary: company.rating_summary,
+      ranking_score: company.ranking_score,
+      trust_badges: company.trust_badges
     }));
+
+    discoveryService.queueDiscoveryLog({
+      action: "discovery_search",
+      details: {
+        result_count: items.length,
+        filters: discoveryService.summarizeAppliedFilters(parsed),
+        raw_query: {
+          service: serviceRaw,
+          city: cityRaw,
+          state: stateRaw,
+          zip: zipRaw,
+          q: cleanText(req.query && (req.query.q || req.query.keyword))
+        }
+      }
+    });
+
+    if (discoveryService.hasStructuredFilters(parsed)) {
+      discoveryService.queueDiscoveryLog({
+        action: "discovery_filter",
+        details: {
+          result_count: items.length,
+          filters: discoveryService.summarizeAppliedFilters(parsed)
+        }
+      });
+    }
 
     return res.json({
       query: {
         service: serviceRaw,
         city: cityRaw,
         state: stateRaw,
-        zip: zipRaw
+        zip: zipRaw,
+        q: cleanText(req.query && (req.query.q || req.query.keyword)),
+        category_id: parsed.categoryId,
+        category_slug: parsed.categorySlug || "",
+        min_rating: parsed.minRating,
+        badge: parsed.badgeId || "",
+        availability_day: parsed.availabilityDay,
+        limit: parsed.searchLimit,
+        offset: parsed.searchOffset
       },
       count: items.length,
       companies: items
@@ -711,7 +955,23 @@ router.get("/companies/public/:slug", async (req, res) => {
       return res.status(404).json({ error: "Company not found" });
     }
 
-    const payload = await shapePublicCompany(result.rows[0]);
+    const row = result.rows[0];
+    const payload = await shapePublicCompany(row);
+    try {
+      const snap = await marketplaceRankingService.getMarketplaceRankingPublic(row.id);
+      payload.ranking_score = snap.ranking_score;
+      payload.reputation_score = snap.reputation_score;
+      payload.trust_score = snap.trust_score;
+      payload.trust_badges = snap.trust_badges;
+      payload.marketplace_rank = snap.marketplace_rank;
+      payload.marketplace_ranking = {
+        ranking_score: snap.ranking_score,
+        calculated_at: snap.calculated_at,
+        components: snap.ranking_components || {}
+      };
+    } catch {
+      /* ranking snapshot optional when deps unavailable */
+    }
     res.json(payload);
   } catch (err) {
     sendSafeServerError(res, err, "COMPANY PUBLIC DETAIL ERROR");
@@ -1239,6 +1499,39 @@ router.put("/companies/services", auth, requireCompanyBillingForMutations, requi
     sendSafeServerError(res, err, "COMPANY SERVICES UPDATE ERROR");
   } finally {
     client.release();
+  }
+});
+
+router.get("/companies/:id/marketplace-ranking", async (req, res) => {
+  try {
+    const companyId = Number(req.params.id);
+    if (!Number.isInteger(companyId) || companyId <= 0) {
+      return res.status(400).json({ error: "Invalid company id" });
+    }
+
+    const pub = await pool.query(
+      `
+      SELECT id
+      FROM companies
+      WHERE id = $1
+        AND is_public = TRUE
+        AND COALESCE(NULLIF(TRIM(public_slug), ''), '') <> ''
+      LIMIT 1
+      `,
+      [companyId]
+    );
+
+    if (!pub.rows.length) {
+      return res.status(404).json({ error: "Not found" });
+    }
+
+    const payload = await marketplaceRankingService.getMarketplaceRankingPublic(companyId);
+    res.json(payload);
+  } catch (err) {
+    if (err && err.code === "COMPANY_NOT_FOUND") {
+      return res.status(404).json({ error: "Company not found" });
+    }
+    sendSafeServerError(res, err, "COMPANY MARKETPLACE RANKING ERROR");
   }
 });
 

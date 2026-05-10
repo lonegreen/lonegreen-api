@@ -907,6 +907,30 @@
 
   <div id="billingWarningBanner" class="billing-warning-banner"></div>
 
+  <div id="growthPulsePanel" class="panel section fx-card" style="display:none;">
+    <div class="section-head fx-section-head">
+      <h3>Growth &amp; trust pulse</h3>
+      <div class="section-note">Trust, Growth OS, retention, and referral signals (manager+).</div>
+    </div>
+    <div id="growthPulseGrid" class="kpi-grid"></div>
+  </div>
+
+  <div id="trustGraphSummaryPanel" class="panel section fx-card" style="display:none;">
+    <div class="section-head fx-section-head">
+      <h3>Trust graph snapshot</h3>
+      <div class="section-note">Repeat clients, returns, lifecycle value, and subscription retention (manager+).</div>
+    </div>
+    <div id="trustGraphSummaryGrid" class="kpi-grid"></div>
+  </div>
+
+  <div id="referralSummaryPanel" class="panel section fx-card" style="display:none;">
+    <div class="section-head fx-section-head">
+      <h3>Referral engine</h3>
+      <div class="section-note">Tracked referrals and recent advocate conversions (manager+).</div>
+    </div>
+    <div id="referralSummaryGrid" class="kpi-grid"></div>
+  </div>
+
   <div id="companyBillingPanel" class="panel section fx-card" style="display:none;">
     <div class="section-head fx-section-head">
       <h3>Plan &amp; usage</h3>
@@ -946,6 +970,10 @@
     </div>
     <p class="section-note">Recent company alerts (managers and above). Mark items read from Settings.</p>
     <div id="dashNotificationsList" class="alert-list">Loading…</div>
+    <div id="dashOperationalInsights" style="display:none;margin-top:16px;padding-top:16px;border-top:1px solid rgba(17,17,17,0.08);">
+      <div class="section-note" style="margin-bottom:10px;"><strong>Operational insights</strong> — reminders, reactivation, referrals (non-blocking).</div>
+      <div id="dashOperationalInsightsBody" class="alert-list"></div>
+    </div>
   </div>
 
   <div class="kpi-grid">
@@ -1174,6 +1202,227 @@ async function loadDashNotifications(){
   } catch(err) {
     listEl.innerHTML = '<div class="empty fx-empty"><strong class="fx-empty__title">Notifications unavailable.</strong></div>';
   }
+}
+
+function growthPulseCard(label, value, sub){
+  const v = value == null ? "—" : String(value);
+  return '<div class="panel kpi-card fx-stat"><div class="kpi-label fx-stat__label">' + escapeHtml(label) + '</div><div class="kpi-value fx-stat__value">' + escapeHtml(v) + '</div><div class="kpi-sub">' + escapeHtml(sub || "") + '</div></div>';
+}
+
+async function loadGrowthPulse(){
+  const panel = document.getElementById("growthPulsePanel");
+  const grid = document.getElementById("growthPulseGrid");
+  if(!panel || !grid) return;
+  const role = String((user && user.role) || "").toLowerCase();
+  if(!["owner","admin","manager"].includes(role)){
+    panel.style.display = "none";
+    return;
+  }
+  panel.style.display = "block";
+  grid.innerHTML = '<div class="muted fx-empty__text" style="grid-column:1/-1;">Loading growth signals…</div>';
+
+  const roleLower = role;
+  const [
+    trust,
+    gf,
+    funnel,
+    revOs,
+    lost,
+    retOs,
+    mpOs,
+    cro,
+    refCo
+  ] = await Promise.all([
+    fetchDashboardJson("/analytics/trust-reputation", null),
+    fetchDashboardJson("/analytics/growth-foundation", null),
+    fetchDashboardJson("/analytics/growth-os/funnel", null),
+    fetchDashboardJson("/analytics/growth-os/revenue", null),
+    fetchDashboardJson("/analytics/growth-os/lost-revenue", null),
+    fetchDashboardJson("/analytics/growth-os/retention", null),
+    fetchDashboardJson("/analytics/growth-os/marketplace", null),
+    fetchDashboardJson("/analytics/customer-retention", null),
+    ["owner","admin","manager"].includes(roleLower)
+      ? fetchDashboardJson("/referrals/company", null)
+      : Promise.resolve(null)
+  ]);
+
+  const parts = [];
+  if(trust && typeof trust === "object"){
+    parts.push(growthPulseCard("Trust score", trust.trust_score != null ? trust.trust_score : "—", "Trust & verification signal"));
+    parts.push(growthPulseCard("Reputation", trust.reputation_score != null ? trust.reputation_score : "—", "Reputation composite"));
+    const badges = Array.isArray(trust.badges)
+      ? trust.badges.slice(0, 4).map(function(b){
+        return typeof b === "string" ? b : (b && (b.label || b.name || b.slug)) || "";
+      }).filter(Boolean).join(", ")
+      : "";
+    parts.push(growthPulseCard("Badges", badges || "—", "Top badge labels"));
+  }
+  if(gf && typeof gf === "object"){
+    const m = gf.metrics || gf.company_metrics || gf;
+    if(m && typeof m === "object"){
+      const keys = ["active_clients","new_clients_30d","monthly_revenue","pipeline_value"];
+      keys.forEach(function(k){
+        if(m[k] != null) parts.push(growthPulseCard(k.replace(/_/g," "), String(m[k]), "Growth foundation"));
+      });
+    }
+  }
+  if(funnel && typeof funnel === "object"){
+    Object.keys(funnel).slice(0, 4).forEach(function(k){
+      const v = funnel[k];
+      if(v != null && typeof v !== "object") parts.push(growthPulseCard("Funnel " + k.replace(/_/g," "), String(v), "Growth OS funnel"));
+    });
+  }
+  if(revOs && typeof revOs === "object"){
+    ["total_revenue","mrr","arr","revenue_30d"].forEach(function(k){
+      if(revOs[k] != null) parts.push(growthPulseCard("Revenue " + k.replace(/_/g," "), formatMoney(revOs[k]), "Growth OS revenue"));
+    });
+  }
+  if(lost && typeof lost === "object"){
+    ["estimated_lost_revenue","lost_revenue","at_risk_amount"].forEach(function(k){
+      if(lost[k] != null) parts.push(growthPulseCard("Lost revenue (" + k + ")", formatMoney(lost[k]), "Growth OS lost revenue"));
+    });
+  }
+  if(retOs && typeof retOs === "object"){
+    Object.keys(retOs).slice(0, 5).forEach(function(k){
+      const v = retOs[k];
+      if(v != null && typeof v !== "object") parts.push(growthPulseCard("Retention " + k.replace(/_/g," "), String(v), "Growth OS retention"));
+    });
+  }
+  if(mpOs && typeof mpOs === "object"){
+    Object.keys(mpOs).slice(0, 5).forEach(function(k){
+      const v = mpOs[k];
+      if(v != null && typeof v !== "object") parts.push(growthPulseCard("Marketplace " + k.replace(/_/g," "), String(v), "Growth OS marketplace"));
+    });
+  }
+  if(cro && typeof cro === "object"){
+    const rb = cro.rebook && cro.rebook.candidates ? cro.rebook.candidates.length : null;
+    const ra = cro.reactivation && cro.reactivation.candidates ? cro.reactivation.candidates.length : null;
+    if(rb != null) parts.push(growthPulseCard("Rebook candidates", rb, "Idle completed-job clients"));
+    if(ra != null) parts.push(growthPulseCard("Reactivation candidates", ra, "Dormant / inactive clients"));
+  }
+  if(refCo && refCo.summary && refCo.summary.referrals && refCo.summary.referrals.by_status){
+    const bs = refCo.summary.referrals.by_status;
+    parts.push(growthPulseCard("Referrals pending", bs.pending != null ? bs.pending : "0", "Company referral pipeline"));
+  }
+
+  if(!parts.length){
+    grid.innerHTML = '<div class="muted fx-empty__text" style="grid-column:1/-1;">Growth signals unavailable right now.</div>';
+    return;
+  }
+  grid.innerHTML = parts.slice(0, 18).join("");
+}
+
+async function loadReferralSummaryCard(){
+  const panel = document.getElementById("referralSummaryPanel");
+  const grid = document.getElementById("referralSummaryGrid");
+  if(!panel || !grid) return;
+  const role = String((user && user.role) || "").toLowerCase();
+  if(!["owner","admin","manager"].includes(role)){
+    panel.style.display = "none";
+    return;
+  }
+  panel.style.display = "block";
+  grid.innerHTML = '<div class="muted fx-empty__text" style="grid-column:1/-1;">Loading referrals…</div>';
+  const [co, lb] = await Promise.all([
+    fetchDashboardJson("/referrals/company", null),
+    fetchDashboardJson("/referrals/company/leaderboard?limit=3", null)
+  ]);
+  const parts = [];
+  if(co && co.summary && co.summary.referrals){
+    const bs = co.summary.referrals.by_status || {};
+    const tot = co.summary.referrals.total != null ? co.summary.referrals.total : 0;
+    parts.push(growthPulseCard("Referrals tracked", tot, "All referral rows for your company"));
+    parts.push(growthPulseCard("Pending", bs.pending != null ? bs.pending : "0", "Pipeline stage"));
+    parts.push(growthPulseCard("Qualified", bs.qualified != null ? bs.qualified : "0", "Qualified referrals"));
+  }
+  if(lb && lb.leaderboard && lb.leaderboard.length){
+    const top = lb.leaderboard[0];
+    const label = top.customer_account_id != null ? ("Advocate #" + top.customer_account_id) : ("Code #" + top.referral_code_id);
+    parts.push(growthPulseCard("Top advocate (conversions)", top.conversions != null ? top.conversions : "—", label));
+  }
+  grid.innerHTML = parts.length ? parts.join("") : '<div class="muted fx-empty__text" style="grid-column:1/-1;">No referral stats yet.</div>';
+}
+
+async function loadTrustGraphSummary(){
+  const panel = document.getElementById("trustGraphSummaryPanel");
+  const grid = document.getElementById("trustGraphSummaryGrid");
+  if(!panel || !grid) return;
+  const role = String((user && user.role) || "").toLowerCase();
+  if(!["owner","admin","manager"].includes(role)){
+    panel.style.display = "none";
+    return;
+  }
+  panel.style.display = "block";
+  grid.innerHTML = '<div class="muted fx-empty__text" style="grid-column:1/-1;">Loading trust graph…</div>';
+  const net = await fetchDashboardJson("/analytics/trust-graph/network", null);
+  if(!net || typeof net !== "object"){
+    grid.innerHTML = '<div class="muted fx-empty__text" style="grid-column:1/-1;">Trust graph unavailable.</div>';
+    return;
+  }
+  function pctLabel(v){
+    const x = Number(v);
+    if(!Number.isFinite(x)) return "—";
+    return (x * 100).toFixed(1) + "%";
+  }
+  const parts = [];
+  if(net.repeat_clients_ratio != null) parts.push(growthPulseCard("Repeat clients ratio", pctLabel(net.repeat_clients_ratio), "Completed-job clients with 2+ jobs"));
+  if(net.returning_customer_ratio != null) parts.push(growthPulseCard("Returning customer ratio", pctLabel(net.returning_customer_ratio), "Recent completes with prior history (90d window)"));
+  if(net.average_lifecycle_value != null) parts.push(growthPulseCard("Avg lifecycle value", formatMoney(net.average_lifecycle_value), "Paid invoice totals averaged per paying client"));
+  if(net.subscription_retention_ratio != null) parts.push(growthPulseCard("Subscription retention ratio", pctLabel(net.subscription_retention_ratio), "Active vs tracked subscription rows"));
+  grid.innerHTML = parts.length ? parts.join("") : '<div class="muted fx-empty__text" style="grid-column:1/-1;">No trust graph metrics yet.</div>';
+}
+
+async function loadOperationalInsights(){
+  const wrap = document.getElementById("dashOperationalInsights");
+  const body = document.getElementById("dashOperationalInsightsBody");
+  if(!wrap || !body) return;
+  const role = String((user && user.role) || "").toLowerCase();
+  if(!["owner","admin","manager"].includes(role)){
+    wrap.style.display = "none";
+    return;
+  }
+
+  const [cro, refCo] = await Promise.all([
+    fetchDashboardJson("/analytics/customer-retention", null),
+    ["owner","admin","manager"].includes(role)
+      ? fetchDashboardJson("/referrals/company", null)
+      : Promise.resolve(null)
+  ]);
+
+  const rows = [];
+  if(cro && cro.reminders){
+    const inv = Array.isArray(cro.reminders.invoice_due_reminders) ? cro.reminders.invoice_due_reminders.length : 0;
+    const sub = Array.isArray(cro.reminders.subscription_billing_reminders) ? cro.reminders.subscription_billing_reminders.length : 0;
+    if(inv) rows.push({ title: "Invoice reminders (7d)", copy: inv + " invoice follow-ups suggested.", pill: String(inv), cls: "fx-badge--warning" });
+    if(sub) rows.push({ title: "Subscription billing soon", copy: sub + " renewals in the reminder window.", pill: String(sub), cls: "fx-badge--info" });
+  }
+  if(cro && cro.reactivation && Array.isArray(cro.reactivation.candidates) && cro.reactivation.candidates.length){
+    const n = cro.reactivation.candidates.length;
+    rows.push({ title: "Reactivation candidates", copy: n + " relationships surfaced for follow-up.", pill: String(n), cls: "fx-badge--neutral" });
+  }
+  if(refCo && refCo.summary && refCo.summary.referrals){
+    const bs = refCo.summary.referrals.by_status || {};
+    const qual = bs.qualified != null ? bs.qualified : 0;
+    const rew = bs.rewarded != null ? bs.rewarded : 0;
+    const pend = bs.pending != null ? bs.pending : 0;
+    if(qual || rew || pend){
+      rows.push({
+        title: "Referral pipeline",
+        copy: "Pending " + pend + " · Qualified " + qual + " · Rewarded " + rew + ".",
+        pill: String(pend + qual + rew),
+        cls: "fx-badge--success"
+      });
+    }
+  }
+
+  if(!rows.length){
+    wrap.style.display = "none";
+    return;
+  }
+  wrap.style.display = "block";
+  body.innerHTML = rows.map(function(r){
+    return '<div class="alert-card" style="cursor:default;"><div><div class="alert-title">' + escapeHtml(r.title) + '</div><div class="alert-copy">' + escapeHtml(r.copy) + '</div></div><div class="pill ' + escapeHtml(r.cls) + '">' + escapeHtml(r.pill) + '</div></div>';
+  }).join("");
 }
 
 const user = getUser();
@@ -2142,6 +2391,7 @@ async function init(){
     renderRecentBillingActivity(safeMoney.recent_billing_activity || {});
 
     await loadDashNotifications();
+    await Promise.all([loadGrowthPulse(), loadTrustGraphSummary(), loadReferralSummaryCard(), loadOperationalInsights()]);
 
   } catch(err){
     console.log("DASHBOARD LOAD ERROR:", err);

@@ -1092,12 +1092,83 @@ function renderOverview(){
   document.getElementById("overview").innerHTML =
     '<div class="panel"><strong>Account</strong><br>' + esc(client.name || "") + '<br>' + esc(client.phone || "") + '<br>' + esc(client.address || "") + '<br>' + esc(client.zip || "") + '</div>' +
     '<div class="panel"><strong>Notifications</strong><br><span class="muted">Unread: ' + esc(String(customerUnreadNotifications)) + '</span><div id="customerNotificationsPanel" style="display:grid;gap:8px;margin-top:10px;"></div></div>' +
+    '<div class="panel" id="customerGrowthPanel"><strong>Referrals &amp; saved addresses</strong><div id="customerGrowthExtras" class="muted" style="margin-top:10px;">Loading…</div>' +
+    '<div style="margin-top:12px;display:flex;flex-wrap:wrap;gap:8px;">' +
+    '<button type="button" class="btn gray sm" data-customer-action="refresh-referral-code">Show / refresh referral code</button>' +
+    '</div></div>' +
+    '<div class="panel" id="customerPreferredCompaniesPanel"><strong>Preferred providers</strong><p class="muted" style="margin:6px 0 10px;font-size:13px;">Based on completed work, paid invoices, repeats, subscriptions, and accepted marketplace offers.</p>' +
+    '<div id="customerPreferredCompaniesBody" class="muted" style="margin-top:6px;">Loading…</div></div>' +
+    '<div class="panel"><strong>Book again</strong><p class="muted" style="margin:6px 0 10px;">Tell your provider you want another visit (intent only — scheduling follows their workflow).</p>' +
+    '<button type="button" class="btn sm" data-customer-action="customer-rebook-open">Request rebook</button></div>' +
     '<div class="grid">' +
     card("Upcoming Jobs", [String((state.upcoming_jobs || []).length)], "", "") +
     card("Open Invoices", [String(openCount)], "", "") +
     card("Active Subscriptions", [String((state.subscriptions || []).filter(function(s){ return s.status === "active"; }).length)], "", "") +
     '</div>';
   renderNotificationsPanel();
+  hydrateCustomerGrowthExtras();
+  hydrateCustomerPreferredCompanies();
+}
+
+async function hydrateCustomerPreferredCompanies(){
+  const body = document.getElementById("customerPreferredCompaniesBody");
+  if(!body) return;
+  body.innerHTML = "Loading…";
+  try {
+    const res = await customerFetch(API + "/customer/trust-graph/preferences");
+    const data = await res.json().catch(function(){ return {}; });
+    if(!res.ok){
+      body.textContent = "Preferred providers unavailable.";
+      return;
+    }
+    const rows = (data.preferred_companies || []).slice(0, 8).map(function(pc){
+      const name = pc.company_name || ("Company #" + pc.company_id);
+      const score = pc.preference_score != null ? " · score " + pc.preference_score : "";
+      return "<div>" + esc(name) + score + "</div>";
+    });
+    body.innerHTML = rows.length ? rows.join("") : '<span class="muted">Complete jobs or accept marketplace offers to surface preferred providers.</span>';
+  } catch(e){
+    body.textContent = "Preferred providers unavailable.";
+  }
+}
+
+async function hydrateCustomerGrowthExtras(){
+  const box = document.getElementById("customerGrowthExtras");
+  if(!box) return;
+  const client = state.client || state.customer || {};
+  const cid = client.company_id != null ? Number(client.company_id) : null;
+  const parts = [];
+  try {
+    const r = await customerFetch(API + "/customer/referrals");
+    const d = await r.json().catch(function(){ return {}; });
+    if(r.ok && d.summary){
+      const rep = d.summary.referrals || {};
+      const bs = rep.by_status || {};
+      parts.push("<div><strong>Referral summary</strong></div>");
+      parts.push('<div class="muted">Pending: ' + String(bs.pending || 0) + " · Qualified: " + String(bs.qualified || 0) + " · Rewarded: " + String(bs.rewarded || 0) + "</div>");
+      if(d.summary.conversion_count != null){
+        parts.push('<div class="muted">Conversions tracked: ' + String(d.summary.conversion_count) + "</div>");
+      }
+      parts.push('<div class="muted" style="margin-top:6px;">Use “Show / refresh referral code” to copy your shareable code.</div>');
+    }
+  } catch (_) {}
+  try {
+    if(cid){
+      const r = await customerFetch(API + "/customer/saved-addresses?company_id=" + encodeURIComponent(cid));
+      const rows = await r.json().catch(function(){ return []; });
+      parts.push('<div style="margin-top:12px;"><strong>Saved addresses</strong></div>');
+      if(r.ok && Array.isArray(rows) && rows.length){
+        rows.slice(0, 8).forEach(function(a){
+          parts.push('<div class="muted">' + esc(a.label || "Saved") + ": " + esc([a.address, a.city, a.state, a.zip].filter(Boolean).join(", ")) + (a.is_default ? " (default)" : "") + "</div>");
+        });
+      } else {
+        parts.push('<div class="muted">No extra saved addresses on file.</div>');
+      }
+    } else {
+      parts.push('<div style="margin-top:12px;" class="muted">When your account is linked to a provider, saved addresses appear here.</div>');
+    }
+  } catch (_) {}
+  box.innerHTML = parts.length ? parts.join("") : '<div class="muted">Retention tools unavailable.</div>';
 }
 
 function renderNotificationsPanel(){
@@ -1331,6 +1402,19 @@ function closeInvoiceDetail(){
   document.getElementById("invoiceDetailBody").innerHTML = "";
 }
 
+function jobHistoryActions(item){
+  const st = String(item.status || "").toLowerCase();
+  const slug = item.company_public_slug ? String(item.company_public_slug).trim() : "";
+  const jid = Number(item.id);
+  if(st !== "completed" || !jid) return "";
+  let html = '<button type="button" class="btn sm" data-customer-action="customer-rebook-job" data-job-id="' + jid + '">Rebook</button>';
+  if(slug){
+    html += ' <a class="btn gray sm" href="/company-profile.html?slug=' + encodeURIComponent(slug) + '">Leave review</a>';
+  }
+  html += ' <span class="muted" style="display:block;margin-top:6px;font-size:12px;">Reviews help pros grow — thank you for leaving feedback.</span>';
+  return html;
+}
+
 function renderJobs(){
   const upcoming = state.upcoming_jobs || [];
   const history = state.job_history || [];
@@ -1338,7 +1422,7 @@ function renderJobs(){
     '<div class="panel"><strong>Upcoming Jobs</strong></div>' +
     (upcoming.length ? upcoming.map(function(item){ return card(item.service || "Job", ["Date: " + date(item.date), "Time: " + (item.start_time || "") + " - " + (item.end_time || ""), "Worker: " + esc(item.worker_name || "TBD")], item.status, ""); }).join("") : '<div class="panel empty-panel fx-empty"><strong class="fx-empty__title">No upcoming jobs</strong><span class="fx-empty__text">Scheduled visits will appear here.</span></div>') +
     '<div class="panel"><strong>Job History</strong></div>' +
-    (history.length ? history.map(function(item){ return card(item.service || "Job", ["Date: " + date(item.date), "Time: " + (item.start_time || "") + " - " + (item.end_time || "")], item.status, ""); }).join("") : '<div class="panel empty-panel fx-empty"><strong class="fx-empty__title">No job history yet</strong><span class="fx-empty__text">Past jobs will show here.</span></div>');
+    (history.length ? history.map(function(item){ return card(item.service || "Job", ["Date: " + date(item.date), "Time: " + (item.start_time || "") + " - " + (item.end_time || "")], item.status, jobHistoryActions(item)); }).join("") : '<div class="panel empty-panel fx-empty"><strong class="fx-empty__title">No job history yet</strong><span class="fx-empty__text">Past jobs will show here.</span></div>');
 }
 
 function renderOffers(){
@@ -1524,6 +1608,91 @@ document.querySelector(".page").addEventListener("click", function(ev){
   }
   if(action === "mark-notification-read"){
     void markNotificationRead(btn.getAttribute("data-customer-notification-id"));
+    return;
+  }
+  if(action === "refresh-referral-code"){
+    void (async function(){
+      const r = await customerFetch(API + "/customer/referrals/code", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: "{}"
+      });
+      const d = await r.json().catch(function(){ return {}; });
+      if(!r.ok){
+        AppUI.showToast(d.error || "Unable to load referral code.", "error");
+        return;
+      }
+      AppUI.showToast("Your referral code: " + String(d.code || ""), "success");
+      await hydrateCustomerGrowthExtras();
+    })();
+    return;
+  }
+  if(action === "customer-rebook-open"){
+    const notes = window.prompt("Optional note for your provider:", "") || "";
+    const cl = state.client || state.customer || {};
+    const companyId = cl.company_id != null ? Number(cl.company_id) : null;
+    if(!companyId){
+      AppUI.showToast("Company context missing for this account.", "error");
+      return;
+    }
+    const jobsList = state.jobs || [];
+    let sourceJobId = null;
+    for(let i = 0; i < jobsList.length; i += 1){
+      const st = String(jobsList[i].status || "").toLowerCase();
+      if(st === "completed"){
+        sourceJobId = jobsList[i].id;
+        break;
+      }
+    }
+    void (async function(){
+      const r = await customerFetch(API + "/customer/rebook", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          company_id: companyId,
+          notes: notes,
+          requested_date: "",
+          source_job_id: sourceJobId
+        })
+      });
+      const d = await r.json().catch(function(){ return {}; });
+      if(!r.ok){
+        AppUI.showToast(d.error || "Unable to record rebook intent.", "error");
+        return;
+      }
+      AppUI.showToast(d.message || "Rebook intent recorded.", "success");
+      AppUI.showToast("Share FairLinx: open Dashboard referral tools to invite friends.", "success");
+    })();
+    return;
+  }
+  if(action === "customer-rebook-job"){
+    const jid = Number(btn.getAttribute("data-job-id"));
+    const cl = state.client || state.customer || {};
+    const companyId = cl.company_id != null ? Number(cl.company_id) : null;
+    if(!companyId || !jid){
+      AppUI.showToast("Missing job or company context.", "error");
+      return;
+    }
+    void (async function(){
+      const r = await customerFetch(API + "/customer/rebook", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          company_id: companyId,
+          notes: "",
+          requested_date: "",
+          source_job_id: jid
+        })
+      });
+      const d = await r.json().catch(function(){ return {}; });
+      if(!r.ok){
+        AppUI.showToast(d.error || "Unable to record rebook intent.", "error");
+        return;
+      }
+      AppUI.showToast(d.message || "Rebook intent recorded.", "success");
+      AppUI.showToast("Invite neighbors: Dashboard → Growth extras → referral code.", "success");
+    })();
+    return;
   }
 });
 

@@ -21,6 +21,8 @@ const {
   loadPortalScopes,
   tokenClientBelongsToScopes
 } = require("../services/customerPortalScope");
+const discoveryService = require("../services/discoveryService");
+const referralEngineService = require("../services/referralEngineService");
 
 const router = express.Router();
 
@@ -77,6 +79,44 @@ function normalizePhone(value) {
 }
 
 const ELIGIBLE_MARKETPLACE_BILLING_STATUSES = ["trial", "trialing", "active"];
+
+router.get("/marketplace/discovery/top-rated", async (req, res) => {
+  try {
+    const parsed = Number(req.query.limit);
+    const rows = await discoveryService.getDiscoveryTopRated(
+      Number.isInteger(parsed) && parsed > 0 ? parsed : 12
+    );
+    res.json({ block: "top_rated", companies: rows });
+  } catch (err) {
+    return sendSafeServerError(res, err, "MARKETPLACE DISCOVERY TOP RATED ERROR");
+  }
+});
+
+router.get("/marketplace/discovery/fastest-responders", async (req, res) => {
+  try {
+    const parsed = Number(req.query.limit);
+    const rows = await discoveryService.getDiscoveryFastestResponders(
+      Number.isInteger(parsed) && parsed > 0 ? parsed : 12
+    );
+    res.json({ block: "fastest_responders", companies: rows });
+  } catch (err) {
+    return sendSafeServerError(res, err, "MARKETPLACE DISCOVERY FASTEST RESPONDERS ERROR");
+  }
+});
+
+router.get("/marketplace/discovery/trending-services", async (req, res) => {
+  try {
+    const catLimit = Number(req.query.categories_limit);
+    const coLimit = Number(req.query.companies_per_category);
+    const payload = await discoveryService.getDiscoveryTrendingServices(
+      Number.isInteger(catLimit) && catLimit > 0 ? catLimit : 8,
+      Number.isInteger(coLimit) && coLimit > 0 ? coLimit : 4
+    );
+    res.json({ block: "trending_services", ...payload });
+  } catch (err) {
+    return sendSafeServerError(res, err, "MARKETPLACE DISCOVERY TRENDING SERVICES ERROR");
+  }
+});
 
 function safeTime(value, fallback) {
   const raw = cleanText(value);
@@ -434,6 +474,13 @@ router.post("/marketplace/requests", customerAuth, marketplaceCustomerRequestCre
       console.log("MARKETPLACE REQUEST FOUNDATION LOG ERROR:", logErr && logErr.message);
     }
 
+    const referralRaw = cleanText(req.body && req.body.referral_code);
+    if (referralRaw) {
+      referralEngineService
+        .trackReferralMarketplaceRequest(referralRaw, created.rows[0].id, {})
+        .catch(() => {});
+    }
+
     return res.status(201).json(withModerationFlag(created.rows[0], res));
   } catch (err) {
     return sendSafeServerError(res, err, "MARKETPLACE REQUEST CREATE ERROR");
@@ -606,152 +653,173 @@ router.get("/marketplace/requests/:id/matches", customerAuth, async (req, res) =
     const matches = await pool.query(
       `
       SELECT
-        c.id,
-        c.name,
-        c.phone,
-        c.email,
-        c.address,
-        c.public_slug,
-        c.public_description,
-        c.logo_url,
-        c.cover_image_url,
-        c.gallery_urls,
-        c.website_url,
-        c.facebook_url,
-        c.instagram_url,
-        c.is_public,
-        c.billing_status,
-        c.platform_suspended_at,
-        COALESCE(rev.average_rating, 0)::numeric AS average_rating,
-        COALESCE(rev.review_count, 0)::int AS review_count,
-        GREATEST(0, LEAST(1, 1 - (COALESCE(resp.avg_response_seconds, 86400) / 86400.0)))::numeric AS response_speed_score,
-        COALESCE(acc.acceptance_rate, 0)::numeric AS acceptance_rate,
-        COALESCE(comp.completion_rate, 0)::numeric AS completion_rate,
-        COALESCE(fav.favorites_count, 0)::int AS favorites_count,
-        COALESCE(fol.follows_count, 0)::int AS follows_count,
-        MAX(
-          CASE
-            WHEN $2 <> '' AND LEFT(REGEXP_REPLACE(COALESCE(csa.zip_code, ''), '[^0-9]', '', 'g'), 5) = $2 THEN 1.0
-            WHEN $3 <> '' AND LOWER(csa.city) = $3 THEN 0.65
-            WHEN $4 <> '' AND UPPER(csa.state) = $4 THEN 0.35
-            ELSE 0
-          END
-        )::numeric AS proximity_score,
-        (
-          (COALESCE(rev.average_rating, 0) / 5.0) * 24 +
-          (LEAST(1, LN(1 + COALESCE(rev.review_count, 0)) / LN(51))) * 7 +
-          (GREATEST(0, LEAST(1, 1 - (COALESCE(resp.avg_response_seconds, 86400) / 86400.0)))) * 11 +
-          (COALESCE(acc.acceptance_rate, 0)) * 11 +
-          (COALESCE(comp.completion_rate, 0)) * 10 +
-          (MAX(
+        sq_inner.*,
+        COALESCE(sq_inner.cmr_ranking, sq_inner.legacy_ranking_score)::numeric(10,4) AS ranking_score,
+        COALESCE(cts.badges, '[]'::jsonb) AS trust_badges
+      FROM (
+        SELECT
+          c.id,
+          c.name,
+          c.phone,
+          c.email,
+          c.address,
+          c.public_slug,
+          c.public_description,
+          c.logo_url,
+          c.cover_image_url,
+          c.gallery_urls,
+          c.website_url,
+          c.facebook_url,
+          c.instagram_url,
+          c.is_public,
+          c.is_verified,
+          c.billing_status,
+          c.platform_suspended_at,
+          COALESCE(rev.average_rating, 0)::numeric AS average_rating,
+          COALESCE(rev.review_count, 0)::int AS review_count,
+          GREATEST(0, LEAST(1, 1 - (COALESCE(resp.avg_response_seconds, 86400) / 86400.0)))::numeric AS response_speed_score,
+          COALESCE(acc.acceptance_rate, 0)::numeric AS acceptance_rate,
+          COALESCE(comp.completion_rate, 0)::numeric AS completion_rate,
+          COALESCE(fav.favorites_count, 0)::int AS favorites_count,
+          COALESCE(fol.follows_count, 0)::int AS follows_count,
+          MAX(
             CASE
               WHEN $2 <> '' AND LEFT(REGEXP_REPLACE(COALESCE(csa.zip_code, ''), '[^0-9]', '', 'g'), 5) = $2 THEN 1.0
               WHEN $3 <> '' AND LOWER(csa.city) = $3 THEN 0.65
               WHEN $4 <> '' AND UPPER(csa.state) = $4 THEN 0.35
               ELSE 0
             END
-          )) * 18 +
-          (CASE WHEN c.billing_status IN ('active', 'trialing') THEN 1 ELSE 0 END) * 6 +
-          (CASE WHEN c.is_verified = TRUE THEN 1 ELSE 0 END) * 6 +
-          (LEAST(1, LN(1 + COALESCE(fav.favorites_count, 0)) / LN(51))) * 4 +
-          (LEAST(1, LN(1 + COALESCE(fol.follows_count, 0)) / LN(51))) * 3
-        )::numeric(10,4) AS ranking_score
-      FROM companies c
-      JOIN company_services cs
-        ON cs.company_id = c.id
-       AND cs.active = TRUE
-       AND cs.category_id = $1
-      JOIN company_service_areas csa
-        ON csa.company_id = c.id
-       AND csa.active = TRUE
-      LEFT JOIN (
-        SELECT
-          company_id,
-          AVG(rating)::numeric AS average_rating,
-          COUNT(*)::int AS review_count
-        FROM company_reviews
-        GROUP BY company_id
-      ) rev
-        ON rev.company_id = c.id
-      LEFT JOIN (
-        SELECT
-          mo.company_id,
-          AVG(EXTRACT(EPOCH FROM (mo.created_at - mr.created_at)))::numeric AS avg_response_seconds
-        FROM marketplace_offers mo
-        JOIN marketplace_requests mr
-          ON mr.id = mo.request_id
-        WHERE mo.created_at >= mr.created_at
-        GROUP BY mo.company_id
-      ) resp
-        ON resp.company_id = c.id
-      LEFT JOIN (
-        SELECT
-          company_id,
-          (COUNT(*) FILTER (WHERE status = 'accepted'))::numeric / NULLIF(COUNT(*)::numeric, 0) AS acceptance_rate
-        FROM marketplace_offers
-        GROUP BY company_id
-      ) acc
-        ON acc.company_id = c.id
-      LEFT JOIN (
-        SELECT
-          mo.company_id,
-          (COUNT(*) FILTER (WHERE mo.status = 'accepted' AND mr.converted_at IS NOT NULL))::numeric
-            / NULLIF((COUNT(*) FILTER (WHERE mo.status = 'accepted'))::numeric, 0) AS completion_rate
-        FROM marketplace_offers mo
-        LEFT JOIN marketplace_requests mr
-          ON mr.accepted_offer_id = mo.id
-        GROUP BY mo.company_id
-      ) comp
-        ON comp.company_id = c.id
-      LEFT JOIN (
-        SELECT company_id, COUNT(*)::int AS favorites_count
-        FROM customer_favorites
-        GROUP BY company_id
-      ) fav
-        ON fav.company_id = c.id
-      LEFT JOIN (
-        SELECT company_id, COUNT(*)::int AS follows_count
-        FROM customer_company_follows
-        GROUP BY company_id
-      ) fol
-        ON fol.company_id = c.id
-      WHERE c.is_public = TRUE
-        AND c.platform_suspended_at IS NULL
-        AND c.billing_status = ANY($7::text[])
-        AND (
-          ($2 <> '' AND LEFT(REGEXP_REPLACE(COALESCE(csa.zip_code, ''), '[^0-9]', '', 'g'), 5) = $2)
-          OR ($3 <> '' AND LOWER(csa.city) = $3)
-          OR ($4 <> '' AND UPPER(csa.state) = $4)
-        )
-      GROUP BY
-        c.id,
-        c.name,
-        c.phone,
-        c.email,
-        c.address,
-        c.public_slug,
-        c.public_description,
-        c.logo_url,
-        c.cover_image_url,
-        c.gallery_urls,
-        c.website_url,
-        c.facebook_url,
-        c.instagram_url,
-        c.is_public,
-        c.billing_status,
-        c.platform_suspended_at,
-        rev.average_rating,
-        rev.review_count,
-        resp.avg_response_seconds,
-        acc.acceptance_rate,
-        comp.completion_rate,
-        fav.favorites_count,
-        fol.follows_count
-      ORDER BY ranking_score DESC, c.id ASC
+          )::numeric AS proximity_score,
+          MAX(cmr.ranking_score)::numeric AS cmr_ranking,
+          (
+            (COALESCE(rev.average_rating, 0) / 5.0) * 24 +
+            (LEAST(1, LN(1 + COALESCE(rev.review_count, 0)) / LN(51))) * 7 +
+            (GREATEST(0, LEAST(1, 1 - (COALESCE(resp.avg_response_seconds, 86400) / 86400.0)))) * 11 +
+            (COALESCE(acc.acceptance_rate, 0)) * 11 +
+            (COALESCE(comp.completion_rate, 0)) * 10 +
+            (MAX(
+              CASE
+                WHEN $2 <> '' AND LEFT(REGEXP_REPLACE(COALESCE(csa.zip_code, ''), '[^0-9]', '', 'g'), 5) = $2 THEN 1.0
+                WHEN $3 <> '' AND LOWER(csa.city) = $3 THEN 0.65
+                WHEN $4 <> '' AND UPPER(csa.state) = $4 THEN 0.35
+                ELSE 0
+              END
+            )) * 18 +
+            (CASE WHEN c.billing_status IN ('active', 'trialing') THEN 1 ELSE 0 END) * 6 +
+            (CASE WHEN c.is_verified = TRUE THEN 1 ELSE 0 END) * 6 +
+            (LEAST(1, LN(1 + COALESCE(fav.favorites_count, 0)) / LN(51))) * 4 +
+            (LEAST(1, LN(1 + COALESCE(fol.follows_count, 0)) / LN(51))) * 3
+          )::numeric(10,4) AS legacy_ranking_score
+        FROM companies c
+        JOIN company_services cs
+          ON cs.company_id = c.id
+         AND cs.active = TRUE
+         AND cs.category_id = $1
+        JOIN company_service_areas csa
+          ON csa.company_id = c.id
+         AND csa.active = TRUE
+        LEFT JOIN company_marketplace_rankings cmr
+          ON cmr.company_id = c.id
+        LEFT JOIN (
+          SELECT
+            company_id,
+            AVG(rating)::numeric AS average_rating,
+            COUNT(*)::int AS review_count
+          FROM company_reviews
+          GROUP BY company_id
+        ) rev
+          ON rev.company_id = c.id
+        LEFT JOIN (
+          SELECT
+            mo.company_id,
+            AVG(EXTRACT(EPOCH FROM (mo.created_at - mr.created_at)))::numeric AS avg_response_seconds
+          FROM marketplace_offers mo
+          JOIN marketplace_requests mr
+            ON mr.id = mo.request_id
+          WHERE mo.created_at >= mr.created_at
+          GROUP BY mo.company_id
+        ) resp
+          ON resp.company_id = c.id
+        LEFT JOIN (
+          SELECT
+            company_id,
+            (COUNT(*) FILTER (WHERE status = 'accepted'))::numeric / NULLIF(COUNT(*)::numeric, 0) AS acceptance_rate
+          FROM marketplace_offers
+          GROUP BY company_id
+        ) acc
+          ON acc.company_id = c.id
+        LEFT JOIN (
+          SELECT
+            mo.company_id,
+            (COUNT(*) FILTER (WHERE mo.status = 'accepted' AND mr.converted_at IS NOT NULL))::numeric
+              / NULLIF((COUNT(*) FILTER (WHERE mo.status = 'accepted'))::numeric, 0) AS completion_rate
+          FROM marketplace_offers mo
+          LEFT JOIN marketplace_requests mr
+            ON mr.accepted_offer_id = mo.id
+          GROUP BY mo.company_id
+        ) comp
+          ON comp.company_id = c.id
+        LEFT JOIN (
+          SELECT company_id, COUNT(*)::int AS favorites_count
+          FROM customer_favorites
+          GROUP BY company_id
+        ) fav
+          ON fav.company_id = c.id
+        LEFT JOIN (
+          SELECT company_id, COUNT(*)::int AS follows_count
+          FROM customer_company_follows
+          GROUP BY company_id
+        ) fol
+          ON fol.company_id = c.id
+        WHERE c.is_public = TRUE
+          AND c.platform_suspended_at IS NULL
+          AND c.billing_status = ANY($7::text[])
+          AND (
+            ($2 <> '' AND LEFT(REGEXP_REPLACE(COALESCE(csa.zip_code, ''), '[^0-9]', '', 'g'), 5) = $2)
+            OR ($3 <> '' AND LOWER(csa.city) = $3)
+            OR ($4 <> '' AND UPPER(csa.state) = $4)
+          )
+        GROUP BY
+          c.id,
+          c.name,
+          c.phone,
+          c.email,
+          c.address,
+          c.public_slug,
+          c.public_description,
+          c.logo_url,
+          c.cover_image_url,
+          c.gallery_urls,
+          c.website_url,
+          c.facebook_url,
+          c.instagram_url,
+          c.is_public,
+          c.is_verified,
+          c.billing_status,
+          c.platform_suspended_at,
+          rev.average_rating,
+          rev.review_count,
+          resp.avg_response_seconds,
+          acc.acceptance_rate,
+          comp.completion_rate,
+          fav.favorites_count,
+          fol.follows_count
+      ) sq_inner
+      LEFT JOIN company_trust_scores cts ON cts.company_id = sq_inner.id
+      ORDER BY
+        COALESCE(sq_inner.cmr_ranking, sq_inner.legacy_ranking_score) DESC,
+        COALESCE(cts.trust_score, 50) DESC,
+        COALESCE(cts.reputation_score, LEAST(100, COALESCE(sq_inner.average_rating, 0) * 20)) DESC,
+        sq_inner.id ASC
       LIMIT $5 OFFSET $6
       `,
       [request.category_id, requestZip, requestCity, requestState, limit, offset, ELIGIBLE_MARKETPLACE_BILLING_STATUSES]
     );
+
+    for (const row of matches.rows) {
+      delete row.cmr_ranking;
+      delete row.legacy_ranking_score;
+    }
 
     return res.json({
       request_id: request.id,
@@ -1394,12 +1462,19 @@ router.get("/marketplace/requests/:id/offers", customerAuth, async (req, res) =>
         mo.created_at,
         c.name AS company_name,
         c.public_slug,
-        c.logo_url
+        c.logo_url,
+        c.is_verified,
+        COALESCE(cts.badges, '[]'::jsonb) AS trust_badges,
+        COALESCE(cmr.ranking_score, 0)::numeric AS marketplace_ranking_score
       FROM marketplace_offers mo
       JOIN companies c
         ON c.id = mo.company_id
+      LEFT JOIN company_trust_scores cts
+        ON cts.company_id = c.id
+      LEFT JOIN company_marketplace_rankings cmr
+        ON cmr.company_id = c.id
       WHERE mo.request_id = $1
-      ORDER BY mo.created_at DESC, mo.id DESC
+      ORDER BY COALESCE(cmr.ranking_score, 0) DESC, mo.created_at DESC, mo.id DESC
       LIMIT $2 OFFSET $3
       `,
       [requestId, limit, offset]

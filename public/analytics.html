@@ -464,6 +464,9 @@
     <button type="button" class="tab fx-badge fx-badge--neutral" data-analytics-tab="pro">Pro</button>
     <button type="button" class="tab fx-badge fx-badge--neutral" data-analytics-tab="workers">Workers</button>
     <button type="button" class="tab fx-badge fx-badge--neutral" data-analytics-tab="clients">Clients</button>
+    <button type="button" class="tab fx-badge fx-badge--neutral" data-analytics-tab="growth">Growth OS</button>
+    <button type="button" class="tab fx-badge fx-badge--neutral" data-analytics-tab="trustGraph">Trust Graph</button>
+    <button type="button" class="tab fx-badge fx-badge--neutral" data-analytics-tab="referralEngine">Referrals</button>
   </div>
 
   <div id="overview" class="section active">
@@ -538,6 +541,59 @@
       </table>
     </div>
   </div>
+
+  <div id="growth" class="section">
+    <div class="panel fx-card">
+      <h3 class="chart-title">Trust &amp; reputation</h3>
+      <div id="growthTrustBlock" class="kpi-grid"></div>
+    </div>
+    <div class="panel fx-card">
+      <h3 class="chart-title">Growth foundation</h3>
+      <div id="growthFoundationBlock" class="compact-list"></div>
+    </div>
+    <div class="panel fx-card">
+      <h3 class="chart-title">Growth OS — funnel, revenue, retention</h3>
+      <div id="growthOsCoreBlock" class="kpi-grid"></div>
+    </div>
+    <div class="panel fx-card">
+      <h3 class="chart-title">Customer retention</h3>
+      <div id="growthRetentionBlock" class="compact-list"></div>
+    </div>
+    <div class="panel fx-card">
+      <h3 class="chart-title">Referrals (company)</h3>
+      <div id="growthReferralBlock" class="compact-list"></div>
+    </div>
+  </div>
+
+  <div id="trustGraph" class="section">
+    <div class="panel fx-card">
+      <h3 class="chart-title">Trust network</h3>
+      <div id="trustGraphNetworkBlock" class="kpi-grid"></div>
+    </div>
+    <div class="panel fx-card">
+      <h3 class="chart-title">Loyal customer segments</h3>
+      <div id="trustGraphSegmentsBlock" class="compact-list"></div>
+    </div>
+    <div class="panel fx-card">
+      <h3 class="chart-title">Service affinity</h3>
+      <div id="trustGraphServicesBlock" class="compact-list"></div>
+    </div>
+  </div>
+
+  <div id="referralEngine" class="section">
+    <div class="panel fx-card">
+      <h3 class="chart-title">Referral summary</h3>
+      <div id="referralEngineSummaryBlock" class="compact-list"></div>
+    </div>
+    <div class="panel fx-card">
+      <h3 class="chart-title">Advocate leaderboard</h3>
+      <div id="referralEngineLeaderboardBlock" class="compact-list"></div>
+    </div>
+    <div class="panel fx-card">
+      <h3 class="chart-title">Recent referral events</h3>
+      <div id="referralEngineEventsBlock" class="compact-list"></div>
+    </div>
+  </div>
 </div>
 
 <script src="/js/ui.js"></script>
@@ -594,7 +650,8 @@ function getUser(){
 }
 
 function allowed(){
-  return ["owner","admin"].includes(getUser().role);
+  const r = String(getUser().role || "").toLowerCase();
+  return ["owner","admin","manager"].includes(r);
 }
 
 function showSection(id, button){
@@ -881,6 +938,233 @@ function renderEndpointError(targetId, title, reason){
   setHtml(targetId, errorState(title, reason || "Request failed."));
 }
 
+function renderKeyValueRows(targetId, obj, limit){
+  const target = el(targetId);
+  if(!target) return;
+  if(!obj || typeof obj !== "object"){
+    target.innerHTML = emptyState("No data", "");
+    return;
+  }
+  const rows = Object.keys(obj).filter(function(k){
+    const v = obj[k];
+    return v != null && typeof v !== "object";
+  }).slice(0, limit || 24);
+  if(!rows.length){
+    target.innerHTML = emptyState("No scalar metrics", "Nested objects omitted.");
+    return;
+  }
+  target.innerHTML = rows.map(function(k){
+    return '<div class="compact-row"><span>' + esc(k.replace(/_/g, " ")) + '</span><strong>' + esc(String(obj[k])) + '</strong></div>';
+  }).join("");
+}
+
+function pctDisplay(value){
+  const x = Number(value || 0);
+  if(!Number.isFinite(x)) return "—";
+  return (x * 100).toFixed(1) + "%";
+}
+
+async function loadReferralEngineSections(){
+  const role = String(getUser().role || "").toLowerCase();
+  if(!["owner","admin","manager"].includes(role)){
+    setHtml("referralEngineSummaryBlock", emptyState("Unavailable", "Referral analytics require manager access."));
+    setHtml("referralEngineLeaderboardBlock", "");
+    setHtml("referralEngineEventsBlock", "");
+    return;
+  }
+
+  const settled = await Promise.allSettled([
+    loadJson("/referrals/company").catch(function(e){ throw e; }),
+    loadJson("/referrals/company/leaderboard?limit=15").catch(function(e){ throw e; }),
+    loadJson("/referrals/company/events?limit=25").catch(function(e){ throw e; })
+  ]);
+
+  const sum = settled[0].status === "fulfilled" ? settled[0].value : null;
+  const lb = settled[1].status === "fulfilled" ? settled[1].value : null;
+  const ev = settled[2].status === "fulfilled" ? settled[2].value : null;
+
+  if(sum && sum.summary){
+    const r = sum.summary.referrals || {};
+    const bs = r.by_status || {};
+    setHtml("referralEngineSummaryBlock",
+      '<div class="compact-row"><span>Total tracked</span><strong>' + esc(String(r.total != null ? r.total : 0)) + "</strong></div>" +
+      '<div class="compact-row"><span>Pending</span><strong>' + esc(String(bs.pending || 0)) + "</strong></div>" +
+      '<div class="compact-row"><span>Qualified</span><strong>' + esc(String(bs.qualified || 0)) + "</strong></div>" +
+      '<div class="compact-row"><span>Rewarded</span><strong>' + esc(String(bs.rewarded || 0)) + "</strong></div>" +
+      '<div class="compact-row"><span>Active codes</span><strong>' + esc(String(sum.summary.active_codes || 0)) + "</strong></div>"
+    );
+  } else {
+    setHtml("referralEngineSummaryBlock", errorState("Referral summary", settled[0].reason && settled[0].reason.message));
+  }
+
+  if(lb && Array.isArray(lb.leaderboard)){
+    const lines = lb.leaderboard.map(function(row){
+      const label = row.customer_account_id != null ? ("Customer account " + row.customer_account_id) : ("Company code " + row.referral_code_id);
+      return '<div class="compact-row"><span>' + esc(label) + '</span><strong>' + esc(String(row.conversions || 0)) + " conversions</strong></div>";
+    });
+    setHtml("referralEngineLeaderboardBlock", lines.length ? lines.join("") : emptyState("Leaderboard", "No conversions recorded yet."));
+  } else {
+    setHtml("referralEngineLeaderboardBlock", errorState("Leaderboard", settled[1].reason && settled[1].reason.message));
+  }
+
+  if(ev && Array.isArray(ev.events)){
+    const lines = ev.events.slice(0, 25).map(function(row){
+      const when = row.created_at ? String(row.created_at).replace("T", " ").slice(0, 19) : "";
+      return '<div class="compact-row"><span>' + esc(row.event_type || "") + " · " + esc(when) + '</span><strong>#' + esc(String(row.id || "")) + "</strong></div>";
+    });
+    setHtml("referralEngineEventsBlock", lines.length ? lines.join("") : emptyState("Events", "No referral events yet."));
+  } else {
+    setHtml("referralEngineEventsBlock", errorState("Events", settled[2].reason && settled[2].reason.message));
+  }
+}
+
+async function loadTrustGraphSections(){
+  const role = String(getUser().role || "").toLowerCase();
+  if(!["owner","admin","manager"].includes(role)){
+    setHtml("trustGraphNetworkBlock", emptyState("Unavailable", "Trust graph requires manager access."));
+    setHtml("trustGraphSegmentsBlock", "");
+    setHtml("trustGraphServicesBlock", "");
+    return;
+  }
+
+  const settled = await Promise.allSettled([
+    loadJson("/analytics/trust-graph/network").catch(function(e){ throw e; }),
+    loadJson("/analytics/trust-graph/customers").catch(function(e){ throw e; }),
+    loadJson("/analytics/trust-graph/services").catch(function(e){ throw e; })
+  ]);
+
+  const net = settled[0].status === "fulfilled" ? settled[0].value : null;
+  const cust = settled[1].status === "fulfilled" ? settled[1].value : null;
+  const svc = settled[2].status === "fulfilled" ? settled[2].value : null;
+
+  if(net){
+    setHtml("trustGraphNetworkBlock", [
+      kpi("Repeat clients ratio", pctDisplay(net.repeat_clients_ratio)),
+      kpi("Returning customer ratio", pctDisplay(net.returning_customer_ratio)),
+      kpi("Avg lifecycle value (paid)", money(net.average_lifecycle_value)),
+      kpi("Subscription retention ratio", pctDisplay(net.subscription_retention_ratio))
+    ].join(""));
+  } else {
+    renderEndpointError("trustGraphNetworkBlock", "Trust network", settled[0].reason && settled[0].reason.message);
+  }
+
+  if(cust && Array.isArray(cust.segments)){
+    const lines = cust.segments.map(function(seg){
+      return '<div class="compact-row"><span>' + esc(seg.label || seg.segment_key || "Segment") + "</span><strong>" + esc(String(seg.client_count || 0)) + " clients</strong></div>";
+    });
+    setHtml("trustGraphSegmentsBlock", lines.length ? lines.join("") : emptyState("Segments", "No loyalty segments detected."));
+  } else {
+    setHtml("trustGraphSegmentsBlock", errorState("Trust segments", settled[1].reason && settled[1].reason.message));
+  }
+
+  if(svc){
+    const catLines = (svc.category_affinity || []).slice(0, 12).map(function(row){
+      return '<div class="compact-row"><span>' + esc(row.category_name || row.slug || "") + "</span><strong>" + esc(String(row.completed_jobs || 0)) + " jobs</strong></div>";
+    });
+    const patLines = (svc.service_patterns || []).slice(0, 12).map(function(row){
+      return '<div class="compact-row"><span>' + esc(row.label || row.pattern_key || "") + "</span><strong>" + esc(String(row.completed_jobs || 0)) + " jobs</strong></div>";
+    });
+    const html = (catLines.length ? "<div class=\"muted\" style=\"margin-bottom:8px;\">Categories</div>" + catLines.join("") : "") +
+      (patLines.length ? "<div class=\"muted\" style=\"margin:12px 0 8px;\">Job title patterns</div>" + patLines.join("") : "");
+    setHtml("trustGraphServicesBlock", html || emptyState("Service affinity", "No category matches yet."));
+  } else {
+    setHtml("trustGraphServicesBlock", errorState("Service affinity", settled[2].reason && settled[2].reason.message));
+  }
+}
+
+async function loadGrowthOsSections(){
+  const role = String(getUser().role || "").toLowerCase();
+  if(!["owner","admin","manager"].includes(role)){
+    setHtml("growthTrustBlock", emptyState("Unavailable", "Growth OS requires manager access."));
+    return;
+  }
+
+  const settled = await Promise.allSettled([
+    loadJson("/analytics/trust-reputation").catch(function(e){ throw e; }),
+    loadJson("/analytics/growth-foundation").catch(function(e){ throw e; }),
+    loadJson("/analytics/growth-os/funnel").catch(function(e){ throw e; }),
+    loadJson("/analytics/growth-os/revenue").catch(function(e){ throw e; }),
+    loadJson("/analytics/growth-os/lost-revenue").catch(function(e){ throw e; }),
+    loadJson("/analytics/growth-os/retention").catch(function(e){ throw e; }),
+    loadJson("/analytics/growth-os/marketplace").catch(function(e){ throw e; }),
+    loadJson("/analytics/growth-os/client-value").catch(function(e){ throw e; }),
+    loadJson("/analytics/customer-retention").catch(function(e){ throw e; }),
+    loadJson("/referrals/company").catch(function(e){ throw e; })
+  ]);
+
+  const trust = settled[0].status === "fulfilled" ? settled[0].value : null;
+  const gf = settled[1].status === "fulfilled" ? settled[1].value : null;
+  const funnel = settled[2].status === "fulfilled" ? settled[2].value : null;
+  const rev = settled[3].status === "fulfilled" ? settled[3].value : null;
+  const lost = settled[4].status === "fulfilled" ? settled[4].value : null;
+  const ret = settled[5].status === "fulfilled" ? settled[5].value : null;
+  const mp = settled[6].status === "fulfilled" ? settled[6].value : null;
+  const cv = settled[7].status === "fulfilled" ? settled[7].value : null;
+  const cro = settled[8].status === "fulfilled" ? settled[8].value : null;
+  const ref = settled[9].status === "fulfilled" ? settled[9].value : null;
+
+  if(trust){
+    setHtml("growthTrustBlock", [
+      kpi("Trust score", trust.trust_score != null ? trust.trust_score : "—"),
+      kpi("Reputation", trust.reputation_score != null ? trust.reputation_score : "—"),
+      kpi("Verified", trust.verified ? "Yes" : "No")
+    ].join(""));
+  } else {
+    renderEndpointError("growthTrustBlock", "Trust data", settled[0].reason && settled[0].reason.message);
+  }
+
+  if(gf){
+    renderKeyValueRows("growthFoundationBlock", gf.metrics || gf, 20);
+  } else {
+    setHtml("growthFoundationBlock", errorState("Growth foundation", settled[1].reason && settled[1].reason.message));
+  }
+
+  const coreParts = [];
+  [funnel, rev, lost, ret, mp, cv].forEach(function(payload, idx){
+    if(!payload || typeof payload !== "object") return;
+    Object.keys(payload).slice(0, 8).forEach(function(k){
+      const v = payload[k];
+      if(v != null && typeof v !== "object"){
+        coreParts.push(kpi(k.replace(/_/g, " "), String(v)));
+      }
+    });
+  });
+  setHtml("growthOsCoreBlock", coreParts.length ? coreParts.join("") : emptyState("Growth OS metrics", "No scalar fields returned."));
+
+  if(cro){
+    const lines = [];
+    if(cro.trust_snapshot){
+      lines.push("<div class=\"compact-row\"><span>Trust snapshot</span><strong>included</strong></div>");
+    }
+    if(cro.rebook && cro.rebook.candidates){
+      lines.push('<div class="compact-row"><span>Rebook candidates</span><strong>' + esc(String(cro.rebook.candidates.length)) + "</strong></div>");
+    }
+    if(cro.reactivation && cro.reactivation.candidates){
+      lines.push('<div class="compact-row"><span>Reactivation candidates</span><strong>' + esc(String(cro.reactivation.candidates.length)) + "</strong></div>");
+    }
+    if(cro.subscription_renewals && cro.subscription_renewals.candidates){
+      lines.push('<div class="compact-row"><span>Renewal candidates</span><strong>' + esc(String(cro.subscription_renewals.candidates.length)) + "</strong></div>");
+    }
+    setHtml("growthRetentionBlock", lines.length ? lines.join("") : emptyState("Retention", "No summary rows."));
+  } else {
+    setHtml("growthRetentionBlock", errorState("Customer retention", settled[8].reason && settled[8].reason.message));
+  }
+
+  if(ref && ref.summary){
+    const s = ref.summary.referrals || {};
+    const bs = s.by_status || {};
+    const totalTracked = s.total != null ? s.total : 0;
+    setHtml("growthReferralBlock",
+      '<div class="compact-row"><span>Total referrals tracked</span><strong>' + esc(String(totalTracked)) + "</strong></div>" +
+      '<div class="compact-row"><span>Pending</span><strong>' + esc(String(bs.pending || 0)) + "</strong></div>" +
+      '<div class="compact-row"><span>Qualified</span><strong>' + esc(String(bs.qualified || 0)) + "</strong></div>" +
+      '<div class="compact-row"><span>Rewarded</span><strong>' + esc(String(bs.rewarded || 0)) + "</strong></div>"
+    );
+  } else {
+    setHtml("growthReferralBlock", errorState("Referrals", settled[9] && settled[9].reason ? settled[9].reason.message : "Unavailable"));
+  }
+}
+
 async function load(){
   if(!AppAuth.getToken()){
     window.location.href = "/login.html";
@@ -948,6 +1232,18 @@ async function load(){
     if(failed > 0) {
       AppUI.showToast("Some analytics sections could not load.", "error");
     }
+
+    await loadGrowthOsSections().catch(function(){
+      AppUI.showToast("Growth OS sections could not fully load.", "error");
+    });
+
+    await loadTrustGraphSections().catch(function(){
+      AppUI.showToast("Trust graph sections could not fully load.", "error");
+    });
+
+    await loadReferralEngineSections().catch(function(){
+      AppUI.showToast("Referral engine sections could not fully load.", "error");
+    });
   } catch(err){
     const message = err && err.message ? err.message : "Please refresh and try again.";
     renderLoadError(message);

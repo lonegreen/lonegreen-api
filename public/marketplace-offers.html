@@ -622,6 +622,14 @@
 
     <div id="globalStatus" class="status-line" role="status" aria-live="polite"></div>
 
+    <section id="offersTrustSnapshot" class="panel fx-card" style="display:none;margin-bottom:16px;" aria-label="Trust snapshot">
+      <div class="list-head">
+        <h2>Your company trust</h2>
+      </div>
+      <p class="subhead">Scores from analytics when available (staff token).</p>
+      <div id="offersTrustSnapshotBody" class="detail-grid"></div>
+    </section>
+
     <section class="flow-strip" aria-label="Marketplace lifecycle">
       <div class="flow-step">Opportunity</div>
       <div class="flow-step">Submit Offer</div>
@@ -678,7 +686,9 @@
         detailMeta: document.getElementById("detailMeta"),
         detailBadge: document.getElementById("detailBadge"),
         detailGrid: document.getElementById("detailGrid"),
-        requestSummary: document.getElementById("requestSummary")
+        requestSummary: document.getElementById("requestSummary"),
+        trustSnap: document.getElementById("offersTrustSnapshot"),
+        trustSnapBody: document.getElementById("offersTrustSnapshotBody")
       };
 
       function getToken() {
@@ -839,6 +849,32 @@
         els.requestSummary.textContent = requestSummary(item);
       }
 
+      async function loadTrustSnapshot() {
+        if (!els.trustSnap || !els.trustSnapBody) return;
+        try {
+          var res = await fetch("/analytics/trust-reputation", {
+            headers: { Authorization: "Bearer " + getToken() }
+          });
+          var payload = await res.json().catch(function() {
+            return {};
+          });
+          if (!res.ok) {
+            els.trustSnap.style.display = "none";
+            return;
+          }
+          els.trustSnap.style.display = "block";
+          els.trustSnapBody.innerHTML =
+            '<article class="detail-card"><span>Trust score</span><strong>' +
+            esc(String(payload.trust_score != null ? payload.trust_score : "—")) +
+            "</strong></article>" +
+            '<article class="detail-card"><span>Reputation</span><strong>' +
+            esc(String(payload.reputation_score != null ? payload.reputation_score : "—")) +
+            "</strong></article>";
+        } catch (_) {
+          els.trustSnap.style.display = "none";
+        }
+      }
+
       async function loadOffers() {
         setLine(els.globalStatus, "Loading offers inbox...", "");
         els.refreshBtn.disabled = true;
@@ -865,6 +901,7 @@
 
           renderList();
           renderDetail();
+          await loadTrustSnapshot();
           setLine(els.globalStatus, "Offers inbox updated.", "ok");
         } catch (err) {
           state.offers = [];
