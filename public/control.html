@@ -56,6 +56,20 @@
       display: flex;
     }
 
+    .sidebar-backdrop {
+      display: none;
+      position: fixed;
+      inset: 0;
+      border: 0;
+      background: rgba(17, 17, 17, 0.46);
+      z-index: 80;
+      cursor: pointer;
+    }
+
+    .sidebar-backdrop.visible {
+      display: block;
+    }
+
     .sidebar {
       width: 292px;
       height: 100vh;
@@ -68,6 +82,7 @@
       box-shadow: inset -1px 0 0 rgba(255, 255, 255, 0.06), 18px 0 46px rgba(17, 17, 17, 0.10);
       scrollbar-width: thin;
       scrollbar-color: rgba(255, 90, 0, 0.65) rgba(255, 255, 255, 0.06);
+      z-index: 90;
     }
 
     .sidebar::-webkit-scrollbar {
@@ -89,6 +104,27 @@
       padding: 8px 8px 18px;
       border-bottom: 1px solid rgba(255, 255, 255, 0.12);
       position: relative;
+    }
+
+    .brand-row {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .sidebar-close {
+      display: none;
+      width: 42px !important;
+      min-width: 42px;
+      height: 42px;
+      padding: 0 !important;
+      text-align: center !important;
+      border-radius: 14px !important;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px !important;
+      line-height: 1;
     }
 
     .brand::before {
@@ -223,6 +259,71 @@
       z-index: 10;
       backdrop-filter: blur(16px);
       box-shadow: 0 8px 22px rgba(17, 17, 17, 0.035);
+    }
+
+    .topbar-title-row {
+      display: flex;
+      align-items: center;
+      gap: 13px;
+      min-width: 0;
+    }
+
+    .menu-toggle {
+      display: none;
+      width: 44px;
+      min-width: 44px;
+      height: 44px;
+      padding: 0 !important;
+      align-items: center;
+      justify-content: center;
+      background: var(--shell-panel) !important;
+      color: var(--shell-text) !important;
+      border: 1px solid var(--shell-border) !important;
+      box-shadow: var(--shell-shadow-soft) !important;
+      font-size: 22px;
+    }
+
+    .page-kicker {
+      margin: 0 0 5px;
+      color: var(--shell-muted);
+      font-size: 12px;
+      font-weight: 800;
+      line-height: 1.2;
+    }
+
+    .breadcrumb {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      color: var(--shell-muted);
+      font-size: 12px;
+      font-weight: 800;
+      margin-top: 5px;
+    }
+
+    .breadcrumb span:last-child {
+      color: var(--shell-text);
+    }
+
+    .topbar-meta {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 8px;
+    }
+
+    .meta-pill {
+      display: inline-flex;
+      align-items: center;
+      min-height: 26px;
+      padding: 5px 9px;
+      border-radius: 999px;
+      background: #fff7f2;
+      border: 1px solid rgba(255, 90, 0, 0.16);
+      color: var(--shell-orange-hover);
+      font-size: 12px;
+      font-weight: 900;
     }
 
     .topbar h3 {
@@ -461,6 +562,71 @@
       font-weight: 900;
     }
 
+    .frame-error {
+      position: absolute;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      background: rgba(245, 245, 245, 0.90);
+      backdrop-filter: blur(5px);
+      z-index: 6;
+    }
+
+    .frame-error.visible {
+      display: flex;
+    }
+
+    .frame-error-card {
+      width: min(440px, 100%);
+      background: white;
+      border: 1px solid var(--shell-border);
+      border-radius: 22px;
+      box-shadow: var(--shell-shadow);
+      padding: 24px;
+      text-align: center;
+    }
+
+    .frame-error-card h4 {
+      margin: 0 0 9px;
+      color: var(--shell-text);
+      font-size: 22px;
+      line-height: 1.1;
+      letter-spacing: -0.03em;
+    }
+
+    .frame-error-card p {
+      margin: 0 0 18px;
+      color: var(--shell-muted);
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .frame-error-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: center;
+    }
+
+    .frame-error-actions button {
+      min-height: 42px;
+      padding: 10px 14px;
+      border-radius: 14px;
+      border: 1px solid var(--shell-border);
+      background: var(--shell-panel);
+      color: var(--shell-text);
+      font-weight: 900;
+      cursor: pointer;
+    }
+
+    .frame-error-actions button.primary {
+      background: var(--shell-orange);
+      color: white;
+      border-color: var(--shell-orange);
+    }
+
     .spinner {
       width: 17px;
       height: 17px;
@@ -507,24 +673,33 @@
 
       html,
       body {
-        height: auto;
+        height: 100%;
         min-height: 100%;
-        overflow: auto;
+        overflow: hidden;
       }
 
       body {
-        flex-direction: column;
-        overflow: auto;
+        flex-direction: row;
+        overflow: hidden;
       }
 
       .sidebar {
-        width: 100%;
-        height: auto;
-        max-height: 42vh;
+        position: fixed;
+        left: 0;
+        top: 0;
+        width: min(326px, 88vw);
+        height: 100vh;
+        max-height: none;
         padding: 16px;
-        border-right: none;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.10);
-        box-shadow: 0 18px 42px rgba(17, 17, 17, 0.18);
+        border-right: 1px solid rgba(255, 255, 255, 0.10);
+        border-bottom: none;
+        box-shadow: 18px 0 42px rgba(17, 17, 17, 0.28);
+        transform: translateX(-104%);
+        transition: transform var(--shell-transition);
+      }
+
+      .sidebar.open {
+        transform: translateX(0);
       }
 
       .brand {
@@ -548,13 +723,22 @@
         grid-column: 2;
       }
 
+      .sidebar-close {
+        display: inline-flex !important;
+      }
+
+      .menu-toggle {
+        display: inline-flex !important;
+      }
+
       .section-title {
         margin-top: 14px;
       }
 
       .main {
-        height: auto;
+        height: 100vh;
         min-height: 100vh;
+        width: 100%;
       }
 
       .topbar {
@@ -594,8 +778,8 @@
       }
 
       .content {
-        height: 78vh;
-        min-height: 78vh;
+        height: auto;
+        min-height: 0;
         padding: 10px;
       }
 
@@ -605,10 +789,6 @@
     }
 
     @media (max-width: 560px) {
-      .sidebar {
-        max-height: 46vh;
-      }
-
       .sidebar button {
         padding: 11px 12px;
         font-size: 13px;
@@ -661,37 +841,44 @@
       }
     })();
   </script>
-  <div class="sidebar">
+  <button id="sidebarBackdrop" class="sidebar-backdrop" type="button" aria-label="Close navigation menu"></button>
+  <div class="sidebar" id="appSidebar" aria-label="Primary navigation">
     <div class="brand">
-      <h2>FairLinx</h2>
-      <small id="sidebarCompany">Professional field service control</small>
+      <div class="brand-row">
+        <div>
+          <h2>FairLinx</h2>
+          <small id="sidebarCompany">Professional field service control</small>
+        </div>
+        <button id="sidebarClose" class="sidebar-close" type="button" aria-label="Close navigation menu">x</button>
+      </div>
     </div>
 
-    <div class="section-title" data-company-nav>Core</div>
+    <div class="section-title" data-company-nav>Main</div>
     <button data-page="dashboard.html">Dashboard</button>
+    <button data-page="analytics.html">Analytics</button>
+    <button data-page="messages.html">Messages</button>
+
+    <div class="section-title" data-company-nav>Workflow</div>
+    <button data-page="clients.html">Clients</button>
     <button data-page="jobs.html">Jobs</button>
     <button data-page="calendar.html">Calendar</button>
-    <button data-page="clients.html">Clients</button>
     <button data-page="estimates.html?view=estimates">Estimates</button>
     <button data-page="invoices.html">Invoices</button>
     <button data-page="subscriptions.html">Subscriptions</button>
-    <button data-page="workers.html">Workers</button>
-    <button data-page="analytics.html">Analytics</button>
 
-    <div class="section-title" data-company-nav>Marketplace</div>
+    <div class="section-title" data-company-nav>Operations</div>
+    <button data-page="workers.html">Workers</button>
     <button data-page="marketplace-dashboard.html">Marketplace Dashboard</button>
     <button data-page="marketplace-opportunities.html">Opportunities</button>
     <button data-page="marketplace-offers.html">Offers</button>
-    <button data-page="messages.html">Messages</button>
+
+    <div class="section-title" data-company-nav>Company</div>
     <button data-page="company-public-profile.html">Public Profile</button>
     <button data-page="company-services.html">Services</button>
     <button data-page="company-service-areas.html">Service Areas</button>
-
-    <div class="section-title" data-company-nav>Admin</div>
     <button data-page="users.html">Users</button>
     <button data-page="billing-plans.html">Billing</button>
     <button data-page="settings.html">Settings</button>
-    <button data-page="support.html" data-support-nav>Support</button>
 
     <div class="section-title" data-worker-nav>Worker</div>
     <button data-page="worker.html" data-worker-nav>Worker App</button>
@@ -704,25 +891,40 @@
     <button data-page="platform.html#health" data-platform-nav>System Health</button>
     <button data-page="platform.html#activity" data-platform-nav>Activity Logs</button>
     <button data-page="platform.html#settings" data-platform-nav>Settings</button>
-    <button data-page="support.html" data-platform-nav data-support-nav>Support</button>
+    <button data-page="platform.html#support" data-platform-nav data-support-nav>Support</button>
+
+    <div class="section-title" data-company-nav data-support-nav>Support</div>
+    <button data-page="support.html" data-support-nav>Support Center</button>
   </div>
 
   <div class="main">
     <div class="topbar">
-      <div>
-        <h3 id="welcome">Welcome</h3>
-        <small id="subwelcome">Control Panel</small>
+      <div class="topbar-title-row">
+        <button id="sidebarToggle" class="menu-toggle" type="button" aria-label="Open navigation menu">☰</button>
+        <div>
+          <p class="page-kicker" id="welcome">Welcome</p>
+          <h3 id="pageTitle">Dashboard</h3>
+          <div class="breadcrumb" aria-label="Breadcrumb">
+            <span>FairLinx</span>
+            <span>/</span>
+            <span id="breadcrumbPage">Dashboard</span>
+          </div>
+          <div class="topbar-meta">
+            <span id="subwelcome" class="meta-pill">Control Panel</span>
+            <span id="topbarCompany" class="meta-pill">Professional field service control</span>
+          </div>
+        </div>
       </div>
 
       <div class="actions">
-        <a href="#" class="notif-link" id="notifBellLink" title="Notifications">
+        <a href="#" class="notif-link" id="notifBellLink" title="Notifications" aria-label="Open notifications">
           <span>🔔</span><span id="notifCount" class="notif-count">0</span>
         </a>
         <button class="fx-btn fx-btn--primary shell-quick-action" data-page="clients.html">+ New Client</button>
         <button class="fx-btn fx-btn--primary shell-quick-action" data-page="estimates.html?view=leads">+ New Lead</button>
 
         <div class="user-menu">
-          <button type="button" class="fx-btn fx-btn--secondary user-trigger" id="userMenuButton">
+          <button type="button" class="fx-btn fx-btn--secondary user-trigger" id="userMenuButton" aria-label="Open account menu" aria-expanded="false">
             <span class="user-avatar" id="userAvatar">LG</span>
             <span id="userMenuLabel">Account</span>
             <span>▼</span>
@@ -731,7 +933,7 @@
           <div id="userDropdown" class="dropdown">
             <button type="button" data-user-action="settings">Settings</button>
             <div class="dropdown-divider"></div>
-            <button type="button" data-user-action="logout">Logout</button>
+            <button type="button" data-user-action="logout" aria-label="Log out">Logout</button>
           </div>
         </div>
       </div>
@@ -745,6 +947,16 @@
             <span>Loading page...</span>
           </div>
         </div>
+        <div id="frameError" class="frame-error" role="status" aria-live="polite">
+          <div class="frame-error-card">
+            <h4>Still loading this page</h4>
+            <p>The page is taking longer than expected. You can retry it or return to a safe starting point.</p>
+            <div class="frame-error-actions">
+              <button id="retryFrameBtn" class="primary" type="button">Retry</button>
+              <button id="fallbackFrameBtn" type="button">Back to Dashboard</button>
+            </div>
+          </div>
+        </div>
 
         <iframe id="frame" src="/dashboard.html"></iframe>
       </div>
@@ -754,6 +966,47 @@
   <script>
     const API = window.location.origin;
     let frameLoadingTimer = null;
+    let frameErrorTimer = null;
+    let currentFramePage = "dashboard.html";
+
+    const PAGE_LABELS = {
+      "dashboard.html": "Dashboard",
+      "marketplace-dashboard.html": "Marketplace Dashboard",
+      "marketplace-opportunities.html": "Opportunities",
+      "marketplace-offers.html": "Offers",
+      "messages.html": "Messages",
+      "company-public-profile.html": "Public Profile",
+      "company-services.html": "Services",
+      "company-service-areas.html": "Service Areas",
+      "clients.html": "Clients",
+      "client.html": "Client Profile",
+      "jobs.html": "Jobs",
+      "estimates.html": "Estimates",
+      "subscriptions.html": "Subscriptions",
+      "calendar.html": "Calendar",
+      "zip-manager.html": "ZIP Groups",
+      "workers.html": "Workers",
+      "invoices.html": "Invoices",
+      "invoice.html": "Invoice",
+      "worker.html": "Worker App",
+      "settings.html": "Settings",
+      "analytics.html": "Analytics",
+      "users.html": "Users",
+      "billing-plans.html": "Billing",
+      "platform.html": "Platform Overview",
+      "support.html": "Support"
+    };
+
+    const PLATFORM_HASH_LABELS = {
+      overview: "Platform Overview",
+      companies: "Companies",
+      billing: "Plans & Billing",
+      users: "Platform Users",
+      health: "System Health",
+      activity: "Activity Logs",
+      settings: "Platform Settings",
+      support: "Platform Support"
+    };
 
     const allowedPages = [
       "dashboard.html",
@@ -789,6 +1042,7 @@
       "platform.html#health",
       "platform.html#activity",
       "platform.html#settings",
+      "platform.html#support",
       "support.html"
     ];
 
@@ -827,6 +1081,7 @@
       "platform.html#health",
       "platform.html#activity",
       "platform.html#settings",
+      "platform.html#support",
       "support.html"
     ];
 
@@ -872,7 +1127,28 @@
     function isAllowedPage(page) {
       const cleanPage = String(page || "").replace(/^\/+/, "");
       const basePage = cleanPage.split(/[?#]/)[0];
+      if (!/^[a-z0-9_.-]+\.html(?:[?#][a-z0-9_=&.%-]+)?$/i.test(cleanPage)) {
+        console.warn("CONTROL_BLOCKED_UNSAFE_PAGE", { page });
+        return false;
+      }
       return allowedPages.includes(cleanPage) || allowedPages.includes(basePage);
+    }
+
+    function pageLabel(page) {
+      const cleanPage = String(page || "").replace(/^\/+/, "");
+      const basePage = cleanPage.split(/[?#]/)[0];
+      if (basePage === "platform.html") {
+        const hash = cleanPage.includes("#") ? cleanPage.split("#")[1] : "overview";
+        return PLATFORM_HASH_LABELS[hash] || "Platform Overview";
+      }
+      if (basePage === "estimates.html" && cleanPage.includes("view=leads")) return "Leads";
+      return PAGE_LABELS[basePage] || "Dashboard";
+    }
+
+    function fallbackPageForRole() {
+      if (isPlatformOwnerUser()) return "platform.html#overview";
+      if (isWorkerUser()) return WORKER_ALLOWED_PAGE;
+      return "dashboard.html";
     }
 
     function safePage(page) {
@@ -880,7 +1156,9 @@
 
       if (isPlatformOwnerUser()) {
         if (cleanPage === "support.html") return "support.html";
-        return cleanPage.startsWith("platform.html") ? cleanPage : "platform.html#overview";
+        return cleanPage.startsWith("platform.html") && isAllowedPage(cleanPage)
+          ? cleanPage
+          : fallbackPageForRole();
       }
 
       if (isWorkerUser()) {
@@ -891,7 +1169,16 @@
         return "dashboard.html";
       }
 
-      return isAllowedPage(cleanPage) ? cleanPage : "dashboard.html";
+      return isAllowedPage(cleanPage) ? cleanPage : fallbackPageForRole();
+    }
+
+    function updatePageChrome(page) {
+      const label = pageLabel(page);
+      document.title = label + " | FairLinx";
+      const title = document.getElementById("pageTitle");
+      const crumb = document.getElementById("breadcrumbPage");
+      if (title) title.textContent = label;
+      if (crumb) crumb.textContent = label;
     }
 
     function applyWorkerRoleProtection() {
@@ -957,8 +1244,8 @@
           button.disabled = !companyAdmin;
         });
         document.querySelectorAll(".section-title[data-company-nav]").forEach((sectionTitle) => {
-          if (sectionTitle.textContent.trim() === "Admin") {
-            sectionTitle.style.display = "";
+          if (sectionTitle.textContent.trim() === "Company") {
+            sectionTitle.style.display = companyAdmin ? "" : "none";
           }
         });
         return;
@@ -983,6 +1270,32 @@
       if (!savedPage || isWorkerBlockedPage(savedPage)) {
         localStorage.setItem("currentPage", WORKER_ALLOWED_PAGE);
       }
+    }
+
+    function openSidebar() {
+      const sidebar = document.getElementById("appSidebar");
+      const backdrop = document.getElementById("sidebarBackdrop");
+      if (sidebar) sidebar.classList.add("open");
+      if (backdrop) backdrop.classList.add("visible");
+    }
+
+    function closeSidebar() {
+      const sidebar = document.getElementById("appSidebar");
+      const backdrop = document.getElementById("sidebarBackdrop");
+      if (sidebar) sidebar.classList.remove("open");
+      if (backdrop) backdrop.classList.remove("visible");
+    }
+
+    function initMobileSidebar() {
+      const toggle = document.getElementById("sidebarToggle");
+      const close = document.getElementById("sidebarClose");
+      const backdrop = document.getElementById("sidebarBackdrop");
+      if (toggle) toggle.addEventListener("click", openSidebar);
+      if (close) close.addEventListener("click", closeSidebar);
+      if (backdrop) backdrop.addEventListener("click", closeSidebar);
+      document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape") closeSidebar();
+      });
     }
 
     function clearLoginStorage() {
@@ -1038,7 +1351,7 @@
 
       if (user && user.role) {
         document.getElementById("subwelcome").textContent =
-          user.role.charAt(0).toUpperCase() + user.role.slice(1) + " account";
+          user.role.replace(/_/g, " ").replace(/\b\w/g, (char) => char.toUpperCase()) + " account";
       } else if (user && user.company_id) {
         document.getElementById("subwelcome").textContent =
           "Company ID: " + user.company_id;
@@ -1063,16 +1376,42 @@
 
     function showFrameLoading() {
       const loader = document.getElementById("frameLoading");
+      const error = document.getElementById("frameError");
+      if (error) error.classList.remove("visible");
       if (loader) loader.classList.add("visible");
       clearTimeout(frameLoadingTimer);
-      frameLoadingTimer = setTimeout(hideFrameLoading, 2000);
+      clearTimeout(frameErrorTimer);
+      frameLoadingTimer = setTimeout(hideFrameLoading, 1800);
+      frameErrorTimer = setTimeout(showFrameError, 12000);
     }
 
     function hideFrameLoading() {
       const loader = document.getElementById("frameLoading");
       if (loader) loader.classList.remove("visible");
       clearTimeout(frameLoadingTimer);
+      clearTimeout(frameErrorTimer);
       frameLoadingTimer = null;
+      frameErrorTimer = null;
+    }
+
+    function showFrameError() {
+      const loader = document.getElementById("frameLoading");
+      const error = document.getElementById("frameError");
+      if (loader) loader.classList.remove("visible");
+      if (error) error.classList.add("visible");
+    }
+
+    function hideFrameError() {
+      const error = document.getElementById("frameError");
+      if (error) error.classList.remove("visible");
+    }
+
+    function updateFallbackButton() {
+      const button = document.getElementById("fallbackFrameBtn");
+      if (!button) return;
+      button.textContent = isPlatformOwnerUser()
+        ? "Back to Platform Overview"
+        : "Back to Dashboard";
     }
 
     function loadPage(page) {
@@ -1080,8 +1419,12 @@
       const frame = document.getElementById("frame");
       const nextSrc = "/" + finalPage;
 
+      currentFramePage = finalPage;
       localStorage.setItem("currentPage", finalPage);
       setActiveButton(finalPage);
+      updatePageChrome(finalPage);
+      updateFallbackButton();
+      hideFrameError();
 
       if (frame && frame.getAttribute("src") !== nextSrc) {
         showFrameLoading();
@@ -1152,8 +1495,10 @@
 
         if (companyRes.status === "fulfilled" && companyRes.value.ok) {
           const company = await companyRes.value.json();
-          document.getElementById("sidebarCompany").textContent =
-            company.name || "Professional field service control";
+          const companyName = company.name || "Professional field service control";
+          document.getElementById("sidebarCompany").textContent = companyName;
+          const topbarCompany = document.getElementById("topbarCompany");
+          if (topbarCompany) topbarCompany.textContent = companyName;
         }
       } catch (err) {
         console.log("SESSION SUMMARY ERROR:", err);
@@ -1182,6 +1527,7 @@
         button.addEventListener("click", (event) => {
           event.preventDefault();
           loadPage(button.getAttribute("data-page"));
+          closeSidebar();
         });
       });
 
@@ -1207,12 +1553,14 @@
       button.addEventListener("click", (event) => {
         event.stopPropagation();
         dropdown.classList.toggle("open");
+        button.setAttribute("aria-expanded", String(dropdown.classList.contains("open")));
       });
 
       document.querySelectorAll("[data-user-action]").forEach((item) => {
         item.addEventListener("click", () => {
           const action = item.getAttribute("data-user-action");
           dropdown.classList.remove("open");
+          button.setAttribute("aria-expanded", "false");
 
           if (action === "settings") {
             loadPage("settings.html");
@@ -1227,8 +1575,28 @@
       document.addEventListener("click", (event) => {
         if (!document.querySelector(".user-menu").contains(event.target)) {
           dropdown.classList.remove("open");
+          button.setAttribute("aria-expanded", "false");
         }
       });
+    }
+
+    function initFrameControls() {
+      const retry = document.getElementById("retryFrameBtn");
+      const fallback = document.getElementById("fallbackFrameBtn");
+      if (retry) {
+        retry.addEventListener("click", () => {
+          const page = currentFramePage || fallbackPageForRole();
+          const frame = document.getElementById("frame");
+          hideFrameError();
+          showFrameLoading();
+          if (frame) frame.setAttribute("src", "/" + page);
+        });
+      }
+      if (fallback) {
+        fallback.addEventListener("click", () => {
+          loadPage(fallbackPageForRole());
+        });
+      }
     }
 
     document.addEventListener("DOMContentLoaded", () => {
@@ -1237,22 +1605,30 @@
       initNavigation();
       initFrameMessages();
       initUserMenu();
+      initMobileSidebar();
+      initFrameControls();
       setWelcome();
       applyWorkerRoleProtection();
 
       const frame = document.getElementById("frame");
 
       if (frame) {
-        frame.addEventListener("load", hideFrameLoading);
+        frame.addEventListener("load", () => {
+          hideFrameLoading();
+          hideFrameError();
+        });
       }
 
-      const defaultPage = isPlatformOwnerUser() ? "platform.html#overview" : (isWorkerUser() ? WORKER_ALLOWED_PAGE : "dashboard.html");
+      const defaultPage = fallbackPageForRole();
       const savedPage = safePage(localStorage.getItem("currentPage") || defaultPage);
 
+      currentFramePage = savedPage;
       localStorage.setItem("currentPage", savedPage);
       showFrameLoading();
       document.getElementById("frame").setAttribute("src", "/" + savedPage);
       setActiveButton(savedPage);
+      updatePageChrome(savedPage);
+      updateFallbackButton();
 
       refreshSessionSummary();
       refreshNotificationBell();

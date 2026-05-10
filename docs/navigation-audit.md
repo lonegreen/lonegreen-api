@@ -44,3 +44,38 @@
 - Add smoke tests for role-specific shell navigation with seeded owner/admin/manager/worker/platform sessions.
 - Decide whether `zip-manager.html`, `admin-marketplace.html`, and `marketplace-analytics.html` should become visible platform/admin tools or permanent redirect shims.
 - Replace duplicated public/legal nav snippets with a shared static include/build step if the project later gains a build process.
+
+## Phase 2 Control Shell Upgrade
+
+### Shell improvements made
+
+- `/control.html` keeps the iframe architecture and now presents grouped navigation: Main, Workflow, Operations, Company, Platform, and Support.
+- The shell shows a text page title, breadcrumb (`FairLinx / Current Page`), role pill, company pill, notification count, quick actions, and the existing account menu.
+- Sidebar navigation has a clearer active state and remains driven by existing `data-page` buttons.
+- Mobile layouts use a drawer with hamburger open, close button, backdrop close, nav-click close, and Escape key close.
+- Iframe switches show a loading state. If a page takes longer than the timeout, the shell shows Retry and a role-safe fallback button.
+
+### currentPage validation policy
+
+- `localStorage.currentPage` is validated before the iframe is loaded.
+- Only local `.html` pages with approved query or hash fragments are allowed.
+- External URLs, arbitrary paths, and unknown pages fall back safely.
+- Child iframe `postMessage` navigation still flows through `loadPage(page)` and the same validation.
+
+### Role defaults
+
+- `platform_owner` defaults to `platform.html#overview` and can use approved platform hashes, including `platform.html#support`.
+- `worker` defaults to `worker.html`.
+- `owner`, `admin`, and `manager` default to `dashboard.html`.
+- Company admin navigation remains visible only for owner/admin where backend routes require admin-level access.
+
+### Manual smoke tests
+
+- Owner/admin default should open `dashboard.html` and allow dashboard, analytics, settings, users, and billing.
+- Manager default should open `dashboard.html` and keep admin-only company settings/users/billing hidden.
+- Worker default should open `worker.html` and keep company admin pages hidden.
+- Platform owner default should open `platform.html#overview`; platform hash navigation should remain inside the shell.
+- Clicking sidebar items should update the active state, page title, breadcrumb, iframe, and `localStorage.currentPage`.
+- An invalid `currentPage` should fall back to the role default without redirect loops.
+- Mobile sidebar should open, close by button/backdrop/Escape, and close after selecting a nav item.
+- Existing iframe `postMessage` events with `{ type: "openPage", page: "..." }` should continue to load through the shell validator.
