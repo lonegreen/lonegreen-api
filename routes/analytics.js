@@ -11,6 +11,7 @@ const growthFoundationAccess = [auth, requireMinimumRole("manager")];
 
 const growthFoundationService = require("../services/growthFoundationService");
 const trustReputationService = require("../services/trustReputationService");
+const growthOsService = require("../services/growthOsService");
 
 function num(value) {
   return Number(value || 0);
@@ -944,6 +945,78 @@ router.get("/analytics/growth-foundation", growthFoundationAccess, async (req, r
     });
   } catch (err) {
     sendSafeServerError(res, err, "ANALYTICS GROWTH FOUNDATION ERROR");
+  }
+});
+
+function growthOsCompanyScope(req, res, next) {
+  if (!req.user || !req.user.company_id) {
+    return res.status(403).json({ error: "Forbidden" });
+  }
+  return next();
+}
+
+const growthOsHandlers = [auth, requireMinimumRole("manager"), growthOsCompanyScope];
+
+router.get("/analytics/growth-os", growthOsHandlers, async (req, res) => {
+  try {
+    const data = await growthOsService.getGrowthOverview(req.user.company_id);
+    res.json(data);
+  } catch (err) {
+    sendSafeServerError(res, err, "ANALYTICS GROWTH OS OVERVIEW ERROR");
+  }
+});
+
+router.get("/analytics/growth-os/funnel", growthOsHandlers, async (req, res) => {
+  try {
+    const data = await growthOsService.getFunnelAnalytics(req.user.company_id);
+    res.json(data);
+  } catch (err) {
+    sendSafeServerError(res, err, "ANALYTICS GROWTH OS FUNNEL ERROR");
+  }
+});
+
+router.get("/analytics/growth-os/revenue", growthOsHandlers, async (req, res) => {
+  try {
+    const data = await growthOsService.getRevenueIntelligence(req.user.company_id);
+    res.json(data);
+  } catch (err) {
+    sendSafeServerError(res, err, "ANALYTICS GROWTH OS REVENUE ERROR");
+  }
+});
+
+router.get("/analytics/growth-os/lost-revenue", growthOsHandlers, async (req, res) => {
+  try {
+    const data = await growthOsService.getLostRevenueAnalytics(req.user.company_id);
+    res.json(data);
+  } catch (err) {
+    sendSafeServerError(res, err, "ANALYTICS GROWTH OS LOST REVENUE ERROR");
+  }
+});
+
+router.get("/analytics/growth-os/retention", growthOsHandlers, async (req, res) => {
+  try {
+    const data = await growthOsService.getRetentionAnalytics(req.user.company_id);
+    res.json(data);
+  } catch (err) {
+    sendSafeServerError(res, err, "ANALYTICS GROWTH OS RETENTION ERROR");
+  }
+});
+
+router.get("/analytics/growth-os/client-value", growthOsHandlers, async (req, res) => {
+  try {
+    const data = await growthOsService.getClientValueAnalytics(req.user.company_id);
+    res.json(data);
+  } catch (err) {
+    sendSafeServerError(res, err, "ANALYTICS GROWTH OS CLIENT VALUE ERROR");
+  }
+});
+
+router.get("/analytics/growth-os/marketplace", growthOsHandlers, async (req, res) => {
+  try {
+    const data = await growthOsService.getMarketplaceGrowthAnalytics(req.user.company_id);
+    res.json(data);
+  } catch (err) {
+    sendSafeServerError(res, err, "ANALYTICS GROWTH OS MARKETPLACE ERROR");
   }
 });
 
