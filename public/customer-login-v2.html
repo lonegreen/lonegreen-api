@@ -318,6 +318,34 @@
       box-shadow: 0 0 0 5px rgba(255,90,0,0.13);
     }
 
+    .password-wrap {
+      position: relative;
+    }
+
+    .password-wrap input {
+      padding-right: 88px;
+    }
+
+    .password-toggle {
+      position: absolute;
+      top: 50%;
+      right: 10px;
+      transform: translateY(-50%);
+      min-height: 40px;
+      padding: 0 13px;
+      border: 1px solid rgba(255, 90, 0, 0.18);
+      border-radius: 12px;
+      background: rgba(255, 90, 0, 0.08);
+      color: var(--fl-orange-hover);
+      font-size: 13px;
+      font-weight: 900;
+      cursor: pointer;
+    }
+
+    .password-toggle:hover {
+      background: rgba(255, 90, 0, 0.13);
+    }
+
     #otpCode {
       min-height: 68px;
       border-radius: 16px;
@@ -529,9 +557,40 @@
           <span>FairLinx</span>
         </div>
 
-        <form id="otpRequestForm" data-view="otp-request">
+        <form id="customerLoginForm" data-view="password">
           <div class="auth-header">
             <h2>Customer Login</h2>
+            <p>Use the email and password connected to your customer portal account.</p>
+          </div>
+
+          <div class="field fx-field">
+            <label for="email">Email</label>
+            <input id="email" class="fx-input" type="email" autocomplete="email" required autofocus>
+          </div>
+
+          <div class="field fx-field">
+            <label for="password">Password</label>
+            <div class="password-wrap">
+              <input id="password" class="fx-input" type="password" autocomplete="current-password" required>
+              <button id="passwordToggle" class="password-toggle" type="button" aria-label="Show password" aria-pressed="false">Show</button>
+            </div>
+          </div>
+
+          <div class="row">
+            <a class="link" href="/customer-forgot-password.html">Forgot password?</a>
+            <a class="link" href="/customer-signup.html">Create account</a>
+          </div>
+
+          <button id="submitBtn" class="btn fx-btn fx-btn--primary" type="submit">Log In</button>
+
+          <div class="row" style="margin-top:18px">
+            <a class="link" href="#" id="showOtpView">Email me a sign-in code</a>
+          </div>
+        </form>
+
+        <form id="otpRequestForm" data-view="otp-request" style="display:none">
+          <div class="auth-header">
+            <h2>Email sign-in code</h2>
             <p>Enter your email and we will send you a one-time sign-in code.</p>
           </div>
 
@@ -543,7 +602,7 @@
           <button id="otpRequestBtn" class="btn fx-btn fx-btn--primary" type="submit">Email me a sign-in code</button>
 
           <div class="row" style="margin-top:18px">
-            <a class="link" href="#" id="showPasswordView">Sign in with password instead</a>
+            <a class="link" href="#" id="showPasswordView">Sign in with password</a>
             <a class="link" href="/customer-signup.html">Create account</a>
           </div>
         </form>
@@ -566,34 +625,6 @@
           <div class="row" style="margin-top:18px">
             <a class="link" href="#" id="otpResendLink">Resend code</a>
             <a class="link" href="#" id="otpUseDifferentEmail">Use a different email</a>
-          </div>
-        </form>
-
-        <form id="customerLoginForm" data-view="password" style="display:none">
-          <div class="auth-header">
-            <h2>Sign in with password</h2>
-            <p>Use the email and password connected to your customer portal account.</p>
-          </div>
-
-          <div class="field fx-field">
-            <label for="email">Email</label>
-            <input id="email" class="fx-input" type="email" autocomplete="email" required>
-          </div>
-
-          <div class="field fx-field">
-            <label for="password">Password</label>
-            <input id="password" class="fx-input" type="password" autocomplete="current-password" required>
-          </div>
-
-          <div class="row">
-            <a class="link" href="/customer-forgot-password.html">Forgot password?</a>
-            <a class="link" href="/customer-signup.html">Create account</a>
-          </div>
-
-          <button id="submitBtn" class="btn fx-btn fx-btn--primary" type="submit">Log In</button>
-
-          <div class="row" style="margin-top:18px">
-            <a class="link" href="#" id="showOtpView">Email me a sign-in code instead</a>
           </div>
         </form>
 
@@ -648,6 +679,9 @@
     const otpRequestBtn   = document.getElementById("otpRequestBtn");
     const otpVerifyBtn    = document.getElementById("otpVerifyBtn");
     const submitBtn       = document.getElementById("submitBtn");
+    const emailInput      = document.getElementById("email");
+    const passwordInput   = document.getElementById("password");
+    const passwordToggle  = document.getElementById("passwordToggle");
 
     let pendingOtpEmail = "";
 
@@ -666,16 +700,28 @@
     document.getElementById("showPasswordView").addEventListener("click", e => {
       e.preventDefault();
       showView("password");
+      setTimeout(() => emailInput.focus(), 60);
     });
     document.getElementById("showOtpView").addEventListener("click", e => {
       e.preventDefault();
       showView("otp-request");
+      setTimeout(() => otpEmailInput.focus(), 60);
     });
     document.getElementById("otpUseDifferentEmail").addEventListener("click", e => {
       e.preventDefault();
       pendingOtpEmail = "";
       otpCodeInput.value = "";
       showView("otp-request");
+      setTimeout(() => otpEmailInput.focus(), 60);
+    });
+
+    passwordToggle.addEventListener("click", () => {
+      const isHidden = passwordInput.type === "password";
+      passwordInput.type = isHidden ? "text" : "password";
+      passwordToggle.textContent = isHidden ? "Hide" : "Show";
+      passwordToggle.setAttribute("aria-label", isHidden ? "Hide password" : "Show password");
+      passwordToggle.setAttribute("aria-pressed", String(isHidden));
+      passwordInput.focus();
     });
 
     document.getElementById("otpResendLink").addEventListener("click", async e => {
@@ -799,6 +845,8 @@
     if (query.get("signup") === "success") {
       setStatus("Account created successfully. Sign in to open your dashboard.", "success");
     }
+
+    setTimeout(() => emailInput.focus(), 60);
   </script>
 </body>
 </html>

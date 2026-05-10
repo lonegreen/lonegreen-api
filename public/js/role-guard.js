@@ -1,15 +1,20 @@
 (function () {
-  const OWNER_ONLY_PAGES = [
+  const ADMIN_AND_ABOVE_PAGES = [
+    "billing-plans.html",
+    "company-public-profile.html",
+    "company-service-areas.html",
+    "company-services.html",
+    "settings.html",
     "users.html",
-    "settings.html"
-  ];
-
-  const ADMIN_ONLY_PAGES = [
-    "analytics.html"
+    "zip-manager.html"
   ];
 
   const MANAGER_AND_ABOVE_PAGES = [
     "dashboard.html",
+    "marketplace-dashboard.html",
+    "marketplace-opportunities.html",
+    "marketplace-offers.html",
+    "messages.html",
     "clients.html",
     "client.html",
     "estimates.html",
@@ -19,14 +24,16 @@
     "invoice.html",
     "subscriptions.html",
     "workers.html",
-    "zip-manager.html",
-    "health.html"
+    "analytics.html",
+    "support.html"
   ];
 
   const PLATFORM_OWNER_PAGES = [
+    "admin-marketplace.html",
+    "health.html",
+    "marketplace-analytics.html",
     "platform.html",
-    "support.html",
-    "health.html"
+    "support.html"
   ];
 
   const VALID_ROLES = [
@@ -58,6 +65,9 @@
   }
 
   function redirectLogin() {
+    console.warn("ROLE_GUARD_REDIRECT_LOGIN", {
+      page: window.location.pathname
+    });
     window.top.location.href = "/login.html";
   }
 
@@ -75,10 +85,17 @@
 
   function redirectSafe(role) {
     if (role === "worker") {
+      console.warn("ROLE_GUARD_REDIRECT_WORKER", {
+        page: window.location.pathname
+      });
       window.top.location.href = "/worker.html";
       return;
     }
 
+    console.warn("ROLE_GUARD_REDIRECT_CONTROL", {
+      role,
+      page: window.location.pathname
+    });
     window.top.location.href = "/control.html";
   }
 
@@ -96,13 +113,7 @@
     }
 
     if (
-      OWNER_ONLY_PAGES.includes(page)
-    ) {
-      return false;
-    }
-
-    if (
-      ADMIN_ONLY_PAGES.includes(page)
+      ADMIN_AND_ABOVE_PAGES.includes(page)
     ) {
       return role === "admin";
     }
@@ -143,6 +154,10 @@
   }
 
   if (!hasAccess(role, page)) {
+    console.warn("ROLE_GUARD_ACCESS_DENIED", {
+      role,
+      page
+    });
     if (window === window.top) {
       redirectSafe(role);
       return;

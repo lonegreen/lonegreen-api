@@ -859,6 +859,10 @@
       return currentRole() === "platform_owner";
     }
 
+    function isCompanyAdminUser() {
+      return ["owner", "admin"].includes(currentRole());
+    }
+
     function isWorkerBlockedPage(page) {
       const cleanPage = String(page || "").replace(/^\/+/, "");
       const basePage = cleanPage.split(/[?#]/)[0];
@@ -893,6 +897,7 @@
     function applyWorkerRoleProtection() {
       const platformOwner = isPlatformOwnerUser();
       const worker = isWorkerUser();
+      const companyAdmin = isCompanyAdminUser();
 
       document.querySelectorAll("[data-company-nav]").forEach((item) => {
         item.style.display = platformOwner || worker ? "none" : "";
@@ -919,8 +924,8 @@
       });
 
       document.querySelectorAll("[data-user-action='settings']").forEach((button) => {
-        button.style.display = platformOwner || worker ? "none" : "";
-        button.disabled = platformOwner || worker;
+        button.style.display = platformOwner || worker || !companyAdmin ? "none" : "";
+        button.disabled = platformOwner || worker || !companyAdmin;
       });
 
       if (platformOwner) {
@@ -946,6 +951,15 @@
         document.querySelectorAll("button[data-page='worker.html']").forEach((button) => {
           button.style.display = "none";
           button.disabled = true;
+        });
+        document.querySelectorAll("button[data-page='users.html'], button[data-page='billing-plans.html'], button[data-page='settings.html'], button[data-page='company-public-profile.html'], button[data-page='company-services.html'], button[data-page='company-service-areas.html']").forEach((button) => {
+          button.style.display = companyAdmin ? "" : "none";
+          button.disabled = !companyAdmin;
+        });
+        document.querySelectorAll(".section-title[data-company-nav]").forEach((sectionTitle) => {
+          if (sectionTitle.textContent.trim() === "Admin") {
+            sectionTitle.style.display = "";
+          }
         });
         return;
       }

@@ -9,6 +9,7 @@
     "check:customer-orphans": "node scripts/check-customer-orphans.js",
     "check:frontend-routes": "node scripts/check-frontend-routes.js",
     "check:navigation": "node scripts/check-navigation-integrity.js",
+    "audit:navigation": "node scripts/audit-navigation.js",
     "check:marketplace-contract": "node scripts/check-marketplace-contract.js",
     "check:final-readiness": "node scripts/final-readiness-report.js",
     "check:design": "node scripts/check-design-system.js",
