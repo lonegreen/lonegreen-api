@@ -12,38 +12,23 @@
       box-sizing: border-box;
     }
 
-    /* Control shell — uses DS tokens from /app-shell.css (fx-tokens) */
+    /* Minimal functional shell — light neutral + green accent (no gradients) */
     :root {
-      --shell-bg: var(--surface-page, #07110d);
-      --shell-panel: var(--surface-card, #0f1f17);
-      --shell-panel-elevated: var(--surface-elevated, #0b1711);
-      --shell-soft: var(--surface-soft, #14261d);
-      --shell-text: var(--text-primary, #f4fff8);
-      --shell-muted: var(--text-muted, #738077);
-      --shell-border: var(--border-default, rgba(255, 255, 255, 0.08));
-      --shell-border-strong: var(--border-strong, rgba(255, 255, 255, 0.14));
-      --shell-accent: var(--interactive-primary, #22c55e);
-      --shell-accent-hover: var(--interactive-primary-hover, #16a34a);
+      --shell-bg: #f4f4f5;
+      --shell-panel: #ffffff;
+      --shell-panel-elevated: #ffffff;
+      --shell-soft: #f9fafb;
+      --shell-text: #111827;
+      --shell-muted: #6b7280;
+      --shell-border: #e5e7eb;
+      --shell-border-strong: #d1d5db;
+      --shell-accent: #22c55e;
+      --shell-accent-hover: #16a34a;
       --shell-accent-soft: rgba(34, 197, 94, 0.12);
-      --shell-accent-line: rgba(34, 197, 94, 0.55);
-      /* Local aliases (historical names in rules below) */
-      --shell-orange: var(--shell-accent);
-      --shell-orange-hover: var(--shell-accent-hover);
-      --shell-orange-soft: rgba(34, 197, 94, 0.14);
-      --shell-orange-glow: rgba(34, 197, 94, 0.22);
-      --shell-black: #f4fff8;
-      --shell-ink: #07110d;
-      --shell-shadow: var(--shadow-md, 0 18px 52px rgba(0, 0, 0, 0.55));
-      --shell-shadow-soft: 0 10px 28px rgba(0, 0, 0, 0.38);
-      --shell-radius: var(--radius-lg, 16px);
-      --shell-radius-xl: 20px;
-      --shell-nav-bg:
-        radial-gradient(ellipse 130% 70% at 0% -15%, rgba(34, 197, 94, 0.07), transparent 46%),
-        radial-gradient(ellipse 70% 55% at 100% 105%, rgba(34, 197, 94, 0.05), transparent 48%),
-        linear-gradient(185deg, #030806 0%, #07110d 42%, #0c1812 100%);
-      --shell-nav-item: rgba(255, 255, 255, 0.045);
-      --shell-nav-item-hover: rgba(255, 255, 255, 0.095);
-      --shell-nav-item-active: rgba(34, 197, 94, 0.16);
+      --shell-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
+      --shell-shadow-soft: 0 1px 3px rgba(15, 23, 42, 0.06);
+      --shell-radius: 12px;
+      --shell-radius-xl: 16px;
       --shell-transition: var(--motion-base, 180ms) var(--ease-standard, cubic-bezier(0.2, 0, 0, 1));
       --shell-space-xs: clamp(6px, 1.2vw, 10px);
       --shell-space-sm: clamp(8px, 1.6vw, 14px);
@@ -53,7 +38,7 @@
     }
 
     html {
-      color-scheme: dark;
+      color-scheme: light;
       overflow-x: hidden;
       max-width: 100%;
     }
@@ -84,8 +69,7 @@
       position: fixed;
       inset: 0;
       border: 0;
-      background: rgba(3, 8, 6, 0.62);
-      backdrop-filter: blur(4px);
+      background: rgba(15, 23, 42, 0.35);
       z-index: 80;
       cursor: pointer;
     }
@@ -106,14 +90,12 @@
         calc(var(--shell-space-sm) + env(safe-area-inset-left, 0px));
       overflow-y: auto;
       flex-shrink: 0;
-      background: var(--shell-nav-bg);
-      color: rgba(255, 255, 255, 0.92);
-      border-right: 1px solid rgba(255, 255, 255, 0.07);
-      box-shadow:
-        inset -1px 0 0 rgba(255, 255, 255, 0.04),
-        16px 0 48px rgba(0, 0, 0, 0.35);
+      background: var(--shell-panel);
+      color: var(--shell-text);
+      border-right: 1px solid var(--shell-border);
+      box-shadow: none;
       scrollbar-width: thin;
-      scrollbar-color: rgba(34, 197, 94, 0.45) rgba(255, 255, 255, 0.05);
+      scrollbar-color: #cbd5e1 #f1f5f9;
       z-index: 90;
     }
 
@@ -122,19 +104,19 @@
     }
 
     .sidebar::-webkit-scrollbar-track {
-      background: rgba(255, 255, 255, 0.05);
+      background: #f1f5f9;
       border-radius: 999px;
     }
 
     .sidebar::-webkit-scrollbar-thumb {
-      background: rgba(34, 197, 94, 0.38);
+      background: #cbd5e1;
       border-radius: 999px;
     }
 
     .brand {
       margin-bottom: 16px;
       padding: 6px 8px 16px;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      border-bottom: 1px solid var(--shell-border);
       position: relative;
     }
 
@@ -158,13 +140,13 @@
       justify-content: center;
       font-size: 18px !important;
       line-height: 1;
-      color: rgba(255, 255, 255, 0.85) !important;
-      background: rgba(255, 255, 255, 0.06) !important;
-      border: 1px solid rgba(255, 255, 255, 0.12) !important;
+      color: var(--shell-text) !important;
+      background: var(--shell-soft) !important;
+      border: 1px solid var(--shell-border-strong) !important;
     }
 
     .sidebar-close:hover {
-      background: rgba(255, 255, 255, 0.1) !important;
+      background: #f3f4f6 !important;
     }
 
     .brand::before {
@@ -176,18 +158,18 @@
       align-items: center;
       justify-content: center;
       margin-bottom: 12px;
-      background: linear-gradient(145deg, #22c55e 0%, #15803d 100%);
-      color: #07110d;
+      background: var(--shell-accent);
+      color: #ffffff;
       font-size: 20px;
       font-weight: 900;
       letter-spacing: -0.06em;
-      box-shadow: 0 14px 32px rgba(34, 197, 94, 0.28);
+      box-shadow: var(--shell-shadow-soft);
     }
 
     .brand h2 {
       margin: 0 0 6px;
       font-size: 26px;
-      color: #f4fff8 !important;
+      color: var(--shell-text) !important;
       letter-spacing: -0.05em;
       line-height: 1;
       font-weight: 800;
@@ -198,7 +180,7 @@
     }
 
     .brand small {
-      color: rgba(167, 184, 174, 0.88);
+      color: var(--shell-muted);
       display: block;
       line-height: 1.45;
       font-size: 12px;
@@ -208,12 +190,12 @@
 
     .section-title {
       font-size: 10px;
-      opacity: 0.72;
+      opacity: 0.85;
       margin: 16px 10px 8px;
       text-transform: uppercase;
       letter-spacing: 0.14em;
       font-weight: 800;
-      color: rgba(167, 184, 174, 0.95);
+      color: var(--shell-muted);
     }
 
     .sidebar button {
@@ -223,8 +205,8 @@
       padding: 10px 12px;
       border-radius: 12px;
       border: 1px solid transparent;
-      background: var(--shell-nav-item);
-      color: rgba(255, 255, 255, 0.88);
+      background: var(--shell-soft);
+      color: var(--shell-text);
       cursor: pointer;
       text-align: left;
       font-size: 14px;
@@ -253,25 +235,25 @@
     }
 
     .sidebar button:hover {
-      background: var(--shell-nav-item-hover);
+      background: #f3f4f6;
       transform: translateX(2px) !important;
-      border-color: rgba(255, 255, 255, 0.1);
-      color: #ffffff;
+      border-color: var(--shell-border);
+      color: var(--shell-text);
     }
 
     .sidebar button:focus-visible,
     .topbar button:focus-visible,
     .notif-link:focus-visible {
       outline: none;
-      box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.4);
+      box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.35);
     }
 
     .sidebar button.active {
-      background: var(--shell-nav-item-active) !important;
+      background: #ecfdf5 !important;
       border-color: rgba(34, 197, 94, 0.35) !important;
-      color: #f4fff8 !important;
+      color: #166534 !important;
       font-weight: 750;
-      box-shadow: 0 10px 26px rgba(0, 0, 0, 0.28) !important;
+      box-shadow: none !important;
     }
 
     .sidebar button.active::before {
@@ -289,14 +271,12 @@
       min-height: 0;
       display: flex;
       flex-direction: column;
-      background:
-        radial-gradient(ellipse 70% 45% at 100% 0%, rgba(34, 197, 94, 0.045), transparent 52%),
-        var(--shell-bg);
+      background: var(--shell-bg);
     }
 
     .topbar {
       flex-shrink: 0;
-      background: rgba(11, 23, 17, 0.82);
+      background: var(--shell-panel);
       padding: var(--shell-space-md) var(--shell-space-lg);
       display: flex;
       justify-content: space-between;
@@ -304,9 +284,7 @@
       gap: 16px;
       border-bottom: 1px solid var(--shell-border);
       z-index: 10;
-      backdrop-filter: blur(18px);
-      -webkit-backdrop-filter: blur(18px);
-      box-shadow: 0 1px 0 rgba(255, 255, 255, 0.04);
+      box-shadow: var(--shell-shadow-soft);
       max-width: 100%;
       overflow-x: hidden;
     }
@@ -332,10 +310,10 @@
       padding: 0 !important;
       align-items: center;
       justify-content: center;
-      background: var(--shell-panel) !important;
+      background: var(--shell-soft) !important;
       color: var(--shell-text) !important;
       border: 1px solid var(--shell-border-strong) !important;
-      box-shadow: var(--shell-shadow-soft) !important;
+      box-shadow: none !important;
       border-radius: 12px !important;
     }
 
@@ -389,7 +367,7 @@
       border-radius: 999px;
       background: var(--shell-accent-soft);
       border: 1px solid rgba(34, 197, 94, 0.22);
-      color: #86efac;
+      color: #15803d;
       font-size: clamp(11px, 2.6vw, 12px);
       font-weight: 650;
     }
@@ -433,7 +411,7 @@
       font-size: 12px;
       font-weight: 650;
       text-decoration: none;
-      box-shadow: var(--shell-shadow-soft);
+      box-shadow: none;
       transition:
         transform var(--shell-transition),
         box-shadow var(--shell-transition),
@@ -443,7 +421,7 @@
     .notif-link:hover {
       transform: translateY(-1px);
       border-color: rgba(34, 197, 94, 0.35);
-      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.35);
+      box-shadow: var(--shell-shadow-soft);
     }
 
     .notif-count {
@@ -451,14 +429,14 @@
       height: 20px;
       border-radius: 999px;
       background: var(--shell-accent);
-      color: #07110d;
+      color: #ffffff;
       font-size: 11px;
       font-weight: 800;
       display: inline-flex;
       align-items: center;
       justify-content: center;
       padding: 0 6px;
-      box-shadow: 0 6px 14px rgba(34, 197, 94, 0.22);
+      box-shadow: none;
     }
 
     .topbar button {
@@ -467,7 +445,7 @@
       border-radius: 12px;
       border: 1px solid transparent;
       background: var(--shell-accent);
-      color: #07110d;
+      color: #ffffff;
       font-weight: 750;
       cursor: pointer;
       transition:
@@ -480,13 +458,13 @@
     .topbar button:hover {
       background: var(--shell-accent-hover);
       transform: translateY(-1px);
-      box-shadow: 0 10px 22px rgba(34, 197, 94, 0.22);
+      box-shadow: var(--shell-shadow-soft);
     }
 
     .shell-quick-action {
-      background: linear-gradient(135deg, var(--shell-accent), var(--shell-accent-hover)) !important;
-      color: #07110d !important;
-      box-shadow: 0 10px 22px rgba(34, 197, 94, 0.2) !important;
+      background: var(--shell-accent);
+      color: #ffffff;
+      box-shadow: var(--shell-shadow-soft);
     }
 
     .user-menu {
@@ -498,17 +476,17 @@
       align-items: center;
       gap: 10px;
       min-height: var(--shell-touch-min);
-      background: var(--shell-panel) !important;
-      color: var(--shell-text) !important;
-      border: 1px solid var(--shell-border-strong) !important;
-      box-shadow: var(--shell-shadow-soft) !important;
-      border-radius: 12px !important;
-      font-weight: 650 !important;
+      background: var(--shell-panel);
+      color: var(--shell-text);
+      border: 1px solid var(--shell-border-strong);
+      box-shadow: none;
+      border-radius: 12px;
+      font-weight: 650;
     }
 
     .user-trigger:hover {
-      background: rgba(34, 197, 94, 0.08) !important;
-      border-color: rgba(34, 197, 94, 0.28) !important;
+      background: var(--shell-soft);
+      border-color: rgba(34, 197, 94, 0.28);
     }
 
     .user-avatar {
@@ -518,7 +496,7 @@
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      background: rgba(34, 197, 94, 0.14);
+      background: var(--shell-accent-soft);
       color: var(--shell-accent);
       font-size: 11px;
       font-weight: 800;
@@ -569,9 +547,9 @@
     }
 
     .dropdown button:hover {
-      background: rgba(34, 197, 94, 0.1) !important;
+      background: #f3f4f6 !important;
       transform: none;
-      color: #ecfdf5 !important;
+      color: var(--shell-text) !important;
     }
 
     .dropdown-divider {
@@ -602,9 +580,7 @@
       background: var(--shell-panel);
       border: 1px solid var(--shell-border-strong);
       border-radius: var(--shell-radius-xl);
-      box-shadow:
-        var(--shell-shadow-soft),
-        inset 0 1px 0 rgba(255, 255, 255, 0.04);
+      box-shadow: var(--shell-shadow-soft);
       position: relative;
     }
 
@@ -627,8 +603,7 @@
       display: none;
       align-items: center;
       justify-content: center;
-      background: rgba(7, 17, 13, 0.78);
-      backdrop-filter: blur(6px);
+      background: rgba(255, 255, 255, 0.85);
       z-index: 5;
       pointer-events: none;
     }
@@ -659,8 +634,7 @@
       align-items: center;
       justify-content: center;
       padding: 24px;
-      background: rgba(7, 17, 13, 0.88);
-      backdrop-filter: blur(6px);
+      background: rgba(255, 255, 255, 0.92);
       z-index: 6;
     }
 
@@ -714,7 +688,7 @@
 
     .frame-error-actions button.primary {
       background: var(--shell-accent);
-      color: #07110d;
+      color: #ffffff;
       border-color: var(--shell-accent);
       font-weight: 750;
     }
@@ -722,7 +696,7 @@
     .spinner {
       width: 17px;
       height: 17px;
-      border: 2px solid rgba(255, 255, 255, 0.12);
+      border: 2px solid #e5e7eb;
       border-top-color: var(--shell-accent);
       border-radius: 999px;
       animation: spin 0.8s linear infinite;
@@ -734,7 +708,6 @@
       }
     }
 
-    /* Shell breakpoints: 320–767 phone · 768–1023 tablet drawer · 1024+ laptop sidebar · 1440+ wide gutters */
     @media (min-width: 768px) and (max-width: 1023px) {
       .sidebar.open {
         width: min(320px, 90vw);
@@ -820,9 +793,9 @@
         height: 100vh;
         max-height: none;
         padding: 14px;
-        border-right: 1px solid rgba(255, 255, 255, 0.08);
+        border-right: 1px solid var(--shell-border);
         border-bottom: none;
-        box-shadow: 20px 0 56px rgba(0, 0, 0, 0.55);
+        box-shadow: var(--shell-shadow);
         transform: translateX(-104%);
         transition: transform var(--shell-transition);
         z-index: 95;
