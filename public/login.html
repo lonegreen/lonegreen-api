@@ -5,546 +5,16 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>FairLinx Login</title>
   <link rel="stylesheet" href="/css/brand.css">
+  <link rel="stylesheet" href="/app-shell.css">
 
-  <style>
-    :root {
-      --brand-primary: #22c55e;
-      --brand-primary-hover: #16a34a;
-      --brand-primary-light: #4ade80;
-      --brand-black: #111111;
-      --brand-dark: #2B2B2B;
-      --brand-border: #d1d5db;
-      --brand-bg: #f4f4f5;
-      --brand-white: #FFFFFF;
-      --brand-success: #16A34A;
-      --brand-warning: #F59E0B;
-      --brand-error: #DC2626;
-
-      --radius-xl: 20px;
-      --radius-lg: 16px;
-      --radius-md: 12px;
-      --radius-sm: 12px;
-      --shadow-shell: 0 4px 16px rgba(15, 23, 42, 0.08);
-      --shadow-card: 0 2px 8px rgba(15, 23, 42, 0.06);
-
-      --ui-primary: var(--interactive-primary, #22c55e);
-      --ui-primary-hover: var(--interactive-primary-hover, #16a34a);
-      --ui-primary-light: var(--interactive-primary-light, #4ade80);
-      --ui-primary-soft: rgba(34, 197, 94, 0.14);
-    }
-
-    * {
-      box-sizing: border-box;
-      font-family: Inter, Arial, sans-serif;
-    }
-
-    html {
-      -webkit-text-size-adjust: 100%;
-    }
-
-    body {
-      margin: 0;
-      min-height: 100vh;
-      background: var(--brand-bg);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 34px;
-      color: var(--brand-black);
-    }
-
-    .page {
-      width: 100%;
-      max-width: 1180px;
-      min-height: 760px;
-      display: grid;
-      grid-template-columns: 1.02fr 0.98fr;
-      background: var(--brand-white);
-      border: 1px solid var(--brand-border);
-      border-radius: var(--radius-xl);
-      overflow: hidden;
-      box-shadow: var(--shadow-shell);
-      position: relative;
-      z-index: 1;
-    }
-
-    .brand-panel {
-      padding: 48px 44px;
-      color: var(--brand-black);
-      position: relative;
-      overflow: hidden;
-      background: #f9fafb;
-      border-right: 1px solid var(--brand-border);
-    }
-
-    .brand-logo {
-      display: inline-flex;
-      align-items: center;
-      gap: 14px;
-      font-weight: 900;
-      font-size: 34px;
-      letter-spacing: -0.055em;
-      margin-bottom: 48px;
-      position: relative;
-      z-index: 2;
-    }
-
-    .brand-logo span {
-      color: var(--brand-black);
-    }
-
-    .brand-logo span::first-letter {
-      color: var(--brand-primary);
-    }
-
-    .brand-mark {
-      width: 62px;
-      height: 62px;
-      border-radius: 18px;
-      background: var(--brand-primary);
-      color: #ffffff;
-      display: grid;
-      place-items: center;
-      font-size: 22px;
-      font-weight: 950;
-      letter-spacing: -0.12em;
-      box-shadow: var(--shadow-card);
-      transform: skew(-8deg);
-    }
-
-    .brand-mark::before {
-      content: "FL";
-      transform: skew(8deg);
-    }
-
-    .brand-mark {
-      font-size: 0;
-    }
-
-    .brand-panel h1 {
-      max-width: 520px;
-      font-size: clamp(32px, 4vw, 48px);
-      line-height: 1.1;
-      margin: 0 0 16px;
-      letter-spacing: -0.04em;
-      position: relative;
-      z-index: 2;
-    }
-
-    .brand-panel h1 strong,
-    .brand-panel h1 .accent {
-      color: var(--brand-primary);
-    }
-
-    .brand-panel p {
-      margin: 0;
-      max-width: 470px;
-      color: #4b5563;
-      font-size: 16px;
-      line-height: 1.65;
-      position: relative;
-      z-index: 2;
-    }
-
-    .brand-stats {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 12px;
-      margin-top: 40px;
-      position: relative;
-      z-index: 2;
-    }
-
-    .stat {
-      min-height: 100px;
-      padding: 16px 14px;
-      border-radius: var(--radius-md);
-      background: #ffffff;
-      border: 1px solid var(--brand-border);
-      box-shadow: none;
-    }
-
-    .stat strong {
-      display: block;
-      font-size: 18px;
-      margin-bottom: 6px;
-      letter-spacing: -0.02em;
-    }
-
-    .stat span {
-      font-size: 12px;
-      color: #6b7280;
-      line-height: 1.4;
-    }
-
-    .auth-panel {
-      background: #ffffff;
-      padding: 48px 44px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .auth-card {
-      width: 100%;
-      max-width: 460px;
-    }
-
-    .mobile-logo {
-      display: none;
-      align-items: center;
-      gap: 12px;
-      font-weight: 900;
-      font-size: 26px;
-      color: var(--brand-black);
-      margin-bottom: 28px;
-      letter-spacing: -0.045em;
-    }
-
-    .auth-header {
-      margin-bottom: 30px;
-    }
-
-    .auth-header h2 {
-      margin: 0 0 10px;
-      font-size: 32px;
-      line-height: 1.1;
-      letter-spacing: -0.04em;
-      color: var(--brand-black);
-    }
-
-    .auth-header p {
-      margin: 0;
-      color: #5f6368;
-      font-size: 15px;
-      line-height: 1.55;
-    }
-
-    .form {
-      display: none;
-    }
-
-    .form.active {
-      display: block;
-    }
-
-    .field {
-      margin-bottom: 18px;
-      text-align: left;
-    }
-
-    label {
-      display: block;
-      font-size: 14px;
-      font-weight: 700;
-      margin-bottom: 8px;
-      color: var(--brand-black);
-    }
-
-    input {
-      width: 100%;
-      min-height: 58px;
-      padding: 15px 16px;
-      border-radius: 12px;
-      border: 1px solid #d1d5db;
-      background: #ffffff;
-      outline: none;
-      font-size: 15px;
-      color: var(--brand-black);
-      transition:
-        border-color 180ms ease,
-        box-shadow 180ms ease;
-    }
-
-    input::placeholder {
-      color: #8a8f98;
-    }
-
-    input:focus {
-      border-color: var(--brand-primary);
-      box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.2);
-    }
-
-    .password-wrap {
-      position: relative;
-    }
-
-    .password-wrap input {
-      padding-right: 54px;
-    }
-
-    .eye-btn {
-      position: absolute;
-      right: 10px;
-      top: 50%;
-      transform: translateY(-50%);
-      width: 40px;
-      height: 40px;
-      border: none;
-      border-radius: 10px;
-      background: transparent;
-      color: #5d636b;
-      cursor: pointer;
-      margin: 0;
-      padding: 0;
-      font-size: 17px;
-      transition: background 160ms ease, color 160ms ease;
-    }
-
-    .eye-btn:hover {
-      background: #f3f4f6;
-      color: var(--brand-primary);
-    }
-
-    .row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 12px;
-      margin: 2px 0 22px;
-    }
-
-    .link {
-      border: none;
-      background: none;
-      color: var(--brand-primary);
-      padding: 0;
-      margin: 0;
-      width: auto;
-      font-size: 13px;
-      font-weight: 700;
-      cursor: pointer;
-      text-decoration: none;
-    }
-
-    .link:hover {
-      text-decoration: underline;
-      text-underline-offset: 3px;
-    }
-
-    .btn {
-      width: 100%;
-      min-height: 58px;
-      padding: 15px 18px;
-      border: none;
-      border-radius: 12px;
-      background: var(--brand-primary);
-      color: #ffffff;
-      font-size: 15px;
-      font-weight: 800;
-      cursor: pointer;
-      transition:
-        transform 180ms ease,
-        box-shadow 180ms ease,
-        opacity 180ms ease;
-      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
-    }
-
-    .btn:hover {
-      transform: translateY(-1px);
-      background: var(--brand-primary-hover);
-      box-shadow: 0 4px 12px rgba(34, 197, 94, 0.2);
-    }
-
-    .btn:active {
-      transform: translateY(0);
-    }
-
-    .btn:disabled {
-      opacity: 0.72;
-      cursor: not-allowed;
-      transform: none;
-    }
-
-    .btn.primary,
-    .primary,
-    .cta,
-    button[type="submit"] {
-      background: var(--ui-primary);
-      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
-      color: #ffffff;
-      border-color: transparent;
-    }
-
-    .btn.primary:hover,
-    .primary:hover,
-    .cta:hover,
-    button[type="submit"]:hover {
-      background: var(--ui-primary-hover);
-    }
-
-    .secondary-btn {
-      background: #ffffff;
-      color: var(--brand-primary);
-      border: 1px solid var(--brand-border);
-      box-shadow: none;
-      margin-top: 10px;
-    }
-
-    .secondary-btn:hover {
-      box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06);
-    }
-
-    .divider {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      margin: 22px 0;
-      color: #6b7280;
-      font-size: 12px;
-      font-weight: 700;
-    }
-
-    .divider::before,
-    .divider::after {
-      content: "";
-      height: 1px;
-      background: #e5e7eb;
-      flex: 1;
-    }
-
-    .message {
-      display: none;
-      padding: 13px 15px;
-      border-radius: 12px;
-      margin-top: 18px;
-      font-size: 13px;
-      line-height: 1.45;
-      text-align: left;
-      font-weight: 650;
-    }
-
-    .message.show {
-      display: block;
-    }
-
-    .message.error {
-      background: #fef2f2;
-      color: #b42318;
-      border: 1px solid #fecaca;
-    }
-
-    .message.success {
-      background: #ecfdf3;
-      color: #067647;
-      border: 1px solid #b8f2cb;
-    }
-
-    .hint {
-      color: #6b7280;
-      font-size: 13px;
-      line-height: 1.55;
-      margin: -4px 0 18px;
-    }
-
-    .legal-links {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px 14px;
-      margin-top: 22px;
-      font-size: 12px;
-      justify-content: center;
-    }
-
-    .legal-links a {
-      color: var(--brand-primary);
-      font-weight: 700;
-      text-decoration: none;
-    }
-
-    .legal-links a:hover {
-      text-decoration: underline;
-      text-underline-offset: 3px;
-    }
-
-    a:focus-visible,
-    button:focus-visible,
-    input:focus-visible {
-      outline: 3px solid rgba(34, 197, 94, 0.35);
-      outline-offset: 3px;
-    }
-
-    input:focus,
-    select:focus,
-    textarea:focus {
-      border-color: var(--ui-primary);
-      box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.15);
-    }
-
-    @media (max-width: 920px) {
-      body {
-        padding: 18px;
-      }
-
-      .page {
-        grid-template-columns: 1fr;
-        min-height: auto;
-        max-width: 560px;
-      }
-
-      .brand-panel {
-        display: none;
-      }
-
-      .auth-panel {
-        padding: 34px 22px;
-      }
-
-      .mobile-logo {
-        display: flex;
-      }
-
-      .auth-header h2 {
-        font-size: 28px;
-      }
-    }
-
-    @media (max-width: 520px) {
-      body {
-        padding: 12px;
-        align-items: stretch;
-      }
-
-      .page {
-        border-radius: 16px;
-      }
-
-      .auth-panel {
-        padding: 28px 18px;
-      }
-
-      .auth-header h2 {
-        font-size: 24px;
-      }
-
-      input,
-      .btn {
-        min-height: 54px;
-      }
-
-      .legal-links {
-        flex-direction: column;
-        align-items: center;
-      }
-    }
-
-    @media (prefers-reduced-motion: reduce) {
-      *,
-      *::before,
-      *::after {
-        transition: none !important;
-        scroll-behavior: auto !important;
-      }
-    }
-\n  </style>\n
 </head>
 
-<body>
-  <main class="page">
-    <section class="brand-panel" aria-label="FairLinx platform overview">
+<body class="phase5-public">
+  <main class="page fx-layout-public auth-page--ds">
+    <section class="brand-panel fx-card" aria-label="FairLinx platform overview">
       <div class="brand-logo">
         <div class="brand-mark">FL</div>
-        <span>Fair<span style="color: var(--brand-primary);">Linx</span></span>
+        <span>Fair<span class="brand-wordmark-accent">Linx</span></span>
       </div>
 
       <h1>Welcome Back to <span class="accent">FairLinx</span></h1>
@@ -568,11 +38,11 @@
       </div>
     </section>
 
-    <section class="auth-panel" aria-label="Login forms">
+    <section class="auth-panel fx-card" aria-label="Login forms">
       <div class="auth-card">
         <div class="mobile-logo">
           <div class="brand-mark">FL</div>
-          <span>Fair<span style="color: var(--brand-primary);">Linx</span></span>
+          <span>Fair<span class="brand-wordmark-accent">Linx</span></span>
         </div>
 
         <form id="loginForm" class="form active">
@@ -581,29 +51,29 @@
             <p>Enter your credentials to access your FairLinx control panel.</p>
           </div>
 
-          <div class="field">
+          <div class="field fx-field">
             <label for="username">Username</label>
-            <input id="username" name="username" type="text" autocomplete="username" placeholder="Enter your username" />
+            <input id="username" name="username" class="fx-input" type="text" autocomplete="username" placeholder="Enter your username" />
           </div>
 
-          <div class="field">
+          <div class="field fx-field">
             <label for="password">Password</label>
             <div class="password-wrap">
-              <input id="password" name="password" type="password" autocomplete="current-password" placeholder="Enter your password" />
+              <input id="password" name="password" class="fx-input" type="password" autocomplete="current-password" placeholder="Enter your password" />
               <button type="button" class="eye-btn" data-password-target="password" aria-label="Show password">👁</button>
             </div>
           </div>
 
           <div class="row">
             <span></span>
-            <button type="button" class="link" id="loginForgotLink">Forgot your password?</button>
+            <button type="button" class="link fx-btn fx-btn--ghost" id="loginForgotLink">Forgot your password?</button>
           </div>
 
-          <button id="loginBtn" class="btn" type="submit">Sign In</button>
+          <button id="loginBtn" class="btn fx-btn fx-btn--primary" type="submit">Sign In</button>
 
-          <div style="margin-top:16px;text-align:center;font-size:13px;color:#5f6368;">
+          <div class="auth-muted-foot">
             Don’t have an account?
-            <a href="/signup.html" class="link" style="font-size:13px;">Sign up</a>
+            <a href="/signup.html" class="link auth-muted-foot__link">Sign up</a>
           </div>
         </form>
 
@@ -613,13 +83,13 @@
             <p>Enter your username. We will send a reset code to your company's email on file.</p>
           </div>
 
-          <div class="field">
+          <div class="field fx-field">
             <label for="forgotUsername">Username</label>
-            <input id="forgotUsername" name="forgotUsername" type="text" autocomplete="username" placeholder="Enter your username" />
+            <input id="forgotUsername" name="forgotUsername" class="fx-input" type="text" autocomplete="username" placeholder="Enter your username" />
           </div>
 
-          <button id="forgotBtn" class="btn" type="submit">Send Reset Code</button>
-          <button type="button" class="btn secondary-btn" id="loginBackFromForgot">Back to Login</button>
+          <button id="forgotBtn" class="btn fx-btn fx-btn--primary" type="submit">Send Reset Code</button>
+          <button type="button" class="btn secondary-btn fx-btn fx-btn--secondary" id="loginBackFromForgot">Back to Login</button>
         </form>
 
         <form id="resetForm" class="form">
@@ -628,34 +98,34 @@
             <p>Enter your username, the code from your email, and your new password.</p>
           </div>
 
-          <div class="field">
+          <div class="field fx-field">
             <label for="resetUsername">Username</label>
-            <input id="resetUsername" name="resetUsername" type="text" autocomplete="username" placeholder="Enter your username" />
+            <input id="resetUsername" name="resetUsername" class="fx-input" type="text" autocomplete="username" placeholder="Enter your username" />
           </div>
 
-          <div class="field">
+          <div class="field fx-field">
             <label for="resetCode">Reset Code</label>
-            <input id="resetCode" name="resetCode" inputmode="numeric" placeholder="Enter reset code" />
+            <input id="resetCode" name="resetCode" class="fx-input" inputmode="numeric" placeholder="Enter reset code" />
           </div>
 
-          <div class="field">
+          <div class="field fx-field">
             <label for="newPassword">New Password</label>
             <div class="password-wrap">
-              <input id="newPassword" name="newPassword" type="password" autocomplete="new-password" placeholder="Enter new password" />
+              <input id="newPassword" name="newPassword" class="fx-input" type="password" autocomplete="new-password" placeholder="Enter new password" />
               <button type="button" class="eye-btn" data-password-target="newPassword" aria-label="Show new password">👁</button>
             </div>
           </div>
 
-          <div class="field">
+          <div class="field fx-field">
             <label for="confirmPassword">Confirm Password</label>
             <div class="password-wrap">
-              <input id="confirmPassword" name="confirmPassword" type="password" autocomplete="new-password" placeholder="Confirm new password" />
+              <input id="confirmPassword" name="confirmPassword" class="fx-input" type="password" autocomplete="new-password" placeholder="Confirm new password" />
               <button type="button" class="eye-btn" data-password-target="confirmPassword" aria-label="Show confirm password">👁</button>
             </div>
           </div>
 
-          <button id="resetBtn" class="btn" type="submit">Update Password</button>
-          <button type="button" class="btn secondary-btn" id="loginBackFromReset">Back to Login</button>
+          <button id="resetBtn" class="btn fx-btn fx-btn--primary" type="submit">Update Password</button>
+          <button type="button" class="btn secondary-btn fx-btn fx-btn--secondary" id="loginBackFromReset">Back to Login</button>
         </form>
 
         <div id="messageBox" class="message" role="status" aria-live="polite"></div>

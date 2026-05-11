@@ -2,483 +2,22 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Support</title>
   <link rel="stylesheet" href="/css/brand.css">
-  <link rel="stylesheet" href="/app-shell.css">
-  <style>
-    * { box-sizing: border-box; }
-
-    :root {
-      --fx-card: rgba(255,255,255,0.96);
-      --fx-text: var(--brand-black);
-      --fx-muted: #667d73;
-      --fx-line: var(--brand-border);
-      --fx-soft: var(--brand-bg);
-      --fx-orange: var(--brand-primary);
-      --fx-orange-dark: var(--brand-primary-hover);
-      --fx-red: #b42318;
-      --fx-blue: #2050b4;
-      --fx-shadow: 0 18px 42px rgba(16,24,40,0.08);
-      --fx-radius: 22px;
-    }
-
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      background:
-        radial-gradient(circle at top left, rgba(255, 90, 0, 0.13), transparent 28%),
-        radial-gradient(circle at top right, rgba(22, 101, 52, 0.08), transparent 24%),
-        linear-gradient(180deg, #fbfcfb 0%, #f6f8f7 42%, #f4f7f5 100%);
-      padding: 28px;
-      color: var(--fx-text);
-    }
-
-    .page {
-      width: min(1320px, 100%);
-      margin: 0 auto;
-    }
-
-    .hero {
-      display: flex;
-      justify-content: space-between;
-      gap: 18px;
-      align-items: flex-end;
-      padding: 26px;
-      margin-bottom: 20px;
-      background: var(--fx-card);
-      border: 1px solid var(--fx-line);
-      border-radius: 26px;
-      box-shadow: var(--fx-shadow);
-      flex-wrap: wrap;
-    }
-
-    h1 {
-      margin: 0 0 8px;
-      font-size: clamp(32px, 4vw, 46px);
-      line-height: 1;
-      color: var(--fx-orange);
-      letter-spacing: -0.045em;
-      font-weight: 950;
-    }
-
-    h2 {
-      margin: 0 0 14px;
-      color: var(--fx-text);
-      font-size: 20px;
-      letter-spacing: -0.025em;
-      font-weight: 950;
-    }
-
-    p.lead {
-      margin: 0;
-      color: var(--fx-muted);
-      line-height: 1.55;
-      max-width: 760px;
-      font-weight: 650;
-    }
-
-    .grid {
-      display: grid;
-      grid-template-columns: 410px minmax(0, 1fr);
-      gap: 20px;
-      align-items: start;
-    }
-
-    .panel {
-      padding: 20px;
-      background: var(--fx-card);
-      border: 1px solid var(--fx-line);
-      border-radius: var(--fx-radius);
-      box-shadow: var(--fx-shadow);
-      min-width: 0;
-    }
-
-    label {
-      display: grid;
-      gap: 7px;
-      font-weight: 900;
-      color: #315548;
-      font-size: 12px;
-      margin-bottom: 13px;
-      text-transform: uppercase;
-      letter-spacing: 0.045em;
-    }
-
-    input,
-    select,
-    textarea {
-      width: 100%;
-      min-height: 44px;
-      padding: 11px 12px;
-      border-radius: 13px;
-      border: 1px solid #d6e1da;
-      background: white;
-      color: var(--fx-text);
-      font-size: 14px;
-      outline: none;
-      transition: border-color .15s ease, box-shadow .15s ease;
-    }
-
-    input:focus,
-    select:focus,
-    textarea:focus {
-      border-color: rgba(255,90,0,0.5);
-      box-shadow: 0 0 0 3px rgba(255,90,0,0.13);
-    }
-
-    textarea {
-      min-height: 112px;
-      resize: vertical;
-      font-family: inherit;
-      line-height: 1.5;
-      text-transform: none;
-      letter-spacing: normal;
-    }
-
-    .btn {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 7px;
-      min-height: 42px;
-      padding: 10px 15px;
-      border: none;
-      border-radius: 13px;
-      background: linear-gradient(135deg, var(--fx-orange), var(--fx-orange-dark));
-      color: white;
-      cursor: pointer;
-      font-weight: 900;
-      font-size: 13px;
-      transition: transform .15s ease, box-shadow .15s ease, opacity .15s ease;
-      box-shadow: 0 10px 22px rgba(16,24,40,0.07);
-    }
-
-    .btn:hover:not(:disabled) {
-      transform: translateY(-1px);
-      box-shadow: 0 14px 26px rgba(16,24,40,0.11);
-    }
-
-    .btn:disabled {
-      opacity: 0.55;
-      cursor: not-allowed;
-      transform: none;
-      box-shadow: none;
-    }
-
-    .btn.ghost {
-      background: white;
-      color: #315548;
-      border: 1px solid #d6e1da;
-    }
-
-    .btn.danger {
-      background: var(--fx-red);
-    }
-
-    .btn.subtle {
-      background: #eef4ef;
-      color: #315548;
-    }
-
-    .row {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
-
-    .filter-bar {
-      display: flex;
-      gap: 8px;
-      margin-bottom: 14px;
-      flex-wrap: wrap;
-    }
-
-    .filter-bar select {
-      width: auto;
-      min-height: 38px;
-      padding: 8px 10px;
-    }
-
-    .ticket-list {
-      display: grid;
-      gap: 10px;
-      max-height: 62vh;
-      overflow: auto;
-      padding-right: 2px;
-    }
-
-    .ticket-item {
-      padding: 14px;
-      border-radius: 16px;
-      border: 1px solid #e1ece5;
-      background: white;
-      cursor: pointer;
-      transition: transform .15s ease, border-color .15s ease, box-shadow .15s ease, background .15s ease;
-    }
-
-    .ticket-item:hover {
-      transform: translateY(-1px);
-      border-color: rgba(255,90,0,0.45);
-      box-shadow: 0 8px 20px rgba(230,74,0,0.09);
-    }
-
-    .ticket-item.active {
-      border-color: rgba(255,90,0,0.55);
-      background: #fff3e8;
-      box-shadow: 0 10px 24px rgba(230,74,0,0.10);
-    }
-
-    .ticket-meta {
-      display: flex;
-      gap: 6px;
-      flex-wrap: wrap;
-      align-items: center;
-      font-size: 11px;
-      color: #6b7c73;
-      line-height: 1.4;
-    }
-
-    .pill {
-      display: inline-block;
-      padding: 4px 9px;
-      border-radius: 999px;
-      font-size: 10px;
-      font-weight: 950;
-      letter-spacing: 0.035em;
-      text-transform: uppercase;
-    }
-
-    .pill.status-open { background: #fff3e8; color: var(--fx-orange-dark); }
-    .pill.status-in_progress { background: #eaf1ff; color: var(--fx-blue); }
-    .pill.status-waiting_customer { background: #fff4d6; color: #8a6300; }
-    .pill.status-pending { background: #fff4d6; color: #8a6300; }
-    .pill.status-resolved { background: #e8eefc; color: var(--fx-blue); }
-    .pill.status-closed { background: #ececec; color: #4a4a4a; }
-
-    .pill.priority-low { background: #eef4ef; color: #4a6357; }
-    .pill.priority-medium,
-    .pill.priority-normal { background: #fff3e8; color: var(--fx-orange-dark); }
-    .pill.priority-high { background: #ffe9d6; color: #9a4a00; }
-    .pill.priority-urgent { background: #fde0de; color: var(--fx-red); }
-
-    .ticket-title {
-      font-weight: 950;
-      color: #1c2c25;
-      margin: 7px 0;
-      letter-spacing: -0.01em;
-      word-break: break-word;
-    }
-
-    .empty {
-      padding: 24px;
-      text-align: center;
-      color: #71867c;
-      font-size: 13px;
-      line-height: 1.55;
-      border: 1px dashed #d2e0d8;
-      border-radius: 16px;
-      background: linear-gradient(180deg, #ffffff, #fbfdfc);
-    }
-
-    .thread {
-      display: grid;
-      gap: 10px;
-      max-height: 52vh;
-      overflow: auto;
-      padding: 4px;
-    }
-
-    .msg {
-      padding: 12px 14px;
-      border-radius: 16px;
-      border: 1px solid #e1ece5;
-      background: white;
-      font-size: 14px;
-      color: #1c2c25;
-      line-height: 1.55;
-      white-space: pre-wrap;
-      word-break: break-word;
-    }
-
-    .msg.platform {
-      border-color: #c8d6f3;
-      background: #f5f8ff;
-    }
-
-    .msg-head {
-      font-size: 11px;
-      color: #6b7c73;
-      margin-bottom: 7px;
-      display: flex;
-      gap: 6px;
-      align-items: center;
-      flex-wrap: wrap;
-    }
-
-    .msg-head strong {
-      color: #1c2c25;
-    }
-
-    .toolbar {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-      margin-bottom: 14px;
-      align-items: center;
-    }
-
-    .toolbar .meta {
-      font-size: 12px;
-      color: #6b7c73;
-    }
-
-    #status {
-      min-height: 18px;
-      font-size: 13px;
-      color: #5f6e66;
-      margin-top: 10px;
-      line-height: 1.45;
-      font-weight: 800;
-    }
-
-    #status.error {
-      color: var(--fx-red);
-    }
-
-    #status.success {
-      color: var(--fx-orange-dark);
-    }
-
-    #status:not(:empty) {
-      border: 1px solid #d6e1da;
-      background: #fff;
-      border-radius: 14px;
-      padding: 10px 12px;
-    }
-
-    .platform-badge {
-      display: inline-block;
-      padding: 4px 10px;
-      border-radius: 999px;
-      background: var(--fx-blue);
-      color: white;
-      font-size: 11px;
-      font-weight: 950;
-      letter-spacing: 0.04em;
-      text-transform: uppercase;
-      margin-left: 8px;
-      vertical-align: middle;
-    }
-
-    hr {
-      margin: 18px 0;
-      border: 0;
-      border-top: 1px solid #e1ece5;
-    }
-
-    @media (max-width: 980px) {
-      body { padding: 18px; }
-      .grid { grid-template-columns: 1fr; }
-      .ticket-list { max-height: 380px; }
-    }
-
-    @media (max-width: 620px) {
-      body { padding: 14px; }
-      .hero,
-      .panel {
-        border-radius: 18px;
-        padding: 18px;
-      }
-      .row,
-      .filter-bar {
-        display: grid;
-        grid-template-columns: 1fr;
-      }
-      .btn,
-      .filter-bar select {
-        width: 100%;
-      }
-    }
-  </style>
+  <link rel="stylesheet" href="/app-shell.css">  
 </head>
-<body>
-  <div class="page fx-layout-public">
-    <div class="hero fx-hero fx-section-head">
-      <div>
-        <h1>Support<span id="platformBadge" class="platform-badge" style="display:none">Platform Owner</span></h1>
-        <p class="lead" id="leadCopy">Open a ticket if something is not working, or browse your existing conversations with the FairLinx team.</p>
-      </div>
-      <div class="row fx-cta-row">
-        <button class="btn ghost fx-btn fx-btn--secondary" id="refreshBtn" type="button">Refresh</button>
-      </div>
-    </div>
-
+<body class="phase5-public fx-layout-public">
+  <header><nav aria-label="Primary navigation"><a href="/">Home</a><a href="/support.html">Support</a><button class="btn ghost fx-btn fx-btn--secondary" id="refreshBtn" type="button">Refresh</button></nav></header>
+  <main class="page fx-layout-public">
+    <h1>Support <span id="platformBadge" class="platform-badge" style="display:none">Platform Owner</span></h1>
+    <p class="lead" id="leadCopy">Open a ticket or browse existing support conversations.</p>
     <div class="grid">
-      <div class="panel fx-card">
-        <h2 id="listHeading">Your tickets</h2>
-
-        <div class="filter-bar fx-toolbar">
-          <select id="filterStatus" class="fx-select">
-            <option value="">All statuses</option>
-            <option value="open">Open</option>
-            <option value="in_progress">In Progress</option>
-            <option value="waiting_customer">Waiting Customer</option>
-            <option value="resolved">Resolved</option>
-            <option value="closed">Closed</option>
-          </select>
-          <select id="filterPriority" class="fx-select">
-            <option value="">All priorities</option>
-            <option value="low">Low</option>
-            <option value="medium">Medium</option>
-            <option value="high">High</option>
-            <option value="urgent">Urgent</option>
-          </select>
-        </div>
-
-        <div id="ticketList" class="ticket-list" aria-live="polite">
-          <div class="empty fx-empty">Loading tickets...</div>
-        </div>
-
-        <hr>
-
-        <h2 id="createHeading">Open a new ticket</h2>
-        <form id="createForm">
-          <label class="fx-field">Subject
-            <input id="newSubject" class="fx-input" type="text" maxlength="200" required>
-          </label>
-          <label class="fx-field">Category
-            <select id="newCategory" class="fx-select">
-              <option value="general">General</option>
-              <option value="billing">Billing</option>
-              <option value="bug">Bug</option>
-              <option value="feature_request">Feature request</option>
-              <option value="account">Account</option>
-              <option value="marketplace">Marketplace</option>
-            </select>
-          </label>
-          <label class="fx-field">Priority
-            <select id="newPriority" class="fx-select">
-              <option value="low">Low</option>
-              <option value="medium" selected>Medium</option>
-              <option value="high">High</option>
-              <option value="urgent">Urgent</option>
-            </select>
-          </label>
-          <label class="fx-field">Message
-            <textarea id="newMessage" class="fx-textarea" maxlength="5000" required placeholder="Describe what is happening, what you expected, and any steps to reproduce."></textarea>
-          </label>
-          <button class="btn fx-btn fx-btn--primary" id="createBtn" type="submit">Open ticket</button>
-        </form>
-        <div id="status" class="fx-alert" role="status" aria-live="polite"></div>
-      </div>
-
-      <div class="panel fx-card" id="detailPanel">
-        <div class="empty fx-empty">Select a ticket on the left to view the conversation.</div>
-      </div>
+      <section class="panel fx-card"><h2 id="listHeading">Your tickets</h2><div class="filter-bar fx-toolbar"><select id="filterStatus" class="fx-select"><option value="">All statuses</option><option value="open">Open</option><option value="in_progress">In Progress</option><option value="waiting_customer">Waiting Customer</option><option value="resolved">Resolved</option><option value="closed">Closed</option></select><select id="filterPriority" class="fx-select"><option value="">All priorities</option><option value="low">Low</option><option value="medium">Medium</option><option value="high">High</option><option value="urgent">Urgent</option></select></div><div id="ticketList" class="ticket-list" aria-live="polite"><div class="empty fx-empty">Loading tickets...</div></div><h2 id="createHeading">Open a new ticket</h2><form id="createForm"><label class="fx-field">Subject<input id="newSubject" class="fx-input" type="text" maxlength="200" required></label><label class="fx-field">Category<select id="newCategory" class="fx-select"><option value="general">General</option><option value="billing">Billing</option><option value="bug">Bug</option><option value="feature_request">Feature request</option><option value="account">Account</option><option value="marketplace">Marketplace</option></select></label><label class="fx-field">Priority<select id="newPriority" class="fx-select"><option value="low">Low</option><option value="medium" selected>Medium</option><option value="high">High</option><option value="urgent">Urgent</option></select></label><label class="fx-field">Message<textarea id="newMessage" class="fx-textarea" maxlength="5000" required placeholder="Describe what is happening, what you expected, and any steps to reproduce."></textarea></label><button class="btn fx-btn fx-btn--primary" id="createBtn" type="submit">Open ticket</button></form><div id="status" class="fx-alert" role="status" aria-live="polite"></div></section>
+      <section class="panel fx-card" id="detailPanel"><div class="empty fx-empty">Select a ticket on the left to view the conversation.</div></section>
     </div>
-  </div>
-
+  </main>
+  <footer><nav aria-label="Footer links"><a href="/contact.html">Contact</a><a href="/trust.html">Trust</a><a href="/terms.html">Terms</a><a href="/privacy.html">Privacy</a></nav></footer>
   <script>
     const API = window.location.origin;
 
@@ -641,15 +180,15 @@
             '<option value="' + s + '"' + (ticket.status === s ? " selected" : "") + '>' + s + '</option>'
           ).join("") +
           '</select>' +
-          '<button class="btn" id="setStatusBtn" type="button">Update status</button>'
+          '<button class="btn fx-btn" id="setStatusBtn" type="button">Update status</button>'
         );
       }
 
       if (ticket.status === "closed") {
-        return '<button class="btn" id="reopenBtn" type="button">Reopen ticket</button>';
+        return '<button class="btn fx-btn" id="reopenBtn" type="button">Reopen ticket</button>';
       }
 
-      return '<button class="btn ghost" id="closeBtn" type="button">Close ticket</button>';
+      return '<button class="btn ghost fx-btn" id="closeBtn" type="button">Close ticket</button>';
     }
 
     function assignControls(ticket) {
@@ -658,7 +197,7 @@
       return (
         '<input id="assignInput" type="number" min="1" placeholder="platform_owner user id" ' +
         'value="' + escapeHtml(current) + '" style="width:220px;display:inline-block">' +
-        '<button class="btn ghost" id="assignBtn" type="button">Assign</button>'
+        '<button class="btn ghost fx-btn" id="assignBtn" type="button">Assign</button>'
       );
     }
 
@@ -727,8 +266,8 @@
       }).join("");
 
       const attachmentHtml = attachments.length
-        ? '<div class="toolbar">' + attachments.map(a =>
-          '<a class="btn subtle" href="' + escapeHtml(a.file_url || "#") + '" target="_blank" rel="noopener">' +
+        ? '<div class="toolbar fx-toolbar">' + attachments.map(a =>
+          '<a class="btn subtle fx-btn" href="' + escapeHtml(a.file_url || "#") + '" target="_blank" rel="noopener">' +
             'Attachment: ' + escapeHtml(a.file_name || "file") +
           '</a>'
         ).join("") + '</div>'
@@ -741,7 +280,7 @@
 
       const internalNoteBlock = isPlatform
         ? ('<label>Internal note<textarea id="internalText" maxlength="5000"></textarea></label>' +
-           '<button class="btn ghost" id="internalBtn" type="button">Add internal note</button>')
+           '<button class="btn ghost fx-btn" id="internalBtn" type="button">Add internal note</button>')
         : "";
 
       const disputeBlock = !isPlatform
@@ -749,13 +288,13 @@
           '<div class="empty fx-empty" style="text-align:left">' +
           'Disputes are reviewed by FairLinx. This does not automatically issue refunds or payment reversals.' +
           '</div>' +
-          '<button class="btn ghost" id="openDisputeBtn" type="button">Open dispute</button>'
+          '<button class="btn ghost fx-btn" id="openDisputeBtn" type="button">Open dispute</button>'
         )
         : "";
 
       detailEl.innerHTML = (
         head +
-        '<div class="toolbar">' +
+        '<div class="toolbar fx-toolbar">' +
         statusActions(t) +
         assignControls(t) +
         '</div>' +
@@ -764,7 +303,7 @@
         '<hr>' +
         replyHint +
         '<label>Reply<textarea id="replyText" maxlength="5000" ' + replyDisabled + '></textarea></label>' +
-        '<button class="btn" id="replyBtn" type="button" ' + replyDisabled + '>Send reply</button>' +
+        '<button class="btn fx-btn" id="replyBtn" type="button" ' + replyDisabled + '>Send reply</button>' +
         disputeBlock +
         internalNoteBlock
       );
