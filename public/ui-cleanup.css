@@ -1,4 +1,30 @@
-/* Shared UI cleanup for operations pages. */
+/* =============================================================================
+   FREEZE CONTRACT (Phase 8F) — ui-cleanup.css
+   ---------------------------------------------------------------------------
+   • **Temporary compatibility override layer** — last-resort tweaks on top of
+     `brand.css` → `app-shell.css` on pages that `<link>` this file.
+   • **Load order:** always linked **after** `/app-shell.css` (never before).
+   • **Do not merge into app-shell / fx-* or remove this file** until all **16**
+     referencing HTML pages pass agreed visual & responsive regression checks.
+   • **Future migration:** absorb rules into `app-shell.css` and/or fx layers
+     (`fx-components.css`, `fx-layouts.css`, via `app-shell` `@import` order)
+     **only** after cascade-safe testing — fx `@import` runs **before** most of
+     app-shell; naive moves change specificity/order.
+   • Treat edits here as **production-touching** until freeze lifts.
+   =============================================================================
+   CANONICAL ROLE (Phase 8C): Ops cleanup / compat for workflow surfaces.
+   Shared UI cleanup for operations pages.
+   ============================================================================= */
+:root {
+  /* Prefer DS semantic tokens, keep brand fallbacks for compatibility. */
+  --uc-primary: var(--interactive-primary, var(--brand-primary));
+  --uc-primary-light: var(--interactive-primary-light, var(--brand-primary-light));
+  --uc-surface: var(--surface-soft, var(--brand-bg));
+  --uc-border: var(--border-default, var(--brand-border));
+  --uc-danger: var(--state-danger-fg, var(--danger));
+  --uc-success: var(--state-success-fg, var(--success));
+  --uc-white: var(--brand-white, #fff);
+}
 .btn,
 .add,
 .edit-btn,
@@ -16,8 +42,8 @@ button.btn {
 .primary,
 .add,
 .primary-action {
-  background: var(--brand-primary);
-  color: var(--brand-white);
+  background: var(--uc-primary);
+  color: var(--uc-white);
 }
 
 .btn.red,
@@ -25,8 +51,8 @@ button.btn {
 .delete,
 .danger,
 .btn.danger {
-  background: var(--danger);
-  color: var(--brand-white);
+  background: var(--uc-danger);
+  color: var(--uc-white);
 }
 
 .btn.gray,
@@ -34,9 +60,9 @@ button.btn {
 .edit-btn,
 .soft,
 .btn.soft {
-  background: var(--brand-bg);
-  color: var(--brand-primary);
-  border: 1px solid var(--brand-border);
+  background: var(--uc-surface);
+  color: var(--uc-primary);
+  border: 1px solid var(--uc-border);
 }
 
 .actions,
@@ -77,22 +103,22 @@ button.btn {
 .status-assigned,
 .status-unpaid,
 .status-draft {
-  background: #fff7ed;
-  color: #c2410c;
+  background: #f3f4f6;
+  color: #374151;
 }
 
 .status-in_progress,
 .status-paused {
-  background: color-mix(in srgb, var(--brand-primary-light) 14%, var(--brand-white));
-  color: var(--brand-primary-light);
+  background: color-mix(in srgb, var(--uc-primary) 12%, var(--uc-white));
+  color: var(--uc-primary);
 }
 
 .status-completed,
 .status-paid,
 .status-active,
 .badge.active {
-  background: color-mix(in srgb, var(--success) 12%, var(--brand-white));
-  color: var(--success);
+  background: color-mix(in srgb, var(--uc-success) 12%, var(--uc-white));
+  color: var(--uc-success);
 }
 
 .status-cancelled,
@@ -100,7 +126,7 @@ button.btn {
 .status-overdue,
 .status-hidden {
   background: #fef2f2;
-  color: var(--danger);
+  color: var(--uc-danger);
 }
 
 .badge.inactive {
@@ -152,13 +178,6 @@ input[id*="search"],
   .edit-btn,
   .delete,
   .primary-action {
-    width: 100%;
-  }
-
-  .modal-actions .btn,
-  .modal-actions .add,
-  .modal-actions .edit-btn,
-  .modal-actions .delete {
     width: 100%;
   }
 

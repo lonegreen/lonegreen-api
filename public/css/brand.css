@@ -1,65 +1,91 @@
+/* =============================================================================
+   FairLinx — public/css/brand.css
+   PHASE B — TOKEN OWNERSHIP: **Legacy compatibility bridge ONLY.**
+   This file is NOT the canonical design token source. Authoritative primitives,
+   semantic aliases, and fx-* variables live in **`public/css/fx-tokens.css`**
+   (loaded inside `app-shell.css`). This stylesheet exists so:
+   • Pages that link `brand.css` before `app-shell.css` get safe `var(--fx-*, …)`
+     fallbacks when fx-tokens has not parsed yet.
+   • Older semantic names (`--text-primary`, `--brand-*`, `--legacy-green-*`, etc.)
+     keep resolving without breaking existing references.
+   Do **not** introduce new system tokens here for greenfield UI — add them in
+   fx-tokens and, only if required for compatibility, alias them here.
+   -----------------------------------------------------------------------------
+   Historical note (Phase 8C): legacy / public compatibility layer; values align
+   with Calm Accent SaaS greens + neutrals from fx-tokens when both load.
+   ============================================================================= */
+
 :root {
-  --brand-primary: #FF5A00;
-  --brand-primary-hover: #E64A00;
-  --brand-primary-light: #FF8A33;
+  /* LEGACY BRIDGE — “brand-*” vocabulary (historical names; values = restrained green DS).
+     Each line prefers `var(--fx-*, literal)` so early cascade matches fx-tokens once loaded. */
+  --brand-primary: var(--fx-primary, #166534);
+  --brand-primary-hover: var(--fx-primary-hover, #14532d);
+  --brand-primary-light: var(--fx-primary-light, #3f8562);
 
-  --brand-black: #111111;
-  --brand-dark: #2B2B2B;
+  --brand-black: var(--fx-text, #0f172a);
+  --brand-dark: #1e293b;
 
-  --brand-border: #D9D9D9;
-  --brand-bg: #F5F5F5;
-  --brand-white: #FFFFFF;
+  --brand-border: var(--fx-border, #e2e8f0);
+  --brand-bg: var(--fx-canvas, #f8fafc);
+  --brand-white: #ffffff;
 
-  --success: #16A34A;
-  --warning: #F59E0B;
-  --danger: #DC2626;
+  --success: var(--fx-success, #15803d);
+  --warning: var(--fx-warning, #a16207);
+  --danger: var(--fx-danger, #b91c1c);
 
-  --gradient-brand: linear-gradient(135deg, #FF5A00 0%, #FF7A1A 100%);
+  /* LEGACY ALIAS — `--gradient-brand`: name retained from marketing era; value is a flat
+     primary fill (no gradient decoration). Maps to the same green accent as `--brand-primary`. */
+  --gradient-brand: var(--brand-primary);
 
-  /* FairLinx semantic color tokens */
+  /* LEGACY BRIDGE — FairLinx semantic tokens (chain through `--brand-*` / literals above).
+     Canonical equivalents when fx-tokens loads: same neutrals and greens as fx primitives. */
   --text-primary: var(--brand-black);
-  --text-secondary: #2b2b2b;
-  --text-muted: #646b73;
+  --text-secondary: #334155;
+  --text-muted: #64748b;
   --text-inverse: #ffffff;
 
   --surface-page: var(--brand-bg);
   --surface-card: var(--brand-white);
   --surface-elevated: #ffffff;
-  --surface-soft: #fafafa;
-  --surface-dark: #1f1f1f;
+  --surface-soft: #f1f5f9;
+  --surface-dark: #0f172a;
 
   --border-default: var(--brand-border);
-  --border-strong: #c9c9c9;
-  --border-subtle: #ececec;
+  --border-strong: #cbd5e1;
+  --border-subtle: #f1f5f9;
 
   --interactive-primary: var(--brand-primary);
   --interactive-primary-hover: var(--brand-primary-hover);
   --interactive-primary-light: var(--brand-primary-light);
-  --focus-ring: 0 0 0 4px rgba(255, 90, 0, 0.16);
+  --focus-ring: 0 0 0 3px rgba(22, 101, 52, 0.35);
 
-  --state-success-bg: #edf8f0;
-  --state-success-fg: #1f7a46;
-  --state-success-border: #cde7d7;
-  --state-warning-bg: #fff7ea;
-  --state-warning-fg: #a15f0a;
-  --state-warning-border: #f2d6aa;
-  --state-danger-bg: #fff2f3;
-  --state-danger-fg: #b93836;
-  --state-danger-border: #f1cbcf;
-  --state-info-bg: #eef4ff;
-  --state-info-fg: #2e4f8f;
-  --state-info-border: #d2def5;
+  --state-success-bg: #ecfdf5;
+  --state-success-fg: #065f46;
+  --state-success-border: #a7f3d0;
+  --state-warning-bg: #fffbeb;
+  --state-warning-fg: #92400e;
+  --state-warning-border: #fde68a;
+  --state-danger-bg: #fef2f2;
+  --state-danger-fg: #991b1b;
+  --state-danger-border: #fecaca;
+  --state-info-bg: #eff6ff;
+  --state-info-fg: #1e40af;
+  --state-info-border: #bfdbfe;
 
-  /* Legacy green drift aliases (keep for backward compatibility) */
-  --legacy-green-900: var(--brand-black);
-  --legacy-green-800: var(--brand-dark);
+  /* LEGACY NAME ALIASES — `--legacy-green-*` (historical green ramp labels).
+     Values map to the current green accent / success tint system — not orange. Kept for
+     older selectors and docs; canonical ramps live in fx-tokens (`--fx-primary*`, states). */
+  --legacy-green-900: #14532d;
+  --legacy-green-800: #166534;
   --legacy-green-700: var(--brand-primary);
   --legacy-green-600: var(--brand-primary-hover);
-  --legacy-green-100: #fff3e8;
-  --legacy-green-soft: #fff3e8;
-  --legacy-green-border: #ffd8bf;
+  --legacy-green-100: #ecfdf5;
+  --legacy-green-soft: rgba(22, 101, 52, 0.1);
+  --legacy-green-border: #a7f3d0;
 
-  /* Typography system */
+  /* LEGACY BRIDGE — typography (px scale + stacks). Duplicates token NAMES from fx-tokens
+     on purpose: pages may load this file without app-shell; fx-tokens uses rem for the
+     same conceptual steps. Do not “fix” px→rem here — that would change computed sizes. */
   --font-sans: Inter, Arial, sans-serif;
   --font-size-xs: 12px;
   --font-size-sm: 14px;
@@ -74,7 +100,7 @@
   --letter-spacing-heading: -0.02em;
   --letter-spacing-label: 0.02em;
 
-  /* Spacing scale */
+  /* LEGACY BRIDGE — spacing scale (aligned numerically with fx-tokens; extra steps 11–12) */
   --space-0: 0;
   --space-1: 4px;
   --space-2: 8px;
@@ -89,29 +115,29 @@
   --space-11: 56px;
   --space-12: 64px;
 
-  /* Radius system */
+  /* LEGACY BRIDGE — radii (aligned with fx-tokens Phase 9B where overlapping; extra radii for older UI) */
   --radius-none: 0;
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 16px;
-  --radius-xl: 20px;
-  --radius-2xl: 24px;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 18px;
+  --radius-2xl: 22px;
   --radius-round: 999px;
 
-  /* Shadow system */
+  /* LEGACY BRIDGE — shadows (neutral slate tint; different subset than fx-tokens — cascade picks winner) */
   --shadow-none: none;
-  --shadow-sm: 0 4px 12px rgba(17, 17, 17, 0.06);
-  --shadow-md: 0 10px 28px rgba(17, 17, 17, 0.09);
-  --shadow-lg: 0 18px 42px rgba(17, 17, 17, 0.12);
+  --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.06);
+  --shadow-md: 0 4px 12px rgba(15, 23, 42, 0.08);
+  --shadow-lg: 0 8px 24px rgba(15, 23, 42, 0.1);
 
-  /* Motion system */
+  /* LEGACY BRIDGE — motion */
   --ease-standard: cubic-bezier(0.2, 0, 0, 1);
   --ease-emphasized: cubic-bezier(0.2, 0, 0, 1);
   --motion-fast: 120ms;
   --motion-base: 180ms;
   --motion-slow: 280ms;
 
-  /* Breakpoints */
+  /* LEGACY BRIDGE — breakpoints (reference tokens; not identical to `--fx-bp-*` names in fx-tokens) */
   --bp-sm: 640px;
   --bp-md: 900px;
   --bp-lg: 1200px;

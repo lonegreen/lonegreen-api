@@ -1,5 +1,9 @@
 /* =============================================================================
    FAIRLINX DESIGN SYSTEM — fx-layouts.css
+   CANONICAL ROLE (Phase 8C): **Shared fx-* layouts** (loaded only through
+   `app-shell.css` `@import`, not as a separate `<link>` from HTML).
+   Phase 14B.1: Density tokens reference premium breathable defaults from fx-tokens.
+   Phase 14B.3: Hero internal gap refinement for calmer headline/subtitle rhythm.
    SECTIONS: Layouts · Legacy-compatible layouts · Responsive rules
    ============================================================================= */
 
@@ -11,8 +15,17 @@
   width: 100%;
   min-height: 100%;
   display: grid;
-  gap: var(--fx-space-6);
+  gap: var(--fx-density-gap-default);
   align-content: start;
+}
+
+/* Phase 9C — optional density (workflow compact vs marketing breathable) */
+.fx-page--dense {
+  gap: var(--fx-density-gap-compact);
+}
+
+.fx-page--comfortable {
+  gap: var(--fx-density-gap-breathable);
 }
 
 .fx-container {
@@ -39,21 +52,22 @@
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
 }
 
-.fx-grid-2 {
+.fx-grid-2,
+.fx-grid-3,
+.fx-grid-4 {
   display: grid;
   gap: var(--fx-space-4);
+}
+
+.fx-grid-2 {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .fx-grid-3 {
-  display: grid;
-  gap: var(--fx-space-4);
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
 .fx-grid-4 {
-  display: grid;
-  gap: var(--fx-space-4);
   grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
@@ -62,6 +76,11 @@
   flex-direction: column;
   gap: var(--fx-space-4);
   min-width: 0;
+}
+
+/* Workflow boards — spaced section stacks (e.g. jobs.html grouped lists) */
+.fx-stack--sections {
+  gap: var(--fx-space-6);
 }
 
 .fx-cluster {
@@ -85,7 +104,7 @@
 
 .fx-dashboard-layout {
   display: grid;
-  gap: var(--fx-space-6);
+  gap: var(--fx-space-7);
   grid-template-columns: minmax(0, 1fr);
 }
 
@@ -124,6 +143,26 @@
   gap: var(--fx-space-8);
 }
 
+/* Phase 12B.2 — iframe workflows: ease vertical stack vs marketing-wide spacing */
+body.phase2-internal .fx-layout-public {
+  gap: var(--fx-space-6);
+}
+
+/* Phase 12C — premium vertical rhythm on dense workflow shells (scoped body flags) */
+body.jobs-ds-page.phase2-internal .jobs-page-shell.fx-page--dense,
+body.invoices-ds-page.phase2-internal .invoices-page-shell.fx-page--dense,
+body.estimates-ds-page.phase2-internal .estimates-page-shell.fx-page--dense {
+  gap: var(--fx-space-5);
+}
+
+/* Phase 12E — align remaining internal workflows with Phase 12C shell rhythm (CSS-only) */
+body.calendar-ds-page.phase2-internal .calendar-page-content.fx-page--dense,
+body.analytics-ds-page.phase2-internal .page.fx-page--dense,
+body.settings-ds-page.phase2-internal .page.fx-page--dense,
+body.users-ds-page.phase2-internal .page.fx-page--dense {
+  gap: var(--fx-space-5);
+}
+
 .fx-layout-dashboard {
   display: grid;
   gap: var(--fx-space-6);
@@ -136,7 +175,7 @@
 
 .fx-hero {
   display: grid;
-  gap: var(--fx-space-4);
+  gap: var(--fx-space-5);
   padding: var(--fx-space-7);
   border-radius: var(--fx-radius-xl);
   border: 1px solid var(--fx-color-border);
@@ -252,4 +291,86 @@
   .fx-grid-4 {
     grid-template-columns: 1fr;
   }
+}
+
+/* -----------------------------------------------------------------------------
+   OVERFLOW-SAFE HELPERS — Phase 10E (wide grids / calendar scroll regions)
+   ----------------------------------------------------------------------------- */
+
+.fx-min-w-0 {
+  min-width: 0;
+}
+
+.fx-scroll-region {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+}
+
+/* -----------------------------------------------------------------------------
+   INTERNAL APP PAGES — structural wrappers (used with body.phase2-internal)
+   ----------------------------------------------------------------------------- */
+
+body.phase2-internal .layout {
+  display: grid;
+  gap: var(--fx-space-5);
+  grid-template-columns: minmax(0, 1fr);
+  min-width: 0;
+}
+
+/* Split layouts inside main are overridden in app-shell.css (Phase 4 marketplace). */
+body.phase2-internal main .layout {
+  min-width: 0;
+}
+
+/* Phase 5 — public auth / legal readability */
+body.phase5-public .legal-page {
+  min-width: 0;
+}
+
+/* Phase 13B — auth pages: comfortable gutters on narrow phones */
+@media (max-width: 640px) {
+  body.phase5-public main.page.auth-page--ds {
+    padding-bottom: var(--fx-space-10, 40px);
+  }
+}
+
+/* Phase 13C — public landings: comfortable close on small screens */
+@media (max-width: 640px) {
+  body.phase5-public main.page.fl-landing {
+    padding-bottom: var(--fx-space-10, 40px);
+  }
+}
+
+/* Phase 13D — marketplace pages: tighten vertical rhythm on narrow widths */
+@media (max-width: 900px) {
+  body.phase2-internal main.page.marketplace-ds.fx-layout-public {
+    gap: var(--fx-space-5);
+  }
+}
+
+/* Phase 6 — platform shell main column */
+body.phase2-internal #platformRoot.page {
+  min-width: 0;
+}
+
+body.phase2-internal .stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--fx-space-5);
+  min-width: 0;
+}
+
+/* Phase 3 — analytics chart stacks share min-width with grid children */
+body.phase2-internal .chart-grid,
+body.phase2-internal .pro-grid {
+  min-width: 0;
+}
+
+/* Phase 11J — client profile (`client.html`): primary column uses `.fx-layout-public` + `.fx-page`; min-width is enforced in `app-shell.css` under `body.client-ds-page` for iframe-safe overflow. */
+body.client-ds-page.phase2-internal .main > .page.fx-layout-public {
+  min-width: 0;
 }

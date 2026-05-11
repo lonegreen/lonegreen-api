@@ -1,10 +1,26 @@
 /* =============================================================================
    FAIRLINX DESIGN SYSTEM — fx-components.css
-   SECTIONS: Components · Responsive rules
+   PHASE C — CANONICAL OWNERSHIP: **Shared `.fx-*` component implementations** for
+   the product UI. Tokens come only from `fx-tokens.css` (via `app-shell.css`
+   import order). This file does **not** own legacy class bridges (`.btn`, `.panel`,
+   `.badge` without `fx-`, etc.) — those live in `app-shell.css` and, where loaded,
+   `ui-cleanup.css`. Rules here must stay compatible with that cascade.
+   Component families defined in this sheet:
+   • **Buttons** — `.fx-btn` + BEM/flat modifier aliases (`.fx-btn--primary` / `.fx-btn-primary`, …)
+   • **Surfaces** — `.fx-card` (+ `__header` / `__body` / `__footer`, density/elevation modifiers),
+     `.fx-panel`, `.fx-page-header`, `.fx-toolbar` (operational groupings, not page layout grid)
+   • **Forms** — `.fx-field` + `.fx-input` / `.fx-select` / `.fx-textarea` + state modifiers
+   • **Data** — `.fx-table-wrap` (scroll + chrome), `.fx-table` (+ `--dense`); empty: `.fx-empty` (+ `__*` / `--start`)
+   • **Status** — `.fx-badge` (semantic tints + neutral), `.fx-alert` (+ `__inner` / `__icon` / `__content` / variants)
+   Other utilities in this file (e.g. `.fx-stat`, `.fx-section-head`, loading, tabs) are part of the same
+   shared layer; prefer these selectors for new markup instead of duplicating in page CSS.
+   -----------------------------------------------------------------------------
+   Historical: Phase 8C shared components; 9C/9D foundations; 14B premium pass; 14B.2–3 polish.
    ============================================================================= */
 
 /* -----------------------------------------------------------------------------
-   COMPONENTS — Buttons
+   COMPONENTS — Buttons (canonical `.fx-btn*`)
+   Primary/secondary/ghost/danger + size modifiers. Legacy `.btn` remains in app-shell.
    ----------------------------------------------------------------------------- */
 
 .fx-btn {
@@ -13,7 +29,7 @@
   border-radius: var(--fx-radius-md);
   font: inherit;
   font-size: var(--fx-text-sm);
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold, 600);
   line-height: 1;
   text-decoration: none;
   cursor: pointer;
@@ -32,7 +48,7 @@
 }
 
 .fx-btn:hover {
-  transform: translateY(-1px);
+  transform: translateY(-0.5px);
 }
 
 .fx-btn:active {
@@ -47,9 +63,34 @@
   box-shadow: none;
 }
 
+/* Loading-safe: no lift; optional class or aria-busy from JS */
+.fx-btn--loading,
+.fx-btn[aria-busy="true"] {
+  cursor: wait;
+  transform: none;
+  box-shadow: none;
+}
+
+.fx-btn--loading:hover,
+.fx-btn[aria-busy="true"]:hover,
+.fx-btn--loading:active,
+.fx-btn[aria-busy="true"]:active {
+  transform: none;
+}
+
+.fx-btn--loading:not(:disabled),
+.fx-btn[aria-busy="true"]:not(:disabled) {
+  opacity: 0.88;
+  pointer-events: none;
+}
+
 .fx-btn:focus-visible {
   outline: none;
   box-shadow: var(--fx-outline-ring);
+}
+
+.fx-btn:focus:not(:focus-visible) {
+  outline: none;
 }
 
 /* Modifier naming: BEM + flat aliases (both supported) */
@@ -63,20 +104,22 @@
 
 .fx-btn--primary:hover,
 .fx-btn-primary:hover {
+  transform: none;
   background: var(--fx-color-primary-hover);
+  color: var(--fx-text-inverse);
 }
 
 .fx-btn--secondary,
 .fx-btn-secondary {
-  background: var(--fx-color-surface-soft);
-  color: var(--fx-color-text-secondary);
+  background: var(--fx-color-surface);
+  color: var(--fx-color-text);
   border-color: var(--fx-color-border-strong);
 }
 
 .fx-btn--secondary:hover,
 .fx-btn-secondary:hover {
-  border-color: rgba(255, 255, 255, 0.22);
-  background: var(--fx-color-surface);
+  border-color: var(--fx-color-border-strong);
+  background: var(--fx-color-surface-soft);
 }
 
 .fx-btn--ghost,
@@ -89,7 +132,7 @@
 .fx-btn--ghost:hover,
 .fx-btn-ghost:hover {
   background: var(--fx-primary-soft);
-  border-color: rgba(34, 197, 94, 0.35);
+  border-color: color-mix(in srgb, var(--fx-color-primary) 28%, var(--fx-color-border-strong));
 }
 
 .fx-btn--danger,
@@ -101,7 +144,8 @@
 
 .fx-btn--danger:hover,
 .fx-btn-danger:hover {
-  background: rgba(239, 68, 68, 0.2);
+  background: color-mix(in srgb, var(--fx-state-danger-bg) 82%, var(--fx-state-danger-fg));
+  border-color: color-mix(in srgb, var(--fx-state-danger-border) 65%, var(--fx-state-danger-fg));
 }
 
 .fx-btn--sm {
@@ -117,19 +161,32 @@
 }
 
 /* -----------------------------------------------------------------------------
-   COMPONENTS — Surfaces: card, panel, toolbar, page header
+   COMPONENTS — Surfaces: `.fx-card*` / `.fx-panel*` + page chrome (canonical)
+   Card = default elevated surface; panel = flatter/inset-friendly; `body.phase2-internal`
+   in app-shell may force `box-shadow: none` on some surfaces — intentional cross-layer behavior.
    ----------------------------------------------------------------------------- */
 
 .fx-card {
   background: var(--fx-color-surface);
   border: 1px solid var(--fx-color-border);
   border-radius: var(--fx-radius-lg);
-  box-shadow: var(--fx-shadow-sm);
+  box-shadow: var(--fx-shadow-card);
   padding: var(--fx-space-5);
+  display: flex;
+  flex-direction: column;
+  gap: 0;
 }
 
 .fx-card:focus-within {
   border-color: var(--fx-color-border-strong);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .fx-card {
+    transition:
+      border-color var(--fx-motion-fast) var(--fx-ease),
+      box-shadow var(--fx-motion-fast) var(--fx-ease);
+  }
 }
 
 .fx-card--soft {
@@ -140,6 +197,17 @@
   box-shadow: var(--fx-shadow-md);
 }
 
+/* Overlay / modal-adjacent surfaces — deeper shadow, still flat (no glow) */
+.fx-card--overlay {
+  box-shadow: var(--fx-shadow-overlay);
+  border-color: var(--fx-color-border-strong);
+}
+
+.fx-card--compact {
+  padding: var(--fx-space-3);
+  border-radius: var(--fx-radius-md);
+}
+
 .fx-card__header {
   margin-bottom: var(--fx-space-3);
 }
@@ -147,6 +215,18 @@
 .fx-card__body {
   display: grid;
   gap: var(--fx-space-3);
+  flex: 1;
+  min-width: 0;
+}
+
+.fx-card__footer {
+  margin-top: var(--fx-space-4);
+  padding-top: var(--fx-space-3);
+  border-top: 1px solid var(--fx-color-border-subtle);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--fx-space-2);
 }
 
 .fx-panel {
@@ -172,13 +252,13 @@
   border-radius: var(--fx-radius-xl);
   border: 1px solid var(--fx-color-border);
   background: var(--fx-color-surface-elevated);
-  box-shadow: var(--fx-shadow-sm);
+  box-shadow: none;
 }
 
 .fx-page-header__title {
   margin: 0;
   font-size: clamp(var(--fx-text-xl), 1.5vw, var(--fx-text-2xl));
-  font-weight: 700;
+  font-weight: var(--font-weight-bold, 700);
   color: var(--fx-color-text);
   letter-spacing: var(--letter-spacing-heading, -0.02em);
 }
@@ -196,7 +276,7 @@
   justify-content: space-between;
   gap: var(--fx-space-3);
   flex-wrap: wrap;
-  padding: var(--fx-space-4);
+  padding: var(--fx-space-3);
   border: 1px solid var(--fx-color-border);
   border-radius: var(--fx-radius-lg);
   background: var(--fx-color-surface-elevated);
@@ -204,11 +284,15 @@
 
 .fx-toolbar:focus-within {
   border-color: var(--fx-color-border-strong);
-  box-shadow: var(--fx-shadow-sm);
+  box-shadow: none;
 }
 
 /* -----------------------------------------------------------------------------
-   COMPONENTS — Badges & alerts
+   COMPONENTS — Badges & alerts (canonical `.fx-badge*` / `.fx-alert*`)
+   Default: token-based semantic tints. Below, `body.phase2-internal` blocks force a flat
+   monochrome look for iframe/ops UIs; `!important` resists other layers’ `!important` — do not
+   drop without auditing app-shell + ui-cleanup. `.badge.status-orange` is a legacy class name
+   (value maps to neutral chrome — not a product “orange” accent in this file).
    ----------------------------------------------------------------------------- */
 
 .fx-badge {
@@ -220,14 +304,21 @@
   border-radius: var(--fx-radius-round);
   border: 1px solid transparent;
   font-size: var(--fx-text-xs);
-  font-weight: 700;
+  font-weight: var(--font-weight-semibold, 600);
   letter-spacing: 0.03em;
   text-transform: uppercase;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Legacy markup often stacks `.badge` + `.status-*` with `.fx-badge` — keep numerics legible; full
+   legacy badge styling remains in app-shell; this rule only guards `font-variant` when combined. */
+.fx-badge[class*="status-"] {
+  font-variant-numeric: tabular-nums;
 }
 
 .fx-badge--neutral,
 .fx-badge-neutral {
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--fx-color-surface-soft);
   border-color: var(--fx-color-border-strong);
   color: var(--fx-color-text-secondary);
 }
@@ -266,6 +357,50 @@
   padding: var(--fx-space-4);
   background: var(--fx-color-surface-elevated);
   color: var(--fx-color-text-secondary);
+  display: flex;
+  flex-direction: column;
+  gap: var(--fx-space-2);
+}
+
+/* Optional row: icon + text stack (wrap markup in .fx-alert__inner when needed) */
+.fx-alert__inner {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--fx-space-3);
+}
+
+.fx-alert__inner .fx-alert__content {
+  flex: 1;
+  min-width: 0;
+}
+
+.fx-alert__icon {
+  width: 1.25rem;
+  height: 1.25rem;
+  flex-shrink: 0;
+  margin-top: 0.125rem;
+  opacity: 0.9;
+  color: inherit;
+}
+
+.fx-alert__content {
+  display: grid;
+  gap: var(--fx-space-1);
+  min-width: 0;
+}
+
+.fx-alert__title {
+  margin: 0;
+  font-size: var(--fx-text-sm);
+  font-weight: var(--font-weight-semibold, 600);
+  color: inherit;
+}
+
+.fx-alert__body {
+  margin: 0;
+  font-size: var(--fx-text-sm);
+  line-height: var(--fx-line-normal);
+  color: inherit;
 }
 
 .fx-alert--info {
@@ -292,8 +427,113 @@
   color: var(--fx-state-danger-fg);
 }
 
+/* Phase 2 internal — monochrome functional alerts/badges (iframe / ops). !important: required
+   to win against stacked shell/cleanup !important on the same long-lived pages. */
+body.phase2-internal .fx-alert--warning {
+  background: #f0f0f0 !important;
+  border-color: #d9d9d9 !important;
+  color: #111111 !important;
+}
+
+body.phase2-internal .fx-badge--info {
+  background: #eeeeee !important;
+  border-color: #d9d9d9 !important;
+  color: #111111 !important;
+}
+
+body.phase2-internal .fx-badge--neutral {
+  background: #ffffff !important;
+  border-color: #d9d9d9 !important;
+  color: #111111 !important;
+}
+
+body.phase2-internal .btn.blue {
+  background: #ffffff !important;
+  color: #111111 !important;
+  border-color: #d9d9d9 !important;
+}
+
+body.phase2-internal .btn.dark-secondary {
+  background: #ffffff !important;
+  color: #111111 !important;
+  border: 1px solid #d9d9d9 !important;
+}
+
+body.phase5-public .link {
+  color: var(--fx-color-primary);
+  font-weight: var(--font-weight-semibold, 600);
+}
+
+/* Phase 13B — public auth surfaces */
+body.phase5-public .auth-otp-code {
+  letter-spacing: 0.375rem;
+  text-align: center;
+  font-size: var(--fx-text-lg, 1.125rem);
+}
+
+body.phase5-public .password-toggle {
+  flex-shrink: 0;
+  align-self: stretch;
+  padding: 0 var(--fx-space-3);
+  margin: 0;
+  min-height: var(--fx-control-height);
+  border: 1px solid var(--fx-color-border-strong);
+  border-radius: var(--fx-radius-sm);
+  background: var(--fx-color-surface-soft);
+  color: var(--fx-color-text-secondary);
+  font-size: var(--fx-text-sm);
+  font-weight: var(--font-weight-medium, 500);
+  cursor: pointer;
+}
+
+body.phase5-public .password-toggle:hover {
+  background: var(--fx-color-surface-elevated);
+  border-color: var(--fx-color-border);
+}
+
+body.phase5-public .auth-card .status.error {
+  border-color: var(--fx-state-danger-border);
+  background: var(--fx-state-danger-bg);
+  color: var(--fx-state-danger-fg);
+}
+
+body.phase5-public .auth-card .status.success {
+  border-color: var(--fx-state-success-border);
+  background: var(--fx-state-success-bg);
+  color: var(--fx-state-success-fg);
+}
+
+body.phase5-public .auth-card .status:not(:empty) {
+  margin-top: var(--fx-space-4);
+  padding: var(--fx-space-3) var(--fx-space-4);
+  border-radius: var(--fx-radius-md);
+  border: 1px solid var(--fx-color-border-subtle);
+  font-size: var(--fx-text-sm);
+  line-height: var(--fx-line-normal);
+}
+
+/* Phase 13C — public landings: keyboard focus on link CTAs */
+body.phase5-public main.fl-landing .links a:focus-visible {
+  outline: 2px solid var(--fx-color-primary);
+  outline-offset: 2px;
+}
+
+/* Phase 13D — marketplace opportunities list items are native buttons */
+body.phase2-internal main.marketplace-ds .opp-item:focus-visible {
+  outline: 2px solid var(--fx-color-primary);
+  outline-offset: 2px;
+}
+
+body.phase2-internal .badge.status-orange {
+  background: #eeeeee !important;
+  color: #111111 !important;
+  border: 1px solid #d9d9d9 !important;
+}
+
 /* -----------------------------------------------------------------------------
-   COMPONENTS — Fields & inputs
+   COMPONENTS — Fields & inputs (canonical `.fx-field*` + `.fx-input` / `.fx-select` / `.fx-textarea`)
+   Label/hint/error grid; control chrome and focus rings use design tokens; error/success modifiers
+   tint borders/backgrounds without replacing legacy `.field` rules in app-shell.
    ----------------------------------------------------------------------------- */
 
 .fx-field {
@@ -302,14 +542,28 @@
 }
 
 .fx-field__label {
-  font-size: var(--fx-text-sm);
-  font-weight: 600;
+  font-size: var(--type-label-size, var(--fx-text-sm));
+  font-weight: var(--font-weight-medium, 500);
+  letter-spacing: var(--letter-spacing-label, 0.02em);
   color: var(--fx-color-text-secondary);
 }
 
 .fx-field__hint {
   font-size: var(--fx-text-xs);
+  line-height: var(--fx-line-normal);
   color: var(--fx-color-muted);
+}
+
+.fx-field__error {
+  font-size: var(--fx-text-xs);
+  line-height: var(--fx-line-normal);
+  color: var(--fx-state-danger-fg);
+  font-weight: var(--font-weight-medium, 500);
+}
+
+.fx-field--success .fx-field__hint--success,
+.fx-field__hint--success {
+  color: var(--fx-state-success-fg);
 }
 
 .fx-input,
@@ -318,10 +572,11 @@
   width: 100%;
   font: inherit;
   font-size: var(--fx-text-sm);
+  line-height: var(--fx-line-normal);
   color: var(--fx-color-text);
-  background: var(--fx-color-surface-soft);
+  background: var(--fx-color-surface-elevated);
   border: 1px solid var(--fx-color-border-strong);
-  border-radius: var(--fx-radius-md);
+  border-radius: var(--fx-radius-sm);
   padding: 10px 12px;
   min-height: var(--fx-control-height);
   transition:
@@ -339,34 +594,51 @@
 .fx-select:focus,
 .fx-textarea:focus {
   outline: none;
-  border-color: rgba(34, 197, 94, 0.55);
+}
+
+.fx-input:focus-visible,
+.fx-select:focus-visible,
+.fx-textarea:focus-visible {
+  border-color: color-mix(in srgb, var(--fx-color-primary) 45%, var(--fx-color-border-strong));
   box-shadow: var(--fx-outline-ring);
-  background: var(--fx-color-surface);
+  background: var(--fx-color-surface-elevated);
 }
 
 .fx-input:disabled,
 .fx-select:disabled,
 .fx-textarea:disabled {
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--fx-color-surface-soft);
   color: var(--fx-color-muted);
   cursor: not-allowed;
-  opacity: 0.85;
+  opacity: 0.72;
 }
 
 .fx-field--error .fx-input,
 .fx-field--error .fx-select,
 .fx-field--error .fx-textarea {
+  border-color: var(--fx-state-danger-border);
+  background: var(--fx-state-danger-bg);
+}
+
+.fx-field--error .fx-input:focus-visible,
+.fx-field--error .fx-select:focus-visible,
+.fx-field--error .fx-textarea:focus-visible {
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--fx-danger) 22%, transparent);
   border-color: var(--fx-danger);
 }
 
-.fx-field--error .fx-input:focus,
-.fx-field--error .fx-select:focus,
-.fx-field--error .fx-textarea:focus {
-  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.35);
+.fx-field--success .fx-input,
+.fx-field--success .fx-select,
+.fx-field--success .fx-textarea {
+  border-color: var(--fx-state-success-border);
+  background: color-mix(in srgb, var(--fx-state-success-bg) 92%, transparent);
 }
 
 /* -----------------------------------------------------------------------------
-   COMPONENTS — Data display: table, stat, empty
+   COMPONENTS — Data display: `.fx-table*` / `.fx-table-wrap`, stats, empty states
+   `.fx-table-wrap` owns horizontal scroll + outer border; `.fx-table` owns cell/head density.
+   `.fx-empty*` = canonical empty/placeholder block (dashed border, centered actions). `.fx-stat` /
+   `.fx-section-head` are KPI/section chrome in the same shared layer.
    ----------------------------------------------------------------------------- */
 
 .fx-table-wrap {
@@ -392,17 +664,21 @@
   vertical-align: middle;
 }
 
+.fx-table thead {
+  border-bottom: 1px solid var(--fx-color-border);
+}
+
 .fx-table th {
   background: var(--fx-color-surface-soft);
   color: var(--fx-color-text);
   font-size: var(--fx-text-xs);
-  font-weight: 700;
+  font-weight: var(--font-weight-semibold, 600);
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
 
 .fx-table tbody tr:hover td {
-  background: rgba(255, 255, 255, 0.02);
+  background: color-mix(in srgb, var(--fx-color-text) 4%, transparent);
 }
 
 .fx-table tr:last-child td {
@@ -433,7 +709,8 @@
 .fx-stat__value {
   font-size: clamp(var(--fx-text-lg), 2vw, var(--fx-text-xl));
   color: var(--fx-color-text);
-  font-weight: 800;
+  font-weight: var(--font-weight-semibold, 600);
+  font-variant-numeric: tabular-nums;
   line-height: 1.2;
 }
 
@@ -459,36 +736,54 @@
   display: inline-flex;
   width: fit-content;
   border-radius: var(--fx-radius-round);
-  border: 1px solid rgba(34, 197, 94, 0.35);
+  border: 1px solid color-mix(in srgb, var(--fx-color-primary) 35%, var(--fx-color-border-strong));
   background: var(--fx-primary-soft);
   color: var(--fx-color-primary);
   padding: 5px 10px;
   font-size: var(--fx-text-xs);
-  font-weight: 700;
+  font-weight: var(--font-weight-semibold, 600);
   letter-spacing: 0.06em;
   text-transform: uppercase;
 }
 
 .fx-empty {
-  border: 1px dashed var(--fx-color-border-strong);
+  border: 1px dashed color-mix(in srgb, var(--fx-color-border-strong) 72%, var(--fx-color-border-subtle));
   border-radius: var(--fx-radius-lg);
-  background: linear-gradient(
-    180deg,
-    var(--fx-color-surface) 0%,
-    var(--fx-color-surface-soft) 100%
-  );
-  padding: var(--fx-space-7);
+  background: color-mix(in srgb, var(--fx-color-surface-soft) 92%, var(--fx-color-surface));
+  padding: var(--fx-space-8);
   display: grid;
   gap: var(--fx-space-3);
+  justify-items: center;
+  text-align: center;
+}
+
+.fx-empty__icon {
+  display: grid;
+  place-items: center;
+  width: 3rem;
+  height: 3rem;
+  border-radius: var(--fx-radius-md);
+  background: var(--fx-color-surface-elevated);
+  border: 1px solid var(--fx-color-border);
+  color: var(--fx-color-muted);
+  font-size: var(--fx-text-xl);
+  line-height: 1;
 }
 
 .fx-empty__title {
   margin: 0;
+  font-size: var(--fx-text-lg);
+  font-weight: var(--font-weight-semibold, 600);
+  letter-spacing: var(--letter-spacing-heading, -0.022em);
   color: var(--fx-color-text);
 }
 
-.fx-empty__text {
+.fx-empty__text,
+.fx-empty__description {
   margin: 0;
+  max-width: 42ch;
+  font-size: var(--fx-text-sm);
+  line-height: var(--fx-line-relaxed);
   color: var(--fx-color-muted);
 }
 
@@ -496,6 +791,76 @@
   display: flex;
   gap: var(--fx-space-2);
   flex-wrap: wrap;
+  justify-content: center;
+}
+
+.fx-empty--start {
+  justify-items: stretch;
+  text-align: left;
+}
+
+.fx-empty--start .fx-empty__actions {
+  justify-content: flex-start;
+}
+
+/* -----------------------------------------------------------------------------
+   COMPONENTS — Loading (flat surfaces — no gradient shimmer, no glow)
+   ----------------------------------------------------------------------------- */
+
+@keyframes fx-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes fx-skeleton-pulse {
+  50% {
+    opacity: 0.42;
+  }
+}
+
+.fx-spinner {
+  width: 1.25rem;
+  height: 1.25rem;
+  border: 2px solid var(--fx-color-border);
+  border-top-color: var(--fx-color-primary);
+  border-radius: 50%;
+  animation: fx-spin 0.65s linear infinite;
+  flex-shrink: 0;
+}
+
+.fx-spinner--lg {
+  width: 2rem;
+  height: 2rem;
+  border-width: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fx-spinner,
+  .fx-spinner--lg {
+    animation: none;
+    opacity: 0.88;
+    border-color: color-mix(in srgb, var(--fx-color-border) 55%, var(--fx-color-primary));
+    border-top-color: var(--fx-color-primary);
+  }
+}
+
+.fx-skeleton {
+  border-radius: var(--fx-radius-sm);
+  background: var(--fx-color-border-subtle);
+  min-height: 1rem;
+  animation: fx-skeleton-pulse 1.4s ease-in-out infinite;
+}
+
+.fx-skeleton--text {
+  width: 100%;
+  height: 0.75rem;
+}
+
+.fx-skeleton--circle {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 50%;
 }
 
 /* -----------------------------------------------------------------------------
@@ -506,14 +871,22 @@
   border-radius: var(--fx-radius-lg);
   border: 1px solid var(--fx-color-border-strong);
   background: var(--fx-color-surface);
-  box-shadow: var(--fx-shadow-lg);
+  box-shadow: var(--fx-shadow-md);
   max-width: min(560px, calc(100vw - 32px));
   padding: var(--fx-space-5);
 }
 
+.fx-modal--elevated {
+  box-shadow: var(--fx-shadow-overlay);
+}
+
 .fx-modal:focus-visible {
   outline: none;
-  box-shadow: var(--fx-shadow-lg), var(--fx-outline-ring);
+  box-shadow: var(--fx-shadow-md), var(--fx-outline-ring);
+}
+
+.fx-modal--elevated:focus-visible {
+  box-shadow: var(--fx-shadow-overlay), var(--fx-outline-ring);
 }
 
 .fx-tabs {
@@ -525,11 +898,10 @@
   border-bottom: 1px solid var(--fx-color-border);
 }
 
-.fx-tabs > button,
-.fx-tabs > a {
+.fx-tabs > :is(button, a) {
   font: inherit;
   font-size: var(--fx-text-sm);
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold, 600);
   cursor: pointer;
   text-decoration: none;
   color: var(--fx-color-text-secondary);
@@ -547,14 +919,12 @@
     border-color var(--fx-motion-base) var(--fx-ease);
 }
 
-.fx-tabs > button:hover,
-.fx-tabs > a:hover {
+.fx-tabs > :is(button, a):hover {
   color: var(--fx-color-text);
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--fx-color-surface-soft);
 }
 
-.fx-tabs > button:focus-visible,
-.fx-tabs > a:focus-visible {
+.fx-tabs > :is(button, a):focus-visible {
   outline: none;
   box-shadow: var(--fx-outline-ring);
 }
@@ -564,11 +934,11 @@
 .fx-tabs > .is-active {
   color: var(--fx-color-primary);
   background: var(--fx-primary-soft);
-  border-color: rgba(34, 197, 94, 0.35);
+  border-color: color-mix(in srgb, var(--fx-color-primary) 32%, var(--fx-color-border-strong));
 }
 
 /* -----------------------------------------------------------------------------
-   RESPONSIVE — Components
+   RESPONSIVE — Shared components (tighten padding/empty actions only; no layout re-architecture)
    ----------------------------------------------------------------------------- */
 
 @media (max-width: 640px) {
@@ -587,4 +957,13 @@
   .fx-page-header {
     padding: var(--fx-space-4);
   }
+}
+
+/* Phase 11J — page-scoped layout assist (client modals): full-width `.fx-input` / `.fx-select` /
+   `.fx-textarea` inside `.modal .form-grid.fx-form-grid` only; global field tokens unchanged. */
+body.client-ds-page.phase2-internal .modal .form-grid.fx-form-grid .fx-input,
+body.client-ds-page.phase2-internal .modal .form-grid.fx-form-grid .fx-select,
+body.client-ds-page.phase2-internal .modal .form-grid.fx-form-grid .fx-textarea {
+  max-width: 100%;
+  box-sizing: border-box;
 }

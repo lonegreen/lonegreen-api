@@ -1,36 +1,59 @@
 /* =============================================================================
    FAIRLINX DESIGN SYSTEM — fx-tokens.css
-   SECTIONS: Tokens · Base
+   PHASE B — TOKEN OWNERSHIP: **Canonical design token source** for FairLinx.
+   All new primitives, semantic aliases, and fx-* variables belong HERE.
+   Consumers (pages, components) should reference tokens from this file when
+   loaded via `app-shell.css` `@import` (this file is not intended as a solo
+   HTML `<link>` entry). `public/css/brand.css` is the **legacy compatibility
+   bridge only** — overlapping names there exist for early-parse fallbacks and
+   older stacks; do not treat brand.css as the place to define new system tokens.
+   -----------------------------------------------------------------------------
+   Historical phases (unchanged behavior): Phase 8C design tokens; Phase 9B Calm
+   Accent SaaS; Phase 9C typography + spacing rhythm; Phase 14B premium surfaces.
    ============================================================================= */
 
 /* -----------------------------------------------------------------------------
-   TOKENS — Primitives & semantic aliases (shared with app-shell via :root)
+   TOKENS — CANONICAL :root definitions (primitives, semantics, fx-* aliases)
+   Shared with the app shell through import order; brand.css may mirror names for
+   legacy loads — canonical values and naming authority remain in THIS file.
    ----------------------------------------------------------------------------- */
 
 :root {
-  /* —— Color primitives (dark SaaS / emerald) —— */
-  --fx-canvas: #07110d;
-  --fx-canvas-elevated: #0b1711;
-  --fx-surface: #0f1f17;
-  --fx-surface-soft: #14261d;
-  --fx-border: rgba(255, 255, 255, 0.08);
-  --fx-border-strong: rgba(255, 255, 255, 0.14);
-  --fx-border-subtle: rgba(255, 255, 255, 0.05);
+  /* —— CANONICAL PRIMITIVES — neutrals (cool slate ramp; premium light surfaces) —— */
+  --fx-canvas: #f8fafc;
+  --fx-canvas-elevated: #ffffff;
+  --fx-surface: #ffffff;
+  --fx-surface-soft: #f1f5f9;
+  --fx-border: #e2e8f0;
+  --fx-border-strong: #cbd5e1;
+  --fx-border-subtle: #eef2f7;
 
-  --fx-text: #f4fff8;
-  --fx-text-secondary: #a7b8ae;
-  --fx-text-muted: #738077;
-  --fx-text-inverse: #07110d;
+  /* Control iframe shell — dark rail (operational clarity; green active accent via components) */
+  --fx-shell-sidebar-bg: #0f1419;
+  --shell-sidebar-bg: var(--fx-shell-sidebar-bg);
 
-  --fx-primary: #22c55e;
-  --fx-primary-hover: #16a34a;
-  --fx-primary-soft: rgba(34, 197, 94, 0.14);
-  --fx-success: #22c55e;
-  --fx-warning: #f59e0b;
-  --fx-danger: #ef4444;
-  --fx-info: #38bdf8;
+  /* —— CANONICAL PRIMITIVES — text —— */
+  --fx-text: #0f172a;
+  --fx-text-secondary: #334155;
+  --fx-text-muted: #64748b;
+  --fx-text-inverse: #ffffff;
 
-  /* Cross-token semantic names (used by pages / app-shell fallbacks) */
+  /* —— CANONICAL PRIMITIVES — primary accent (restrained green; interactive / CTAs) —— */
+  --fx-primary: #166534;
+  --fx-primary-hover: #14532d;
+  --fx-primary-soft: rgba(22, 101, 52, 0.12);
+  --fx-primary-focus-ring: rgba(22, 101, 52, 0.38);
+
+  /* CANONICAL — lighter green for paired fills / LEGACY “light” endpoints (name retained; not neon) */
+  --fx-primary-light: #3f8562;
+
+  /* CANONICAL PRIMITIVES — semantic hues (distinct from primary button green where needed) */
+  --fx-success: #15803d;
+  --fx-warning: #a16207;
+  --fx-danger: #b91c1c;
+  --fx-info: #1d4ed8;
+
+  /* CANONICAL SEMANTIC NAMES — cross-token aliases (pages / app-shell; map to fx primitives above) */
   --surface-page: var(--fx-canvas);
   --surface-elevated: var(--fx-canvas-elevated);
   --surface-card: var(--fx-surface);
@@ -44,12 +67,22 @@
   --border-subtle: var(--fx-border-subtle);
   --interactive-primary: var(--fx-primary);
   --interactive-primary-hover: var(--fx-primary-hover);
-  --interactive-primary-light: #4ade80;
+  --interactive-primary-light: var(--fx-primary-light);
 
-  /* fx-* semantic aliases */
+  /* LEGACY BRIDGE ALIAS — `--brand-*` names (historical “brand” vocabulary; values = green/neutral DS, not orange).
+     Kept so older markup and dual-load stacks resolve; canonical semantics flow from `--interactive-*` / `--fx-*`. */
+  --brand-primary: var(--interactive-primary);
+  --brand-primary-hover: var(--interactive-primary-hover);
+  --brand-primary-light: var(--interactive-primary-light);
+  --brand-black: var(--text-primary);
+  --brand-white: #ffffff;
+  --brand-bg: var(--surface-page);
+  --brand-border: var(--border-default);
+
+  /* CANONICAL — fx-* semantic aliases (resolve through `--interactive-*` / `--text-*` / `--surface-*` chains) */
   --fx-color-primary: var(--interactive-primary, var(--fx-primary));
   --fx-color-primary-hover: var(--interactive-primary-hover, var(--fx-primary-hover));
-  --fx-color-primary-light: var(--interactive-primary-light, #4ade80);
+  --fx-color-primary-light: var(--interactive-primary-light, var(--fx-primary-light));
   --fx-color-text: var(--text-primary, var(--fx-text));
   --fx-color-text-secondary: var(--text-secondary, var(--fx-text-secondary));
   --fx-color-muted: var(--text-muted, var(--fx-text-muted));
@@ -62,11 +95,26 @@
   --fx-color-border-strong: var(--border-strong, var(--fx-border-strong));
   --fx-color-border-subtle: var(--border-subtle, var(--fx-border-subtle));
 
-  /* —— Typography —— */
-  --font-sans: Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
-  --letter-spacing-heading: -0.02em;
-  --fx-font-sans: var(--font-sans);
+  /* —— CANONICAL TYPOGRAPHY — Phase 9C: stacks, scale, weights, rhythm —— */
+  /* Primary UI / body — Inter-compatible system stack */
+  --font-sans: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-ui: var(--font-sans);
+  /* Display / marketing headlines — same family, explicit fallback stack */
+  --font-display: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  /* Mono / tabular */
+  --font-mono: ui-monospace, "Cascadia Code", "Segoe UI Mono", "SFMono-Regular", Menlo, Monaco, Consolas, monospace;
 
+  --fx-font-sans: var(--font-sans);
+  --fx-font-ui: var(--font-ui);
+  --fx-font-display: var(--font-display);
+  --fx-font-mono: var(--font-mono);
+
+  --letter-spacing-heading: -0.022em;
+  --letter-spacing-label: 0.02em;
+  --letter-spacing-caption: 0;
+  --letter-spacing-meta: 0.015em;
+
+  /* CANONICAL TYPE SCALE — numeric sizes (rem); “legacy” here means preserved rem aliases, not brand.css */
   --font-size-xs: 0.8125rem;
   --font-size-sm: 0.875rem;
   --font-size-md: 1rem;
@@ -74,6 +122,18 @@
   --font-size-xl: 1.25rem;
   --font-size-2xl: 1.5rem;
   --font-size-3xl: 2rem;
+  --font-size-4xl: 2.25rem;
+
+  /* Semantic roles (maps to scale — use in components / utilities) */
+  --type-display-size: clamp(2rem, 3.5vw, 2.625rem);
+  --type-h1-size: clamp(var(--font-size-2xl), 2.4vw, var(--font-size-3xl));
+  --type-h2-size: clamp(var(--font-size-xl), 1.9vw, var(--font-size-2xl));
+  --type-h3-size: var(--font-size-lg);
+  --type-h4-size: var(--font-size-md);
+  --type-body-size: var(--font-size-md);
+  --type-small-size: var(--font-size-sm);
+  --type-caption-size: var(--font-size-xs);
+  --type-label-size: var(--font-size-sm);
 
   --fx-text-xs: var(--font-size-xs);
   --fx-text-sm: var(--font-size-sm);
@@ -82,7 +142,10 @@
   --fx-text-xl: var(--font-size-xl);
   --fx-text-2xl: var(--font-size-2xl);
   --fx-text-3xl: var(--font-size-3xl);
+  --fx-text-4xl: var(--font-size-4xl);
+  --fx-text-display: var(--type-display-size);
 
+  /* Line height */
   --line-height-tight: 1.2;
   --line-height-normal: 1.45;
   --line-height-relaxed: 1.65;
@@ -90,7 +153,18 @@
   --fx-line-normal: var(--line-height-normal);
   --fx-line-relaxed: var(--line-height-relaxed);
 
-  /* —— Spacing scale —— */
+  /* Font weight */
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  --fx-font-regular: var(--font-weight-regular);
+  --fx-font-medium: var(--font-weight-medium);
+  --fx-font-semibold: var(--font-weight-semibold);
+  --fx-font-bold: var(--font-weight-bold);
+
+  /* —— Spacing scale (4px base — preserve aliases) —— */
+  --space-0: 0;
   --space-1: 4px;
   --space-2: 8px;
   --space-3: 12px;
@@ -102,6 +176,7 @@
   --space-9: 40px;
   --space-10: 48px;
 
+  --fx-space-0: var(--space-0);
   --fx-space-1: var(--space-1);
   --fx-space-2: var(--space-2);
   --fx-space-3: var(--space-3);
@@ -113,11 +188,21 @@
   --fx-space-9: var(--space-9);
   --fx-space-10: var(--space-10);
 
-  /* —— Radius —— */
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 16px;
-  --radius-xl: 20px;
+  /* Document rhythm + density (after spacing scale — references --space-*) */
+  --body-line-height: var(--line-height-normal);
+  --fx-rhythm-paragraph: var(--space-4);
+  --fx-rhythm-heading-after: var(--space-3);
+  --fx-rhythm-section: var(--space-7);
+
+  --fx-density-gap-compact: var(--space-4);
+  --fx-density-gap-default: var(--space-6);
+  --fx-density-gap-breathable: var(--space-9);
+
+  /* —— Radius (inputs/small → sm; cards/buttons → md/lg; avoid playful xl abuse) —— */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 18px;
   --radius-round: 999px;
 
   --fx-radius-sm: var(--radius-sm);
@@ -126,18 +211,26 @@
   --fx-radius-xl: var(--radius-xl);
   --fx-radius-round: var(--radius-round);
 
-  /* —— Shadows (subtle lift on dark UI) —— */
-  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.35);
-  --shadow-md: 0 12px 32px rgba(0, 0, 0, 0.45);
-  --shadow-lg: 0 22px 56px rgba(0, 0, 0, 0.55);
+  /* —— Shadows / elevation (flat UI; subtle lift only — no glow) —— */
+  --shadow-none: none;
+  --shadow-flat: none;
+  --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.045);
+  --shadow-card: 0 1px 2px rgba(15, 23, 42, 0.05), 0 4px 12px rgba(15, 23, 42, 0.04);
+  --shadow-md: 0 4px 14px rgba(15, 23, 42, 0.07);
+  --shadow-lg: 0 8px 28px rgba(15, 23, 42, 0.09);
+  --shadow-overlay: 0 12px 44px rgba(15, 23, 42, 0.11);
 
+  --fx-shadow-none: var(--shadow-none);
+  --fx-shadow-flat: var(--shadow-flat);
   --fx-shadow-sm: var(--shadow-sm);
+  --fx-shadow-card: var(--shadow-card);
   --fx-shadow-md: var(--shadow-md);
   --fx-shadow-lg: var(--shadow-lg);
+  --fx-shadow-overlay: var(--shadow-overlay);
 
-  /* —— Focus rings (visible, WCAG-friendly on dark) —— */
-  --focus-ring: 0 0 0 3px rgba(34, 197, 94, 0.45);
-  --focus-ring-inset: inset 0 0 0 3px rgba(34, 197, 94, 0.35);
+  /* —— Focus rings (accent-tinted; keyboard / a11y) —— */
+  --focus-ring: 0 0 0 3px var(--fx-primary-focus-ring);
+  --focus-ring-inset: inset 0 0 0 2px var(--fx-primary-focus-ring);
   --fx-outline-ring: var(--focus-ring);
 
   /* —— Z-index scale —— */
@@ -161,22 +254,22 @@
   --fx-motion-base: var(--motion-base);
   --fx-motion-slow: var(--motion-slow);
 
-  /* —— State surfaces (dark-tinted; readable with colored text) —— */
-  --state-success-bg: rgba(34, 197, 94, 0.12);
-  --state-success-fg: #4ade80;
-  --state-success-border: rgba(34, 197, 94, 0.35);
+  /* —— Semantic states (subtle tinted surfaces — professional, readable) —— */
+  --state-success-bg: #ecfdf5;
+  --state-success-fg: #065f46;
+  --state-success-border: #a7f3d0;
 
-  --state-warning-bg: rgba(245, 158, 11, 0.12);
-  --state-warning-fg: #fbbf24;
-  --state-warning-border: rgba(245, 158, 11, 0.35);
+  --state-warning-bg: #fffbeb;
+  --state-warning-fg: #92400e;
+  --state-warning-border: #fde68a;
 
-  --state-danger-bg: rgba(239, 68, 68, 0.12);
-  --state-danger-fg: #fca5a5;
-  --state-danger-border: rgba(239, 68, 68, 0.35);
+  --state-danger-bg: #fef2f2;
+  --state-danger-fg: #991b1b;
+  --state-danger-border: #fecaca;
 
-  --state-info-bg: rgba(56, 189, 248, 0.12);
-  --state-info-fg: #7dd3fc;
-  --state-info-border: rgba(56, 189, 248, 0.35);
+  --state-info-bg: #eff6ff;
+  --state-info-fg: #1e40af;
+  --state-info-border: #bfdbfe;
 
   --fx-state-success-bg: var(--state-success-bg);
   --fx-state-success-fg: var(--state-success-fg);
@@ -190,6 +283,9 @@
   --fx-state-info-bg: var(--state-info-bg);
   --fx-state-info-fg: var(--state-info-fg);
   --fx-state-info-border: var(--state-info-border);
+
+  /* —— Layout: dashboard / operational max readable width —— */
+  --fx-dashboard-content-max: 1180px;
 
   /* —— Layout: container widths —— */
   --fx-container-sm: 640px;
@@ -213,56 +309,92 @@
 }
 
 /* -----------------------------------------------------------------------------
-   BASE — Document defaults & type utilities
+   BASE — CANONICAL document defaults & `.fx-*` type utilities (use tokens above)
    ----------------------------------------------------------------------------- */
 
 html {
-  color-scheme: dark;
+  color-scheme: light;
 }
 
 html,
 body {
-  font-family: var(--fx-font-sans);
+  font-family: var(--fx-font-ui);
   color: var(--fx-color-text);
   background: var(--fx-color-bg);
+  line-height: var(--body-line-height);
 }
 
 ::selection {
-  background: var(--fx-primary-soft);
+  background: rgba(22, 101, 52, 0.14);
+  color: var(--fx-color-text);
+}
+
+.fx-display {
+  margin: 0;
+  font-family: var(--fx-font-display);
+  font-size: var(--type-display-size);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--fx-line-tight);
+  letter-spacing: var(--letter-spacing-heading);
   color: var(--fx-color-text);
 }
 
 .fx-h1,
 .fx-h2,
-.fx-h3 {
+.fx-h3,
+.fx-h4 {
   margin: 0;
   color: var(--fx-color-text);
   letter-spacing: var(--letter-spacing-heading);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--fx-line-tight);
 }
 
 .fx-h1 {
-  font-size: clamp(var(--fx-text-2xl), 2.4vw, var(--fx-text-3xl));
-  line-height: var(--fx-line-tight);
+  font-size: var(--type-h1-size);
 }
 
 .fx-h2 {
-  font-size: clamp(var(--fx-text-xl), 1.9vw, var(--fx-text-2xl));
-  line-height: var(--fx-line-tight);
+  font-size: var(--type-h2-size);
 }
 
 .fx-h3 {
-  font-size: var(--fx-text-lg);
-  line-height: var(--fx-line-tight);
+  font-size: var(--type-h3-size);
+}
+
+.fx-h4 {
+  font-size: var(--type-h4-size);
 }
 
 .fx-body {
-  font-size: var(--fx-text-md);
+  font-size: var(--type-body-size);
   line-height: var(--fx-line-relaxed);
+  font-weight: var(--font-weight-regular);
+  color: var(--fx-color-text-secondary);
+}
+
+.fx-small {
+  font-size: var(--type-small-size);
+  line-height: var(--fx-line-normal);
   color: var(--fx-color-text-secondary);
 }
 
 .fx-caption {
-  font-size: var(--fx-text-sm);
+  font-size: var(--type-caption-size);
   line-height: var(--fx-line-normal);
+  letter-spacing: var(--letter-spacing-caption);
   color: var(--fx-color-muted);
+}
+
+.fx-label {
+  font-size: var(--type-label-size);
+  line-height: var(--fx-line-tight);
+  font-weight: var(--font-weight-medium);
+  letter-spacing: var(--letter-spacing-label);
+  color: var(--fx-color-text-secondary);
+}
+
+.fx-tabular {
+  font-variant-numeric: tabular-nums;
+  font-family: var(--fx-font-mono);
 }
