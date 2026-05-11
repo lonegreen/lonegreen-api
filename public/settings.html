@@ -2,555 +2,14 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>My Account</title>
   <link rel="stylesheet" href="/css/brand.css">
   <link rel="stylesheet" href="/app-shell.css">
-  <style>
-    * { box-sizing: border-box; }
-
-    :root {
-      --bg: #F5F5F5;
-      --panel: #FFFFFF;
-      --panel-soft: #FAFAFA;
-      --border: #D9D9D9;
-      --border-strong: #c9c9c9;
-      --text: #111111;
-      --muted: #5f6368;
-      --muted-2: #7a7f87;
-      --green: #FF5A00;
-      --green-2: #E64A00;
-      --green-soft: rgba(255, 90, 0, 0.08);
-      --red: #DC2626;
-      --red-soft: #fff1f0;
-      --yellow: #F59E0B;
-      --yellow-soft: #fff7e6;
-      --blue: #FF5A00;
-      --blue-soft: rgba(255, 90, 0, 0.08);
-      --shadow: 0 18px 50px rgba(17, 17, 17, 0.08);
-      --shadow-soft: 0 10px 28px rgba(17, 17, 17, 0.06);
-      --radius: 22px;
-    }
-
-    body {
-      margin: 0;
-      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
-      color: var(--text);
-      background:
-        radial-gradient(circle at top left, rgba(255, 90, 0, 0.14), transparent 30%),
-        radial-gradient(circle at top right, rgba(255, 138, 51, 0.10), transparent 28%),
-        linear-gradient(180deg, #ffffff 0%, var(--bg) 44%, #fbfbfb 100%);
-      padding: 24px;
-    }
-
-    .page {
-      max-width: 1320px;
-      margin: 0 auto;
-      display: grid;
-      gap: 18px;
-    }
-
-    .hero {
-      position: relative;
-      overflow: hidden;
-      background:
-        linear-gradient(135deg, rgba(255, 255, 255, 0.96), rgba(255, 250, 247, 0.92)),
-        radial-gradient(circle at 92% 20%, rgba(255, 90, 0, 0.16), transparent 32%);
-      border: 1px solid rgba(217, 217, 217, 0.9);
-      border-radius: 28px;
-      box-shadow: var(--shadow);
-      padding: 28px;
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      gap: 18px;
-      flex-wrap: wrap;
-    }
-
-    .hero::before {
-      content: "";
-      position: absolute;
-      inset: 0 0 auto 0;
-      height: 5px;
-      background: linear-gradient(90deg, #FF5A00, #FF7A1A);
-    }
-
-    .hero > * {
-      position: relative;
-      z-index: 1;
-    }
-
-    .eyebrow {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      width: fit-content;
-      color: var(--green-2);
-      background: rgba(255, 90, 0, 0.08);
-      border: 1px solid rgba(255, 90, 0, 0.18);
-      border-radius: 999px;
-      padding: 8px 12px;
-      font-size: 12px;
-      font-weight: 900;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      margin-bottom: 12px;
-    }
-
-    .eyebrow::before {
-      content: "";
-      width: 8px;
-      height: 8px;
-      border-radius: 999px;
-      background: #FF5A00;
-      box-shadow: 0 0 0 5px rgba(255, 90, 0, 0.12);
-    }
-
-    .hero h1 {
-      margin: 0 0 8px;
-      font-size: clamp(34px, 4vw, 54px);
-      color: var(--text);
-      letter-spacing: -0.06em;
-      line-height: 0.98;
-      font-weight: 950;
-    }
-
-    .hero p {
-      margin: 0;
-      color: var(--muted);
-      line-height: 1.65;
-      max-width: 720px;
-      font-size: 15px;
-    }
-
-    .hero-card {
-      min-width: 260px;
-      background: linear-gradient(135deg, #111111, #2B2B2B);
-      border: 1px solid rgba(17, 17, 17, 0.1);
-      border-radius: 20px;
-      padding: 16px 18px;
-      box-shadow: 0 18px 38px rgba(17, 17, 17, 0.16);
-    }
-
-    .hero-card-label {
-      font-size: 11px;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      color: rgba(255, 255, 255, 0.62);
-      font-weight: 900;
-      margin-bottom: 7px;
-    }
-
-    .hero-card-value {
-      color: #FFFFFF;
-      font-weight: 950;
-      line-height: 1.35;
-      overflow-wrap: anywhere;
-    }
-
-    .layout {
-      display: grid;
-      grid-template-columns: minmax(0, 1.08fr) minmax(380px, 0.92fr);
-      gap: 18px;
-      align-items: start;
-    }
-
-    .stack { display: grid; gap: 18px; }
-
-    .panel {
-      background: rgba(255, 255, 255, 0.96);
-      border: 1px solid rgba(217, 217, 217, 0.92);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow-soft);
-      padding: 20px;
-    }
-
-    .panel-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      gap: 12px;
-      margin-bottom: 16px;
-    }
-
-    .panel h2 {
-      margin: 0 0 6px;
-      font-size: 20px;
-      letter-spacing: -0.035em;
-      color: var(--text);
-      line-height: 1.18;
-    }
-
-    .note {
-      margin: 0;
-      color: var(--muted);
-      font-size: 14px;
-      line-height: 1.6;
-    }
-
-    .account-grid {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 14px;
-    }
-
-    .metric {
-      border: 1px solid rgba(217, 217, 217, 0.9);
-      background:
-        linear-gradient(180deg, #ffffff, #fafafa);
-      border-radius: 18px;
-      padding: 15px;
-      box-shadow: 0 8px 20px rgba(17, 17, 17, 0.035);
-    }
-
-    .metric-label {
-      font-size: 11px;
-      font-weight: 950;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      color: var(--muted-2);
-      margin-bottom: 8px;
-    }
-
-    .metric-value {
-      font-size: 19px;
-      font-weight: 950;
-      color: var(--text);
-      word-break: break-word;
-    }
-
-    form { display: grid; gap: 14px; }
-
-    .field-grid {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 14px;
-    }
-
-    .field { display: grid; gap: 7px; }
-    .field.full { grid-column: 1 / -1; }
-
-    .inline-actions {
-      display: flex;
-      gap: 8px;
-      align-items: center;
-      flex-wrap: wrap;
-    }
-
-    .logo-preview {
-      width: 120px;
-      height: 120px;
-      border-radius: 16px;
-      border: 1px solid var(--border);
-      background: #fff;
-      object-fit: contain;
-      padding: 8px;
-      display: none;
-      box-shadow: 0 8px 20px rgba(17, 17, 17, 0.06);
-    }
-
-    label {
-      font-size: 13px;
-      font-weight: 900;
-      color: #2B2B2B;
-    }
-
-    input,
-    textarea {
-      width: 100%;
-      border: 1px solid rgba(217, 217, 217, 0.95);
-      border-radius: 14px;
-      padding: 12px 13px;
-      font: inherit;
-      background: white;
-      color: var(--text);
-      outline: none;
-      transition: border-color 0.16s ease, box-shadow 0.16s ease, background 0.16s ease;
-    }
-
-    input:focus,
-    textarea:focus {
-      border-color: #FF5A00;
-      box-shadow: 0 0 0 4px rgba(255, 90, 0, 0.14);
-    }
-
-    input:disabled,
-    textarea:disabled,
-    button:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
-    }
-
-    textarea {
-      min-height: 92px;
-      resize: vertical;
-    }
-
-    .toolbar {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-      align-items: center;
-    }
-
-    button {
-      border: none;
-      border-radius: 14px;
-      padding: 12px 16px;
-      background: linear-gradient(135deg, #FF5A00, #FF7A1A);
-      color: white;
-      font-weight: 950;
-      cursor: pointer;
-      box-shadow: 0 14px 28px rgba(255, 90, 0, 0.22);
-      transition: transform 0.14s ease, box-shadow 0.14s ease, background 0.14s ease;
-    }
-
-    button:hover:not(:disabled) {
-      background: linear-gradient(135deg, #E64A00, #FF5A00);
-      transform: translateY(-1px);
-      box-shadow: 0 18px 34px rgba(255, 90, 0, 0.28);
-    }
-
-    button:focus-visible,
-    a:focus-visible {
-      outline: 3px solid rgba(255, 90, 0, 0.35);
-      outline-offset: 3px;
-    }
-
-    button.secondary {
-      background: white;
-      color: #E64A00;
-      border: 1px solid rgba(255, 90, 0, 0.35);
-      box-shadow: none;
-    }
-
-    button.secondary:hover:not(:disabled) {
-      background: rgba(255, 90, 0, 0.08);
-      box-shadow: none;
-    }
-
-    button.small {
-      padding: 8px 12px;
-      border-radius: 12px;
-      font-size: 13px;
-      box-shadow: none;
-    }
-
-    .status {
-      min-height: 20px;
-      font-size: 13px;
-      font-weight: 850;
-    }
-
-    .status.ok { color: #166534; }
-    .status.error { color: var(--red); }
-    .status.muted { color: var(--muted); }
-
-    .list { display: grid; gap: 12px; }
-
-    .item {
-      border: 1px solid rgba(217, 217, 217, 0.9);
-      border-radius: 18px;
-      padding: 14px;
-      background: linear-gradient(180deg, #ffffff, #fbfbfb);
-      transition: border-color 0.15s ease, transform 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
-    }
-
-    .item:hover {
-      border-color: rgba(255, 90, 0, 0.28);
-      background: #ffffff;
-      transform: translateY(-1px);
-      box-shadow: 0 12px 24px rgba(17, 17, 17, 0.06);
-    }
-
-    .item-head {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      gap: 12px;
-      margin-bottom: 10px;
-      flex-wrap: wrap;
-    }
-
-    .item-title {
-      font-weight: 950;
-      color: var(--text);
-      line-height: 1.35;
-    }
-
-    .item-meta {
-      color: var(--muted-2);
-      font-size: 12px;
-      margin-top: 3px;
-    }
-
-    .item-body {
-      color: #4b5563;
-      font-size: 14px;
-      line-height: 1.6;
-      word-break: break-word;
-    }
-
-    .details-grid {
-      display: grid;
-      gap: 7px;
-      margin-top: 2px;
-    }
-
-    .detail-row {
-      display: flex;
-      align-items: flex-start;
-      justify-content: space-between;
-      gap: 12px;
-      background: #ffffff;
-      border: 1px solid rgba(217, 217, 217, 0.85);
-      border-radius: 12px;
-      padding: 9px 10px;
-    }
-
-    .detail-key {
-      color: #6b7280;
-      font-size: 12px;
-      font-weight: 950;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      white-space: nowrap;
-    }
-
-    .detail-value {
-      color: var(--text);
-      font-weight: 800;
-      text-align: right;
-      overflow-wrap: anywhere;
-    }
-
-    .change-row {
-      display: grid;
-      grid-template-columns: 120px minmax(0, 1fr);
-      gap: 10px;
-      background: #ffffff;
-      border: 1px solid rgba(217, 217, 217, 0.85);
-      border-radius: 12px;
-      padding: 9px 10px;
-    }
-
-    .change-label {
-      color: #6b7280;
-      font-size: 12px;
-      font-weight: 950;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-    }
-
-    .change-values {
-      color: var(--text);
-      font-weight: 800;
-      overflow-wrap: anywhere;
-    }
-
-    .muted-value { color: var(--muted-2); font-weight: 800; }
-    .arrow { color: #FF5A00; font-weight: 950; padding: 0 6px; }
-
-    .pill {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      padding: 6px 10px;
-      border-radius: 999px;
-      font-size: 11px;
-      font-weight: 950;
-      background: rgba(255, 90, 0, 0.08);
-      color: #E64A00;
-      border: 1px solid rgba(255, 90, 0, 0.22);
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      white-space: nowrap;
-    }
-
-    .pill.unread {
-      background: var(--yellow-soft);
-      color: #9a6700;
-      border-color: #f4deb0;
-    }
-
-    .pill.blue {
-      background: rgba(255, 90, 0, 0.08);
-      color: #E64A00;
-      border-color: rgba(255, 90, 0, 0.25);
-    }
-
-    .pill.red {
-      background: var(--red-soft);
-      color: var(--red);
-      border-color: #ffd2cc;
-    }
-
-    .empty {
-      padding: 16px;
-      color: var(--muted);
-      background: rgba(255, 90, 0, 0.045);
-      border: 1px dashed rgba(255, 90, 0, 0.25);
-      border-radius: 16px;
-      line-height: 1.5;
-    }
-
-    .section-divider {
-      height: 1px;
-      background: rgba(217, 217, 217, 0.95);
-      margin: 6px 0;
-    }
-
-    .legal-link-grid {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 10px;
-    }
-
-    .legal-link-grid a {
-      display: block;
-      border: 1px solid rgba(217, 217, 217, 0.9);
-      border-radius: 14px;
-      padding: 12px;
-      background: linear-gradient(180deg, #ffffff, #fafafa);
-      color: #E64A00;
-      font-weight: 950;
-      text-decoration: none;
-      transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
-    }
-
-    .legal-link-grid a:hover {
-      transform: translateY(-1px);
-      border-color: rgba(255, 90, 0, 0.28);
-      box-shadow: 0 10px 22px rgba(17, 17, 17, 0.06);
-    }
-
-    @media (max-width: 1040px) {
-      .layout,
-      .field-grid,
-      .account-grid,
-      .legal-link-grid {
-        grid-template-columns: 1fr;
-      }
-
-      .hero-card {
-        width: 100%;
-      }
-    }
-
-    @media (max-width: 620px) {
-      body { padding: 14px; }
-      .hero, .panel { border-radius: 20px; padding: 16px; }
-      .change-row { grid-template-columns: 1fr; }
-      .detail-row { display: grid; }
-      .detail-value { text-align: left; }
-      .toolbar { display: grid; grid-template-columns: 1fr; }
-      .toolbar button { width: 100%; }
-      .inline-actions { display: grid; grid-template-columns: 1fr; }
-    }
-  </style>
   <script src="/js/role-guard.js"></script>
+  
 </head>
-<body>
+<body class="phase2-internal settings-ds-page">
   <script>
 (function(){
   const token = localStorage.getItem("token");
@@ -576,26 +35,26 @@
 })();
 </script>
   
-<div class="page">
-  <header class="hero">
-    <div>
-      <div class="eyebrow">Workspace Settings</div>
-      <h1>My Account</h1>
-      <p>Manage your user profile, company settings, password, notifications, and workspace activity in one clean control center.</p>
+<div class="page fx-page fx-page--dense fx-min-w-0">
+  <header class="fx-page-header settings-page-header" aria-labelledby="settingsPageTitle">
+    <div class="fx-stack fx-min-w-0">
+      <div class="eyebrow fx-caption">Workspace Settings</div>
+      <h1 id="settingsPageTitle" class="fx-h3">My Account</h1>
+      <p class="fx-caption">Manage your user profile, company settings, password, notifications, and workspace activity in one clean control center.</p>
     </div>
-    <div class="hero-card">
+    <div class="hero-card settings-hero-card fx-min-w-0">
       <div class="hero-card-label">Current Workspace</div>
       <div class="hero-card-value" id="heroBadge">Loading account...</div>
     </div>
   </header>
 
-  <main class="layout">
-    <section class="stack">
-      <div class="panel">
+  <main class="layout settings-main-layout fx-min-w-0">
+    <section class="stack fx-stack fx-min-w-0">
+      <div class="panel fx-card">
         <div class="panel-header">
           <div>
-            <h2>Account Summary</h2>
-            <p class="note">Your current username, role, and company workspace identity.</p>
+            <h2 class="fx-h3">Account Summary</h2>
+            <p class="note fx-caption">Your current username, role, and company workspace identity.</p>
           </div>
           <span class="pill blue" id="rolePill">Loading</span>
         </div>
@@ -620,241 +79,241 @@
         </div>
       </div>
 
-      <div class="panel">
+      <div class="panel fx-card">
         <div class="panel-header">
           <div>
-            <h2>Company Information</h2>
-            <p class="note">Update the company profile used across your SaaS workspace.</p>
+            <h2 class="fx-h3">Company Information</h2>
+            <p class="note fx-caption">Update the company profile used across your SaaS workspace.</p>
           </div>
         </div>
 
         <form id="companyForm">
-          <div class="field-grid">
-            <div class="field">
+          <div class="field-grid fx-form-grid">
+            <div class="field fx-field">
               <label for="company_name">Company Name</label>
-              <input id="company_name" name="company_name" required>
+              <input id="company_name" name="company_name" class="fx-input" required>
             </div>
-            <div class="field">
+            <div class="field fx-field">
               <label for="company_phone">Phone</label>
-              <input id="company_phone" name="company_phone">
+              <input id="company_phone" name="company_phone" class="fx-input">
             </div>
-            <div class="field">
+            <div class="field fx-field">
               <label for="company_email">Email</label>
-              <input id="company_email" name="company_email" type="email">
+              <input id="company_email" name="company_email" class="fx-input" type="email">
             </div>
-            <div class="field">
+            <div class="field fx-field">
               <label for="company_service_area">Service Area</label>
-              <input id="company_service_area" name="company_service_area" placeholder="City, ZIP groups, neighborhoods...">
+              <input id="company_service_area" name="company_service_area" class="fx-input" placeholder="City, ZIP groups, neighborhoods...">
             </div>
-            <div class="field full">
+            <div class="field full fx-field">
               <label for="company_address">Address</label>
-              <textarea id="company_address" name="company_address"></textarea>
+              <textarea id="company_address" name="company_address" class="fx-input fx-textarea"></textarea>
             </div>
-            <div class="field full">
+            <div class="field full fx-field">
               <label for="company_hours">Business Hours</label>
-              <textarea id="company_hours" name="company_hours" placeholder="Mon-Fri 8:00 AM - 5:00 PM"></textarea>
+              <textarea id="company_hours" name="company_hours" class="fx-input fx-textarea" placeholder="Mon-Fri 8:00 AM - 5:00 PM"></textarea>
             </div>
 
-            <div class="field full">
+            <div class="field full fx-field">
               <div class="section-divider"></div>
             </div>
 
-            <div class="field full">
-              <h2>Invoice Branding</h2>
-              <p class="note">These optional fields are used on invoices and fall back to the company profile above when left blank.</p>
+            <div class="field full fx-field">
+              <h2 class="fx-h3">Invoice Branding</h2>
+              <p class="note fx-caption">These optional fields are used on invoices and fall back to the company profile above when left blank.</p>
             </div>
 
-            <div class="field full">
+            <div class="field full fx-field">
               <label for="invoice_logo_url">Invoice Logo URL</label>
-              <input id="invoice_logo_url" name="invoice_logo_url" type="url" placeholder="https://example.com/logo.png">
+              <input id="invoice_logo_url" name="invoice_logo_url" class="fx-input" type="url" placeholder="https://example.com/logo.png">
               <div class="inline-actions">
-                <button type="button" class="secondary small" id="uploadInvoiceLogoBtn">Upload Logo</button>
-                <input id="invoiceLogoFileInput" type="file" accept="image/jpeg,image/png,image/webp" style="display:none;">
-                <span class="note">Upload JPG/PNG/WEBP up to 2MB. Uploaded logos are stored locally in this environment and may need cloud storage for production durability.</span>
+                <button type="button" class="secondary small fx-btn fx-btn--secondary fx-btn--sm" id="uploadInvoiceLogoBtn">Upload Logo</button>
+                <input id="invoiceLogoFileInput" class="fx-input" type="file" accept="image/jpeg,image/png,image/webp" style="display:none;">
+                <span class="note fx-caption">Upload JPG/PNG/WEBP up to 2MB. Uploaded logos are stored locally in this environment and may need cloud storage for production durability.</span>
               </div>
               <img id="invoiceLogoPreview" class="logo-preview" alt="Invoice logo preview">
             </div>
-            <div class="field">
+            <div class="field fx-field">
               <label for="invoice_display_name">Billing Display Name</label>
-              <input id="invoice_display_name" name="invoice_display_name" placeholder="Shown on invoices">
+              <input id="invoice_display_name" name="invoice_display_name" class="fx-input" placeholder="Shown on invoices">
             </div>
-            <div class="field">
+            <div class="field fx-field">
               <label for="invoice_prefix">Invoice Prefix</label>
-              <input id="invoice_prefix" name="invoice_prefix" maxlength="16" placeholder="INV">
+              <input id="invoice_prefix" name="invoice_prefix" class="fx-input" maxlength="16" placeholder="INV">
             </div>
-            <div class="field">
+            <div class="field fx-field">
               <label for="invoice_phone">Billing Phone</label>
-              <input id="invoice_phone" name="invoice_phone">
+              <input id="invoice_phone" name="invoice_phone" class="fx-input">
             </div>
-            <div class="field">
+            <div class="field fx-field">
               <label for="invoice_email">Billing Email</label>
-              <input id="invoice_email" name="invoice_email" type="email">
+              <input id="invoice_email" name="invoice_email" class="fx-input" type="email">
             </div>
-            <div class="field full">
+            <div class="field full fx-field">
               <label for="invoice_website">Website</label>
-              <input id="invoice_website" name="invoice_website" placeholder="https://example.com">
+              <input id="invoice_website" name="invoice_website" class="fx-input" placeholder="https://example.com">
             </div>
-            <div class="field full">
+            <div class="field full fx-field">
               <label for="invoice_address">Billing Address</label>
-              <textarea id="invoice_address" name="invoice_address" placeholder="Leave blank to use company address"></textarea>
+              <textarea id="invoice_address" name="invoice_address" class="fx-input fx-textarea" placeholder="Leave blank to use company address"></textarea>
             </div>
 
-            <div class="field full">
+            <div class="field full fx-field">
               <div class="section-divider"></div>
             </div>
 
-            <div class="field full">
-              <h2>Payment Instructions</h2>
-              <p class="note">Add customer-facing payment notes for branded invoices.</p>
+            <div class="field full fx-field">
+              <h2 class="fx-h3">Payment Instructions</h2>
+              <p class="note fx-caption">Add customer-facing payment notes for branded invoices.</p>
             </div>
 
-            <div class="field full">
+            <div class="field full fx-field">
               <label for="payment_instructions">Payment Instructions</label>
-              <textarea id="payment_instructions" name="payment_instructions" placeholder="Example: Please send payment by Zelle after service is complete."></textarea>
+              <textarea id="payment_instructions" name="payment_instructions" class="fx-input fx-textarea" placeholder="Example: Please send payment by Zelle after service is complete."></textarea>
             </div>
-            <div class="field">
+            <div class="field fx-field">
               <label for="zelle_name">Zelle Name</label>
-              <input id="zelle_name" name="zelle_name">
+              <input id="zelle_name" name="zelle_name" class="fx-input">
             </div>
-            <div class="field">
+            <div class="field fx-field">
               <label for="zelle_contact">Zelle Contact</label>
-              <input id="zelle_contact" name="zelle_contact" placeholder="Email or phone">
+              <input id="zelle_contact" name="zelle_contact" class="fx-input" placeholder="Email or phone">
             </div>
-            <div class="field full">
+            <div class="field full fx-field">
               <label for="invoice_footer">Invoice Footer</label>
-              <textarea id="invoice_footer" name="invoice_footer" placeholder="Thank you for your business."></textarea>
+              <textarea id="invoice_footer" name="invoice_footer" class="fx-input fx-textarea" placeholder="Thank you for your business."></textarea>
             </div>
           </div>
 
-          <div class="toolbar">
-            <button type="submit" id="saveCompanyBtn">Save Company Info</button>
+          <div class="toolbar fx-toolbar">
+            <button type="submit" class="btn primary fx-btn fx-btn--primary" id="saveCompanyBtn">Save Company Info</button>
             <div class="status muted" id="companyStatus"></div>
           </div>
         </form>
       </div>
 
-      <div class="panel">
+      <div class="panel fx-card">
         <div class="panel-header">
           <div>
-            <h2>Change Password</h2>
-            <p class="note">This updates only your own login password.</p>
+            <h2 class="fx-h3">Change Password</h2>
+            <p class="note fx-caption">This updates only your own login password.</p>
           </div>
         </div>
 
         <form id="passwordForm">
-          <div class="field-grid">
-            <div class="field">
+          <div class="field-grid fx-form-grid">
+            <div class="field fx-field">
               <label for="current_password">Current Password</label>
-              <input id="current_password" type="password" autocomplete="current-password" required>
+              <input id="current_password" class="fx-input" type="password" autocomplete="current-password" required>
             </div>
-            <div class="field">
+            <div class="field fx-field">
               <label for="new_password">New Password</label>
-              <input id="new_password" type="password" autocomplete="new-password" required>
+              <input id="new_password" class="fx-input" type="password" autocomplete="new-password" required>
             </div>
           </div>
-          <div class="toolbar">
-            <button type="submit">Update Password</button>
+          <div class="toolbar fx-toolbar">
+            <button type="submit" class="btn primary fx-btn fx-btn--primary">Update Password</button>
             <div class="status muted" id="passwordStatus"></div>
           </div>
         </form>
       </div>
 
-      <div class="panel">
+      <div class="panel fx-card">
         <div class="panel-header">
           <div>
-            <h2>Trust Layer</h2>
-            <p class="note">Submit verification, insurance, and license details for platform review.</p>
+            <h2 class="fx-h3">Trust Layer</h2>
+            <p class="note fx-caption">Submit verification, insurance, and license details for platform review.</p>
           </div>
         </div>
         <form id="trustVerificationForm">
-          <div class="field-grid">
-            <div class="field full">
+          <div class="field-grid fx-form-grid">
+            <div class="field full fx-field">
               <label>Current Trust Review</label>
-              <div id="trustReviewState" class="empty">Loading trust moderation state...</div>
+              <div id="trustReviewState" class="empty fx-empty">Loading trust moderation state...</div>
             </div>
           </div>
-          <div class="field-grid">
-            <div class="field full">
+          <div class="field-grid fx-form-grid">
+            <div class="field full fx-field">
               <label for="verification_notes">Verification Notes</label>
-              <textarea id="verification_notes" placeholder="Provide any context for verification review."></textarea>
+              <textarea id="verification_notes" class="fx-input fx-textarea" placeholder="Provide any context for verification review."></textarea>
             </div>
           </div>
-          <div class="toolbar">
-            <button type="submit">Submit Verification</button>
-            <button type="button" class="secondary" id="resubmitVerificationBtn">Re-submit After Rejection</button>
+          <div class="toolbar fx-toolbar">
+            <button type="submit" class="btn primary fx-btn fx-btn--primary">Submit Verification</button>
+            <button type="button" class="secondary fx-btn fx-btn--secondary" id="resubmitVerificationBtn">Re-submit After Rejection</button>
             <div class="status muted" id="verificationStatus"></div>
           </div>
         </form>
-        <div class="field-grid">
-          <div class="field full">
+        <div class="field-grid fx-form-grid">
+          <div class="field full fx-field">
             <label>Trust Alerts</label>
-            <div id="trustAlerts" class="empty">Loading trust alerts...</div>
+            <div id="trustAlerts" class="empty fx-empty">Loading trust alerts...</div>
           </div>
         </div>
         <form id="trustInsuranceForm">
-          <div class="field-grid">
-            <div class="field">
+          <div class="field-grid fx-form-grid">
+            <div class="field fx-field">
               <label for="insurance_provider">Insurance Provider</label>
-              <input id="insurance_provider" placeholder="Provider name">
+              <input id="insurance_provider" class="fx-input" placeholder="Provider name">
             </div>
-            <div class="field">
+            <div class="field fx-field">
               <label for="insurance_expiry_date">Insurance Expiry Date</label>
-              <input id="insurance_expiry_date" type="date">
+              <input id="insurance_expiry_date" class="fx-input" type="date">
             </div>
-            <div class="field full">
+            <div class="field full fx-field">
               <label for="insurance_document_url">Insurance Document URL</label>
-              <input id="insurance_document_url" type="url" placeholder="https://...">
+              <input id="insurance_document_url" class="fx-input" type="url" placeholder="https://...">
             </div>
           </div>
-          <div class="toolbar">
-            <button type="submit">Upload Insurance</button>
+          <div class="toolbar fx-toolbar">
+            <button type="submit" class="btn primary fx-btn fx-btn--primary">Upload Insurance</button>
             <div class="status muted" id="insuranceStatus"></div>
           </div>
         </form>
         <form id="trustLicenseForm">
-          <div class="field-grid">
-            <div class="field">
+          <div class="field-grid fx-form-grid">
+            <div class="field fx-field">
               <label for="license_number">License Number</label>
-              <input id="license_number" placeholder="License number">
+              <input id="license_number" class="fx-input" placeholder="License number">
             </div>
-            <div class="field">
+            <div class="field fx-field">
               <label for="license_state">License State</label>
-              <input id="license_state" maxlength="2" placeholder="NY">
+              <input id="license_state" class="fx-input" maxlength="2" placeholder="NY">
             </div>
-            <div class="field">
+            <div class="field fx-field">
               <label for="license_expiry_date">License Expiry Date</label>
-              <input id="license_expiry_date" type="date">
+              <input id="license_expiry_date" class="fx-input" type="date">
             </div>
-            <div class="field full">
+            <div class="field full fx-field">
               <label for="license_document_url">License Document URL</label>
-              <input id="license_document_url" type="url" placeholder="https://...">
+              <input id="license_document_url" class="fx-input" type="url" placeholder="https://...">
             </div>
           </div>
-          <div class="toolbar">
-            <button type="submit">Upload License</button>
+          <div class="toolbar fx-toolbar">
+            <button type="submit" class="btn primary fx-btn fx-btn--primary">Upload License</button>
             <div class="status muted" id="licenseStatus"></div>
           </div>
         </form>
       </div>
     </section>
 
-    <aside class="stack">
-      <div class="panel">
+    <aside class="stack fx-stack fx-min-w-0">
+      <div class="panel fx-card">
         <div class="panel-header">
           <div>
-            <h2>Notifications</h2>
-            <p class="note">Recent system updates for your company and account.</p>
+            <h2 class="fx-h3">Notifications</h2>
+            <p class="note fx-caption">Recent system updates for your company and account.</p>
           </div>
-          <button type="button" class="secondary small" id="settingsNotifRefresh">Refresh</button>
+          <button type="button" class="secondary small fx-btn fx-btn--secondary fx-btn--sm" id="settingsNotifRefresh">Refresh</button>
         </div>
         <div id="notificationsList" class="list"></div>
       </div>
 
-      <div class="panel">
+      <div class="panel fx-card">
         <div class="panel-header">
           <div>
-            <h2>Legal &amp; Compliance</h2>
-            <p class="note">Review current legal versions and your acceptance status.</p>
+            <h2 class="fx-h3">Legal &amp; Compliance</h2>
+            <p class="note fx-caption">Review current legal versions and your acceptance status.</p>
           </div>
         </div>
         <div class="account-grid">
@@ -884,19 +343,19 @@
           <a href="/cookie-policy.html" target="_blank" rel="noopener">Cookie Policy</a>
           <a href="/data-processing.html" target="_blank" rel="noopener">Data Processing Policy</a>
         </div>
-        <div class="toolbar" style="margin-top:14px;">
-          <button type="button" id="acceptLegalBtn">Accept Current Legal Terms</button>
+        <div class="toolbar fx-toolbar" style="margin-top:14px;">
+          <button type="button" class="btn primary fx-btn fx-btn--primary" id="acceptLegalBtn">Accept Current Legal Terms</button>
           <div class="status muted" id="legalStatus"></div>
         </div>
       </div>
 
-      <div class="panel">
+      <div class="panel fx-card">
         <div class="panel-header">
           <div>
-            <h2>Activity Log</h2>
-            <p class="note">Important workspace actions, displayed in a readable format.</p>
+            <h2 class="fx-h3">Activity Log</h2>
+            <p class="note fx-caption">Important workspace actions, displayed in a readable format.</p>
           </div>
-          <button type="button" class="secondary small" id="settingsActivityRefresh">Refresh</button>
+          <button type="button" class="secondary small fx-btn fx-btn--secondary fx-btn--sm" id="settingsActivityRefresh">Refresh</button>
         </div>
         <div id="activityList" class="list"></div>
       </div>
@@ -1513,7 +972,7 @@ async function markNotificationRead(id){
 
 async function loadNotifications(){
   const container = document.getElementById("notificationsList");
-  container.innerHTML = '<div class="empty">Loading notifications...</div>';
+  container.innerHTML = '<div class="empty fx-empty">Loading notifications...</div>';
 
   try {
     const res = await apiFetch(API + "/notifications");
@@ -1523,7 +982,7 @@ async function loadNotifications(){
     }
 
     if(!Array.isArray(data) || data.length === 0){
-      container.innerHTML = '<div class="empty">No notifications yet.</div>';
+      container.innerHTML = '<div class="empty fx-empty">No notifications yet.</div>';
       return;
     }
 
@@ -1534,28 +993,28 @@ async function loadNotifications(){
             <div class="item-title">${escapeHtml(item.title || "Notification")}</div>
             <div class="item-meta">${escapeHtml(item.type || "system")} • ${escapeHtml(formatDateTime(item.created_at))}</div>
           </div>
-          <div class="toolbar">
+          <div class="toolbar fx-toolbar">
             <span class="pill ${item.is_read ? "" : "unread"}">${item.is_read ? "Read" : "Unread"}</span>
-            ${item.is_read ? "" : `<button type="button" class="secondary small" data-notification-mark-read="${Number(item.id)}">Mark Read</button>`}
+            ${item.is_read ? "" : `<button type="button" class="secondary small fx-btn fx-btn--secondary fx-btn--sm" data-notification-mark-read="${Number(item.id)}">Mark Read</button>`}
           </div>
         </div>
         <div class="item-body">${escapeHtml(item.message || "")}</div>
       </div>
     `).join("");
   } catch (err) {
-    container.innerHTML = '<div class="empty">Unable to load notifications.</div>';
+    container.innerHTML = '<div class="empty fx-empty">Unable to load notifications.</div>';
   }
 }
 
 async function loadActivity(){
   const container = document.getElementById("activityList");
-  container.innerHTML = '<div class="empty">Loading activity log...</div>';
+  container.innerHTML = '<div class="empty fx-empty">Loading activity log...</div>';
 
   try {
     const res = await apiFetch(API + "/activity-log");
 
     if(res.status === 403){
-      container.innerHTML = '<div class="empty">Your role cannot view the activity log.</div>';
+      container.innerHTML = '<div class="empty fx-empty">Your role cannot view the activity log.</div>';
       return;
     }
 
@@ -1565,7 +1024,7 @@ async function loadActivity(){
     }
 
     if(!Array.isArray(data) || data.length === 0){
-      container.innerHTML = '<div class="empty">No activity has been logged yet.</div>';
+      container.innerHTML = '<div class="empty fx-empty">No activity has been logged yet.</div>';
       return;
     }
 
@@ -1584,7 +1043,7 @@ async function loadActivity(){
       </div>
     `).join("");
   } catch (err) {
-    container.innerHTML = '<div class="empty">Unable to load activity log.</div>';
+    container.innerHTML = '<div class="empty fx-empty">Unable to load activity log.</div>';
   }
 }
 

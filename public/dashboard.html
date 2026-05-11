@@ -2,866 +2,13 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>Dashboard</title>
   <link rel="stylesheet" href="/css/brand.css">
   <link rel="stylesheet" href="/app-shell.css">
-  <style>
-
-    :root {
-      --fl-orange: #FF5A00;
-      --fl-orange-hover: #E64A00;
-      --fl-orange-soft: #FF8A33;
-      --fl-black: #111111;
-      --fl-gray: #2B2B2B;
-      --fl-border: #D9D9D9;
-      --fl-bg: #F5F5F5;
-      --fl-white: #FFFFFF;
-      --fl-success: #16A34A;
-      --fl-warning: #F59E0B;
-      --fl-error: #DC2626;
-      --fl-shadow: 0 18px 46px rgba(17, 17, 17, 0.08);
-      --fl-shadow-soft: 0 10px 28px rgba(17, 17, 17, 0.06);
-      --fl-radius-xl: 24px;
-      --fl-radius-lg: 18px;
-      --fl-radius-md: 14px;
-    }
-
-    * { box-sizing: border-box; }
-
-    html {
-      min-height: 100%;
-      background: var(--fl-bg);
-    }
-
-    body {
-      font-family: Inter, Arial, sans-serif;
-      margin: 0;
-      min-height: 100vh;
-      background:
-        radial-gradient(circle at 8% 0%, rgba(255,90,0,0.12), transparent 34%),
-        radial-gradient(circle at 96% 8%, rgba(255,138,51,0.10), transparent 30%),
-        linear-gradient(180deg, #ffffff 0%, #fafafa 270px, #f4f4f4 100%);
-      color: var(--fl-black);
-      padding: 24px;
-    }
-
-    button,
-    select {
-      font: inherit;
-    }
-
-    .page {
-      max-width: 1280px;
-      margin: 0 auto;
-      display: grid;
-      gap: 18px;
-      animation: pageIn 0.25s ease-out;
-    }
-
-    @keyframes pageIn {
-      from { opacity: 0; transform: translateY(8px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    .hero {
-      position: relative;
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-end;
-      gap: 18px;
-      flex-wrap: wrap;
-      padding: 28px;
-      border: 1px solid rgba(217, 217, 217, 0.95);
-      border-radius: var(--fl-radius-xl);
-      background:
-        linear-gradient(135deg, rgba(255,255,255,0.97), rgba(255,255,255,0.86)),
-        radial-gradient(circle at 100% 0%, rgba(255, 90, 0, 0.15), transparent 38%);
-      box-shadow: var(--fl-shadow-soft);
-      overflow: hidden;
-    }
-
-    .hero::before {
-      content: "";
-      position: absolute;
-      inset: 0 auto 0 0;
-      width: 7px;
-      background: linear-gradient(180deg, var(--fl-orange), var(--fl-orange-soft));
-    }
-
-    .hero::after {
-      content: "FL";
-      position: absolute;
-      right: 26px;
-      top: -26px;
-      font-size: 112px;
-      font-weight: 950;
-      letter-spacing: -0.08em;
-      color: rgba(255, 90, 0, 0.055);
-      pointer-events: none;
-    }
-
-    .hero > * {
-      position: relative;
-      z-index: 1;
-    }
-
-    .hero h1 {
-      margin: 0 0 8px;
-      font-size: clamp(36px, 4.8vw, 56px);
-      line-height: 0.95;
-      letter-spacing: -0.06em;
-      color: var(--fl-orange);
-      font-weight: 950;
-    }
-
-    .hero p {
-      margin: 0;
-      color: #60646c;
-      font-size: 15px;
-      line-height: 1.55;
-      max-width: 740px;
-    }
-
-    .month-badge {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      padding: 11px 15px;
-      background: #fff;
-      border: 1px solid rgba(217, 217, 217, 0.95);
-      border-radius: 999px;
-      box-shadow: 0 10px 24px rgba(17, 17, 17, 0.06);
-      color: var(--fl-orange);
-      font-weight: 950;
-      white-space: nowrap;
-    }
-
-    .panel {
-      background: rgba(255,255,255,0.96);
-      border: 1px solid rgba(217, 217, 217, 0.92);
-      border-radius: var(--fl-radius-lg);
-      box-shadow: var(--fl-shadow);
-      overflow: hidden;
-    }
-
-    .section {
-      padding: 20px;
-    }
-
-    .section-head {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 12px;
-      margin-bottom: 16px;
-      flex-wrap: wrap;
-    }
-
-    .section h3 {
-      margin: 0;
-      color: var(--fl-orange);
-      font-size: 21px;
-      letter-spacing: -0.03em;
-      font-weight: 950;
-    }
-
-    .section-note {
-      color: #60646c;
-      font-size: 13px;
-      line-height: 1.45;
-    }
-
-    .action-grid {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 16px;
-    }
-
-    .primary-action {
-      position: relative;
-      border: none;
-      border-radius: 18px;
-      padding: 24px 24px 24px 96px;
-      min-height: 112px;
-      text-align: left;
-      cursor: pointer;
-      background: linear-gradient(135deg, var(--fl-orange) 0%, var(--fl-orange-hover) 100%);
-      color: white;
-      font-weight: 900;
-      box-shadow: 0 18px 36px rgba(255, 90, 0, 0.24);
-      transition: transform 0.16s ease, box-shadow 0.16s ease, filter 0.16s ease;
-      overflow: hidden;
-    }
-
-    .primary-action::before {
-      content: "+";
-      position: absolute;
-      left: 26px;
-      top: 50%;
-      transform: translateY(-50%);
-      width: 50px;
-      height: 50px;
-      border-radius: 999px;
-      display: grid;
-      place-items: center;
-      background: rgba(255,255,255,0.96);
-      color: var(--fl-orange);
-      font-size: 34px;
-      font-weight: 700;
-      line-height: 1;
-    }
-
-    .primary-action::after {
-      content: "";
-      position: absolute;
-      right: -30px;
-      top: -30px;
-      width: 150px;
-      height: 150px;
-      border-radius: 50%;
-      border: 26px solid rgba(255,255,255,0.10);
-    }
-
-    .primary-action:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 24px 44px rgba(255, 90, 0, 0.30);
-      filter: saturate(1.02);
-    }
-
-    .primary-action strong {
-      display: block;
-      font-size: 22px;
-      margin-bottom: 7px;
-      letter-spacing: -0.03em;
-    }
-
-    .primary-action span {
-      display: block;
-      font-size: 14px;
-      color: rgba(255,255,255,0.88);
-      line-height: 1.45;
-      font-weight: 700;
-      max-width: 260px;
-    }
-
-    .kpi-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(168px, 1fr));
-      gap: 14px;
-    }
-
-    .kpi-card {
-      position: relative;
-      padding: 18px;
-      min-height: 142px;
-    }
-
-    .kpi-card::before {
-      content: "";
-      display: block;
-      width: 36px;
-      height: 36px;
-      border-radius: 999px;
-      background:
-        radial-gradient(circle at center, rgba(255,90,0,0.17), rgba(255,90,0,0.09));
-      margin-bottom: 14px;
-      border: 1px solid rgba(255,90,0,0.12);
-    }
-
-    .kpi-label {
-      font-size: 11px;
-      font-weight: 950;
-      letter-spacing: 0.07em;
-      text-transform: uppercase;
-      color: #4b4f56;
-      margin-bottom: 10px;
-    }
-
-    .kpi-value {
-      font-size: 32px;
-      font-weight: 950;
-      color: var(--fl-black);
-      line-height: 1.04;
-      letter-spacing: -0.04em;
-    }
-
-    .kpi-sub {
-      margin-top: 10px;
-      font-size: 13px;
-      color: #60646c;
-      line-height: 1.45;
-    }
-
-    .main-grid {
-      display: grid;
-      grid-template-columns: minmax(0, 0.92fr) minmax(0, 1.08fr);
-      gap: 18px;
-      align-items: start;
-    }
-
-    .alert-list,
-    .today-list,
-    .invoice-alert-list,
-    .activity-list {
-      display: grid;
-      gap: 10px;
-    }
-
-    .alert-item,
-    .job-card,
-    .billing-box,
-    .invoice-alert-row,
-    .activity-row,
-    .metric-card,
-    .billing-chip,
-    .billing-subsection,
-    .billing-plan-card {
-      border: 1px solid rgba(217, 217, 217, 0.95);
-      background: #fff;
-      border-radius: 16px;
-    }
-
-    .alert-item,
-    .job-card {
-      padding: 15px 16px;
-    }
-
-    .billing-box {
-      padding: 16px;
-      background: linear-gradient(180deg, #fff, #fbfbfb);
-    }
-
-    .billing-box h4,
-    .billing-subsection h4 {
-      margin: 0 0 10px;
-      color: var(--fl-black);
-      font-size: 15px;
-      font-weight: 950;
-      letter-spacing: -0.02em;
-    }
-
-    .metrics-grid,
-    .age-grid {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 10px;
-    }
-
-    .metric-card {
-      padding: 12px;
-      background: #fff;
-    }
-
-    .metric-card span {
-      display: block;
-      font-size: 11px;
-      text-transform: uppercase;
-      color: #60646c;
-      font-weight: 900;
-      letter-spacing: 0.05em;
-      margin-bottom: 6px;
-    }
-
-    .metric-card strong {
-      color: var(--fl-black);
-      font-size: 19px;
-      font-weight: 950;
-    }
-
-    .invoice-alert-row,
-    .activity-row {
-      padding: 12px 13px;
-      display: grid;
-      gap: 7px;
-    }
-
-    .invoice-alert-meta,
-    .activity-meta {
-      font-size: 12px;
-      color: #60646c;
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-    }
-
-    .alert-item {
-      display: flex;
-      justify-content: space-between;
-      gap: 12px;
-      align-items: flex-start;
-      transition: transform 0.16s ease, border-color 0.16s ease, background 0.16s ease;
-    }
-
-    .alert-item:hover {
-      transform: translateY(-1px);
-      border-color: rgba(255,90,0,0.32);
-      background: #fff9f5;
-    }
-
-    .alert-title {
-      font-weight: 950;
-      margin-bottom: 4px;
-      color: var(--fl-black);
-      letter-spacing: -0.02em;
-    }
-
-    .alert-copy {
-      color: #60646c;
-      font-size: 13px;
-      line-height: 1.45;
-    }
-
-    .pill {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      min-width: 34px;
-      padding: 7px 10px;
-      border-radius: 999px;
-      font-size: 12px;
-      font-weight: 950;
-      white-space: nowrap;
-    }
-
-    .pill-orange { background: #fff7ed; color: #c2410c; }
-    .pill-red { background: #fef2f2; color: #b42318; }
-    .pill-green { background: #ecfdf3; color: #027a48; }
-    .pill-gray { background: #f4f4f5; color: #52525b; }
-
-    .job-top {
-      display: flex;
-      justify-content: space-between;
-      gap: 12px;
-      align-items: flex-start;
-      flex-wrap: wrap;
-      margin-bottom: 10px;
-    }
-
-    .job-client {
-      font-size: 18px;
-      font-weight: 950;
-      color: var(--fl-black);
-      margin: 0 0 4px;
-      letter-spacing: -0.025em;
-    }
-
-    .job-service {
-      color: #3f3f46;
-      font-weight: 800;
-      margin-bottom: 4px;
-    }
-
-    .job-meta {
-      color: #60646c;
-      font-size: 13px;
-      line-height: 1.5;
-    }
-
-    .status-badge {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      padding: 6px 10px;
-      border-radius: 999px;
-      color: white;
-      font-size: 11px;
-      text-transform: uppercase;
-      font-weight: 950;
-      width: fit-content;
-      letter-spacing: 0.04em;
-    }
-
-    .green { background: var(--fl-success); }
-    .orange { background: var(--fl-warning); }
-    .red { background: var(--fl-error); }
-    .purple { background: var(--fl-orange-soft); }
-    .gray { background: #6b7280; }
-
-    .job-actions {
-      display: flex;
-      gap: 9px;
-      flex-wrap: wrap;
-      align-items: center;
-      margin-top: 12px;
-    }
-
-    .btn,
-    .job-actions select,
-    #billingCycleSelect {
-      border-radius: 13px;
-      padding: 10px 14px;
-      font-weight: 900;
-      font: inherit;
-    }
-
-    .btn {
-      border: none;
-      cursor: pointer;
-      background: linear-gradient(135deg, var(--fl-orange), var(--fl-orange-hover));
-      color: #fff;
-      transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease, border-color 0.15s ease;
-      box-shadow: 0 10px 20px rgba(255,90,0,0.18);
-    }
-
-    .btn:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 14px 26px rgba(255,90,0,0.24);
-    }
-
-    .btn.secondary,
-    .billing-action-row .btn.secondary {
-      background: #fff;
-      color: var(--fl-orange);
-      border: 1px solid rgba(255,90,0,0.38);
-      box-shadow: none;
-    }
-
-    .btn.secondary:hover {
-      background: rgba(255,90,0,0.055);
-      border-color: var(--fl-orange);
-    }
-
-    .btn:disabled,
-    .billing-action-row .btn:disabled {
-      opacity: 0.55;
-      cursor: not-allowed;
-      transform: none;
-      box-shadow: none;
-    }
-
-    .job-actions select,
-    #billingCycleSelect {
-      min-width: 190px;
-      border: 1px solid var(--fl-border);
-      background: white;
-      color: var(--fl-black);
-    }
-
-    .empty,
-    .billing-placeholder {
-      padding: 16px;
-      color: #60646c;
-      background:
-        radial-gradient(circle at center top, rgba(255,90,0,0.07), transparent 42%),
-        #fff;
-      border: 1px dashed rgba(255,90,0,0.32);
-      border-radius: 15px;
-      line-height: 1.45;
-    }
-
-    .billing-warning-banner {
-      display: none;
-      padding: 16px 18px;
-      border: 1px solid rgba(245,158,11,0.28);
-      border-radius: 16px;
-      background: #fffaf0;
-      color: #6f4400;
-      line-height: 1.5;
-      box-shadow: var(--fl-shadow-soft);
-    }
-
-    .billing-warning-banner.danger {
-      border-color: rgba(220,38,38,0.25);
-      background: #fff7f7;
-      color: #b42318;
-    }
-
-    .billing-warning-banner strong {
-      display: block;
-      margin-bottom: 4px;
-      color: inherit;
-      font-weight: 950;
-    }
-
-    .billing-dash-body,
-    .billing-pro-main,
-    .billing-pro-side,
-    .billing-plan-meta,
-    .billing-timeline,
-    .billing-history,
-    .usage-row,
-    .billing-warn-list {
-      display: grid;
-      gap: 10px;
-    }
-
-    .billing-dash-top {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-      gap: 12px;
-    }
-
-    .billing-chip {
-      padding: 13px 14px;
-      background: #fff;
-    }
-
-    .billing-chip span {
-      display: block;
-      font-size: 11px;
-      font-weight: 950;
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
-      color: #60646c;
-      margin-bottom: 6px;
-    }
-
-    .billing-chip strong {
-      font-size: 19px;
-      color: var(--fl-orange);
-      font-weight: 950;
-    }
-
-    .usage-row label {
-      font-size: 12px;
-      color: #60646c;
-      display: flex;
-      justify-content: space-between;
-      gap: 10px;
-      font-weight: 800;
-    }
-
-    .usage-track {
-      height: 10px;
-      border-radius: 999px;
-      background: #eeeeee;
-      overflow: hidden;
-    }
-
-    .usage-fill {
-      height: 100%;
-      border-radius: 999px;
-      background: linear-gradient(90deg, var(--fl-orange), var(--fl-orange-hover));
-      max-width: 100%;
-    }
-
-    .usage-fill.warn { background: linear-gradient(90deg, #f59e0b, #c47a12); }
-    .usage-fill.danger { background: linear-gradient(90deg, #b42318, #dc2626); }
-
-    .billing-warn-list {
-      margin: 0;
-      padding: 0;
-      list-style: none;
-    }
-
-    .billing-warn-list li {
-      border: 1px solid rgba(245,158,11,0.28);
-      border-radius: 13px;
-      padding: 10px 12px;
-      background: #fffaf0;
-      color: #6f4400;
-      font-size: 13px;
-      line-height: 1.45;
-    }
-
-    .billing-warn-list li.danger {
-      border-color: rgba(220,38,38,0.25);
-      background: #fff7f7;
-      color: #b42318;
-    }
-
-    .billing-pro-grid {
-      display: grid;
-      grid-template-columns: minmax(0, 1.1fr) minmax(280px, 0.9fr);
-      gap: 14px;
-      align-items: start;
-    }
-
-    .billing-subsection {
-      padding: 14px;
-      display: grid;
-      gap: 12px;
-      min-width: 0;
-      background: #fff;
-    }
-
-    .billing-action-row {
-      display: flex;
-      gap: 8px;
-      align-items: center;
-      flex-wrap: wrap;
-    }
-
-    .billing-plan-grid {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 10px;
-    }
-
-    .billing-plan-card {
-      padding: 14px;
-      display: grid;
-      gap: 9px;
-      min-width: 0;
-      background: #fff;
-    }
-
-    .billing-plan-card.current {
-      border-color: rgba(255,90,0,0.52);
-      background: #fff8f3;
-      box-shadow: inset 0 0 0 1px rgba(255,90,0,0.12);
-    }
-
-    .billing-plan-card strong {
-      color: var(--fl-black);
-      font-size: 17px;
-      font-weight: 950;
-    }
-
-    .billing-plan-price {
-      font-size: 26px;
-      color: var(--fl-orange);
-      font-weight: 950;
-      line-height: 1;
-      letter-spacing: -0.04em;
-    }
-
-    .billing-detail-row,
-    .billing-history-row,
-    .billing-timeline-row {
-      display: grid;
-      grid-template-columns: minmax(0, 1fr) auto;
-      gap: 10px;
-      align-items: center;
-      border-bottom: 1px solid #eeeeee;
-      padding: 8px 0;
-      min-width: 0;
-    }
-
-    .billing-detail-row:last-child,
-    .billing-history-row:last-child,
-    .billing-timeline-row:last-child {
-      border-bottom: 0;
-    }
-
-    .billing-detail-row span,
-    .billing-history-row span,
-    .billing-timeline-row span {
-      color: #60646c;
-      font-size: 13px;
-      overflow-wrap: anywhere;
-    }
-
-    .billing-detail-row strong,
-    .billing-history-row strong,
-    .billing-timeline-row strong {
-      color: var(--fl-black);
-      font-size: 13px;
-      text-align: right;
-      overflow-wrap: anywhere;
-      font-weight: 950;
-    }
-
-    .billing-status-pill {
-      display: inline-flex;
-      width: fit-content;
-      border-radius: 999px;
-      padding: 6px 9px;
-      font-size: 11px;
-      font-weight: 950;
-      text-transform: uppercase;
-      background: rgba(255,90,0,0.08);
-      color: var(--fl-orange);
-      border: 1px solid rgba(255,90,0,0.18);
-    }
-
-    .billing-status-pill.danger {
-      background: #fff1f1;
-      color: #b42318;
-      border-color: rgba(220,38,38,0.20);
-    }
-
-    .billing-status-pill.warn {
-      background: #fff7df;
-      color: #9a5b05;
-      border-color: rgba(245,158,11,0.22);
-    }
-
-    .alert-card {
-      border: 1px solid rgba(217,217,217,0.92);
-      border-radius: 15px;
-      padding: 13px;
-      background: #fff;
-    }
-
-    @media (max-width: 1080px) {
-      .action-grid,
-      .main-grid,
-      .billing-pro-grid {
-        grid-template-columns: 1fr;
-      }
-
-      .billing-plan-grid {
-        grid-template-columns: 1fr;
-      }
-
-      .primary-action {
-        padding-left: 88px;
-      }
-    }
-
-    @media (max-width: 760px) {
-      body { padding: 14px; }
-
-      .hero {
-        padding: 22px 18px;
-        border-radius: 20px;
-      }
-
-      .hero h1 { font-size: 34px; }
-
-      .hero::after {
-        font-size: 76px;
-        right: 14px;
-        top: -10px;
-      }
-
-      .kpi-grid,
-      .metrics-grid,
-      .age-grid,
-      .billing-dash-top {
-        grid-template-columns: 1fr;
-      }
-
-      .job-actions {
-        flex-direction: column;
-        align-items: stretch;
-      }
-
-      .job-actions .btn,
-      .job-actions select,
-      .billing-action-row .btn,
-      #billingCycleSelect {
-        width: 100%;
-      }
-
-      .primary-action {
-        min-height: 96px;
-        padding: 20px 18px 20px 78px;
-      }
-
-      .primary-action::before {
-        left: 20px;
-        width: 44px;
-        height: 44px;
-      }
-    }
-
-    @media (prefers-reduced-motion: reduce) {
-      *,
-      *::before,
-      *::after {
-        animation: none !important;
-        transition: none !important;
-        scroll-behavior: auto !important;
-      }
-    }
-
-  </style>
   <link rel="stylesheet" href="/ui-cleanup.css">
   <script src="/js/role-guard.js"></script>
+  
 </head>
 
 <body class="phase2-internal">
@@ -891,14 +38,31 @@
 </script>
   
 
-<div class="page">
-  <div class="hero fx-section-head">
-    <div>
-      <h1>Dashboard</h1>
-      <p>Simple daily control center for customer growth, jobs, cash flow, and urgent follow-up.</p>
+<main class="page staff-dashboard-ds dash-executive">
+  <header class="hero fx-section-head dash-exec-hero fx-card" role="banner">
+    <div class="dash-exec-hero__layout">
+      <div class="dash-exec-hero__content">
+        <div class="dash-exec-eyebrow">Fairlinx Operations OS</div>
+        <h1 class="dash-exec-title" id="dashExecWelcomeTitle">Dashboard</h1>
+        <p class="dash-exec-lede">Monitor revenue, active jobs, team workload, subscriptions, and operational health from a single command center.</p>
+        <div class="dash-exec-meta-row">
+          <div class="dash-meta-pill"><span id="dashHeroPillMonthJobs">0</span> jobs this month</div>
+          <div class="dash-meta-pill"><span id="dashHeroPillUnassigned">0</span> open jobs unassigned</div>
+          <div class="dash-meta-pill dash-meta-pill--success"><span id="dashHeroPillPaidInner">$0</span> net paid MTD</div>
+        </div>
+      </div>
+      <div class="dash-exec-hero__side">
+        <div class="dash-exec-highlight fx-card">
+          <div class="dash-highlight-label">Today&rsquo;s operations</div>
+          <div class="dash-highlight-value" id="dashHeroHighlightJobs">0</div>
+          <div class="dash-highlight-copy">Jobs scheduled for today across your crews.</div>
+          <div class="dash-highlight-foot">
+            <span class="month-badge fx-badge fx-badge--neutral" id="monthBadge">Current Month</span>
+          </div>
+        </div>
+      </div>
     </div>
-    <div class="month-badge fx-badge fx-badge--neutral" id="monthBadge">Current Month</div>
-  </div>
+  </header>
 
   <div id="dashboardHint" class="page-hint fx-alert fx-alert--warning" style="display:none;">
     <strong>Start with the basics.</strong>
@@ -907,62 +71,14 @@
 
   <div id="billingWarningBanner" class="billing-warning-banner"></div>
 
-  <div id="growthPulsePanel" class="panel section fx-card" style="display:none;">
-    <div class="section-head fx-section-head">
-      <h3>Growth &amp; trust pulse</h3>
-      <div class="section-note">Trust, Growth OS, retention, and referral signals (manager+).</div>
+  <section class="dash-zone dash-zone--commands" aria-label="Command center">
+    <div class="dash-zone-head">
+      <div>
+        <div class="dash-zone-kicker">Command center</div>
+        <h2 class="dash-zone-section-title">Quick actions</h2>
+      </div>
     </div>
-    <div id="growthPulseGrid" class="kpi-grid"></div>
-  </div>
-
-  <div id="trustGraphSummaryPanel" class="panel section fx-card" style="display:none;">
-    <div class="section-head fx-section-head">
-      <h3>Trust graph snapshot</h3>
-      <div class="section-note">Repeat clients, returns, lifecycle value, and subscription retention (manager+).</div>
-    </div>
-    <div id="trustGraphSummaryGrid" class="kpi-grid"></div>
-  </div>
-
-  <div id="reputationExpansionPanel" class="panel section fx-card" style="display:none;">
-    <div class="section-head fx-section-head">
-      <h3>Reputation expansion</h3>
-      <div class="section-note">Internal quality, retention, response, referral, and risk signals (manager+).</div>
-    </div>
-    <div id="reputationExpansionGrid" class="kpi-grid"></div>
-  </div>
-
-  <div id="growthLoopsPanel" class="panel section fx-card" style="display:none;">
-    <div class="section-head fx-section-head">
-      <h3>Growth loops</h3>
-      <div class="section-note">Internal opportunity loops for follow-up planning. No messages are sent automatically.</div>
-    </div>
-    <div id="growthLoopsGrid" class="kpi-grid"></div>
-  </div>
-
-  <div id="referralSummaryPanel" class="panel section fx-card" style="display:none;">
-    <div class="section-head fx-section-head">
-      <h3>Referral engine</h3>
-      <div class="section-note">Tracked referrals and recent advocate conversions (manager+).</div>
-    </div>
-    <div id="referralSummaryGrid" class="kpi-grid"></div>
-  </div>
-
-  <div id="companyBillingPanel" class="panel section fx-card" style="display:none;">
-    <div class="section-head fx-section-head">
-      <h3>Plan &amp; usage</h3>
-      <div class="section-note">Company platform subscription (warning mode — limits are advisory until payments connect).</div>
-    </div>
-    <div id="companyBillingBody" class="billing-dash-body">
-      <div class="empty fx-empty"><strong class="fx-empty__title">Loading billing...</strong></div>
-    </div>
-  </div>
-
-  <div class="panel section fx-card">
-    <div class="section-head fx-section-head">
-      <h3>Quick Actions</h3>
-      <div class="section-note">The most common actions stay above the fold.</div>
-    </div>
-    <div class="action-grid">
+    <div class="dash-command-grid action-grid">
       <button type="button" class="primary-action fx-btn fx-btn--primary" id="dashQuickClients">
         <strong>+ Client</strong>
         <span>Add a new customer and open the client workflow.</span>
@@ -976,113 +92,222 @@
         <span>Open the finance area and continue invoicing from client records.</span>
       </button>
     </div>
-  </div>
+  </section>
 
-  <div id="dashNotificationsPanel" class="panel section fx-card">
-    <div class="section-head fx-section-head">
-      <h3>Notifications</h3>
-      <span id="notifUnreadBadge" class="month-badge fx-badge fx-badge--info" style="display:none;">0 unread</span>
-      <button type="button" class="btn secondary fx-btn fx-btn--secondary" id="dashOpenSettings">Manage in settings</button>
-    </div>
-    <p class="section-note">Recent company alerts (managers and above). Mark items read from Settings.</p>
-    <div id="dashNotificationsList" class="alert-list">Loading…</div>
-    <div id="dashOperationalInsights" style="display:none;margin-top:16px;padding-top:16px;border-top:1px solid rgba(17,17,17,0.08);">
-      <div class="section-note" style="margin-bottom:10px;"><strong>Operational insights</strong> — reminders, reactivation, referrals (non-blocking).</div>
-      <div id="dashOperationalInsightsBody" class="alert-list"></div>
-    </div>
-  </div>
-
-  <div class="kpi-grid">
-    <div class="panel kpi-card fx-stat">
-      <div class="kpi-label fx-stat__label">Revenue This Month</div>
-      <div class="kpi-value fx-stat__value" id="revenueThisMonth">$0</div>
-      <div class="kpi-sub">Net cash collected this month (payments minus refunds issued this month).</div>
-    </div>
-    <div class="panel kpi-card fx-stat">
-      <div class="kpi-label fx-stat__label">Total Collected</div>
-      <div class="kpi-value fx-stat__value" id="totalCollected">$0</div>
-      <div class="kpi-sub">Net lifetime collected after refunds.</div>
-    </div>
-    <div class="panel kpi-card fx-stat">
-      <div class="kpi-label fx-stat__label">Unpaid</div>
-      <div class="kpi-value fx-stat__value" id="unpaidAmount">$0</div>
-      <div class="kpi-sub">Remaining balance on open invoices (draft, unpaid, overdue), net of payments and refunds.</div>
-    </div>
-    <div class="panel kpi-card fx-stat">
-      <div class="kpi-label fx-stat__label">Overdue Balance</div>
-      <div class="kpi-value fx-stat__value" id="overdueBalance">$0</div>
-      <div class="kpi-sub">Open invoice balances that are already past due.</div>
-    </div>
-    <div class="panel kpi-card fx-stat">
-      <div class="kpi-label fx-stat__label">Active Invoices</div>
-      <div class="kpi-value fx-stat__value" id="activeInvoices">0</div>
-      <div class="kpi-sub">Invoices currently in draft, unpaid, or overdue state.</div>
-    </div>
-    <div class="panel kpi-card fx-stat">
-      <div class="kpi-label fx-stat__label">Paid This Month</div>
-      <div class="kpi-value fx-stat__value" id="paidThisMonth">$0</div>
-      <div class="kpi-sub">Net paid this month after refund adjustments.</div>
-    </div>
-    <div class="panel kpi-card fx-stat">
-      <div class="kpi-label fx-stat__label">Refunds This Month</div>
-      <div class="kpi-value fx-stat__value" id="refundsThisMonth">$0</div>
-      <div class="kpi-sub">Total refunds issued this month.</div>
-    </div>
-    <div class="panel kpi-card fx-stat">
-      <div class="kpi-label fx-stat__label">Jobs Today</div>
-      <div class="kpi-value fx-stat__value" id="jobsTodayCount">0</div>
-      <div class="kpi-sub">Scheduled work for today that needs attention now.</div>
-    </div>
-    <div class="panel kpi-card fx-stat">
-      <div class="kpi-label fx-stat__label">Active Subscriptions</div>
-      <div class="kpi-value fx-stat__value" id="activeSubscriptionsCount">0</div>
-      <div class="kpi-sub">Recurring customers currently active in the system.</div>
-    </div>
-  </div>
-
-  <div class="panel section fx-card">
-    <div class="section-head fx-section-head">
-      <h3>Billing Dashboard Pro</h3>
-      <div class="section-note">Net-balance monitoring across collections, aging, and invoice risk.</div>
-    </div>
-    <div class="billing-pro-grid">
-      <div class="billing-box">
-        <h4>Invoice Alerts</h4>
-        <div id="billingInvoiceAlerts" class="invoice-alert-list"><div class="empty fx-empty"><strong class="fx-empty__title">Loading billing alerts...</strong></div></div>
-      </div>
-      <div class="billing-box">
-        <h4>Aging Buckets</h4>
-        <div id="billingAgingBuckets" class="age-grid"><div class="empty fx-empty"><strong class="fx-empty__title">Loading aging buckets...</strong></div></div>
-      </div>
-      <div class="billing-box">
-        <h4>Collections Snapshot</h4>
-        <div id="billingCollectionsSnapshot" class="metrics-grid"><div class="empty fx-empty"><strong class="fx-empty__title">Loading collection metrics...</strong></div></div>
-      </div>
-      <div class="billing-box">
-        <h4>Recent Billing Activity</h4>
-        <div id="billingRecentActivity" class="activity-list"><div class="empty fx-empty"><strong class="fx-empty__title">Loading billing activity...</strong></div></div>
+  <section class="dash-zone dash-zone--primary-kpis" aria-labelledby="dash-metrics-heading">
+    <div class="dash-zone-head" id="dash-metrics-heading">
+      <div>
+        <div class="dash-zone-kicker">Executive snapshot</div>
+        <h2 class="dash-zone-section-title">Financial &amp; operational overview</h2>
+        <p class="dash-kpi-zone-note">Cash performance and invoice exposure — headline metrics first, supporting signals below.</p>
       </div>
     </div>
-  </div>
+    <div class="dash-kpi-grid dash-kpi-grid--primary dash-kpi-cluster dash-kpi-cluster--primary kpi-grid">
+      <div class="panel kpi-card fx-stat fx-card">
+        <div class="kpi-label fx-stat__label">Revenue This Month</div>
+        <div class="kpi-value fx-stat__value" id="revenueThisMonth">$0</div>
+        <div class="kpi-sub">Net cash collected this month (payments minus refunds issued this month).</div>
+      </div>
+      <div class="panel kpi-card fx-stat fx-card">
+        <div class="kpi-label fx-stat__label">Total Collected</div>
+        <div class="kpi-value fx-stat__value" id="totalCollected">$0</div>
+        <div class="kpi-sub">Net lifetime collected after refunds.</div>
+      </div>
+      <div class="panel kpi-card fx-stat fx-card">
+        <div class="kpi-label fx-stat__label">Unpaid</div>
+        <div class="kpi-value fx-stat__value" id="unpaidAmount">$0</div>
+        <div class="kpi-sub">Remaining balance on open invoices (draft, unpaid, overdue), net of payments and refunds.</div>
+      </div>
+      <div class="panel kpi-card fx-stat fx-card">
+        <div class="kpi-label fx-stat__label">Overdue Balance</div>
+        <div class="kpi-value fx-stat__value" id="overdueBalance">$0</div>
+        <div class="kpi-sub">Open invoice balances that are already past due.</div>
+      </div>
+    </div>
+    <div class="dash-kpi-grid dash-kpi-grid--secondary dash-kpi-cluster dash-kpi-cluster--secondary kpi-grid">
+      <div class="panel kpi-card fx-stat fx-card">
+        <div class="kpi-label fx-stat__label">Active Invoices</div>
+        <div class="kpi-value fx-stat__value" id="activeInvoices">0</div>
+        <div class="kpi-sub">Invoices currently in draft, unpaid, or overdue state.</div>
+      </div>
+      <div class="panel kpi-card fx-stat fx-card">
+        <div class="kpi-label fx-stat__label">Paid This Month</div>
+        <div class="kpi-value fx-stat__value" id="paidThisMonth">$0</div>
+        <div class="kpi-sub">Net paid this month after refund adjustments.</div>
+      </div>
+      <div class="panel kpi-card fx-stat fx-card">
+        <div class="kpi-label fx-stat__label">Refunds This Month</div>
+        <div class="kpi-value fx-stat__value" id="refundsThisMonth">$0</div>
+        <div class="kpi-sub">Total refunds issued this month.</div>
+      </div>
+      <div class="panel kpi-card fx-stat fx-card">
+        <div class="kpi-label fx-stat__label">Jobs Today</div>
+        <div class="kpi-value fx-stat__value" id="jobsTodayCount">0</div>
+        <div class="kpi-sub">Scheduled work for today that needs attention now.</div>
+      </div>
+      <div class="panel kpi-card fx-stat fx-card">
+        <div class="kpi-label fx-stat__label">Active Subscriptions</div>
+        <div class="kpi-value fx-stat__value" id="activeSubscriptionsCount">0</div>
+        <div class="kpi-sub">Recurring customers currently active in the system.</div>
+      </div>
+    </div>
+  </section>
 
-  <div class="main-grid">
-    <div class="panel section fx-card">
+  <section class="dash-zone dash-zone--executive-workspace" aria-label="Operations workspace">
+    <div class="dash-main-grid dash-main-grid--executive">
+      <div class="dash-main-grid__primary">
+        <div class="panel section fx-card">
+          <div class="dash-zone-head dash-zone-head--panel">
+            <div>
+              <div class="dash-zone-kicker">Attention center</div>
+              <h2 class="dash-zone-section-title">Urgent operational alerts</h2>
+              <p class="section-note">Focus on the issues that need action first.</p>
+            </div>
+          </div>
+          <div id="alertsList" class="alert-list">Loading...</div>
+        </div>
+
+        <div class="panel section fx-card">
+          <div class="dash-zone-head dash-zone-head--panel">
+            <div>
+              <div class="dash-zone-kicker">Field operations</div>
+              <h2 class="dash-zone-section-title">Today&rsquo;s schedule</h2>
+              <p class="section-note">Quick actions for today's field work.</p>
+            </div>
+          </div>
+          <div id="todayJobsList" class="today-list">Loading...</div>
+        </div>
+
+        <div class="panel section fx-card dash-panel dash-panel--billing-pro">
+          <div class="dash-zone-head dash-zone-head--panel">
+            <div>
+              <div class="dash-zone-kicker">Financial health</div>
+              <h2 class="dash-zone-section-title">Billing &amp; cash flow</h2>
+              <p class="section-note">Net-balance monitoring across collections, aging, and invoice risk.</p>
+            </div>
+          </div>
+          <div class="billing-pro-grid">
+            <div class="billing-box">
+              <h4>Invoice Alerts</h4>
+              <div id="billingInvoiceAlerts" class="invoice-alert-list"><div class="empty fx-empty"><strong class="fx-empty__title">Loading billing alerts...</strong></div></div>
+            </div>
+            <div class="billing-box">
+              <h4>Aging Buckets</h4>
+              <div id="billingAgingBuckets" class="age-grid"><div class="empty fx-empty"><strong class="fx-empty__title">Loading aging buckets...</strong></div></div>
+            </div>
+            <div class="billing-box">
+              <h4>Collections Snapshot</h4>
+              <div id="billingCollectionsSnapshot" class="metrics-grid"><div class="empty fx-empty"><strong class="fx-empty__title">Loading collection metrics...</strong></div></div>
+            </div>
+            <div class="billing-box">
+              <h4>Recent Billing Activity</h4>
+              <div id="billingRecentActivity" class="activity-list"><div class="empty fx-empty"><strong class="fx-empty__title">Loading billing activity...</strong></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <aside class="dash-main-grid__side">
+        <div id="dashNotificationsPanel" class="panel section fx-card dash-panel dash-panel--pulse">
+          <div class="dash-zone-head dash-zone-head--split">
+            <div>
+              <div class="dash-zone-kicker">Company pulse</div>
+              <h2 class="dash-zone-section-title">Notifications</h2>
+            </div>
+            <div class="dash-zone-head__actions">
+              <span id="notifUnreadBadge" class="month-badge fx-badge fx-badge--info" style="display:none;">0 unread</span>
+              <button type="button" class="btn secondary fx-btn fx-btn--secondary" id="dashOpenSettings">Manage in settings</button>
+            </div>
+          </div>
+          <p class="section-note">Recent company alerts (managers and above). Mark items read from Settings.</p>
+          <div id="dashNotificationsList" class="alert-list">Loading…</div>
+          <div id="dashOperationalInsights" style="display:none;margin-top:16px;padding-top:16px;border-top:1px solid rgba(17,17,17,0.08);">
+            <div class="section-note" style="margin-bottom:10px;"><strong>Operational insights</strong> — reminders, reactivation, referrals (non-blocking).</div>
+            <div id="dashOperationalInsightsBody" class="alert-list"></div>
+          </div>
+        </div>
+
+        <section class="dash-side-card fx-card" aria-label="Team capacity">
+          <div class="dash-zone-kicker">Team status</div>
+          <h3 class="dash-side-card__title">Crew roster</h3>
+          <div class="dash-side-card__value" id="dashSideWorkersCount">&mdash;</div>
+          <p class="dash-side-card__copy">Workers available for routing and assignment.</p>
+        </section>
+
+        <section class="dash-side-card fx-card" aria-label="Marketplace pipeline">
+          <div class="dash-zone-kicker">Marketplace</div>
+          <h3 class="dash-side-card__title">Active invoices exposure</h3>
+          <div class="dash-side-card__value" id="dashSideOpenInvoices">&mdash;</div>
+          <p class="dash-side-card__copy">Open invoice workload across draft, unpaid, and overdue states.</p>
+        </section>
+
+        <section class="dash-side-card fx-card" aria-label="Retention engine">
+          <div class="dash-zone-kicker">Retention</div>
+          <h3 class="dash-side-card__title">Recurring clients</h3>
+          <div class="dash-side-card__value" id="dashSideSubsCount">&mdash;</div>
+          <p class="dash-side-card__copy">Customers on active subscriptions right now.</p>
+        </section>
+      </aside>
+    </div>
+  </section>
+
+  <section class="dash-zone dash-zone--advanced dash-zone--analytics" aria-labelledby="dash-analytics-zone-heading">
+    <div class="dash-zone-heading dash-zone-heading--advanced" id="dash-analytics-zone-heading">
+      <h2 class="dash-zone-heading__title">Growth &amp; platform intelligence</h2>
+      <p class="dash-zone-heading__note">Manager and owner signals — trust, loops, referrals, and subscription limits — placed after core operations.</p>
+    </div>
+
+    <div id="growthPulsePanel" class="panel section fx-card dash-panel dash-panel--advanced" style="display:none;">
       <div class="section-head fx-section-head">
-        <h3>Alerts</h3>
-        <div class="section-note">Focus on the issues that need action first.</div>
+        <h3>Growth &amp; trust pulse</h3>
+        <div class="section-note">Trust, Growth OS, retention, and referral signals (manager+).</div>
       </div>
-      <div id="alertsList" class="alert-list">Loading...</div>
+      <div id="growthPulseGrid" class="kpi-grid"></div>
     </div>
 
-    <div class="panel section fx-card">
+    <div id="trustGraphSummaryPanel" class="panel section fx-card dash-panel dash-panel--advanced" style="display:none;">
       <div class="section-head fx-section-head">
-        <h3>Today Jobs</h3>
-        <div class="section-note">Quick actions for today's field work.</div>
+        <h3>Trust graph snapshot</h3>
+        <div class="section-note">Repeat clients, returns, lifecycle value, and subscription retention (manager+).</div>
       </div>
-      <div id="todayJobsList" class="today-list">Loading...</div>
+      <div id="trustGraphSummaryGrid" class="kpi-grid"></div>
     </div>
-  </div>
-</div>
+
+    <div id="reputationExpansionPanel" class="panel section fx-card dash-panel dash-panel--advanced" style="display:none;">
+      <div class="section-head fx-section-head">
+        <h3>Reputation expansion</h3>
+        <div class="section-note">Internal quality, retention, response, referral, and risk signals (manager+).</div>
+      </div>
+      <div id="reputationExpansionGrid" class="kpi-grid"></div>
+    </div>
+
+    <div id="growthLoopsPanel" class="panel section fx-card dash-panel dash-panel--advanced" style="display:none;">
+      <div class="section-head fx-section-head">
+        <h3>Growth loops</h3>
+        <div class="section-note">Internal opportunity loops for follow-up planning. No messages are sent automatically.</div>
+      </div>
+      <div id="growthLoopsGrid" class="kpi-grid"></div>
+    </div>
+
+    <div id="referralSummaryPanel" class="panel section fx-card dash-panel dash-panel--advanced" style="display:none;">
+      <div class="section-head fx-section-head">
+        <h3>Referral engine</h3>
+        <div class="section-note">Tracked referrals and recent advocate conversions (manager+).</div>
+      </div>
+      <div id="referralSummaryGrid" class="kpi-grid"></div>
+    </div>
+
+    <div id="companyBillingPanel" class="panel section fx-card dash-panel dash-panel--advanced" style="display:none;">
+      <div class="section-head fx-section-head">
+        <h3>Plan &amp; usage</h3>
+        <div class="section-note">Company platform subscription (warning mode — limits are advisory until payments connect).</div>
+      </div>
+      <div id="companyBillingBody" class="billing-dash-body">
+        <div class="empty fx-empty"><strong class="fx-empty__title">Loading billing...</strong></div>
+      </div>
+    </div>
+  </section>
+</main>
 
 <script src="/js/ui.js"></script>
 <script src="/js/auth.js"></script>
@@ -1222,7 +447,7 @@ async function loadDashNotifications(){
 
 function growthPulseCard(label, value, sub){
   const v = value == null ? "—" : String(value);
-  return '<div class="panel kpi-card fx-stat"><div class="kpi-label fx-stat__label">' + escapeHtml(label) + '</div><div class="kpi-value fx-stat__value">' + escapeHtml(v) + '</div><div class="kpi-sub">' + escapeHtml(sub || "") + '</div></div>';
+  return '<div class="panel kpi-card fx-stat fx-card"><div class="kpi-label fx-stat__label">' + escapeHtml(label) + '</div><div class="kpi-value fx-stat__value">' + escapeHtml(v) + '</div><div class="kpi-sub">' + escapeHtml(sub || "") + '</div></div>';
 }
 
 async function loadGrowthPulse(){
@@ -1505,6 +730,27 @@ let dashboardState = {
   subscriptions: [],
   money: {}
 };
+
+function updateExecutiveHeroShell(opts){
+  const welcome = document.getElementById("dashExecWelcomeTitle");
+  if(welcome){
+    const cn = user && (user.company_name || user.companyName);
+    const nm = cn || (user && user.username) || "there";
+    welcome.textContent = "Welcome back, " + nm;
+  }
+  function setText(id, val){
+    const el = document.getElementById(id);
+    if(el) el.textContent = val == null ? "" : String(val);
+  }
+  setText("dashHeroHighlightJobs", opts.jobsToday);
+  setText("dashHeroPillMonthJobs", opts.monthJobs);
+  setText("dashHeroPillUnassigned", opts.unassigned);
+  const paidEl = document.getElementById("dashHeroPillPaidInner");
+  if(paidEl) paidEl.textContent = formatMoney(opts.paidThisMonth || 0);
+  setText("dashSideWorkersCount", opts.workersCount);
+  setText("dashSideSubsCount", opts.activeSubs);
+  setText("dashSideOpenInvoices", opts.activeInvoices);
+}
 
 function canViewBillingWarning(){
   const role = String((user && user.role) || "").toLowerCase();
@@ -2446,6 +1692,16 @@ async function init(){
 
     document.getElementById("jobsTodayCount").innerText = jobsToday.length;
     document.getElementById("activeSubscriptionsCount").innerText = activeSubscriptions.length;
+
+    updateExecutiveHeroShell({
+      jobsToday: jobsToday.length,
+      monthJobs: monthJobs.length,
+      unassigned: unassignedJobs.length,
+      paidThisMonth: kpis.paid_this_month || 0,
+      workersCount: safeWorkers.length,
+      activeSubs: activeSubscriptions.length,
+      activeInvoices: Number(kpis.active_invoices || 0)
+    });
 
     renderAlerts({
       unpaidJobs,

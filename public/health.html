@@ -2,321 +2,14 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>System Health</title>
   <link rel="stylesheet" href="/css/brand.css">
   <link rel="stylesheet" href="/app-shell.css">
-  <style>
-    :root {
-      --fl-bg: #050505;
-      --fl-surface: #111111;
-      --fl-surface-2: #171717;
-      --fl-card: rgba(255, 255, 255, 0.055);
-      --fl-card-2: rgba(255, 255, 255, 0.035);
-      --fl-text: #ffffff;
-      --fl-muted: #b9b9b9;
-      --fl-muted-2: #8b8b8b;
-      --fl-line: rgba(255, 255, 255, 0.12);
-      --fl-orange: #ff5a00;
-      --fl-orange-dark: #e64a00;
-      --fl-orange-soft: rgba(255, 90, 0, 0.14);
-      --fl-green: #16a34a;
-      --fl-amber: #f59e0b;
-      --fl-red: #dc2626;
-      --fl-radius: 24px;
-      --fl-shadow: 0 24px 70px rgba(0, 0, 0, 0.42);
-    }
-
-    * {
-      box-sizing: border-box;
-    }
-
-    body {
-      margin: 0;
-      min-height: 100vh;
-      font-family: Inter, Arial, sans-serif;
-      color: var(--fl-text);
-      background:
-        radial-gradient(circle at 8% 0%, rgba(255, 90, 0, 0.16), transparent 30%),
-        radial-gradient(circle at 92% 8%, rgba(255, 90, 0, 0.13), transparent 28%),
-        linear-gradient(180deg, #050505 0%, #0a0a0a 44%, #050505 100%);
-      padding: 24px;
-    }
-
-    body::before {
-      content: "";
-      position: fixed;
-      inset: 0;
-      pointer-events: none;
-      opacity: 0.34;
-      background-image: radial-gradient(rgba(255, 90, 0, 0.34) 1px, transparent 1px);
-      background-size: 22px 22px;
-      mask-image: radial-gradient(circle at 88% 8%, #000 0 18%, transparent 42%);
-    }
-
-    .page {
-      width: min(1180px, 100%);
-      margin: 0 auto;
-      position: relative;
-      z-index: 1;
-    }
-
-    .hero {
-      display: flex;
-      justify-content: space-between;
-      gap: 18px;
-      align-items: center;
-      padding: 28px;
-      margin-bottom: 20px;
-      border-radius: 28px;
-      border: 1px solid rgba(255, 90, 0, 0.28);
-      background:
-        linear-gradient(135deg, rgba(255, 90, 0, 0.16), rgba(255, 255, 255, 0.035) 44%, rgba(255, 255, 255, 0.02)),
-        rgba(17, 17, 17, 0.86);
-      box-shadow: var(--fl-shadow);
-      overflow: hidden;
-      position: relative;
-    }
-
-    .hero::after {
-      content: "FL";
-      position: absolute;
-      right: 26px;
-      bottom: -44px;
-      font-size: 138px;
-      line-height: 1;
-      font-weight: 1000;
-      font-style: italic;
-      color: rgba(255, 90, 0, 0.10);
-      letter-spacing: -14px;
-      pointer-events: none;
-    }
-
-    .hero h1 {
-      margin: 0 0 8px;
-      font-size: clamp(30px, 5vw, 46px);
-      line-height: 1.05;
-      letter-spacing: -1.2px;
-      text-transform: uppercase;
-    }
-
-    .hero p {
-      max-width: 760px;
-      margin: 0;
-      color: var(--fl-muted);
-      font-size: 15px;
-    }
-
-    .hero-actions {
-      position: relative;
-      z-index: 2;
-      display: flex;
-      gap: 10px;
-      align-items: center;
-      flex-shrink: 0;
-    }
-
-    .btn,
-    button.btn {
-      min-height: 46px;
-      border-radius: 999px;
-      border: 1px solid transparent;
-      padding: 10px 17px;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      font-size: 13px;
-      font-weight: 900;
-      text-transform: uppercase;
-      letter-spacing: 0.03em;
-      cursor: pointer;
-      transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease, opacity 0.18s ease;
-    }
-
-    .btn.gray,
-    .btn-primary {
-      color: #fff;
-      background: linear-gradient(135deg, var(--fl-orange), var(--fl-orange-dark));
-      border-color: rgba(255, 90, 0, 0.62);
-      box-shadow: 0 18px 42px rgba(255, 90, 0, 0.26);
-    }
-
-    .btn:hover {
-      transform: translateY(-2px);
-    }
-
-    .btn:disabled {
-      cursor: not-allowed;
-      opacity: 0.72;
-      transform: none;
-    }
-
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 18px;
-    }
-
-    .panel {
-      padding: 22px;
-      min-height: 210px;
-      border-radius: var(--fl-radius);
-      border: 1px solid var(--fl-line);
-      background:
-        linear-gradient(180deg, var(--fl-card), var(--fl-card-2)),
-        var(--fl-surface);
-      box-shadow: 0 18px 50px rgba(0, 0, 0, 0.30);
-      position: relative;
-      overflow: hidden;
-    }
-
-    .panel::before {
-      content: "";
-      position: absolute;
-      left: 0;
-      top: 0;
-      width: 4px;
-      height: 100%;
-      background: linear-gradient(180deg, var(--fl-orange), transparent);
-      opacity: 0.9;
-    }
-
-    .panel h2 {
-      margin: 0 0 16px;
-      font-size: 20px;
-      line-height: 1.2;
-      letter-spacing: -0.3px;
-      color: #fff;
-    }
-
-    .status-line {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 14px;
-      padding: 11px 0;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.09);
-      color: rgba(255, 255, 255, 0.88);
-      font-size: 14px;
-    }
-
-    .status-line:last-child {
-      border-bottom: none;
-    }
-
-    .status-line strong {
-      color: #fff;
-      font-size: 15px;
-    }
-
-    .muted {
-      color: var(--fl-muted-2);
-    }
-
-    ul {
-      margin: 12px 0 0;
-      padding-left: 20px;
-      color: var(--fl-muted);
-    }
-
-    li {
-      margin: 6px 0;
-    }
-
-    .badge {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      min-height: 26px;
-      padding: 4px 10px;
-      border-radius: 999px;
-      font-size: 12px;
-      font-weight: 900;
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
-      border: 1px solid rgba(255, 255, 255, 0.12);
-      background: rgba(255, 255, 255, 0.08);
-      color: #fff;
-      white-space: nowrap;
-    }
-
-    .badge.active {
-      border-color: rgba(22, 163, 74, 0.45);
-      background: rgba(22, 163, 74, 0.16);
-      color: #86efac;
-    }
-
-    .badge.status-orange {
-      border-color: rgba(245, 158, 11, 0.45);
-      background: rgba(245, 158, 11, 0.16);
-      color: #fcd34d;
-    }
-
-    .badge.status-red {
-      border-color: rgba(220, 38, 38, 0.45);
-      background: rgba(220, 38, 38, 0.16);
-      color: #fca5a5;
-    }
-
-    .page-forbidden,
-    .empty-state {
-      padding: 28px;
-      border-radius: 24px;
-      border: 1px solid rgba(220, 38, 38, 0.30);
-      background: rgba(220, 38, 38, 0.09);
-      color: #fecaca;
-      font-weight: 800;
-      box-shadow: var(--fl-shadow);
-    }
-
-    .empty-state {
-      border-color: rgba(245, 158, 11, 0.30);
-      background: rgba(245, 158, 11, 0.09);
-      color: #fde68a;
-    }
-
-    @media (max-width: 900px) {
-      body {
-        padding: 16px;
-      }
-
-      .hero {
-        align-items: flex-start;
-        flex-direction: column;
-        padding: 22px;
-      }
-
-      .hero-actions,
-      .hero-actions .btn {
-        width: 100%;
-      }
-
-      .grid {
-        grid-template-columns: 1fr;
-      }
-    }
-
-    @media (max-width: 520px) {
-      body {
-        padding: 12px;
-      }
-
-      .hero,
-      .panel {
-        border-radius: 20px;
-      }
-
-      .status-line {
-        align-items: flex-start;
-        flex-direction: column;
-        gap: 6px;
-      }
-    }
-  </style>
   <script src="/js/role-guard.js"></script>
+  
 </head>
-<body>
+<body class="phase2-internal health-ds-page">
   <script>
 (function(){
   const token = localStorage.getItem("token");
@@ -342,18 +35,18 @@
 })();
 </script>
 
-<div class="page">
-  <div class="hero">
-    <div>
-      <h1>System Health</h1>
-      <p>Launch readiness checks for database, migrations, billing, Stripe, email, uploads, scheduler, queue, and environment blockers.</p>
+<div class="page fx-page fx-page--dense">
+  <header class="fx-page-header" aria-labelledby="health-page-title">
+    <div class="fx-stack">
+      <h1 id="health-page-title" class="fx-h3">System Health</h1>
+      <p class="fx-caption">Launch readiness checks for database, migrations, billing, Stripe, email, uploads, scheduler, queue, and environment blockers.</p>
     </div>
-    <div class="hero-actions">
-      <button type="button" class="btn gray" id="healthRefreshBtn">Refresh</button>
+    <div class="fx-page-header__actions">
+      <button type="button" class="btn gray fx-btn fx-btn--secondary" id="healthRefreshBtn">Refresh</button>
     </div>
-  </div>
+  </header>
 
-  <div id="healthBox" class="grid" aria-live="polite"></div>
+  <div id="healthBox" class="grid fx-grid fx-min-w-0" aria-live="polite"></div>
 </div>
 
 <script src="/js/ui.js"></script>
@@ -367,14 +60,14 @@ function badge(status){
   const normalized = String(status || "").toLowerCase();
   const good = ["ok", "complete", "configured", "running"].includes(normalized);
   const bad = ["blocked", "missing", "stopped", "error", "failed"].includes(normalized);
-  return '<span class="badge ' + (good ? "active" : bad ? "status-red" : "status-orange") + '">' + esc(status || "-") + '</span>';
+  return '<span class="badge fx-badge ' + (good ? "active fx-badge--success" : bad ? "status-red fx-badge--danger" : "status-orange fx-badge--warning") + '">' + esc(status || "-") + '</span>';
 }
 function listBlockers(items){
   const list = Array.isArray(items) ? items.filter(Boolean) : [];
   return list.length ? '<ul>' + list.map(item => '<li>' + esc(item) + '</li>').join("") + '</ul>' : '<p class="muted">None reported.</p>';
 }
 function card(title, html){
-  return '<div class="panel"><h2>' + esc(title) + '</h2>' + html + '</div>';
+  return '<div class="panel fx-card"><h2>' + esc(title) + '</h2>' + html + '</div>';
 }
 
 function render(data){
@@ -408,7 +101,7 @@ async function load(){
 
   if(!AppAuth.requireAuth()) return;
   if(!allowed()){
-    document.querySelector(".page").innerHTML = '<div class="page-forbidden">You do not have permission to view system health.</div>';
+    document.querySelector(".page").innerHTML = '<div class="page-forbidden fx-empty"><span class="fx-empty__text">You do not have permission to view system health.</span></div>';
     return;
   }
 
@@ -430,7 +123,7 @@ async function load(){
     render(systemHealth);
   } catch(err) {
     AppUI.showToast(err.message || "Unable to load system health.", "error");
-    document.getElementById("healthBox").innerHTML = '<div class="empty-state">Unable to load system health. Please refresh or check your connection.</div>';
+    document.getElementById("healthBox").innerHTML = '<div class="empty-state fx-empty"><span class="fx-empty__text">Unable to load system health. Please refresh or check your connection.</span></div>';
   } finally {
     AppUI.setLoading(false);
     if(refreshBtn){

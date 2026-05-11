@@ -1,594 +1,16 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <title>Invoices</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <link rel="stylesheet" href="/css/brand.css">
   <link rel="stylesheet" href="/app-shell.css">
-  <style>
-    * { box-sizing: border-box; }
-
-    :root {
-      --fx-orange: #FF5A00;
-      --fx-orange-deep: #E64A00;
-      --fx-orange-soft: #FF8A33;
-      --fx-black: #111111;
-      --fx-dark: #2B2B2B;
-      --fx-border: #D9D9D9;
-      --fx-bg: #F5F5F5;
-      --fx-white: #FFFFFF;
-      --fx-success: #16A34A;
-      --fx-warning: #F59E0B;
-      --fx-danger: #DC2626;
-      --fx-shadow: 0 24px 60px rgba(17,17,17,0.08);
-      --fx-shadow-soft: 0 14px 34px rgba(17,17,17,0.06);
-      --fx-radius-xl: 28px;
-      --fx-radius-lg: 20px;
-      --fx-radius-md: 16px;
-      --fx-radius-sm: 12px;
-    }
-
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      background:
-        radial-gradient(circle at 88% 8%, rgba(255,90,0,0.10), transparent 24%),
-        radial-gradient(circle at 0% 100%, rgba(255,90,0,0.08), transparent 22%),
-        linear-gradient(135deg, #ffffff 0%, #f7f7f7 52%, #ffffff 100%);
-      color: var(--brand-black, var(--fx-black));
-      padding: 22px;
-      min-height: 100vh;
-    }
-
-    body::before {
-      content: "";
-      position: fixed;
-      inset: auto auto 0 0;
-      width: 260px;
-      height: 260px;
-      pointer-events: none;
-      opacity: .16;
-      background:
-        radial-gradient(circle, rgba(255,90,0,.28) 1px, transparent 1.5px);
-      background-size: 14px 14px;
-      transform: rotate(-8deg);
-    }
-
-    .page {
-      max-width: 1280px;
-      margin: 0 auto;
-      display: grid;
-      gap: 22px;
-      position: relative;
-      z-index: 1;
-    }
-
-    .hero {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-end;
-      gap: 18px;
-      flex-wrap: wrap;
-      padding: 4px 2px 2px;
-    }
-
-    .hero::before {
-      content: "FairLinx Finance";
-      display: inline-flex;
-      width: fit-content;
-      padding: 8px 12px;
-      border: 1px solid rgba(255,90,0,.24);
-      border-radius: 999px;
-      background: rgba(255,90,0,.08);
-      color: var(--fx-orange-deep);
-      font-size: 12px;
-      font-weight: 900;
-      letter-spacing: .04em;
-      text-transform: uppercase;
-      order: -1;
-      flex-basis: 100%;
-    }
-
-    .hero h1 {
-      margin: 0 0 7px;
-      color: var(--fx-black);
-      font-size: clamp(34px, 5vw, 58px);
-      line-height: .96;
-      letter-spacing: -0.06em;
-      font-weight: 900;
-    }
-
-    .hero h1::after {
-      content: ".";
-      color: var(--fx-orange);
-    }
-
-    .hero p {
-      margin: 0;
-      color: #5f6368;
-      line-height: 1.6;
-      font-size: 16px;
-      max-width: 650px;
-    }
-
-    .panel {
-      background: rgba(255,255,255,0.92);
-      border: 1px solid rgba(217,217,217,0.9);
-      border-radius: var(--fx-radius-lg);
-      box-shadow: var(--fx-shadow-soft);
-      backdrop-filter: blur(18px);
-    }
-
-    .toolbar {
-      padding: 20px;
-      display: grid;
-      gap: 18px;
-      border-radius: var(--fx-radius-xl);
-      position: relative;
-      overflow: hidden;
-    }
-
-    .toolbar::after {
-      content: "";
-      position: absolute;
-      right: -80px;
-      top: -110px;
-      width: 260px;
-      height: 260px;
-      border-radius: 50%;
-      background: radial-gradient(circle, rgba(255,90,0,.12), transparent 64%);
-      pointer-events: none;
-    }
-
-    .filter-row {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-      position: relative;
-      z-index: 1;
-    }
-
-    .filter-chip {
-      border: 1px solid rgba(217,217,217,0.95);
-      background: white;
-      color: var(--fx-black);
-      border-radius: 12px;
-      padding: 12px 18px;
-      font-weight: 800;
-      cursor: pointer;
-      transition: transform .16s ease, box-shadow .16s ease, border-color .16s ease, background .16s ease, color .16s ease;
-      min-height: 44px;
-    }
-
-    .filter-chip:hover {
-      border-color: rgba(255,90,0,.55);
-      transform: translateY(-1px);
-      box-shadow: 0 10px 22px rgba(17,17,17,.08);
-    }
-
-    .filter-chip:focus-visible,
-    .btn:focus-visible,
-    input:focus-visible,
-    select:focus-visible,
-    textarea:focus-visible {
-      outline: 3px solid rgba(255,90,0,.24);
-      outline-offset: 2px;
-    }
-
-    .filter-chip.active {
-      background: linear-gradient(135deg, var(--fx-orange), var(--fx-orange-deep));
-      color: white;
-      border-color: transparent;
-      box-shadow: 0 14px 26px rgba(255,90,0,0.25);
-    }
-
-    .summary {
-      display: grid;
-      grid-template-columns: repeat(5, minmax(150px, 1fr));
-      gap: 14px;
-      position: relative;
-      z-index: 1;
-    }
-
-    .summary-card {
-      padding: 18px;
-      min-height: 112px;
-      display: grid;
-      align-content: center;
-      position: relative;
-      overflow: hidden;
-    }
-
-    .summary-card::after {
-      content: "";
-      position: absolute;
-      right: 18px;
-      top: 50%;
-      width: 48px;
-      height: 48px;
-      border-radius: 50%;
-      transform: translateY(-50%);
-      background: rgba(255,90,0,.10);
-    }
-
-    .label {
-      font-size: 11px;
-      font-weight: 900;
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-      color: #555;
-      margin-bottom: 10px;
-      position: relative;
-      z-index: 1;
-    }
-
-    .value {
-      font-size: clamp(23px, 2.6vw, 32px);
-      font-weight: 900;
-      color: var(--fx-orange);
-      letter-spacing: -0.05em;
-      word-break: break-word;
-      position: relative;
-      z-index: 1;
-    }
-
-    #paidAmount {
-      color: var(--fx-success);
-    }
-
-    .invoice-list {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 18px;
-    }
-
-    .invoice-card {
-      padding: 22px;
-      border: 1px solid rgba(217,217,217,0.92);
-      border-radius: 22px;
-      background:
-        linear-gradient(180deg, rgba(255,255,255,.98), rgba(255,255,255,.92));
-      box-shadow: var(--fx-shadow-soft);
-      min-width: 0;
-      transition: transform .16s ease, box-shadow .16s ease, border-color .16s ease;
-    }
-
-    .invoice-card:hover {
-      transform: translateY(-2px);
-      border-color: rgba(255,90,0,.26);
-      box-shadow: var(--fx-shadow);
-    }
-
-    .card-top {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      gap: 12px;
-      margin-bottom: 18px;
-      flex-wrap: wrap;
-    }
-
-    .card-title {
-      margin: 0 0 8px;
-      color: var(--fx-black);
-      font-size: 24px;
-      font-weight: 900;
-      letter-spacing: -0.04em;
-      word-break: break-word;
-    }
-
-    .card-sub {
-      color: #5f6368;
-      font-size: 14px;
-      line-height: 1.55;
-      word-break: break-word;
-    }
-
-    .badge {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      padding: 8px 12px;
-      border-radius: 10px;
-      font-size: 12px;
-      font-weight: 900;
-      text-transform: capitalize;
-      white-space: nowrap;
-      letter-spacing: 0.01em;
-    }
-
-    .status-unpaid { background: #fff1e8; color: var(--fx-orange-deep); }
-    .status-paid { background: #dcfce7; color: #087a36; }
-    .status-overdue { background: #fee2e2; color: #b91c1c; }
-    .status-draft { background: #f3f4f6; color: #4b5563; }
-    .status-cancelled { background: #fee2e2; color: #b91c1c; }
-    .status-partially_paid { background: #fff7df; color: #a65f00; }
-
-    .money-grid {
-      display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-      gap: 10px;
-      margin-bottom: 18px;
-    }
-
-    .money-box {
-      padding: 14px;
-      border-radius: 14px;
-      background: linear-gradient(180deg, #ffffff, #fafafa);
-      border: 1px solid rgba(217,217,217,.86);
-      min-width: 0;
-    }
-
-    .money-box strong {
-      display: block;
-      margin-top: 6px;
-      color: var(--fx-black);
-      font-size: 17px;
-      word-break: break-word;
-      letter-spacing: -0.03em;
-    }
-
-    .actions {
-      display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-      gap: 10px;
-      flex-wrap: wrap;
-    }
-
-    .btn {
-      border: 1px solid transparent;
-      border-radius: 12px;
-      padding: 12px 14px;
-      font-weight: 900;
-      cursor: pointer;
-      font-family: inherit;
-      transition: transform .15s ease, box-shadow .15s ease, opacity .15s ease, background .15s ease, border-color .15s ease;
-      box-shadow: none;
-      min-height: 44px;
-      white-space: nowrap;
-    }
-
-    .btn:hover:not(:disabled) {
-      transform: translateY(-1px);
-      box-shadow: 0 12px 24px rgba(17,17,17,0.10);
-    }
-
-    .btn:disabled {
-      opacity: .55;
-      cursor: not-allowed;
-      transform: none;
-      box-shadow: none;
-    }
-
-    .primary {
-      background: linear-gradient(135deg, var(--fx-orange), var(--fx-orange-deep));
-      color: white;
-    }
-
-    .gray {
-      background: white;
-      color: var(--fx-black);
-      border-color: rgba(217,217,217,.95);
-    }
-
-    .red {
-      background: #fff;
-      color: var(--fx-danger);
-      border-color: rgba(220,38,38,.24);
-    }
-
-    .red:hover:not(:disabled) {
-      background: #fff5f5;
-    }
-
-    .modal {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: rgba(17,17,17,0.62);
-      justify-content: center;
-      align-items: center;
-      z-index: 9999;
-      padding: 18px;
-      backdrop-filter: blur(10px);
-    }
-
-    .modal-box {
-      background: white;
-      width: 760px;
-      max-width: 100%;
-      max-height: 92vh;
-      overflow: auto;
-      border-radius: 24px;
-      padding: 24px;
-      box-shadow: 0 30px 90px rgba(0,0,0,0.30);
-      border: 1px solid rgba(217,217,217,.9);
-    }
-
-    .modal-box h3 {
-      margin: 0 0 18px;
-      color: var(--fx-black);
-      font-size: 26px;
-      font-weight: 900;
-      letter-spacing: -0.04em;
-    }
-
-    .modal-box h3::after {
-      content: ".";
-      color: var(--fx-orange);
-    }
-
-    .modal-box p {
-      color: #555;
-      line-height: 1.6;
-      margin: 0;
-    }
-
-    .form-grid {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 14px;
-    }
-
-    .field {
-      display: flex;
-      flex-direction: column;
-      gap: 7px;
-    }
-
-    .field.wide {
-      grid-column: 1 / -1;
-    }
-
-    .field label {
-      font-size: 12px;
-      font-weight: 900;
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-      color: #555;
-    }
-
-    input,
-    select,
-    textarea {
-      width: 100%;
-      padding: 12px 14px;
-      border-radius: 13px;
-      border: 1px solid rgba(217,217,217,.95);
-      background: white;
-      color: var(--fx-black);
-      font: inherit;
-      outline: none;
-      transition: border .15s ease, box-shadow .15s ease;
-    }
-
-    input:focus,
-    select:focus,
-    textarea:focus {
-      border-color: var(--fx-orange);
-      box-shadow: 0 0 0 4px rgba(255,90,0,0.10);
-    }
-
-    textarea {
-      resize: vertical;
-    }
-
-    .line-items-editor {
-      display: grid;
-      gap: 10px;
-    }
-
-    .line-item-row {
-      display: grid;
-      grid-template-columns: minmax(0, 2fr) 110px 130px;
-      gap: 10px;
-    }
-
-    .modal-actions {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-      margin-top: 18px;
-    }
-
-    .empty {
-      padding: 34px;
-      border: 1px dashed rgba(255,90,0,.35);
-      border-radius: 22px;
-      background:
-        radial-gradient(circle at top right, rgba(255,90,0,.10), transparent 28%),
-        #fff;
-      color: #666;
-      grid-column: 1 / -1;
-      line-height: 1.6;
-      box-shadow: var(--fx-shadow-soft);
-    }
-
-    .empty strong {
-      display: block;
-      color: var(--fx-black);
-      font-size: 22px;
-      font-weight: 900;
-      margin-bottom: 6px;
-      letter-spacing: -0.03em;
-    }
-
-    @media (max-width: 1180px) {
-      .summary {
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-      }
-
-      .actions {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-      }
-    }
-
-    @media (max-width: 900px) {
-      body {
-        padding: 14px;
-      }
-
-      .hero h1 {
-        font-size: 42px;
-      }
-
-      .summary,
-      .invoice-list,
-      .form-grid {
-        grid-template-columns: 1fr;
-      }
-
-      .money-grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-      }
-
-      .line-item-row {
-        grid-template-columns: 1fr;
-      }
-
-      .actions {
-        grid-template-columns: 1fr;
-      }
-
-      .actions .btn,
-      .modal-actions .btn {
-        flex: 1 1 150px;
-      }
-    }
-
-    @media (max-width: 560px) {
-      body {
-        padding: 10px;
-      }
-
-      .toolbar,
-      .invoice-card,
-      .modal-box {
-        border-radius: 18px;
-        padding: 16px;
-      }
-
-      .hero h1 {
-        font-size: 36px;
-      }
-
-      .filter-chip {
-        flex: 1 1 calc(50% - 10px);
-      }
-
-      .money-grid {
-        grid-template-columns: 1fr;
-      }
-
-      .value {
-        font-size: 26px;
-      }
-    }
-  </style>
   <link rel="stylesheet" href="/ui-cleanup.css">
   <script src="/js/role-guard.js"></script>
+  
 </head>
-<body class="phase2-internal">
+<body class="phase2-internal invoices-ds-page">
   <script>
 (function(){
   const token = localStorage.getItem("token");
@@ -614,32 +36,32 @@
   }
 })();
 </script>
-<div class="page">
-  <div class="hero fx-section-head">
-    <div>
-      <h1>Invoices</h1>
-      <p>Clear financial view of invoice status, net paid amounts, refunds, and remaining balances.</p>
+<div class="page fx-page fx-page--dense fx-min-w-0 invoices-page-shell">
+  <header class="hero fx-page-header invoices-page-header fx-section-head" aria-labelledby="invoicesPageTitle">
+    <div class="fx-stack fx-min-w-0">
+      <h1 id="invoicesPageTitle" class="fx-h3">Invoices</h1>
+      <p class="fx-caption">Clear financial view of invoice status, net paid amounts, refunds, and remaining balances.</p>
     </div>
-  </div>
+  </header>
 
-  <div class="panel toolbar fx-toolbar">
-    <div class="filter-row">
+  <div class="panel toolbar fx-toolbar invoices-toolbar fx-card">
+    <div class="filter-row invoices-filter-row fx-cluster">
       <button type="button" class="filter-chip active fx-badge fx-badge--info" id="filter-all">All</button>
       <button type="button" class="filter-chip fx-badge fx-badge--neutral" id="filter-unpaid">Unpaid</button>
       <button type="button" class="filter-chip fx-badge fx-badge--neutral" id="filter-paid">Paid</button>
       <button type="button" class="filter-chip fx-badge fx-badge--neutral" id="filter-overdue">Overdue</button>
     </div>
-
-    <div class="summary">
-      <div class="panel summary-card fx-stat"><div class="label fx-stat__label">Invoices</div><div class="value fx-stat__value" id="invoiceCount">0</div></div>
-      <div class="panel summary-card fx-stat"><div class="label fx-stat__label">Total</div><div class="value fx-stat__value" id="totalAmount">$0</div></div>
-      <div class="panel summary-card fx-stat"><div class="label fx-stat__label">Net paid</div><div class="value fx-stat__value" id="paidAmount">$0</div></div>
-      <div class="panel summary-card fx-stat"><div class="label fx-stat__label">Refunded</div><div class="value fx-stat__value" id="refundedAmount">$0</div></div>
-      <div class="panel summary-card fx-stat"><div class="label fx-stat__label">Remaining</div><div class="value fx-stat__value" id="remainingAmount">$0</div></div>
-    </div>
   </div>
 
-  <div id="list" class="invoice-list"></div>
+  <div class="summary invoices-summary fx-min-w-0">
+    <div class="panel summary-card fx-card fx-stat"><div class="label fx-stat__label">Invoices</div><div class="value fx-stat__value" id="invoiceCount">0</div></div>
+    <div class="panel summary-card fx-card fx-stat"><div class="label fx-stat__label">Total</div><div class="value fx-stat__value" id="totalAmount">$0</div></div>
+    <div class="panel summary-card fx-card fx-stat"><div class="label fx-stat__label">Net paid</div><div class="value fx-stat__value" id="paidAmount">$0</div></div>
+    <div class="panel summary-card fx-card fx-stat"><div class="label fx-stat__label">Refunded</div><div class="value fx-stat__value" id="refundedAmount">$0</div></div>
+    <div class="panel summary-card fx-card fx-stat"><div class="label fx-stat__label">Remaining</div><div class="value fx-stat__value" id="remainingAmount">$0</div></div>
+  </div>
+
+  <div id="list" class="invoice-list invoices-list fx-min-w-0"></div>
 </div>
 
 <script src="/js/ui.js"></script>
@@ -820,7 +242,7 @@ function render(){
   const wrap = document.getElementById("list");
 
   if(!list.length){
-    wrap.innerHTML = `<div class="empty fx-empty"><strong class="fx-empty__title">No invoices yet</strong><span class="fx-empty__text">Create an invoice from a client profile.</span></div>`;
+    wrap.innerHTML = `<div class="panel fx-card empty fx-empty invoices-empty"><strong class="fx-empty__title">No invoices yet</strong><span class="fx-empty__text">Create an invoice from a client profile.</span></div>`;
     return;
   }
 
@@ -1074,7 +496,7 @@ async function load(){
   } catch(err){
     AppUI.showToast("Unable to load invoices.", "error");
     document.getElementById("list").innerHTML =
-      `<div class="empty fx-empty"><strong class="fx-empty__title">Unable to load invoices</strong><span class="fx-empty__text">${escapeHtml(err && err.message ? err.message : "Please refresh and try again.")}</span></div>`;
+      `<div class="panel fx-card empty fx-empty invoices-empty"><strong class="fx-empty__title">Unable to load invoices</strong><span class="fx-empty__text">${escapeHtml(err && err.message ? err.message : "Please refresh and try again.")}</span></div>`;
   } finally {
     AppUI.setLoading(false);
   }
@@ -1127,9 +549,9 @@ document.addEventListener("DOMContentLoaded", function(){
 
 <div id="invoiceEditModal" class="modal">
   <div class="modal-box fx-card">
-    <h3 id="invoiceEditTitle">Edit Invoice</h3>
+    <h3 id="invoiceEditTitle" class="fx-h3">Edit Invoice</h3>
 
-    <div class="form-grid">
+    <div class="form-grid fx-form-grid">
       <div class="field fx-field">
         <label for="edit_invoice_status">Status</label>
         <select id="edit_invoice_status" class="fx-select">
@@ -1148,16 +570,18 @@ document.addEventListener("DOMContentLoaded", function(){
 
       <div class="field wide fx-field">
         <label>Line Items</label>
-        <div id="invoiceLineItems" class="line-items-editor"></div>
+        <div class="fx-scroll-region invoices-line-items-scroll" role="region" aria-label="Invoice line items">
+          <div id="invoiceLineItems" class="line-items-editor"></div>
+        </div>
       </div>
 
       <div class="field wide fx-field">
         <label for="edit_invoice_notes">Notes</label>
-        <textarea id="edit_invoice_notes" class="fx-textarea" rows="4" placeholder="Invoice notes"></textarea>
+        <textarea id="edit_invoice_notes" class="fx-input fx-textarea" rows="4" placeholder="Invoice notes"></textarea>
       </div>
     </div>
 
-    <div class="modal-actions">
+    <div class="modal-actions fx-cluster">
       <button type="button" class="btn primary fx-btn fx-btn--primary" id="saveInvoiceEditBtn">Save</button>
       <button type="button" class="btn gray fx-btn fx-btn--secondary" id="cancelInvoiceEditBtn">Cancel</button>
     </div>
@@ -1166,9 +590,9 @@ document.addEventListener("DOMContentLoaded", function(){
 
 <div id="deleteInvoiceModal" class="modal">
   <div class="modal-box fx-card">
-    <h3>Delete Invoice</h3>
-    <p>This will safely archive, cancel, deactivate, or delete only when safe.</p>
-    <div class="modal-actions">
+    <h3 class="fx-h3">Delete Invoice</h3>
+    <p class="fx-caption">This will safely archive, cancel, deactivate, or delete only when safe.</p>
+    <div class="modal-actions fx-cluster">
       <button type="button" class="btn gray fx-btn fx-btn--secondary" id="cancelDeleteInvoiceBtn">Cancel</button>
       <button type="button" class="btn red fx-btn fx-btn--danger" id="confirmDeleteInvoiceBtn">Delete</button>
     </div>
