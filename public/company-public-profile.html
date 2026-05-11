@@ -2,590 +2,16 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>Company Public Profile Settings | FairLinx</title>
 
   <link rel="stylesheet" href="/css/brand.css" />
   <link rel="stylesheet" href="/app-shell.css" />
-
-  <style>
-    :root {
-      --fl-orange: #FF5A00;
-      --fl-orange-dark: #E64A00;
-      --fl-orange-soft: #FF8A33;
-      --fl-black: #111111;
-      --fl-gray: #2B2B2B;
-      --fl-border: #D9D9D9;
-      --fl-bg: #F5F5F5;
-      --fl-white: #FFFFFF;
-      --fl-success: #16A34A;
-      --fl-warning: #F59E0B;
-      --fl-error: #DC2626;
-      --shadow-sm: 0 8px 22px rgba(17, 17, 17, 0.06);
-      --shadow-md: 0 18px 45px rgba(17, 17, 17, 0.10);
-      --radius-lg: 22px;
-      --radius-md: 16px;
-      --radius-sm: 12px;
-    }
-
-    * {
-      box-sizing: border-box;
-      font-family: Inter, Arial, sans-serif;
-    }
-
-    body {
-      margin: 0;
-      min-height: 100vh;
-      color: var(--fl-black);
-      background:
-        radial-gradient(circle at top left, rgba(255, 90, 0, 0.13), transparent 340px),
-        linear-gradient(180deg, #ffffff 0%, var(--fl-bg) 100%);
-      padding: 24px;
-    }
-
-    .page {
-      width: min(1180px, 100%);
-      margin: 0 auto;
-      display: grid;
-      gap: 18px;
-    }
-
-    .hero {
-      background:
-        linear-gradient(135deg, rgba(17, 17, 17, 0.96), rgba(43, 43, 43, 0.94)),
-        radial-gradient(circle at top right, rgba(255, 90, 0, 0.35), transparent 360px);
-      color: #fff;
-      border-radius: 28px;
-      padding: 28px;
-      box-shadow: var(--shadow-md);
-      display: grid;
-      grid-template-columns: 1fr auto;
-      gap: 22px;
-      align-items: end;
-      position: relative;
-      overflow: hidden;
-    }
-
-    .hero::after {
-      content: "";
-      position: absolute;
-      right: -80px;
-      top: -80px;
-      width: 220px;
-      height: 220px;
-      border-radius: 999px;
-      background: linear-gradient(135deg, var(--fl-orange), var(--fl-orange-soft));
-      opacity: 0.22;
-    }
-
-    .eyebrow {
-      display: inline-flex;
-      width: fit-content;
-      align-items: center;
-      gap: 8px;
-      border: 1px solid rgba(255,255,255,0.16);
-      background: rgba(255,255,255,0.08);
-      color: #fff;
-      border-radius: 999px;
-      padding: 7px 11px;
-      font-size: 12px;
-      font-weight: 800;
-      margin-bottom: 12px;
-    }
-
-    .dot {
-      width: 8px;
-      height: 8px;
-      background: var(--fl-orange);
-      border-radius: 999px;
-      box-shadow: 0 0 0 5px rgba(255, 90, 0, 0.18);
-    }
-
-    h1 {
-      margin: 0 0 8px;
-      font-size: clamp(30px, 4vw, 46px);
-      line-height: 1.02;
-      letter-spacing: -0.04em;
-    }
-
-    .muted {
-      margin: 0;
-      color: rgba(255,255,255,0.74);
-      line-height: 1.55;
-      max-width: 680px;
-      font-size: 15px;
-    }
-
-    .actions,
-    .inline-actions {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-    }
-
-    .btn {
-      border: 0;
-      border-radius: 14px;
-      padding: 12px 16px;
-      font-size: 14px;
-      font-weight: 900;
-      cursor: pointer;
-      transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
-      text-decoration: none;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      min-height: 46px;
-      white-space: nowrap;
-    }
-
-    .btn.primary {
-      background: linear-gradient(135deg, var(--fl-orange), var(--fl-orange-soft));
-      color: #fff;
-      box-shadow: 0 16px 32px rgba(255, 90, 0, 0.28);
-    }
-
-    .btn.secondary {
-      background: #fff;
-      color: var(--fl-black);
-      border: 1px solid rgba(217,217,217,0.95);
-      box-shadow: 0 8px 18px rgba(17,17,17,0.05);
-    }
-
-    .btn.dark-secondary {
-      background: rgba(255,255,255,0.08);
-      color: #fff;
-      border: 1px solid rgba(255,255,255,0.18);
-    }
-
-    .btn.small {
-      min-height: 38px;
-      padding: 9px 12px;
-      font-size: 12px;
-      border-radius: 12px;
-    }
-
-    .btn:hover:not(:disabled) {
-      transform: translateY(-1px);
-    }
-
-    .btn:disabled {
-      opacity: 0.62;
-      cursor: not-allowed;
-      transform: none;
-    }
-
-    .status {
-      display: none;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      border-radius: 16px;
-      border: 1px solid var(--fl-border);
-      background: #fff;
-      color: var(--fl-gray);
-      padding: 13px 15px;
-      box-shadow: var(--shadow-sm);
-      font-size: 14px;
-      font-weight: 700;
-    }
-
-    .status.show {
-      display: flex;
-    }
-
-    .status.success {
-      border-color: rgba(22, 163, 74, 0.25);
-      background: rgba(22, 163, 74, 0.07);
-      color: #117a38;
-    }
-
-    .status.error {
-      border-color: rgba(220, 38, 38, 0.25);
-      background: rgba(220, 38, 38, 0.07);
-      color: var(--fl-error);
-    }
-
-    .content-grid {
-      display: grid;
-      grid-template-columns: minmax(0, 1.45fr) minmax(320px, 0.75fr);
-      gap: 18px;
-      align-items: start;
-    }
-
-    .stack {
-      display: grid;
-      gap: 14px;
-    }
-
-    .panel {
-      background: rgba(255,255,255,0.94);
-      border: 1px solid var(--fl-border);
-      border-radius: var(--radius-lg);
-      box-shadow: var(--shadow-sm);
-      padding: 20px;
-      display: grid;
-      gap: 16px;
-      backdrop-filter: blur(10px);
-    }
-
-    .panel-header {
-      display: flex;
-      align-items: flex-start;
-      justify-content: space-between;
-      gap: 14px;
-    }
-
-    .panel h2 {
-      margin: 0;
-      color: var(--fl-black);
-      font-size: 19px;
-      letter-spacing: -0.02em;
-    }
-
-    .panel-subtitle {
-      margin: 5px 0 0;
-      color: #667085;
-      font-size: 13px;
-      line-height: 1.45;
-    }
-
-    .badge {
-      display: inline-flex;
-      align-items: center;
-      border-radius: 999px;
-      padding: 6px 10px;
-      font-size: 12px;
-      font-weight: 900;
-      color: var(--fl-orange-dark);
-      background: rgba(255, 90, 0, 0.10);
-      border: 1px solid rgba(255, 90, 0, 0.22);
-      white-space: nowrap;
-    }
-
-    .grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 14px;
-    }
-
-    .field {
-      display: grid;
-      gap: 8px;
-    }
-
-    .field.full {
-      grid-column: 1 / -1;
-    }
-
-    label,
-    .field-title {
-      font-size: 13px;
-      font-weight: 900;
-      color: var(--fl-black);
-    }
-
-    input,
-    textarea,
-    select {
-      width: 100%;
-      border-radius: 14px;
-      border: 1px solid var(--fl-border);
-      background: #fff;
-      padding: 12px 13px;
-      font-size: 14px;
-      color: var(--fl-black);
-      outline: none;
-      transition: border-color 0.18s ease, box-shadow 0.18s ease;
-    }
-
-    textarea {
-      min-height: 104px;
-      resize: vertical;
-      line-height: 1.45;
-    }
-
-    input:focus,
-    textarea:focus,
-    select:focus {
-      border-color: var(--fl-orange);
-      box-shadow: 0 0 0 4px rgba(255, 90, 0, 0.13);
-    }
-
-    .hint {
-      color: #667085;
-      font-size: 12px;
-      line-height: 1.4;
-      margin: 0;
-    }
-
-    .url-actions {
-      display: flex;
-      gap: 8px;
-      align-items: center;
-      flex-wrap: wrap;
-      margin-top: 2px;
-    }
-
-    .preview-card {
-      position: sticky;
-      top: 18px;
-      overflow: hidden;
-      padding: 0;
-    }
-
-    .cover-preview {
-      min-height: 150px;
-      background:
-        linear-gradient(135deg, rgba(17,17,17,0.75), rgba(255,90,0,0.58)),
-        url("https://images.unsplash.com/photo-1558904541-efa843a96f01?auto=format&fit=crop&w=1200&q=80");
-      background-size: cover;
-      background-position: center;
-      position: relative;
-    }
-
-    .profile-body {
-      padding: 0 20px 20px;
-      display: grid;
-      gap: 14px;
-    }
-
-    .avatar {
-      width: 76px;
-      height: 76px;
-      border-radius: 20px;
-      border: 5px solid #fff;
-      background: linear-gradient(135deg, var(--fl-orange), var(--fl-orange-soft));
-      color: #fff;
-      display: grid;
-      place-items: center;
-      font-size: 24px;
-      font-weight: 950;
-      margin-top: -38px;
-      box-shadow: 0 14px 28px rgba(17,17,17,0.15);
-      overflow: hidden;
-    }
-
-    .avatar img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-
-    .preview-title {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      gap: 12px;
-    }
-
-    .preview-title h3 {
-      margin: 0;
-      font-size: 20px;
-      letter-spacing: -0.03em;
-    }
-
-    .preview-slug {
-      margin: 4px 0 0;
-      color: #667085;
-      font-size: 12px;
-      word-break: break-word;
-    }
-
-    .public-pill {
-      border-radius: 999px;
-      background: rgba(22, 163, 74, 0.10);
-      color: #117a38;
-      border: 1px solid rgba(22, 163, 74, 0.22);
-      padding: 6px 9px;
-      font-size: 11px;
-      font-weight: 900;
-      white-space: nowrap;
-    }
-
-    .public-pill.off {
-      background: rgba(245, 158, 11, 0.10);
-      color: #92400e;
-      border-color: rgba(245, 158, 11, 0.25);
-    }
-
-    .preview-description {
-      margin: 0;
-      color: var(--fl-gray);
-      line-height: 1.55;
-      font-size: 13px;
-    }
-
-    .mini-gallery {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 8px;
-    }
-
-    .mini-shot {
-      border-radius: 13px;
-      min-height: 72px;
-      background: linear-gradient(135deg, #f3f4f6, #e5e7eb);
-      border: 1px solid var(--fl-border);
-      overflow: hidden;
-    }
-
-    .mini-shot img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      display: block;
-    }
-
-    .quick-stats {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 8px;
-    }
-
-    .stat {
-      background: var(--fl-bg);
-      border: 1px solid var(--fl-border);
-      border-radius: 14px;
-      padding: 10px;
-    }
-
-    .stat strong {
-      display: block;
-      font-size: 15px;
-      color: var(--fl-black);
-    }
-
-    .stat span {
-      color: #667085;
-      font-size: 11px;
-      font-weight: 800;
-    }
-
-    .toggle-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 14px;
-      padding: 14px;
-      border-radius: 18px;
-      border: 1px solid var(--fl-border);
-      background: var(--fl-bg);
-    }
-
-    .toggle-copy strong {
-      display: block;
-      font-size: 14px;
-      margin-bottom: 3px;
-    }
-
-    .toggle-copy span {
-      display: block;
-      color: #667085;
-      font-size: 12px;
-      line-height: 1.4;
-    }
-
-    .switch {
-      position: relative;
-      width: 52px;
-      height: 30px;
-      flex: 0 0 auto;
-    }
-
-    .switch input {
-      opacity: 0;
-      width: 0;
-      height: 0;
-    }
-
-    .slider {
-      position: absolute;
-      inset: 0;
-      cursor: pointer;
-      background: #d0d5dd;
-      border-radius: 999px;
-      transition: 0.2s ease;
-    }
-
-    .slider::before {
-      content: "";
-      position: absolute;
-      width: 24px;
-      height: 24px;
-      left: 3px;
-      top: 3px;
-      background: #fff;
-      border-radius: 999px;
-      transition: 0.2s ease;
-      box-shadow: 0 3px 8px rgba(17,17,17,0.22);
-    }
-
-    .switch input:checked + .slider {
-      background: linear-gradient(135deg, var(--fl-orange), var(--fl-orange-soft));
-    }
-
-    .switch input:checked + .slider::before {
-      transform: translateX(22px);
-    }
-
-    .footer-note {
-      color: #667085;
-      font-size: 12px;
-      padding: 0 4px 16px;
-    }
-
-    @media (max-width: 980px) {
-      .hero,
-      .content-grid {
-        grid-template-columns: 1fr;
-      }
-
-      .preview-card {
-        position: static;
-      }
-
-      .actions {
-        width: 100%;
-      }
-
-      .actions .btn {
-        flex: 1;
-      }
-    }
-
-    @media (max-width: 720px) {
-      body {
-        padding: 14px;
-      }
-
-      .hero {
-        padding: 22px;
-        border-radius: 22px;
-      }
-
-      .grid {
-        grid-template-columns: 1fr;
-      }
-
-      .field.full {
-        grid-column: auto;
-      }
-
-      .btn {
-        width: 100%;
-      }
-
-      .quick-stats {
-        grid-template-columns: 1fr;
-      }
-    }
-  </style>
+  
 </head>
 
-<body>
-  <main class="page">
+<body class="phase2-internal fx-layout-public">
+  <main class="page fx-min-w-0">
     <section class="hero">
       <div>
         <div class="eyebrow"><span class="dot"></span> FairLinx Company Profile</div>
@@ -596,8 +22,8 @@
       </div>
 
       <div class="actions">
-        <button id="previewBtn" type="button" class="btn dark-secondary">Preview Public Profile</button>
-        <button id="saveBtn" type="button" class="btn primary">Save Profile</button>
+        <button id="previewBtn" type="button" class="btn dark-secondary fx-btn">Preview Public Profile</button>
+        <button id="saveBtn" type="button" class="btn primary fx-btn">Save Profile</button>
       </div>
     </section>
 
@@ -605,23 +31,23 @@
 
     <section class="content-grid">
       <div class="stack">
-        <section class="panel">
+        <section class="panel fx-card">
           <div class="panel-header">
             <div>
               <h2>Basic Info</h2>
               <p class="panel-subtitle">Set the public URL and customer-facing company description.</p>
             </div>
-            <span class="badge">Required</span>
+            <span class="badge fx-badge">Required</span>
           </div>
 
           <div class="grid">
-            <label class="field">
+            <label class="field fx-field">
               Public Slug
               <input id="publicSlug" type="text" placeholder="your-company-name" autocomplete="off" required />
               <p class="hint">Used in your public profile URL and preview.</p>
             </label>
 
-            <label class="field full">
+            <label class="field full fx-field">
               Public Description
               <textarea id="publicDescription" placeholder="Describe your company, services, service quality, and why customers should choose you."></textarea>
               <p class="hint">Recommended: 2–4 short sentences with your service area and specialties.</p>
@@ -629,84 +55,84 @@
           </div>
         </section>
 
-        <section class="panel">
+        <section class="panel fx-card">
           <div class="panel-header">
             <div>
               <h2>Branding</h2>
               <p class="panel-subtitle">Add a logo and cover image to make the profile feel professional.</p>
             </div>
-            <span class="badge">Visuals</span>
+            <span class="badge fx-badge">Visuals</span>
           </div>
 
           <div class="grid">
-            <label class="field">
+            <label class="field fx-field">
               Logo URL
               <input id="logoUrl" type="url" placeholder="https://example.com/logo.png" />
               <span class="url-actions">
-                <button id="uploadLogoBtn" type="button" class="btn secondary small">Upload Logo</button>
-                <button id="viewLogoBtn" type="button" class="btn secondary small">View Logo</button>
+                <button id="uploadLogoBtn" type="button" class="btn secondary small fx-btn">Upload Logo</button>
+                <button id="viewLogoBtn" type="button" class="btn secondary small fx-btn">View Logo</button>
               </span>
             </label>
 
-            <label class="field">
+            <label class="field fx-field">
               Cover Image URL
               <input id="coverImageUrl" type="url" placeholder="https://example.com/cover.jpg" />
               <span class="url-actions">
-                <button id="uploadCoverBtn" type="button" class="btn secondary small">Upload Cover Image</button>
-                <button id="viewCoverBtn" type="button" class="btn secondary small">View Cover</button>
+                <button id="uploadCoverBtn" type="button" class="btn secondary small fx-btn">Upload Cover Image</button>
+                <button id="viewCoverBtn" type="button" class="btn secondary small fx-btn">View Cover</button>
               </span>
             </label>
           </div>
         </section>
 
-        <section class="panel">
+        <section class="panel fx-card">
           <div class="panel-header">
             <div>
               <h2>Gallery</h2>
               <p class="panel-subtitle">Show examples of real work, crews, equipment, or completed jobs.</p>
             </div>
-            <span id="galleryCount" class="badge">0 / 20</span>
+            <span id="galleryCount" class="badge fx-badge">0 / 20</span>
           </div>
 
           <div class="inline-actions">
-            <button id="uploadGalleryBtn" type="button" class="btn secondary small">Upload Gallery Images</button>
+            <button id="uploadGalleryBtn" type="button" class="btn secondary small fx-btn">Upload Gallery Images</button>
           </div>
 
-          <label class="field">
+          <label class="field fx-field">
             Gallery Image URLs
             <textarea id="galleryUrls" placeholder="https://example.com/image1.jpg&#10;https://example.com/image2.jpg"></textarea>
             <p class="hint">One URL per line. Maximum 20 image URLs.</p>
           </label>
         </section>
 
-        <section class="panel">
+        <section class="panel fx-card">
           <div class="panel-header">
             <div>
               <h2>Links</h2>
               <p class="panel-subtitle">Connect customers to your website and social channels.</p>
             </div>
-            <span class="badge">Optional</span>
+            <span class="badge fx-badge">Optional</span>
           </div>
 
           <div class="grid">
-            <label class="field">
+            <label class="field fx-field">
               Website URL
               <input id="websiteUrl" type="url" placeholder="https://yourcompany.com" />
             </label>
 
-            <label class="field">
+            <label class="field fx-field">
               Facebook URL
               <input id="facebookUrl" type="url" placeholder="https://facebook.com/yourcompany" />
             </label>
 
-            <label class="field">
+            <label class="field fx-field">
               Instagram URL
               <input id="instagramUrl" type="url" placeholder="https://instagram.com/yourcompany" />
             </label>
           </div>
         </section>
 
-        <section class="panel">
+        <section class="panel fx-card">
           <div class="panel-header">
             <div>
               <h2>Publish Settings</h2>
@@ -728,7 +154,7 @@
         </section>
       </div>
 
-      <aside class="panel preview-card">
+      <aside class="panel preview-card fx-card">
         <div id="coverPreview" class="cover-preview"></div>
 
         <div class="profile-body">
@@ -767,7 +193,7 @@
             <div class="mini-shot"></div>
           </div>
 
-          <button id="previewBtnSide" type="button" class="btn primary">Open Public Preview</button>
+          <button id="previewBtnSide" type="button" class="btn primary fx-btn">Open Public Preview</button>
         </div>
       </aside>
     </section>
@@ -974,7 +400,7 @@
 
       if (payload.cover_image_url && isValidUrl(payload.cover_image_url)) {
         elements.coverPreview.style.backgroundImage =
-          "linear-gradient(135deg, rgba(17,17,17,0.45), rgba(255,90,0,0.35)), url('" + payload.cover_image_url.replace(/'/g, "%27") + "')";
+          "linear-gradient(135deg, rgba(17,17,17,0.45), rgba(17, 17, 17,0.35)), url('" + payload.cover_image_url.replace(/'/g, "%27") + "')";
       }
 
       if (payload.logo_url && isValidUrl(payload.logo_url)) {

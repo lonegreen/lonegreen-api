@@ -6,353 +6,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="/css/brand.css">
   <link rel="stylesheet" href="/app-shell.css">
-
-  <style>
-    * { box-sizing: border-box; }
-
-    :root {
-      --bg: #f5f8f6;
-      --panel: #ffffff;
-      --text: var(--brand-black);
-      --muted: #648076;
-      --border: var(--brand-border);
-      --green: var(--brand-primary);
-      --green-dark: #17462c;
-      --green-soft: #eaf5ee;
-      --blue: var(--brand-primary);
-      --blue-soft: #ebf3ff;
-      --red: #dc2626;
-      --red-soft: #fff1f1;
-      --shadow: 0 18px 42px rgba(16, 24, 40, 0.07);
-      --radius: 18px;
-    }
-
-    body {
-      font-family: Arial, sans-serif;
-      padding: 20px;
-      margin: 0;
-      background:
-        radial-gradient(circle at top left, rgba(31, 92, 58, 0.10), transparent 340px),
-        linear-gradient(180deg, #edf5f0 0%, #f7f9f8 190px, #f4f6f8 100%);
-      color: var(--text);
-    }
-
-    .page {
-      max-width: 1180px;
-      margin: 0 auto;
-    }
-
-    .hero {
-      display: flex;
-      justify-content: space-between;
-      gap: 14px;
-      align-items: flex-end;
-      flex-wrap: wrap;
-      margin-bottom: 20px;
-    }
-
-    .hero h1 {
-      margin: 0 0 6px;
-      color: var(--green);
-      font-size: 34px;
-      letter-spacing: -0.04em;
-    }
-
-    .hero p {
-      margin: 0;
-      color: var(--muted);
-      line-height: 1.5;
-    }
-
-    .hero-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 9px 12px;
-      border-radius: 999px;
-      background: rgba(255,255,255,0.78);
-      border: 1px solid var(--border);
-      box-shadow: 0 10px 24px rgba(16, 24, 40, 0.05);
-      color: var(--green);
-      font-weight: 800;
-      font-size: 13px;
-    }
-
-    .top {
-      display: grid;
-      grid-template-columns: 1fr 180px auto;
-      gap: 10px;
-      margin-bottom: 20px;
-      background: rgba(255,255,255,0.82);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 14px;
-      box-shadow: var(--shadow);
-      backdrop-filter: blur(10px);
-    }
-
-    input,
-    select {
-      width: 100%;
-      padding: 11px 12px;
-      border-radius: 12px;
-      border: 1px solid var(--brand-border);
-      font: inherit;
-      color: var(--text);
-      background: white;
-      outline: none;
-    }
-
-    input:focus,
-    select:focus {
-      border-color: var(--green);
-      box-shadow: 0 0 0 3px rgba(31, 92, 58, 0.12);
-    }
-
-    button {
-      padding: 10px 14px;
-      border: none;
-      border-radius: 12px;
-      cursor: pointer;
-      font-weight: 800;
-      transition: transform 0.16s ease, box-shadow 0.16s ease, background 0.16s ease;
-      white-space: nowrap;
-    }
-
-    button:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 10px 22px rgba(16, 24, 40, 0.10);
-    }
-
-    button:disabled {
-      opacity: 0.65;
-      cursor: not-allowed;
-      transform: none;
-      box-shadow: none;
-    }
-
-    .add {
-      background: var(--green);
-      color: white;
-    }
-
-    .add:hover {
-      background: var(--green-dark);
-    }
-
-    .edit {
-      background: var(--blue);
-      color: white;
-    }
-
-    .delete {
-      background: var(--red);
-      color: white;
-    }
-
-    .panel {
-      background: rgba(255,255,255,0.96);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      padding: 18px;
-      margin-bottom: 16px;
-    }
-
-    .panel-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      gap: 12px;
-      flex-wrap: wrap;
-      margin-bottom: 14px;
-    }
-
-    .day {
-      font-weight: 900;
-      color: var(--green);
-      font-size: 18px;
-      letter-spacing: -0.02em;
-      margin-bottom: 4px;
-    }
-
-    .muted {
-      color: var(--muted);
-      font-size: 13px;
-      line-height: 1.45;
-    }
-
-    .row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      margin-bottom: 12px;
-      align-items: center;
-    }
-
-    .zip {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      background: var(--brand-bg);
-      border: 1px solid #dce9e1;
-      padding: 7px 10px;
-      border-radius: 999px;
-      font-weight: 800;
-      color: #244637;
-      font-size: 13px;
-    }
-
-    .zip .delete {
-      padding: 4px 8px;
-      border-radius: 999px;
-      line-height: 1;
-      font-size: 12px;
-    }
-
-    .worker-pill {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      background: var(--blue-soft);
-      border: 1px solid #d8e7ff;
-      color: var(--brand-primary-hover);
-      padding: 7px 10px;
-      border-radius: 999px;
-      font-size: 13px;
-      font-weight: 800;
-    }
-
-    .worker-pill.inactive {
-      background: #f3f4f6;
-      border-color: #e5e7eb;
-      color: #6b7280;
-    }
-
-    .zip-form {
-      display: grid;
-      grid-template-columns: minmax(160px, 260px) auto;
-      gap: 8px;
-      align-items: center;
-      margin: 8px 0 14px;
-    }
-
-    details {
-      border: 1px solid #e0eae4;
-      border-radius: 14px;
-      background: #fbfdfc;
-      padding: 12px;
-      margin-top: 10px;
-    }
-
-    summary {
-      cursor: pointer;
-      font-weight: 900;
-      color: var(--green);
-      user-select: none;
-    }
-
-    .worker-list {
-      margin-top: 12px;
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
-      gap: 8px;
-    }
-
-    .worker-option {
-      display: flex;
-      align-items: center;
-      gap: 9px;
-      background: white;
-      border: 1px solid #e0eae4;
-      border-radius: 12px;
-      padding: 9px 10px;
-      font-weight: 700;
-      color: var(--text);
-    }
-
-    .worker-option input {
-      width: auto;
-      padding: 0;
-      box-shadow: none;
-    }
-
-    .details-actions {
-      margin-top: 12px;
-    }
-
-    .danger-row {
-      display: flex;
-      justify-content: flex-end;
-      margin-top: 12px;
-      padding-top: 12px;
-      border-top: 1px solid #edf2ef;
-    }
-
-    .state {
-      text-align: center;
-      padding: 28px 18px;
-    }
-
-    .state strong {
-      display: block;
-      color: var(--text);
-      font-size: 16px;
-      margin-bottom: 5px;
-    }
-
-    .spinner {
-      width: 18px;
-      height: 18px;
-      border: 2px solid #d8e6de;
-      border-top-color: var(--green);
-      border-radius: 999px;
-      animation: spin 0.8s linear infinite;
-      display: inline-block;
-      margin-right: 8px;
-      vertical-align: middle;
-    }
-
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
-
-    @media (max-width: 760px) {
-      body {
-        padding: 12px;
-      }
-
-      .hero {
-        align-items: flex-start;
-      }
-
-      .hero h1 {
-        font-size: 28px;
-      }
-
-      .top {
-        grid-template-columns: 1fr;
-      }
-
-      .zip-form {
-        grid-template-columns: 1fr;
-      }
-
-      .danger-row {
-        justify-content: stretch;
-      }
-
-      .danger-row button,
-      .top button,
-      .zip-form button {
-        width: 100%;
-      }
-    }
-  </style>
   <script src="/js/role-guard.js"></script>
+  
 </head>
 
-<body>
+<body class="fx-layout-public">
   <script>
 (function(){
   const token = localStorage.getItem("token");
@@ -378,7 +36,7 @@
 })();
 </script>
   
-<div class="page">
+<div class="page fx-min-w-0">
   <div class="hero">
     <div>
       <h1>ZIP Groups</h1>
@@ -511,7 +169,7 @@ function renderGroup(group){
   const groupWorkers = Array.isArray(group.workers) ? group.workers : [];
 
   return `
-    <div class="panel">
+    <div class="panel fx-card">
       <div class="panel-header">
         <div>
           <div class="day">${escapeHtml(group.name || "Unnamed Group")} - ${escapeHtml(days[groupDay] || "Unknown Day")}</div>
@@ -569,7 +227,7 @@ function renderGroup(group){
 
 function renderState(title, message, loading){
   document.getElementById("list").innerHTML = `
-    <div class="panel state">
+    <div class="panel state fx-card">
       <strong>${loading ? '<span class="spinner"></span>' : ''}${escapeHtml(title)}</strong>
       <div class="muted">${escapeHtml(message || "")}</div>
     </div>
@@ -595,7 +253,7 @@ async function load(){
     document.getElementById("list").innerHTML = groups.length
       ? groups.map(renderGroup).join("")
       : `
-        <div class="panel state">
+        <div class="panel state fx-card">
           <strong>No groups yet.</strong>
           <div class="muted">Create your first ZIP group to start routing jobs by territory.</div>
         </div>
@@ -603,7 +261,7 @@ async function load(){
   } catch(err){
     console.log("ZIP GROUP LOAD ERROR:", err);
     document.getElementById("list").innerHTML = `
-      <div class="panel state">
+      <div class="panel state fx-card">
         <strong>Unable to load ZIP groups right now.</strong>
         <div class="muted">Check the server connection, then refresh this page.</div>
       </div>

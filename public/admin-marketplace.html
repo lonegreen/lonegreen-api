@@ -8,405 +8,9 @@
 
   <link rel="stylesheet" href="/app-shell.css">
   <link rel="stylesheet" href="/ui-cleanup.css">
-  <style>
-    :root {
-      --fl-orange: #ff5a00;
-      --fl-orange-dark: #e64a00;
-      --fl-orange-soft: #fff1e8;
-      --fl-black: #050505;
-      --fl-ink: #111111;
-      --fl-gray: #667085;
-      --fl-line: #d9d9d9;
-      --fl-bg: #f5f5f5;
-      --fl-white: #ffffff;
-      --fl-red: #dc2626;
-      --fl-green: #16a34a;
-      --fl-amber: #f59e0b;
-      --fl-shadow: 0 18px 50px rgba(17, 17, 17, 0.10);
-      --fl-shadow-soft: 0 10px 28px rgba(17, 17, 17, 0.07);
-    }
   
-    * {
-      box-sizing: border-box;
-    }
-  
-    body {
-      margin: 0;
-      font-family: Inter, Arial, sans-serif;
-      color: var(--fl-ink);
-      background:
-        radial-gradient(circle at top left, rgba(255, 90, 0, 0.10), transparent 30%),
-        linear-gradient(180deg, #ffffff 0%, var(--fl-bg) 260px, #f4f4f4 100%);
-      padding: 24px;
-    }
-  
-    .page {
-      width: min(1280px, 100%);
-      margin: 0 auto;
-      display: grid;
-      gap: 18px;
-    }
-  
-    .hero {
-      background:
-        radial-gradient(circle at 95% 20%, rgba(255, 90, 0, 0.16), transparent 28%),
-        linear-gradient(135deg, var(--fl-black), #151515);
-      border: 1px solid rgba(255, 255, 255, 0.10);
-      border-radius: 24px;
-      box-shadow: var(--fl-shadow);
-      padding: 28px;
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-end;
-      gap: 18px;
-      flex-wrap: wrap;
-      color: var(--fl-white);
-    }
-  
-    .hero h1 {
-      margin: 0 0 8px;
-      color: var(--fl-white);
-      font-size: clamp(28px, 3vw, 40px);
-      line-height: 1.05;
-      letter-spacing: -0.04em;
-    }
-  
-    .hero p {
-      margin: 0;
-      color: rgba(255, 255, 255, 0.72);
-      line-height: 1.55;
-      max-width: 720px;
-    }
-  
-    .hero-actions {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-    }
-  
-    .btn {
-      border: 1px solid transparent;
-      border-radius: 12px;
-      padding: 10px 14px;
-      font: inherit;
-      font-weight: 850;
-      cursor: pointer;
-      transition: transform .16s ease, box-shadow .16s ease, opacity .16s ease, border-color .16s ease, background .16s ease;
-    }
-  
-    .btn:hover:not(:disabled) {
-      transform: translateY(-1px);
-    }
-  
-    .btn.primary {
-      background: linear-gradient(135deg, var(--fl-orange), var(--fl-orange-dark));
-      color: #fff;
-      box-shadow: 0 14px 28px rgba(255, 90, 0, 0.26);
-    }
-  
-    .btn.secondary {
-      background: #fff;
-      color: var(--fl-ink);
-      border-color: var(--fl-line);
-      box-shadow: 0 8px 18px rgba(17, 17, 17, 0.05);
-    }
-  
-    .btn.secondary:hover:not(:disabled) {
-      border-color: var(--fl-orange);
-      color: var(--fl-orange-dark);
-    }
-  
-    .btn.danger {
-      background: linear-gradient(135deg, #ef4444, #b42318);
-      color: #fff;
-      box-shadow: 0 12px 24px rgba(220, 38, 38, 0.20);
-    }
-  
-    .btn:disabled {
-      opacity: .55;
-      cursor: not-allowed;
-      transform: none;
-      box-shadow: none;
-    }
-  
-    .status-line {
-      min-height: 20px;
-      color: var(--fl-gray);
-      font-size: 13px;
-      font-weight: 800;
-    }
-  
-    .status-line.error {
-      color: var(--fl-red);
-    }
-  
-    .status-line.ok {
-      color: var(--fl-green);
-    }
-  
-    .kpis {
-      display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-      gap: 14px;
-    }
-  
-    .kpi {
-      position: relative;
-      overflow: hidden;
-      background: rgba(255, 255, 255, .96);
-      border: 1px solid var(--fl-line);
-      border-radius: 20px;
-      box-shadow: var(--fl-shadow-soft);
-      padding: 18px;
-      display: grid;
-      gap: 8px;
-    }
-  
-    .kpi::before {
-      content: "";
-      width: 48px;
-      height: 48px;
-      border-radius: 16px;
-      background: var(--fl-orange-soft);
-      border: 1px solid rgba(255, 90, 0, 0.18);
-      position: absolute;
-      right: 16px;
-      top: 16px;
-    }
-  
-    .kpi span {
-      color: var(--fl-gray);
-      font-size: 12px;
-      font-weight: 900;
-      text-transform: uppercase;
-      letter-spacing: .04em;
-      max-width: 170px;
-    }
-  
-    .kpi strong {
-      color: var(--fl-orange);
-      font-size: 40px;
-      line-height: 1;
-      font-weight: 950;
-      font-variant-numeric: tabular-nums;
-      letter-spacing: -0.04em;
-    }
-  
-    .grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 16px;
-      align-items: start;
-    }
-  
-    .panel {
-      background: rgba(255, 255, 255, .98);
-      border: 1px solid var(--fl-line);
-      border-radius: 20px;
-      box-shadow: var(--fl-shadow-soft);
-      padding: 18px;
-      display: grid;
-      gap: 14px;
-    }
-  
-    .panel h2 {
-      margin: 0;
-      color: var(--fl-ink);
-      font-size: 22px;
-      line-height: 1.15;
-      letter-spacing: -0.03em;
-    }
-  
-    .subhead {
-      margin: -6px 0 0;
-      color: var(--fl-gray);
-      font-size: 13px;
-      line-height: 1.5;
-    }
-  
-    .list {
-      display: grid;
-      gap: 10px;
-      max-height: 390px;
-      overflow: auto;
-      padding-right: 3px;
-    }
-  
-    .list::-webkit-scrollbar {
-      width: 8px;
-    }
-  
-    .list::-webkit-scrollbar-thumb {
-      background: #d0d5dd;
-      border-radius: 999px;
-    }
-  
-    .item {
-      border: 1px solid #ececec;
-      border-radius: 16px;
-      background: linear-gradient(180deg, #ffffff, #fbfbfb);
-      padding: 13px;
-      display: grid;
-      gap: 8px;
-      box-shadow: 0 8px 18px rgba(17, 17, 17, 0.04);
-    }
-  
-    .item-top {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 10px;
-      flex-wrap: wrap;
-    }
-  
-    .item h3 {
-      margin: 0;
-      color: var(--fl-ink);
-      font-size: 15px;
-      font-weight: 900;
-      overflow-wrap: anywhere;
-    }
-  
-    .meta {
-      margin: 0;
-      color: var(--fl-gray);
-      font-size: 12px;
-      line-height: 1.45;
-      font-weight: 650;
-    }
-  
-    .badge {
-      border-radius: 999px;
-      padding: 5px 10px;
-      font-size: 10px;
-      font-weight: 950;
-      text-transform: uppercase;
-      letter-spacing: .03em;
-      background: var(--fl-orange-soft);
-      color: var(--fl-orange-dark);
-      white-space: nowrap;
-      border: 1px solid rgba(255, 90, 0, 0.18);
-    }
-  
-    .badge.pending,
-    .badge.open {
-      background: #fff7ed;
-      color: #c2410c;
-      border-color: #fed7aa;
-    }
-  
-    .badge.accepted,
-    .badge.matched,
-    .badge.active,
-    .badge.trialing {
-      background: #ecfdf3;
-      color: #027a48;
-      border-color: #bbf7d0;
-    }
-  
-    .badge.rejected,
-    .badge.suspended,
-    .badge.cancelled,
-    .badge.closed {
-      background: #fef2f2;
-      color: #b42318;
-      border-color: #fecaca;
-    }
-  
-    .actions {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-      margin-top: 2px;
-    }
-  
-    .actions .btn {
-      padding: 8px 11px;
-      font-size: 12px;
-      border-radius: 10px;
-    }
-  
-    .audit {
-      border: 1px solid #ececec;
-      border-left: 4px solid var(--fl-orange);
-      border-radius: 14px;
-      background: #ffffff;
-      padding: 12px;
-      display: grid;
-      gap: 5px;
-      box-shadow: 0 8px 18px rgba(17, 17, 17, 0.04);
-    }
-  
-    .audit strong {
-      color: var(--fl-ink);
-      font-size: 13px;
-    }
-  
-    .empty {
-      border: 1px dashed #d0d5dd;
-      border-radius: 16px;
-      background:
-        radial-gradient(circle at top right, rgba(255, 90, 0, 0.08), transparent 35%),
-        #ffffff;
-      padding: 20px;
-      color: var(--fl-gray);
-      font-size: 13px;
-      line-height: 1.55;
-      text-align: center;
-    }
-  
-    .empty strong {
-      display: block;
-      margin-bottom: 6px;
-      color: var(--fl-ink);
-      font-size: 14px;
-    }
-  
-    @media (max-width: 1080px) {
-      .kpis {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-      }
-  
-      .grid {
-        grid-template-columns: 1fr;
-      }
-    }
-  
-    @media (max-width: 720px) {
-      body {
-        padding: 14px;
-      }
-  
-      .hero {
-        padding: 22px;
-      }
-  
-      .hero-actions {
-        width: 100%;
-        display: grid;
-        grid-template-columns: 1fr;
-      }
-  
-      .hero-actions .btn,
-      .actions .btn {
-        width: 100%;
-      }
-  
-      .kpis {
-        grid-template-columns: 1fr;
-      }
-  
-      .kpi strong {
-        font-size: 34px;
-      }
-  
-      .panel {
-        padding: 15px;
-      }
-    }
-  </style>
 </head>
-<body>
+<body class="phase2-internal">
   <main class="page fx-layout-public">
     <header class="hero fx-hero fx-section-head">
       <div>
@@ -496,7 +100,7 @@
       function esc(v){ return String(v==null?"":v).replace(/[&<>"']/g,function(c){return({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"})[c];});}
       function txt(v,f){ return (v===null||v===undefined||v==="")?(f||""):String(v); }
       function statusText(v){ return String(v||"unknown").replace(/_/g," ").replace(/\b\w/g,function(c){return c.toUpperCase();});}
-      function badgeClass(v){ return "badge "+String(v||"pending").toLowerCase(); }
+      function badgeClass(v){ return "badge fx-badge "+String(v||"pending").toLowerCase(); }
       function fmtDate(v){ if(!v)return "-"; const d=new Date(v); return Number.isNaN(d.getTime())?String(v):d.toLocaleString([], { dateStyle:"medium", timeStyle:"short" }); }
 
       function setStatus(message, type){
@@ -581,7 +185,7 @@
       }
 
       function renderUnavailableList(el, title, message) {
-        el.innerHTML = '<div class="empty"><strong>' + esc(title) + '</strong>' + esc(message) + "</div>";
+        el.innerHTML = '<div class="empty fx-empty"><strong>' + esc(title) + '</strong>' + esc(message) + "</div>";
       }
 
       function renderRequestsOffers() {
@@ -603,7 +207,7 @@
         }).slice(0, 20);
 
         if (!sorted.length) {
-          els.reviewsList.innerHTML = '<div class="empty"><strong>No review data</strong>Public review summaries are not available yet.</div>';
+          els.reviewsList.innerHTML = '<div class="empty fx-empty"><strong>No review data</strong>Public review summaries are not available yet.</div>';
           return;
         }
 
@@ -612,7 +216,7 @@
             '<article class="item">' +
               '<div class="item-top">' +
                 '<h3>' + esc(txt(r.company_name, "Company")) + "</h3>" +
-                '<span class="badge">' + esc(r.average_rating > 0 ? r.average_rating.toFixed(1) + "★" : "No rating") + "</span>" +
+                '<span class="badge fx-badge">' + esc(r.average_rating > 0 ? r.average_rating.toFixed(1) + "★" : "No rating") + "</span>" +
               "</div>" +
               '<p class="meta">Reviews: ' + esc(r.total_reviews) + "</p>" +
               '<p class="meta">Company ID: ' + esc(r.company_id) + "</p>" +
@@ -633,7 +237,7 @@
       function renderReported() {
         const list = reportedCompanies();
         if (!list.length) {
-          els.reportedList.innerHTML = '<div class="empty"><strong>No reported items</strong>No companies currently flagged by platform/billing risk signals.</div>';
+          els.reportedList.innerHTML = '<div class="empty fx-empty"><strong>No reported items</strong>No companies currently flagged by platform/billing risk signals.</div>';
           return;
         }
         els.reportedList.innerHTML = list.map(function(c) {
@@ -652,7 +256,7 @@
 
       function renderCompaniesControls() {
         if (!state.platformCompanies.length) {
-          els.companiesList.innerHTML = '<div class="empty"><strong>No companies loaded</strong>Unable to fetch platform company records for moderation controls.</div>';
+          els.companiesList.innerHTML = '<div class="empty fx-empty"><strong>No companies loaded</strong>Unable to fetch platform company records for moderation controls.</div>';
           return;
         }
 
@@ -670,8 +274,8 @@
               '<p class="meta">Company ID: ' + esc(companyId) + " • Verified: " + esc(verified ? "Yes" : "No") + "</p>" +
               '<p class="meta">Plan: ' + esc(txt(c.plan, "-")) + " • Platform Suspended: " + esc(suspended ? "Yes" : "No") + "</p>" +
               '<div class="actions">' +
-                '<button class="btn secondary" type="button" data-verify="' + esc(companyId) + '"' + (isPlatformOwner() ? "" : " disabled") + ">" + (verified ? "Unverify" : "Verify") + "</button>" +
-                '<button class="btn danger" type="button" data-suspend="' + esc(companyId) + '"' + (isPlatformOwner() ? "" : " disabled") + ">" + (suspended ? "Unlock" : "Suspend") + "</button>" +
+                '<button class="btn secondary fx-btn" type="button" data-verify="' + esc(companyId) + '"' + (isPlatformOwner() ? "" : " disabled") + ">" + (verified ? "Unverify" : "Verify") + "</button>" +
+                '<button class="btn danger fx-btn" type="button" data-suspend="' + esc(companyId) + '"' + (isPlatformOwner() ? "" : " disabled") + ">" + (suspended ? "Unlock" : "Suspend") + "</button>" +
               "</div>" +
             "</article>"
           );
@@ -680,7 +284,7 @@
 
       function renderAudit() {
         if (!state.audit.length) {
-          els.auditList.innerHTML = '<div class="empty"><strong>No moderation actions yet</strong>Actions performed in this panel will appear in the session audit log.</div>';
+          els.auditList.innerHTML = '<div class="empty fx-empty"><strong>No moderation actions yet</strong>Actions performed in this panel will appear in the session audit log.</div>';
           return;
         }
         els.auditList.innerHTML = state.audit.map(function(a) {

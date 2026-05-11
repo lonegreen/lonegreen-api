@@ -2,491 +2,14 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Worker App</title>
   <link rel="stylesheet" href="/css/brand.css">
   <link rel="stylesheet" href="/app-shell.css">
-  <style>
-    * { box-sizing: border-box; }
-
-    :root {
-      --fl-orange: #FF5A00;
-      --fl-orange-hover: #E64A00;
-      --fl-orange-light: #FF8A33;
-      --fl-black: #111111;
-      --fl-dark: #2B2B2B;
-      --fl-border: #D9D9D9;
-      --fl-bg: #F5F5F5;
-      --fl-white: #FFFFFF;
-      --fl-success: #16A34A;
-      --fl-warning: #F59E0B;
-      --fl-error: #DC2626;
-      --shadow: 0 18px 50px rgba(17, 17, 17, 0.08);
-      --shadow-soft: 0 10px 28px rgba(17, 17, 17, 0.06);
-    }
-
-    body {
-      font-family: Inter, Arial, sans-serif;
-      padding: 16px;
-      background:
-        radial-gradient(circle at top left, rgba(255, 90, 0, 0.13), transparent 32%),
-        radial-gradient(circle at top right, rgba(255, 138, 51, 0.10), transparent 28%),
-        linear-gradient(180deg, #ffffff 0%, #f5f5f5 42%, #fbfbfb 100%);
-      margin: 0;
-      color: var(--fl-black);
-    }
-
-    .page {
-      max-width: 860px;
-      margin: 0 auto;
-      display: grid;
-      gap: 14px;
-    }
-
-    .hero {
-      position: relative;
-      overflow: hidden;
-      display: grid;
-      gap: 10px;
-      padding: 24px;
-      border: 1px solid rgba(217, 217, 217, 0.92);
-      border-radius: 26px;
-      background:
-        linear-gradient(135deg, rgba(255, 255, 255, 0.96), rgba(255, 250, 247, 0.92)),
-        radial-gradient(circle at 92% 20%, rgba(255, 90, 0, 0.15), transparent 32%);
-      box-shadow: var(--shadow);
-    }
-
-    .hero::before {
-      content: "";
-      position: absolute;
-      inset: 0 0 auto 0;
-      height: 5px;
-      background: linear-gradient(90deg, #FF5A00, #FF7A1A);
-    }
-
-    .hero h1 {
-      margin: 0;
-      color: var(--fl-black);
-      font-size: clamp(34px, 7vw, 52px);
-      line-height: 0.98;
-      letter-spacing: -0.06em;
-      font-weight: 950;
-    }
-
-    .hero p {
-      margin: 0;
-      color: #5f6368;
-      font-size: 15px;
-      line-height: 1.6;
-      max-width: 680px;
-    }
-
-    .worker-bar {
-      display: grid;
-      grid-template-columns: 1fr auto;
-      gap: 10px;
-      align-items: center;
-    }
-
-    .worker-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 11px 15px;
-      border-radius: 999px;
-      background: rgba(255, 255, 255, 0.96);
-      border: 1px solid rgba(255, 90, 0, 0.24);
-      color: var(--fl-orange-hover);
-      font-weight: 950;
-      width: fit-content;
-      box-shadow: var(--shadow-soft);
-    }
-
-    .worker-badge::before {
-      content: "";
-      width: 9px;
-      height: 9px;
-      border-radius: 999px;
-      background: var(--fl-orange);
-      box-shadow: 0 0 0 5px rgba(255, 90, 0, 0.12);
-    }
-
-    .btn {
-      padding: 14px 16px;
-      border: none;
-      border-radius: 15px;
-      cursor: pointer;
-      font-weight: 950;
-      font-size: 16px;
-      font-family: inherit;
-      min-height: 50px;
-      transition: transform .15s ease, box-shadow .15s ease, opacity .15s ease, background .15s ease;
-      box-shadow: 0 10px 22px rgba(17, 17, 17, 0.07);
-    }
-
-    .btn:hover:not(:disabled) {
-      transform: translateY(-1px);
-      box-shadow: 0 14px 28px rgba(17, 17, 17, 0.11);
-    }
-
-    .btn:focus-visible,
-    .quick-link:focus-visible,
-    .notes-box:focus-visible,
-    select:focus-visible {
-      outline: 3px solid rgba(255, 90, 0, 0.35);
-      outline-offset: 3px;
-    }
-
-    .btn:disabled {
-      opacity: .55;
-      cursor: not-allowed;
-      transform: none;
-      box-shadow: none;
-    }
-
-    .primary,
-    .start-btn {
-      background: linear-gradient(135deg, #FF5A00, #FF7A1A);
-      color: white;
-      box-shadow: 0 14px 28px rgba(255, 90, 0, 0.22);
-    }
-
-    .secondary,
-    .save-btn {
-      background: #fff;
-      color: var(--fl-orange-hover);
-      border: 1px solid rgba(255, 90, 0, 0.34);
-      box-shadow: none;
-    }
-
-    .secondary:hover:not(:disabled),
-    .save-btn:hover:not(:disabled) {
-      background: rgba(255, 90, 0, 0.08);
-      box-shadow: none;
-    }
-
-    .done-btn {
-      background: var(--fl-success);
-      color: white;
-    }
-
-    .panel {
-      background: rgba(255, 255, 255, 0.96);
-      border: 1px solid rgba(217, 217, 217, 0.92);
-      border-radius: 24px;
-      box-shadow: var(--shadow-soft);
-      padding: 16px;
-    }
-
-    .route-summary {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 10px;
-    }
-
-    .summary-box {
-      padding: 14px;
-      border-radius: 18px;
-      background: linear-gradient(180deg, #ffffff, #fafafa);
-      border: 1px solid rgba(217, 217, 217, 0.9);
-      min-width: 0;
-      box-shadow: 0 8px 20px rgba(17, 17, 17, 0.035);
-    }
-
-    .summary-label {
-      font-size: 11px;
-      text-transform: uppercase;
-      letter-spacing: 0.07em;
-      color: #6b7280;
-      font-weight: 950;
-      margin-bottom: 5px;
-    }
-
-    .summary-value {
-      font-size: 28px;
-      color: var(--fl-black);
-      font-weight: 950;
-      letter-spacing: -0.05em;
-    }
-
-    .job-list {
-      display: grid;
-      gap: 14px;
-    }
-
-    .job {
-      border: 1px solid rgba(217, 217, 217, 0.92);
-      border-radius: 24px;
-      padding: 18px;
-      background: linear-gradient(180deg, #ffffff, #fbfbfb);
-      display: grid;
-      gap: 14px;
-      box-shadow: 0 12px 28px rgba(17, 17, 17, 0.055);
-      transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease;
-    }
-
-    .job:hover {
-      transform: translateY(-1px);
-      border-color: rgba(255, 90, 0, 0.26);
-      box-shadow: 0 18px 38px rgba(17, 17, 17, 0.08);
-    }
-
-    .job.completed-card {
-      border-color: rgba(22, 163, 74, 0.28);
-      background: linear-gradient(180deg, #ffffff, rgba(22, 163, 74, 0.06));
-    }
-
-    .job-top {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      gap: 12px;
-    }
-
-    .job-title {
-      margin: 0 0 6px;
-      color: var(--fl-black);
-      font-size: 24px;
-      font-weight: 950;
-      line-height: 1.12;
-      letter-spacing: -0.045em;
-      word-break: break-word;
-    }
-
-    .job-service {
-      color: var(--fl-orange-hover);
-      font-size: 16px;
-      font-weight: 950;
-      margin-bottom: 8px;
-      word-break: break-word;
-    }
-
-    .job-address,
-    .job-phone {
-      color: #5f6368;
-      font-size: 14px;
-      line-height: 1.45;
-      margin-bottom: 4px;
-      word-break: break-word;
-    }
-
-    .job-time {
-      color: var(--fl-dark);
-      font-size: 15px;
-      font-weight: 950;
-      word-break: break-word;
-    }
-
-    .status {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      padding: 8px 12px;
-      border-radius: 999px;
-      color: white;
-      font-size: 12px;
-      font-weight: 950;
-      text-transform: uppercase;
-      white-space: nowrap;
-      letter-spacing: 0.03em;
-    }
-
-    .scheduled { background: #6b7280; }
-    .assigned { background: var(--fl-orange); }
-    .in_progress { background: var(--fl-warning); }
-    .completed { background: var(--fl-success); }
-    .cancelled { background: var(--fl-error); }
-
-    .quick-links,
-    .actions {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 10px;
-    }
-
-    .quick-link {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
-      min-height: 48px;
-      padding: 12px 14px;
-      border-radius: 15px;
-      background: white;
-      border: 1px solid rgba(255, 90, 0, 0.34);
-      color: var(--fl-orange-hover);
-      font-weight: 950;
-      text-decoration: none;
-      transition: transform .15s ease, box-shadow .15s ease, border .15s ease, background .15s ease;
-    }
-
-    .quick-link:hover {
-      transform: translateY(-1px);
-      background: rgba(255, 90, 0, 0.08);
-      box-shadow: 0 10px 20px rgba(17, 17, 17, 0.07);
-    }
-
-    .details {
-      border-top: 1px solid rgba(217, 217, 217, 0.9);
-      padding-top: 12px;
-      display: none;
-      gap: 12px;
-    }
-
-    .details.open {
-      display: grid;
-    }
-
-    .detail-grid {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 10px;
-    }
-
-    .detail {
-      padding: 12px;
-      border-radius: 15px;
-      background: white;
-      border: 1px solid rgba(217, 217, 217, 0.9);
-      min-width: 0;
-      word-break: break-word;
-      line-height: 1.45;
-      color: var(--fl-dark);
-    }
-
-    .detail span {
-      display: block;
-      font-size: 11px;
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-      color: #6b7280;
-      font-weight: 950;
-      margin-bottom: 4px;
-    }
-
-    .notes-box {
-      width: 100%;
-      min-height: 108px;
-      padding: 13px;
-      border-radius: 16px;
-      border: 1px solid rgba(217, 217, 217, 0.95);
-      font: inherit;
-      resize: vertical;
-      color: var(--fl-black);
-      outline: none;
-      transition: border .15s ease, box-shadow .15s ease;
-      background: white;
-    }
-
-    .notes-box:focus {
-      border-color: var(--fl-orange);
-      box-shadow: 0 0 0 4px rgba(255, 90, 0, 0.14);
-    }
-
-    .empty {
-      padding: 20px;
-      border: 1px dashed rgba(255, 90, 0, 0.28);
-      border-radius: 18px;
-      background: rgba(255, 90, 0, 0.045);
-      color: #5f6368;
-      line-height: 1.5;
-    }
-
-    .empty strong {
-      display: block;
-      color: var(--fl-black);
-      font-size: 18px;
-      margin-bottom: 6px;
-    }
-
-    select {
-      width: 100%;
-      padding: 14px 12px;
-      border-radius: 14px;
-      border: 1px solid rgba(217, 217, 217, 0.95);
-      font: inherit;
-      background: white;
-      min-height: 50px;
-      color: var(--fl-black);
-      outline: none;
-      transition: border .15s ease, box-shadow .15s ease;
-    }
-
-    select:focus {
-      border-color: var(--fl-orange);
-      box-shadow: 0 0 0 4px rgba(255, 90, 0, 0.14);
-    }
-
-    .page-hint {
-      padding: 16px;
-      border-radius: 18px;
-      border: 1px solid rgba(217, 217, 217, 0.92);
-      background: rgba(255, 255, 255, 0.96);
-      color: #5f6368;
-      box-shadow: var(--shadow-soft);
-      line-height: 1.5;
-    }
-
-    .page-hint strong {
-      display: block;
-      color: var(--fl-black);
-      margin-bottom: 4px;
-      font-size: 16px;
-    }
-
-    .page-hint p {
-      margin: 0;
-    }
-
-    @media (max-width: 640px) {
-      body {
-        padding: 10px;
-      }
-
-      .hero {
-        padding: 20px;
-        border-radius: 22px;
-      }
-
-      .hero h1 {
-        font-size: 34px;
-      }
-
-      .worker-bar,
-      .route-summary,
-      .actions,
-      .quick-links,
-      .detail-grid {
-        grid-template-columns: 1fr;
-      }
-
-      .job-top {
-        flex-direction: column;
-        align-items: stretch;
-      }
-
-      .status {
-        width: fit-content;
-      }
-
-      .job {
-        padding: 15px;
-        border-radius: 20px;
-      }
-
-      .job-title {
-        font-size: 23px;
-      }
-
-      .panel {
-        border-radius: 20px;
-      }
-    }
-  </style>
+  
 </head>
-<body>
-<div class="page">
+<body class="phase2-internal fx-layout-public">
+<div class="page fx-min-w-0">
   <div class="hero">
     <h1>Worker App</h1>
     <p>Today's assigned jobs only. Open the route, add a quick note, and tap once to start or complete work.</p>
@@ -496,7 +19,7 @@
 
   <div class="worker-bar" id="workerPicker">
     <select id="workerSelect"></select>
-    <button type="button" class="btn primary" id="workerBtnOpenJobs">Open Today's Jobs</button>
+    <button type="button" class="btn primary fx-btn" id="workerBtnOpenJobs">Open Today's Jobs</button>
   </div>
 
   <div id="workerHint" class="page-hint" style="display:none;">
@@ -504,7 +27,7 @@
     <p>Select an active worker above to open today's assigned route.</p>
   </div>
 
-  <div class="panel">
+  <div class="panel fx-card">
     <div class="route-summary" id="routeSummary">
       <div class="summary-box"><div class="summary-label">Assigned</div><div class="summary-value" id="assignedCount">0</div></div>
       <div class="summary-box"><div class="summary-label">In Progress</div><div class="summary-value" id="progressCount">0</div></div>
@@ -512,7 +35,7 @@
     </div>
   </div>
 
-  <div class="panel">
+  <div class="panel fx-card">
     <div class="job-list" id="list">Loading...</div>
   </div>
 </div>
@@ -606,7 +129,7 @@ function getErrorMessage(data, fallback){
 
 function renderInlineError(title, message, actionsHtml = ""){
   return `
-    <div class="empty">
+    <div class="empty fx-empty">
       <strong>${safeText(title)}</strong>
       <div>${safeText(message)}</div>
       ${actionsHtml ? `<div style="margin-top:12px;">${actionsHtml}</div>` : ""}
@@ -618,10 +141,10 @@ function workerEmptyState(title, message, actions){
   const actionHtml = (actions || []).map(a => {
     const key = a.dataWorkerEmpty;
     if(!key) return "";
-    return `<button type="button" class="${escapeHtml(a.className || "btn primary")}" data-worker-empty="${escapeHtml(key)}">${escapeHtml(a.label || "Action")}</button>`;
+    return `<button type="button" class="${escapeHtml(a.className || "btn primary fx-btn")}" data-worker-empty="${escapeHtml(key)}">${escapeHtml(a.label || "Action")}</button>`;
   }).join("");
   return `
-    <div class="empty">
+    <div class="empty fx-empty">
       <strong>${safeText(title)}</strong>
       <div>${safeText(message)}</div>
       ${actionHtml ? `<div style="margin-top:12px;">${actionHtml}</div>` : ""}
@@ -705,8 +228,8 @@ function renderJobs(){
       currentWorkerId() ? "No assigned jobs for today." : "Choose a worker to view today's jobs.",
       currentWorkerId() ? "This route is clear right now." : "Select an active worker above to load today's assigned jobs.",
       currentWorkerId()
-        ? [{ label: "Refresh", dataWorkerEmpty: "refresh", className: "btn primary" }]
-        : [{ label: "Select Worker", dataWorkerEmpty: "focus-worker", className: "btn primary" }]
+        ? [{ label: "Refresh", dataWorkerEmpty: "refresh", className: "btn primary fx-btn" }]
+        : [{ label: "Select Worker", dataWorkerEmpty: "focus-worker", className: "btn primary fx-btn" }]
     );
     return;
   }
@@ -735,7 +258,7 @@ function renderJobs(){
           ${address ? `<a class="quick-link" href="${escapeHtml(mapHref(address))}" target="_blank" rel="noopener">Open Map</a>` : `<span class="quick-link">No Address</span>`}
         </div>
 
-        <button type="button" class="btn secondary" data-worker-job-action="toggle-details" data-job-id="${jobId}">Job Details</button>
+        <button type="button" class="btn secondary fx-btn" data-worker-job-action="toggle-details" data-job-id="${jobId}">Job Details</button>
 
         <div class="details" id="details_${jobId}">
           <div class="detail-grid">
@@ -751,9 +274,9 @@ function renderJobs(){
         <textarea id="notes_${jobId}" class="notes-box" placeholder="Add a quick note...">${textareaText(job.internal_notes)}</textarea>
 
         <div class="actions">
-          <button type="button" class="btn save-btn" data-worker-job-action="save-notes" data-job-id="${jobId}">Save Notes</button>
-          <button type="button" class="btn start-btn" data-worker-job-action="update-job" data-job-id="${jobId}" data-status="in_progress" ${isComplete ? "disabled" : ""}>Start Job</button>
-          <button type="button" class="btn done-btn" data-worker-job-action="update-job" data-job-id="${jobId}" data-status="completed" ${isComplete ? "disabled" : ""}>${isComplete ? "Completed" : "Complete Job"}</button>
+          <button type="button" class="btn save-btn fx-btn" data-worker-job-action="save-notes" data-job-id="${jobId}">Save Notes</button>
+          <button type="button" class="btn start-btn fx-btn" data-worker-job-action="update-job" data-job-id="${jobId}" data-status="in_progress" ${isComplete ? "disabled" : ""}>Start Job</button>
+          <button type="button" class="btn done-btn fx-btn" data-worker-job-action="update-job" data-job-id="${jobId}" data-status="completed" ${isComplete ? "disabled" : ""}>${isComplete ? "Completed" : "Complete Job"}</button>
         </div>
       </div>
     `;
@@ -819,7 +342,7 @@ async function loadJobs(){
     document.getElementById("list").innerHTML = workerEmptyState(
       "Choose a worker to view today's jobs.",
       "Select an active worker above to open today's assigned route.",
-      [{ label: "Select Worker", dataWorkerEmpty: "focus-worker", className: "btn primary" }]
+      [{ label: "Select Worker", dataWorkerEmpty: "focus-worker", className: "btn primary fx-btn" }]
     );
 
     renderWorkers();
@@ -840,7 +363,7 @@ async function loadJobs(){
       document.getElementById("list").innerHTML = renderInlineError(
         "Unable to load today's jobs",
         getErrorMessage(data, "Please refresh and try again."),
-        `<button type="button" class="btn primary" data-worker-empty="reload">Refresh</button>`
+        `<button type="button" class="btn primary fx-btn" data-worker-empty="reload">Refresh</button>`
       );
 
       AppUI.showToast(getErrorMessage(data, "Unable to load today's jobs."), "error");
@@ -858,7 +381,7 @@ async function loadJobs(){
     document.getElementById("list").innerHTML = renderInlineError(
       "Unable to load today's jobs",
       "Please refresh and try again.",
-      `<button type="button" class="btn primary" data-worker-empty="load-jobs">Refresh</button>`
+      `<button type="button" class="btn primary fx-btn" data-worker-empty="load-jobs">Refresh</button>`
     );
 
     AppUI.showToast("Unable to load today's jobs.", "error");
@@ -900,7 +423,7 @@ async function load(){
       document.getElementById("list").innerHTML = renderInlineError(
         "Unable to load workers",
         getErrorMessage(data, "Please refresh and try again."),
-        `<button type="button" class="btn primary" data-worker-empty="load-app">Refresh</button>`
+        `<button type="button" class="btn primary fx-btn" data-worker-empty="load-app">Refresh</button>`
       );
 
       AppUI.showToast(getErrorMessage(data, "Unable to load workers."), "error");
@@ -919,7 +442,7 @@ async function load(){
     document.getElementById("list").innerHTML = renderInlineError(
       "Unable to load workers",
       "Please refresh and try again.",
-      `<button type="button" class="btn primary" data-worker-empty="load-app">Refresh</button>`
+      `<button type="button" class="btn primary fx-btn" data-worker-empty="load-app">Refresh</button>`
     );
 
     AppUI.showToast("Unable to load workers.", "error");
