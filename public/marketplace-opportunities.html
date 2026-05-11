@@ -2,687 +2,98 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>FairLinx | Marketplace Opportunities</title>
   <link rel="stylesheet" href="/css/brand.css">
 
   <link rel="stylesheet" href="/app-shell.css">
   <link rel="stylesheet" href="/ui-cleanup.css">
-  <style>
-    * { box-sizing: border-box; }
-
-    :root {
-      --fx-orange: var(--brand-primary, #FF5A00);
-      --fx-orange-hover: var(--brand-primary-hover, #E64A00);
-      --fx-orange-light: var(--brand-primary-light, #FF8A33);
-      --fx-black: var(--brand-black, #111111);
-      --fx-dark: #2B2B2B;
-      --fx-muted: #6B7280;
-      --fx-border: var(--brand-border, #D9D9D9);
-      --fx-bg: var(--brand-bg, #F5F5F5);
-      --fx-white: #FFFFFF;
-      --fx-success: #16A34A;
-      --fx-warning: #F59E0B;
-      --fx-error: #DC2626;
-      --fx-radius-xl: 26px;
-      --fx-radius-lg: 20px;
-      --fx-radius-md: 14px;
-      --fx-shadow: 0 22px 55px rgba(17, 17, 17, 0.08);
-      --fx-shadow-soft: 0 14px 34px rgba(17, 17, 17, 0.06);
-    }
-
-    body {
-      margin: 0;
-      font-family: Inter, Arial, sans-serif;
-      color: var(--fx-black);
-      background:
-        radial-gradient(circle at top left, rgba(255, 90, 0, 0.14), transparent 340px),
-        radial-gradient(circle at 90% 0%, rgba(255, 138, 51, 0.10), transparent 320px),
-        linear-gradient(180deg, #ffffff 0%, #fafafa 230px, #f3f4f6 100%);
-      padding: 22px;
-    }
-
-    .page {
-      width: min(1480px, 100%);
-      margin: 0 auto;
-      display: grid;
-      gap: 16px;
-    }
-
-    .hero {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 18px;
-      flex-wrap: wrap;
-      padding: 22px 24px;
-      border-radius: var(--fx-radius-xl);
-      background:
-        linear-gradient(135deg, rgba(255,255,255,.98), rgba(255,247,242,.96)),
-        radial-gradient(circle at right top, rgba(255,90,0,.12), transparent 300px);
-      border: 1px solid rgba(217,217,217,.92);
-      box-shadow: var(--fx-shadow);
-    }
-
-    .hero h1 {
-      margin: 0 0 6px;
-      color: var(--fx-black);
-      font-size: clamp(28px, 3vw, 40px);
-      letter-spacing: -0.045em;
-      line-height: 1.05;
-    }
-
-    .hero h1:before {
-      content: "";
-      display: inline-block;
-      width: 12px;
-      height: 34px;
-      margin-right: 12px;
-      border-radius: 999px;
-      background: linear-gradient(180deg, var(--fx-orange), var(--fx-orange-light));
-      vertical-align: -6px;
-      box-shadow: 0 12px 24px rgba(255,90,0,.22);
-    }
-
-    .hero p {
-      margin: 0;
-      color: var(--fx-muted);
-      line-height: 1.5;
-      max-width: 720px;
-      font-size: 14px;
-    }
-
-    .hero-actions {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-      align-items: center;
-      justify-content: flex-end;
-    }
-
-    .btn {
-      border: 1px solid transparent;
-      border-radius: 14px;
-      min-height: 42px;
-      padding: 11px 16px;
-      font: inherit;
-      font-weight: 900;
-      cursor: pointer;
-      transition: transform .15s ease, box-shadow .15s ease, opacity .15s ease, background .15s ease, border-color .15s ease;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      text-decoration: none;
-      white-space: nowrap;
-    }
-
-    .btn:hover:not(:disabled) {
-      transform: translateY(-1px);
-      box-shadow: 0 14px 26px rgba(17,17,17,.10);
-    }
-
-    .btn.primary {
-      background: linear-gradient(135deg, var(--fx-orange), var(--fx-orange-light));
-      color: #fff;
-      box-shadow: 0 12px 24px rgba(255,90,0,.24);
-    }
-
-    .btn.primary:hover:not(:disabled) {
-      background: linear-gradient(135deg, var(--fx-orange-hover), var(--fx-orange));
-    }
-
-    .btn.secondary {
-      background: #ffffff;
-      color: var(--fx-black);
-      border: 1px solid #dedede;
-    }
-
-    .btn:disabled {
-      opacity: 0.62;
-      cursor: not-allowed;
-      transform: none;
-      box-shadow: none;
-    }
-
-    .status-line {
-      min-height: 44px;
-      color: #7c2d12;
-      font-size: 13px;
-      font-weight: 800;
-      display: flex;
-      align-items: center;
-      padding: 12px 15px;
-      border: 1px solid #fed7aa;
-      background: #fff7ed;
-      border-radius: 18px;
-      box-shadow: var(--fx-shadow-soft);
-    }
-
-    .status-line:empty {
-      display: none;
-    }
-
-    .status-line.error {
-      color: #991b1b;
-      border-color: #fecaca;
-      background: #fef2f2;
-    }
-
-    .status-line.ok {
-      color: #166534;
-      border-color: #bbf7d0;
-      background: #f0fdf4;
-    }
-
-    .flow-strip {
-      display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-      gap: 10px;
-    }
-
-    .flow-step {
-      border: 1px solid rgba(217,217,217,.95);
-      border-radius: 18px;
-      background: rgba(255,255,255,.96);
-      padding: 14px 12px;
-      color: var(--fx-black);
-      font-size: 13px;
-      font-weight: 950;
-      text-align: center;
-      box-shadow: var(--fx-shadow-soft);
-      position: relative;
-      overflow: hidden;
-    }
-
-    .flow-step:before {
-      content: "";
-      display: block;
-      width: 30px;
-      height: 30px;
-      border-radius: 12px;
-      margin: 0 auto 8px;
-      background: #fff3eb;
-      border: 1px solid #ffd7c2;
-    }
-
-    .flow-step:after {
-      content: "";
-      position: absolute;
-      left: 0;
-      bottom: 0;
-      width: 100%;
-      height: 3px;
-      background: linear-gradient(90deg, var(--fx-orange), var(--fx-orange-light));
-    }
-
-    .layout {
-      display: grid;
-      grid-template-columns: 390px 1fr;
-      gap: 14px;
-      align-items: start;
-    }
-
-    .panel {
-      background: rgba(255,255,255,.97);
-      border: 1px solid rgba(217,217,217,.92);
-      border-radius: 22px;
-      box-shadow: var(--fx-shadow-soft);
-      padding: 18px;
-      display: grid;
-      gap: 14px;
-      min-width: 0;
-    }
-
-    .panel h2 {
-      margin: 0;
-      color: var(--fx-black);
-      font-size: 20px;
-      letter-spacing: -.03em;
-    }
-
-    .subhead {
-      margin: 0;
-      color: var(--fx-muted);
-      font-size: 13px;
-      line-height: 1.45;
-    }
-
-    .filters {
-      border: 1px solid #eeeeee;
-      border-radius: 18px;
-      background: #fafafa;
-      padding: 14px;
-      display: grid;
-      gap: 12px;
-    }
-
-    .filter-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-    }
-
-    .field {
-      display: grid;
-      gap: 7px;
-      min-width: 0;
-    }
-
-    .field label {
-      font-size: 11px;
-      font-weight: 900;
-      text-transform: uppercase;
-      letter-spacing: 0.055em;
-      color: var(--fx-muted);
-    }
-
-    input, textarea {
-      width: 100%;
-      border: 1px solid #dedede;
-      border-radius: 13px;
-      background: #fff;
-      color: var(--fx-black);
-      padding: 11px 13px;
-      font: inherit;
-      outline: none;
-      min-height: 42px;
-    }
-
-    input:focus, textarea:focus {
-      border-color: var(--fx-orange);
-      box-shadow: 0 0 0 4px rgba(255, 90, 0, 0.13);
-    }
-
-    textarea {
-      resize: vertical;
-      min-height: 110px;
-    }
-
-    .actions {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-    }
-
-    .list-head {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 8px;
-      flex-wrap: wrap;
-      padding-top: 4px;
-    }
-
-    .pill {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      border-radius: 999px;
-      padding: 7px 11px;
-      font-size: 11px;
-      font-weight: 950;
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
-      background: #fff3eb;
-      color: var(--fx-orange-hover);
-      border: 1px solid #ffd7c2;
-    }
-
-    .opportunities-list {
-      display: grid;
-      gap: 10px;
-      max-height: 690px;
-      overflow: auto;
-      padding-right: 2px;
-      scrollbar-width: thin;
-      scrollbar-color: #c9c9c9 transparent;
-    }
-
-    .opportunities-list::-webkit-scrollbar {
-      width: 8px;
-    }
-
-    .opportunities-list::-webkit-scrollbar-thumb {
-      background: #c9c9c9;
-      border-radius: 999px;
-    }
-
-    .opp-item {
-      border: 1px solid #eeeeee;
-      border-radius: 16px;
-      background: #ffffff;
-      padding: 13px;
-      display: grid;
-      gap: 8px;
-      text-align: left;
-      width: 100%;
-      cursor: pointer;
-      box-shadow: 0 6px 16px rgba(17,17,17,.035);
-      transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease, background .15s ease;
-    }
-
-    .opp-item:hover {
-      transform: translateY(-1px);
-      border-color: #ffd7c2;
-      background: #fffaf7;
-      box-shadow: 0 12px 24px rgba(17,17,17,.075);
-    }
-
-    .opp-item.active {
-      border-color: var(--fx-orange);
-      background: linear-gradient(180deg, #fffaf7, #ffffff);
-      box-shadow: 0 16px 30px rgba(255,90,0,.12);
-    }
-
-    .opp-top {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      gap: 8px;
-    }
-
-    .opp-title {
-      margin: 0;
-      color: var(--fx-black);
-      font-size: 15px;
-      font-weight: 950;
-      line-height: 1.25;
-      overflow-wrap: anywhere;
-    }
-
-    .opp-meta {
-      margin: 0;
-      color: var(--fx-muted);
-      font-size: 12px;
-      line-height: 1.45;
-    }
-
-    .badge {
-      border-radius: 999px;
-      padding: 5px 10px;
-      font-size: 10px;
-      font-weight: 950;
-      text-transform: uppercase;
-      letter-spacing: 0.03em;
-      background: #f8fafc;
-      color: #475569;
-      border: 1px solid #e2e8f0;
-      white-space: nowrap;
-    }
-
-    .badge.open {
-      background: #fff7ed;
-      color: #c2410c;
-      border-color: #fed7aa;
-    }
-
-    .badge.matched {
-      background: #ecfdf3;
-      color: #027a48;
-      border-color: #bbf7d0;
-    }
-
-    .badge.closed,
-    .badge.cancelled {
-      background: #fef2f2;
-      color: #b42318;
-      border-color: #fecaca;
-    }
-
-    .detail-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      gap: 12px;
-      flex-wrap: wrap;
-      padding-bottom: 12px;
-      border-bottom: 1px solid #eeeeee;
-    }
-
-    .detail-title {
-      margin: 0;
-      color: var(--fx-black);
-      font-size: clamp(22px, 2vw, 30px);
-      letter-spacing: -.04em;
-      overflow-wrap: anywhere;
-    }
-
-    .detail-meta {
-      margin: 5px 0 0;
-      color: var(--fx-muted);
-      font-size: 13px;
-    }
-
-    .detail-grid {
-      display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-      gap: 10px;
-    }
-
-    .detail-card {
-      border: 1px solid #eeeeee;
-      background:
-        radial-gradient(circle at top right, rgba(255,90,0,.08), transparent 90px),
-        #fafafa;
-      border-radius: 16px;
-      padding: 12px;
-      display: grid;
-      gap: 6px;
-      min-height: 78px;
-    }
-
-    .detail-card span {
-      font-size: 10px;
-      text-transform: uppercase;
-      letter-spacing: 0.055em;
-      color: var(--fx-muted);
-      font-weight: 900;
-    }
-
-    .detail-card strong {
-      font-size: 14px;
-      color: var(--fx-black);
-      word-break: break-word;
-      line-height: 1.35;
-    }
-
-    .section {
-      border: 1px solid #eeeeee;
-      border-radius: 18px;
-      padding: 15px;
-      display: grid;
-      gap: 12px;
-      background: #ffffff;
-      box-shadow: 0 6px 16px rgba(17,17,17,.035);
-    }
-
-    .section h3 {
-      margin: 0;
-      color: var(--fx-black);
-      font-size: 19px;
-      letter-spacing: -.03em;
-    }
-
-    .offer-summary {
-      border: 1px solid #ffd7c2;
-      border-radius: 16px;
-      background: #fff7ed;
-      padding: 12px;
-      display: none;
-      gap: 6px;
-    }
-
-    .offer-summary.visible {
-      display: grid;
-    }
-
-    .offer-summary p {
-      margin: 0;
-      color: #7c2d12;
-      font-size: 13px;
-      line-height: 1.45;
-    }
-
-    .empty {
-      border: 1px dashed #d9d9d9;
-      border-radius: 16px;
-      background: #fafafa;
-      padding: 18px;
-      color: var(--fx-muted);
-      font-size: 13px;
-      line-height: 1.5;
-      text-align: center;
-      grid-column: 1 / -1;
-    }
-
-    .empty strong {
-      display: block;
-      margin-bottom: 6px;
-      color: var(--fx-black);
-      font-size: 14px;
-    }
-
-    @media (max-width: 1080px) {
-      .layout {
-        grid-template-columns: 1fr;
-      }
-
-      .opportunities-list {
-        max-height: 360px;
-      }
-
-      .detail-grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-      }
-    }
-
-    @media (max-width: 720px) {
-      body {
-        padding: 14px;
-      }
-
-      .hero {
-        padding: 18px;
-        border-radius: 22px;
-      }
-
-      .hero h1 {
-        font-size: 28px;
-      }
-
-      .hero h1:before {
-        height: 28px;
-      }
-
-      .hero-actions {
-        width: 100%;
-        display: grid;
-        grid-template-columns: 1fr;
-      }
-
-      .hero-actions .btn,
-      .actions .btn {
-        width: 100%;
-      }
-
-      .filter-grid,
-      .detail-grid,
-      .flow-strip {
-        grid-template-columns: 1fr;
-      }
-
-      .panel {
-        padding: 15px;
-        border-radius: 18px;
-      }
-    }
-  </style>
+  
 </head>
-<body>
-  <main class="page">
-    <header class="hero">
-      <div>
-        <h1>Marketplace Opportunities</h1>
-        <p>Opportunity to offer: select a request, submit an offer, then track acceptance in the Offers inbox.</p>
+<body class="phase2-internal marketplace-opportunities-ds-page">
+  <main class="page fx-layout-public marketplace-ds fx-page fx-page--dense fx-min-w-0">
+    <header class="hero fx-hero fx-section-head">
+      <div class="fx-stack fx-min-w-0">
+        <h1 class="fx-h3">Marketplace Opportunities</h1>
+        <p class="fx-caption">Opportunity to offer: select a request, submit an offer, then track acceptance in the Offers inbox.</p>
       </div>
-      <div class="hero-actions">
-        <a class="btn secondary" href="/marketplace-dashboard.html">Marketplace Dashboard</a>
-        <a class="btn secondary" href="/marketplace-offers.html">Offers Inbox</a>
-        <button id="refreshBtn" type="button" class="btn secondary">Refresh</button>
+      <div class="hero-actions fx-cluster">
+        <a class="btn secondary fx-btn fx-btn--secondary" href="/marketplace-dashboard.html">Marketplace Dashboard</a>
+        <a class="btn secondary fx-btn fx-btn--secondary" href="/marketplace-offers.html">Offers Inbox</a>
+        <button id="refreshBtn" type="button" class="btn secondary fx-btn fx-btn--secondary">Refresh</button>
       </div>
     </header>
 
     <div id="globalStatus" class="status-line" role="status" aria-live="polite"></div>
 
-    <section class="flow-strip" aria-label="Marketplace lifecycle">
+    <section class="flow-strip fx-cluster" aria-label="Marketplace lifecycle">
       <div class="flow-step">Opportunity</div>
       <div class="flow-step">Submit Offer</div>
       <div class="flow-step">Accepted Offer</div>
       <div class="flow-step">Convert to Estimate</div>
     </section>
 
-    <section class="layout">
-      <aside class="panel">
-        <h2>Opportunity Filters</h2>
-        <p class="subhead">Filter opportunities by category and location text (city/state/zip).</p>
+    <section class="layout fx-min-w-0">
+      <aside class="panel fx-card fx-min-w-0">
+        <h2 class="fx-h3">Opportunity Filters</h2>
+        <p class="subhead fx-caption">Filter opportunities by category and location text (city/state/zip).</p>
         <div class="filters">
-          <div class="filter-grid">
-            <div class="field">
+          <div class="filter-grid fx-form-grid">
+            <div class="field fx-field">
               <label for="categoryFilter">Category ID</label>
-              <input id="categoryFilter" type="text" placeholder="e.g. 4">
+              <input id="categoryFilter" class="fx-input" type="text" placeholder="e.g. 4">
             </div>
-            <div class="field">
+            <div class="field fx-field">
               <label for="locationFilter">Location</label>
-              <input id="locationFilter" type="text" placeholder="Zip, city, or state">
+              <input id="locationFilter" class="fx-input" type="text" placeholder="Zip, city, or state">
             </div>
           </div>
-          <div class="actions">
-            <button id="applyFiltersBtn" type="button" class="btn secondary">Apply Filters</button>
-            <button id="clearFiltersBtn" type="button" class="btn secondary">Clear</button>
+          <div class="actions fx-cluster">
+            <button id="applyFiltersBtn" type="button" class="btn secondary fx-btn fx-btn--secondary">Apply Filters</button>
+            <button id="clearFiltersBtn" type="button" class="btn secondary fx-btn fx-btn--secondary">Clear</button>
           </div>
         </div>
 
-        <div class="list-head">
-          <h2>Opportunities</h2>
-          <span id="countPill" class="pill">0</span>
+        <div class="list-head fx-cluster">
+          <h2 class="fx-h3">Opportunities</h2>
+          <span id="countPill" class="pill fx-badge fx-badge--info">0</span>
         </div>
-        <div id="opportunitiesList" class="opportunities-list"></div>
+        <div id="opportunitiesList" class="opportunities-list fx-min-w-0"></div>
       </aside>
 
-      <section class="panel">
-        <div class="detail-header">
-          <div>
-            <h2 id="detailTitle" class="detail-title">Select an opportunity</h2>
-            <p id="detailMeta" class="detail-meta">Request details and offer form will appear here.</p>
+      <section class="panel fx-card fx-min-w-0">
+        <div class="detail-header fx-cluster">
+          <div class="fx-stack fx-min-w-0">
+            <h2 id="detailTitle" class="detail-title fx-h3">Select an opportunity</h2>
+            <p id="detailMeta" class="detail-meta fx-caption">Request details and offer form will appear here.</p>
           </div>
-          <span id="detailBadge" class="badge">N/A</span>
+          <span id="detailBadge" class="badge fx-badge fx-badge--neutral">N/A</span>
         </div>
 
-        <div id="detailGrid" class="detail-grid"></div>
+        <div id="detailGrid" class="detail-grid fx-min-w-0"></div>
 
-        <section class="section">
-          <h3>Submit Offer</h3>
-          <p class="subhead">Send or update your offer for this request. Existing offer is overwritten per company/request pair.</p>
-          <form id="offerForm" class="filter-grid">
-            <div class="field">
+        <section class="section fx-min-w-0">
+          <h3 class="fx-h3">Submit Offer</h3>
+          <p class="subhead fx-caption">Send or update your offer for this request. Existing offer is overwritten per company/request pair.</p>
+          <form id="offerForm" class="filter-grid fx-form-grid">
+            <div class="field fx-field">
               <label for="offerPrice">Offer Price *</label>
-              <input id="offerPrice" name="price" type="number" min="1" step="0.01" placeholder="120.00" required>
+              <input id="offerPrice" name="price" class="fx-input" type="number" min="1" step="0.01" placeholder="120.00" required>
             </div>
-            <div class="field">
+            <div class="field fx-field">
               <label for="offerStartDate">Estimated Start Date</label>
-              <input id="offerStartDate" name="estimated_start_date" type="date">
+              <input id="offerStartDate" name="estimated_start_date" class="fx-input" type="date">
             </div>
-            <div class="field" style="grid-column: 1 / -1;">
+            <div class="field fx-field marketplace-field-span">
               <label for="offerMessage">Message</label>
-              <textarea id="offerMessage" name="message" maxlength="2000" placeholder="Describe your scope, timeline, and what is included."></textarea>
+              <textarea id="offerMessage" name="message" class="fx-input fx-textarea" maxlength="2000" placeholder="Describe your scope, timeline, and what is included."></textarea>
             </div>
-            <div class="field" style="grid-column: 1 / -1;">
-              <button id="submitOfferBtn" type="submit" class="btn primary">Submit Offer</button>
+            <div class="field fx-field marketplace-field-span">
+              <button id="submitOfferBtn" type="submit" class="btn primary fx-btn fx-btn--primary">Submit Offer</button>
             </div>
           </form>
           <div id="offerStatus" class="status-line"></div>
-          <div id="offerSummary" class="offer-summary"></div>
+          <div id="offerSummary" class="offer-summary fx-min-w-0"></div>
         </section>
       </section>
     </section>
@@ -757,9 +168,18 @@
         return String(value || "unknown").replace(/_/g, " ").replace(/\b\w/g, function(ch) { return ch.toUpperCase(); });
       }
 
+      function oppBadgeFxTone(raw) {
+        const s = String(raw || "").toLowerCase();
+        if (/cancel|close|expired|reject|void/.test(s)) return "fx-badge--neutral";
+        if (/match|accept|convert|won|complete/.test(s)) return "fx-badge--success";
+        if (/pending|review|draft|hold/.test(s)) return "fx-badge--warning";
+        if (/open/.test(s)) return "fx-badge--info";
+        return "fx-badge--neutral";
+      }
+
       function badgeClass(status) {
-        const s = String(status || "").toLowerCase();
-        return "badge " + (s || "open");
+        const s = String(status || "").toLowerCase().replace(/[^a-z0-9_]/g, "") || "open";
+        return "badge fx-badge " + oppBadgeFxTone(status) + " badge-" + s;
       }
 
       function money(value) {
@@ -844,7 +264,9 @@
         els.countPill.textContent = String(list.length);
 
         if (!list.length) {
-          els.opportunitiesList.innerHTML = '<div class="empty"><strong>No opportunities found</strong>Try clearing filters or check again later.</div>';
+          els.opportunitiesList.innerHTML =
+            '<div class="empty fx-empty"><strong class="fx-empty__title">No opportunities found</strong>' +
+            '<span class="fx-empty__text">Try clearing filters or check again later.</span></div>';
           return;
         }
 
@@ -870,9 +292,11 @@
         if (!item) {
           els.detailTitle.textContent = "Select an opportunity";
           els.detailMeta.textContent = "Request details and offer form will appear here.";
-          els.detailBadge.className = "badge";
+          els.detailBadge.className = "badge fx-badge fx-badge--neutral";
           els.detailBadge.textContent = "N/A";
-          els.detailGrid.innerHTML = '<div class="empty"><strong>No opportunity selected</strong>Pick an item from the opportunities list.</div>';
+          els.detailGrid.innerHTML =
+            '<div class="empty fx-empty"><strong class="fx-empty__title">No opportunity selected</strong>' +
+            '<span class="fx-empty__text">Pick an item from the opportunities list.</span></div>';
           setOfferFormEnabled(false);
           renderOfferSummary();
           return;

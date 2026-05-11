@@ -2,774 +2,37 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>FairLinx | Marketplace Dashboard</title>
   <link rel="stylesheet" href="/css/brand.css">
   <link rel="stylesheet" href="/app-shell.css">
   <link rel="stylesheet" href="/ui-cleanup.css">
-
-  <style>
-    * {
-      box-sizing: border-box;
-    }
-
-    :root {
-      --fx-page: #f6f8f7;
-      --fx-card: rgba(255, 255, 255, 0.94);
-      --fx-card-strong: #ffffff;
-      --fx-text: var(--brand-black, #10231c);
-      --fx-muted: #60786e;
-      --fx-soft: #eef5f1;
-      --fx-line: var(--brand-border, #dbe7e0);
-      --fx-orange: var(--brand-primary, #e64a00);
-      --fx-orange-dark: var(--brand-primary-hover, #c83f00);
-      --fx-green: #166534;
-      --fx-red: #b42318;
-      --fx-shadow: 0 18px 42px rgba(16, 24, 40, 0.08);
-      --fx-shadow-soft: 0 10px 26px rgba(16, 24, 40, 0.06);
-      --fx-radius: 22px;
-    }
-
-    body {
-      margin: 0;
-      min-height: 100vh;
-      font-family: Inter, Arial, sans-serif;
-      color: var(--fx-text);
-      background:
-        radial-gradient(circle at top left, rgba(255, 90, 0, 0.14), transparent 26%),
-        radial-gradient(circle at top right, rgba(22, 101, 52, 0.08), transparent 24%),
-        linear-gradient(180deg, #fbfcfb 0%, var(--fx-page) 42%, #f3f6f4 100%);
-      padding: 30px;
-    }
-
-    .page {
-      width: min(1420px, 100%);
-      margin: 0 auto;
-      display: grid;
-      gap: 22px;
-    }
-
-    .hero {
-      display: grid;
-      grid-template-columns: minmax(0, 1fr) auto;
-      align-items: center;
-      gap: 18px;
-    }
-
-    .hero h1 {
-      margin: 0 0 8px;
-      color: var(--fx-orange);
-      font-size: clamp(30px, 4vw, 44px);
-      line-height: 1;
-      letter-spacing: -0.04em;
-      font-weight: 950;
-    }
-
-    .hero p {
-      margin: 0;
-      max-width: 760px;
-      color: #44675a;
-      line-height: 1.6;
-      font-size: 16px;
-      font-weight: 600;
-    }
-
-    .hero-actions {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      flex-wrap: wrap;
-    }
-
-    .btn {
-      min-height: 46px;
-      border: none;
-      border-radius: 14px;
-      padding: 11px 16px;
-      font: inherit;
-      font-size: 14px;
-      font-weight: 900;
-      cursor: pointer;
-      transition: transform .15s ease, box-shadow .15s ease, opacity .15s ease, border-color .15s ease;
-    }
-
-    .btn:hover:not(:disabled) {
-      transform: translateY(-1px);
-    }
-
-    .btn.primary {
-      background: linear-gradient(135deg, var(--fx-orange), var(--fx-orange-dark));
-      color: #fff;
-      box-shadow: 0 14px 28px rgba(230, 74, 0, 0.18);
-      text-decoration: none;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .btn.secondary {
-      background: rgba(255, 255, 255, 0.92);
-      color: var(--fx-orange);
-      border: 1px solid var(--fx-line);
-      box-shadow: var(--fx-shadow-soft);
-      text-decoration: none;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 9px;
-    }
-
-    .btn.secondary::before {
-      content: "↻";
-      font-size: 18px;
-      line-height: 1;
-    }
-
-    .btn:disabled {
-      opacity: 0.62;
-      cursor: not-allowed;
-      transform: none;
-      box-shadow: none;
-    }
-
-    .status-line {
-      min-height: 52px;
-      width: fit-content;
-      max-width: 100%;
-      display: inline-flex;
-      align-items: center;
-      gap: 10px;
-      color: #4f6d62;
-      background: rgba(255, 255, 255, 0.9);
-      border: 1px solid var(--fx-line);
-      border-radius: 15px;
-      padding: 12px 16px;
-      font-size: 13px;
-      font-weight: 850;
-      box-shadow: var(--fx-shadow-soft);
-    }
-
-    .status-line:empty {
-      display: none;
-    }
-
-    .status-line::before {
-      content: "●";
-      color: #94a3b8;
-      font-size: 10px;
-    }
-
-    .status-line.error {
-      color: var(--fx-red);
-      background: #fff7f5;
-      border-color: #fed7d2;
-    }
-
-    .status-line.error::before {
-      color: var(--fx-red);
-    }
-
-    .status-line.ok {
-      color: var(--fx-green);
-      background: #f0fdf4;
-      border-color: #bbf7d0;
-    }
-
-    .status-line.ok::before {
-      color: var(--fx-green);
-    }
-
-    .flow-strip {
-      order: 10;
-      display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-      gap: 0;
-      overflow: hidden;
-      background: var(--fx-card);
-      border: 1px solid var(--fx-line);
-      border-radius: var(--fx-radius);
-      box-shadow: var(--fx-shadow);
-      padding: 14px;
-    }
-
-    .flow-step {
-      position: relative;
-      min-height: 88px;
-      display: grid;
-      align-content: center;
-      gap: 6px;
-      padding: 14px 18px 14px 72px;
-      color: var(--fx-text);
-      font-size: 15px;
-      font-weight: 950;
-      text-align: left;
-    }
-
-    .flow-step::before {
-      position: absolute;
-      left: 16px;
-      top: 50%;
-      width: 42px;
-      height: 42px;
-      transform: translateY(-50%);
-      display: grid;
-      place-items: center;
-      border-radius: 15px;
-      background: #f1f8f3;
-      color: var(--fx-green);
-      font-size: 22px;
-      box-shadow: inset 0 0 0 1px rgba(22, 101, 52, 0.08);
-    }
-
-    .flow-step:nth-child(1)::before { content: "⌕"; }
-    .flow-step:nth-child(2)::before { content: "▣"; color: var(--fx-orange); background: #fff3ec; }
-    .flow-step:nth-child(3)::before { content: "✓"; }
-    .flow-step:nth-child(4)::before { content: "▤"; color: var(--fx-orange); background: #fff3ec; }
-
-    .flow-step::after {
-      content: "→";
-      position: absolute;
-      right: -8px;
-      top: 50%;
-      transform: translateY(-50%);
-      color: #687872;
-      font-size: 24px;
-      z-index: 2;
-    }
-
-    .flow-step:last-child::after {
-      display: none;
-    }
-
-    .kpi-grid {
-      display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-      gap: 18px;
-    }
-
-    .kpi-card {
-      position: relative;
-      min-height: 132px;
-      background: var(--fx-card);
-      border: 1px solid var(--fx-line);
-      border-radius: var(--fx-radius);
-      box-shadow: var(--fx-shadow);
-      padding: 22px 22px 22px 98px;
-      display: grid;
-      align-content: center;
-      gap: 8px;
-      overflow: hidden;
-    }
-
-    .kpi-card::before {
-      content: "□";
-      position: absolute;
-      left: 22px;
-      top: 50%;
-      transform: translateY(-50%);
-      width: 58px;
-      height: 58px;
-      display: grid;
-      place-items: center;
-      border-radius: 20px;
-      background: #eff8f1;
-      color: var(--fx-green);
-      font-size: 28px;
-      font-weight: 900;
-    }
-
-    .kpi-card:nth-child(1)::before { content: "▤"; }
-    .kpi-card:nth-child(2)::before { content: "▣"; color: var(--fx-orange); background: #fff3ec; }
-    .kpi-card:nth-child(3)::before { content: "◎"; }
-    .kpi-card:nth-child(4)::before { content: "✓"; color: var(--fx-orange); background: #fff3ec; }
-
-    .kpi-label {
-      color: #31564a;
-      font-size: 15px;
-      font-weight: 850;
-      letter-spacing: -0.01em;
-    }
-
-    .kpi-value {
-      margin: 0;
-      color: #0d2b22;
-      font-size: 42px;
-      line-height: 1;
-      font-weight: 950;
-      font-variant-numeric: tabular-nums;
-      letter-spacing: -0.04em;
-    }
-
-    .layout {
-      display: grid;
-      grid-template-columns: 1.1fr 1.05fr;
-      gap: 22px;
-      align-items: stretch;
-    }
-
-    .panel {
-      background: var(--fx-card);
-      border: 1px solid var(--fx-line);
-      border-radius: var(--fx-radius);
-      box-shadow: var(--fx-shadow);
-      padding: 24px;
-      display: grid;
-      gap: 18px;
-    }
-
-    .panel h2 {
-      position: relative;
-      margin: 0;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      color: var(--fx-orange);
-      font-size: 24px;
-      line-height: 1.15;
-      letter-spacing: -0.03em;
-      font-weight: 950;
-    }
-
-    .panel h2::before {
-      content: "◇";
-      width: 30px;
-      height: 30px;
-      display: inline-grid;
-      place-items: center;
-      color: var(--fx-orange);
-      font-size: 22px;
-    }
-
-    .subhead {
-      margin: -10px 0 4px;
-      color: #557267;
-      font-size: 14px;
-      line-height: 1.55;
-      font-weight: 600;
-    }
-
-    .quick-links {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 10px;
-    }
-
-    .quick-link {
-      position: relative;
-      min-height: 86px;
-      border: 1px solid var(--fx-line);
-      border-radius: 15px;
-      background: rgba(255, 255, 255, 0.78);
-      padding: 16px 52px 16px 90px;
-      text-decoration: none;
-      display: grid;
-      align-content: center;
-      gap: 6px;
-      transition: transform .15s ease, border-color .15s ease, box-shadow .15s ease, background .15s ease;
-    }
-
-    .quick-link::before {
-      content: "⌕";
-      position: absolute;
-      left: 18px;
-      top: 50%;
-      transform: translateY(-50%);
-      width: 52px;
-      height: 52px;
-      display: grid;
-      place-items: center;
-      border-radius: 17px;
-      background: #fff3ec;
-      color: var(--fx-orange);
-      font-size: 27px;
-    }
-
-    .quick-link:nth-child(2)::before {
-      content: "▱";
-      background: #eff8f1;
-      color: var(--fx-green);
-    }
-
-    .quick-link:nth-child(3)::before {
-      content: "□";
-    }
-
-    .quick-link:nth-child(4)::before {
-      content: "♙";
-      background: #eff8f1;
-      color: var(--fx-green);
-    }
-
-    .quick-link::after {
-      content: "›";
-      position: absolute;
-      right: 18px;
-      top: 50%;
-      transform: translateY(-50%);
-      color: #4b5c55;
-      font-size: 32px;
-      line-height: 1;
-    }
-
-    .quick-link strong {
-      color: #101828;
-      font-size: 16px;
-      font-weight: 950;
-    }
-
-    .quick-link span {
-      color: #475467;
-      font-size: 13px;
-      line-height: 1.45;
-      font-weight: 600;
-    }
-
-    .quick-link:hover {
-      transform: translateY(-1px);
-      border-color: rgba(230, 74, 0, 0.38);
-      background: #fffdfb;
-      box-shadow: var(--fx-shadow-soft);
-    }
-
-    .marketplace-kpi-grid {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 10px;
-    }
-
-    .marketplace-kpi {
-      position: relative;
-      min-height: 76px;
-      border: 1px solid var(--fx-line);
-      border-radius: 15px;
-      background: rgba(255, 255, 255, 0.78);
-      padding: 14px 18px 14px 82px;
-      display: grid;
-      grid-template-columns: minmax(0, 1fr) auto;
-      align-items: center;
-      gap: 12px;
-    }
-
-    .marketplace-kpi::before {
-      content: "◎";
-      position: absolute;
-      left: 16px;
-      top: 50%;
-      transform: translateY(-50%);
-      width: 48px;
-      height: 48px;
-      display: grid;
-      place-items: center;
-      border-radius: 16px;
-      background: #eff8f1;
-      color: var(--fx-green);
-      font-size: 24px;
-    }
-
-    .marketplace-kpi:nth-child(2)::before,
-    .marketplace-kpi:nth-child(4)::before {
-      color: var(--fx-orange);
-      background: #fff3ec;
-    }
-
-    .marketplace-kpi:nth-child(2)::before { content: "✓"; }
-    .marketplace-kpi:nth-child(3)::before { content: "◉"; }
-    .marketplace-kpi:nth-child(4)::before { content: "▤"; }
-
-    .marketplace-kpi span {
-      font-size: 15px;
-      color: #18392f;
-      letter-spacing: -0.01em;
-      font-weight: 850;
-    }
-
-    .marketplace-kpi strong {
-      color: var(--fx-green);
-      font-size: 32px;
-      line-height: 1;
-      font-weight: 950;
-      font-variant-numeric: tabular-nums;
-      letter-spacing: -0.04em;
-    }
-
-    .marketplace-kpi:nth-child(2) strong,
-    .marketplace-kpi:nth-child(4) strong {
-      color: var(--fx-orange);
-    }
-
-    .activity-list {
-      min-height: 316px;
-      display: grid;
-      gap: 10px;
-      align-content: start;
-    }
-
-    .activity-item {
-      border: 1px solid var(--fx-line);
-      border-radius: 15px;
-      background: rgba(255, 255, 255, 0.8);
-      padding: 14px;
-      display: grid;
-      gap: 8px;
-    }
-
-    .activity-top {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
-
-    .activity-title {
-      margin: 0;
-      color: #101828;
-      font-size: 15px;
-      font-weight: 900;
-      overflow-wrap: anywhere;
-    }
-
-    .activity-meta {
-      margin: 0;
-      color: #637b71;
-      font-size: 12px;
-      line-height: 1.45;
-      font-weight: 650;
-    }
-
-    .badge {
-      border-radius: 999px;
-      padding: 5px 10px;
-      font-size: 10px;
-      font-weight: 950;
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
-      background: #eef7f2;
-      color: var(--fx-green);
-      white-space: nowrap;
-    }
-
-    .badge.open,
-    .badge.pending {
-      background: #fff7ed;
-      color: #c2410c;
-    }
-
-    .badge.matched,
-    .badge.accepted {
-      background: #ecfdf3;
-      color: #027a48;
-    }
-
-    .badge.closed,
-    .badge.cancelled,
-    .badge.rejected {
-      background: #fef2f2;
-      color: var(--fx-red);
-    }
-
-    .empty {
-      min-height: 280px;
-      border: 1px dashed #cfded6;
-      border-radius: 18px;
-      background:
-        radial-gradient(circle at center 34%, rgba(22, 101, 52, 0.08), transparent 22%),
-        linear-gradient(180deg, rgba(255,255,255,0.86), rgba(248,251,249,0.88));
-      padding: 30px;
-      color: #657d73;
-      font-size: 14px;
-      line-height: 1.6;
-      text-align: center;
-      display: grid;
-      place-items: center;
-      align-content: center;
-      gap: 10px;
-    }
-
-    .empty::before {
-      content: "▱";
-      width: 84px;
-      height: 62px;
-      display: grid;
-      place-items: center;
-      border: 3px solid #9aaaa3;
-      border-radius: 18px;
-      color: #9aaaa3;
-      font-size: 32px;
-      background: rgba(255,255,255,0.76);
-      box-shadow: 12px 12px 0 rgba(16, 24, 40, 0.04);
-      margin-bottom: 4px;
-    }
-
-    .empty strong {
-      display: block;
-      margin-bottom: 0;
-      color: #101828;
-      font-size: 22px;
-      letter-spacing: -0.03em;
-      font-weight: 950;
-    }
-
-    @media (min-width: 1081px) {
-      .page > .panel {
-        grid-column: auto;
-      }
-
-      .page {
-        grid-template-columns: 1.05fr 1fr 1.08fr;
-      }
-
-      .hero,
-      .status-line,
-      .flow-strip,
-      .kpi-grid {
-        grid-column: 1 / -1;
-      }
-
-      .layout {
-        grid-column: 1 / 3;
-        grid-template-columns: 1fr 1fr;
-      }
-
-      .page > .panel {
-        grid-column: 3 / 4;
-        grid-row: 5 / 6;
-      }
-    }
-
-    @media (max-width: 1080px) {
-      body {
-        padding: 22px;
-      }
-
-      .hero {
-        grid-template-columns: 1fr;
-      }
-
-      .hero-actions {
-        justify-content: flex-start;
-      }
-
-      .kpi-grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-      }
-
-      .layout {
-        grid-template-columns: 1fr;
-      }
-
-      .flow-strip {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-      }
-
-      .flow-step:nth-child(2)::after {
-        display: none;
-      }
-    }
-
-    @media (max-width: 720px) {
-      body {
-        padding: 14px;
-      }
-
-      .page {
-        gap: 16px;
-      }
-
-      .hero h1 {
-        font-size: 30px;
-      }
-
-      .hero-actions {
-        width: 100%;
-        display: grid;
-        grid-template-columns: 1fr;
-      }
-
-      .hero-actions .btn {
-        width: 100%;
-      }
-
-      .status-line {
-        width: 100%;
-      }
-
-      .kpi-grid,
-      .marketplace-kpi-grid,
-      .flow-strip {
-        grid-template-columns: 1fr;
-      }
-
-      .kpi-card {
-        min-height: 116px;
-        padding-left: 88px;
-      }
-
-      .kpi-card::before {
-        left: 18px;
-        width: 54px;
-        height: 54px;
-      }
-
-      .panel {
-        padding: 18px;
-        border-radius: 18px;
-      }
-
-      .quick-link {
-        padding-left: 78px;
-      }
-
-      .quick-link::before {
-        left: 14px;
-        width: 48px;
-        height: 48px;
-      }
-
-      .marketplace-kpi {
-        grid-template-columns: 1fr;
-        align-items: start;
-        padding-right: 16px;
-      }
-
-      .marketplace-kpi strong {
-        font-size: 30px;
-      }
-
-      .flow-step {
-        padding-left: 72px;
-      }
-
-      .flow-step::after {
-        display: none;
-      }
-    }
-  </style>
+  
 </head>
 
-<body>
-  <main class="page fx-layout-public">
+<body class="phase2-internal marketplace-dashboard-ds-page">
+  <main class="page fx-layout-public marketplace-ds fx-page fx-page--dense fx-min-w-0">
     <header class="hero fx-hero fx-section-head">
-      <div>
-        <h1>Marketplace Dashboard</h1>
-        <p>Unified command center for requests, offers, matching activity, and performance KPIs.</p>
+      <div class="fx-stack fx-min-w-0">
+        <h1 class="fx-h3">Marketplace Dashboard</h1>
+        <p class="fx-caption">Unified command center for requests, offers, matching activity, and performance KPIs.</p>
       </div>
 
-      <div class="hero-actions">
+      <div class="hero-actions fx-cluster">
         <button id="refreshBtn" class="btn secondary fx-btn fx-btn--secondary" type="button">Refresh</button>
       </div>
     </header>
 
-    <div id="globalStatus" class="status-line" role="status" aria-live="polite"></div>
+    <div id="globalStatus" class="status-line fx-alert" role="status" aria-live="polite"></div>
 
-    <section class="flow-strip" aria-label="Marketplace lifecycle">
+    <section class="flow-strip fx-cluster" aria-label="Marketplace lifecycle">
       <div class="flow-step">Opportunity</div>
       <div class="flow-step">Submit Offer</div>
       <div class="flow-step">Accepted Offer</div>
       <div class="flow-step">Convert to Estimate</div>
     </section>
 
-    <section class="kpi-grid" aria-label="Marketplace KPI cards">
+    <section class="kpi-grid fx-min-w-0" aria-label="Marketplace KPI cards">
       <article class="kpi-card fx-stat">
         <span class="kpi-label">Active Requests</span>
         <p id="kpiActiveRequests" class="kpi-value">0</p>
@@ -791,18 +54,18 @@
       </article>
     </section>
 
-    <section id="marketplaceTrustSnapshot" class="panel fx-card" style="display:none;" aria-label="Trust snapshot">
-      <h2>Trust &amp; reputation snapshot</h2>
-      <p class="subhead">Pulled from your company analytics when signed in as staff.</p>
-      <div id="marketplaceTrustSnapshotBody" class="marketplace-kpi-grid"></div>
+    <section id="marketplaceTrustSnapshot" class="panel fx-card fx-min-w-0" style="display:none;" aria-label="Trust snapshot">
+      <h2 class="fx-h3">Trust &amp; reputation snapshot</h2>
+      <p class="subhead fx-caption">Pulled from your company analytics when signed in as staff.</p>
+      <div id="marketplaceTrustSnapshotBody" class="marketplace-kpi-grid fx-min-w-0"></div>
     </section>
 
-    <section class="layout">
+    <section class="layout fx-min-w-0">
       <article class="panel fx-card">
-        <h2>Quick Links</h2>
-        <p class="subhead">Jump into key marketplace workflows by role.</p>
+        <h2 class="fx-h3">Quick Links</h2>
+        <p class="subhead fx-caption">Jump into key marketplace workflows by role.</p>
 
-        <div class="quick-links">
+        <div class="quick-links fx-min-w-0">
           <a class="quick-link" href="/marketplace-opportunities.html">
             <strong>Opportunities</strong>
             <span>Browse opportunities and submit offers.</span>
@@ -826,10 +89,10 @@
       </article>
 
       <article class="panel fx-card">
-        <h2>Marketplace KPIs</h2>
-        <p class="subhead">Snapshot derived from your current marketplace data.</p>
+        <h2 class="fx-h3">Marketplace KPIs</h2>
+        <p class="subhead fx-caption">Snapshot derived from your current marketplace data.</p>
 
-        <div class="marketplace-kpi-grid">
+        <div class="marketplace-kpi-grid fx-min-w-0">
           <div class="marketplace-kpi">
             <span>Request Match Rate</span>
             <strong id="kpiMatchRate">0%</strong>
@@ -853,10 +116,10 @@
       </article>
     </section>
 
-    <section class="panel fx-card">
-      <h2>Latest Activity</h2>
-      <p class="subhead">Recent request/offer events from available marketplace endpoints.</p>
-      <div id="activityList" class="activity-list"></div>
+    <section class="panel fx-card fx-min-w-0">
+      <h2 class="fx-h3">Latest Activity</h2>
+      <p class="subhead fx-caption">Recent request/offer events from available marketplace endpoints.</p>
+      <div id="activityList" class="activity-list fx-min-w-0"></div>
     </section>
   </main>
 
@@ -888,7 +151,7 @@
 
       function setStatus(message, type) {
         els.globalStatus.textContent = message || "";
-        els.globalStatus.className = "status-line" + (type ? " " + type : "");
+        els.globalStatus.className = "status-line fx-alert" + (type ? " " + type : "");
       }
 
       function esc(value) {

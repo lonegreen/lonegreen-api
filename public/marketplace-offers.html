@@ -2,617 +2,23 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>FairLinx | Marketplace Offers Inbox</title>
   <link rel="stylesheet" href="/css/brand.css">
   <link rel="stylesheet" href="/app-shell.css">
   <link rel="stylesheet" href="/ui-cleanup.css">
-
-  <style>
-    :root {
-      --brand-primary: #FF5A00;
-      --brand-primary-hover: #E64A00;
-      --brand-primary-light: #FF8A33;
-      --brand-black: #111111;
-      --brand-dark: #2B2B2B;
-      --brand-border: #D9D9D9;
-      --brand-bg: #F5F5F5;
-      --brand-white: #FFFFFF;
-      --brand-success: #16A34A;
-      --brand-warning: #F59E0B;
-      --brand-error: #DC2626;
-
-      --page-max: 1280px;
-      --radius-xl: 24px;
-      --radius-lg: 18px;
-      --radius-md: 14px;
-      --radius-pill: 999px;
-      --shadow-soft: 0 18px 45px rgba(17, 17, 17, 0.08);
-      --shadow-card: 0 12px 30px rgba(17, 17, 17, 0.06);
-      --shadow-orange: 0 14px 28px rgba(255, 90, 0, 0.18);
-    }
-
-    * {
-      box-sizing: border-box;
-    }
-
-    html {
-      -webkit-text-size-adjust: 100%;
-      scroll-behavior: smooth;
-    }
-
-    body {
-      margin: 0;
-      min-height: 100vh;
-      font-family: Inter, Arial, sans-serif;
-      color: var(--brand-black);
-      background:
-        radial-gradient(circle at 8% 0%, rgba(255, 90, 0, 0.14), transparent 30%),
-        radial-gradient(circle at 96% 12%, rgba(22, 163, 74, 0.08), transparent 26%),
-        linear-gradient(180deg, #ffffff 0%, #f8f8f8 220px, #f5f5f5 100%);
-      padding: 26px;
-    }
-
-    body::before {
-      content: "";
-      position: fixed;
-      inset: 0;
-      pointer-events: none;
-      background-image:
-        linear-gradient(rgba(17, 17, 17, 0.035) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(17, 17, 17, 0.035) 1px, transparent 1px);
-      background-size: 44px 44px;
-      mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.38), transparent 70%);
-    }
-
-    .page {
-      width: min(var(--page-max), 100%);
-      margin: 0 auto;
-      display: grid;
-      gap: 18px;
-      position: relative;
-      z-index: 1;
-    }
-
-    .hero {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-end;
-      gap: 18px;
-      flex-wrap: wrap;
-      padding: 10px 0 2px;
-    }
-
-    .hero h1 {
-      margin: 0 0 8px;
-      color: var(--brand-primary);
-      font-size: clamp(34px, 4vw, 48px);
-      line-height: 1;
-      letter-spacing: -0.065em;
-      font-weight: 950;
-    }
-
-    .hero h1::before {
-      content: "▱";
-      display: inline-flex;
-      margin-right: 12px;
-      color: var(--brand-primary);
-      font-weight: 900;
-      transform: translateY(-2px);
-    }
-
-    .hero p {
-      margin: 0;
-      color: #5f6368;
-      line-height: 1.55;
-      font-size: 15px;
-      max-width: 660px;
-    }
-
-    .hero-actions {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-      align-items: center;
-    }
-
-    .btn {
-      border: none;
-      border-radius: var(--radius-md);
-      padding: 11px 15px;
-      min-height: 42px;
-      font: inherit;
-      font-size: 14px;
-      font-weight: 900;
-      cursor: pointer;
-      text-decoration: none;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      transition:
-        transform 160ms ease,
-        box-shadow 160ms ease,
-        opacity 160ms ease,
-        border-color 160ms ease,
-        background 160ms ease,
-        color 160ms ease;
-    }
-
-    .btn:hover:not(:disabled) {
-      transform: translateY(-1px);
-    }
-
-    .btn.primary {
-      background: linear-gradient(135deg, var(--brand-primary), var(--brand-primary-hover));
-      color: #fff;
-      box-shadow: var(--shadow-orange);
-    }
-
-    .btn.secondary {
-      background: rgba(255, 255, 255, 0.92);
-      color: var(--brand-black);
-      border: 1px solid rgba(217, 217, 217, 0.95);
-      box-shadow: 0 10px 22px rgba(17, 17, 17, 0.05);
-    }
-
-    .btn.secondary:hover:not(:disabled) {
-      color: var(--brand-primary);
-      border-color: rgba(255, 90, 0, 0.42);
-      background: #fff7f2;
-      box-shadow: 0 14px 28px rgba(255, 90, 0, 0.11);
-    }
-
-    .btn:disabled {
-      opacity: 0.62;
-      cursor: not-allowed;
-      transform: none;
-      box-shadow: none;
-    }
-
-    .status-line {
-      min-height: 22px;
-      display: flex;
-      align-items: center;
-      color: #5f6368;
-      font-size: 13px;
-      font-weight: 800;
-      padding-left: 2px;
-    }
-
-    .status-line::before {
-      content: "";
-      width: 9px;
-      height: 9px;
-      margin-right: 8px;
-      border-radius: 999px;
-      background: var(--brand-border);
-      box-shadow: 0 0 0 5px rgba(217, 217, 217, 0.28);
-    }
-
-    .status-line.error {
-      color: #b42318;
-    }
-
-    .status-line.error::before {
-      background: var(--brand-error);
-      box-shadow: 0 0 0 5px rgba(220, 38, 38, 0.12);
-    }
-
-    .status-line.ok {
-      color: #166534;
-    }
-
-    .status-line.ok::before {
-      background: var(--brand-success);
-      box-shadow: 0 0 0 5px rgba(22, 163, 74, 0.13);
-    }
-
-    .flow-strip {
-      display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-      gap: 10px;
-      padding: 12px;
-      background: rgba(255, 255, 255, 0.92);
-      border: 1px solid rgba(217, 217, 217, 0.88);
-      border-radius: var(--radius-xl);
-      box-shadow: var(--shadow-card);
-    }
-
-    .flow-step {
-      border: 1px solid rgba(217, 217, 217, 0.9);
-      border-radius: 16px;
-      background:
-        linear-gradient(180deg, #ffffff, #fbfbfb);
-      padding: 13px 12px;
-      color: var(--brand-black);
-      font-size: 13px;
-      font-weight: 950;
-      text-align: center;
-      position: relative;
-      overflow: hidden;
-    }
-
-    .flow-step::before {
-      content: "";
-      display: block;
-      width: 30px;
-      height: 30px;
-      margin: 0 auto 8px;
-      border-radius: 999px;
-      background:
-        radial-gradient(circle, #ffffff 32%, transparent 34%),
-        linear-gradient(135deg, var(--brand-primary), var(--brand-primary-light));
-      box-shadow: 0 10px 20px rgba(255, 90, 0, 0.16);
-    }
-
-    .layout {
-      display: grid;
-      grid-template-columns: 420px 1fr;
-      gap: 18px;
-      align-items: start;
-    }
-
-    .panel {
-      background: rgba(255, 255, 255, 0.96);
-      border: 1px solid rgba(217, 217, 217, 0.92);
-      border-radius: var(--radius-xl);
-      box-shadow: var(--shadow-soft);
-      padding: 18px;
-      display: grid;
-      gap: 14px;
-      min-width: 0;
-    }
-
-    .panel h2 {
-      margin: 0;
-      color: var(--brand-black);
-      font-size: 21px;
-      line-height: 1.2;
-      letter-spacing: -0.035em;
-      font-weight: 950;
-    }
-
-    .subhead {
-      margin: 0;
-      color: #6b7280;
-      font-size: 13px;
-      line-height: 1.45;
-    }
-
-    .list-head {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
-
-    .pill {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      border-radius: var(--radius-pill);
-      min-width: 42px;
-      padding: 7px 11px;
-      font-size: 11px;
-      font-weight: 950;
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
-      background: #fff7ed;
-      color: var(--brand-primary);
-      border: 1px solid rgba(255, 90, 0, 0.24);
-    }
-
-    .offers-list {
-      display: grid;
-      gap: 10px;
-      max-height: 680px;
-      overflow: auto;
-      padding-right: 3px;
-      scrollbar-width: thin;
-      scrollbar-color: rgba(255, 90, 0, 0.45) transparent;
-    }
-
-    .offers-list::-webkit-scrollbar {
-      width: 8px;
-    }
-
-    .offers-list::-webkit-scrollbar-thumb {
-      background: rgba(255, 90, 0, 0.32);
-      border-radius: 999px;
-    }
-
-    .offer-item {
-      border: 1px solid rgba(217, 217, 217, 0.9);
-      border-radius: 18px;
-      background:
-        linear-gradient(180deg, #ffffff, #fbfbfb);
-      padding: 14px;
-      display: grid;
-      gap: 8px;
-      text-align: left;
-      width: 100%;
-      cursor: pointer;
-      box-shadow: 0 8px 18px rgba(17, 17, 17, 0.035);
-      transition:
-        transform 160ms ease,
-        border-color 160ms ease,
-        box-shadow 160ms ease,
-        background 160ms ease;
-    }
-
-    .offer-item:hover {
-      transform: translateY(-1px);
-      border-color: rgba(255, 90, 0, 0.36);
-      box-shadow: 0 14px 28px rgba(255, 90, 0, 0.10);
-    }
-
-    .offer-item.active {
-      border-color: rgba(255, 90, 0, 0.72);
-      background:
-        linear-gradient(90deg, rgba(255, 90, 0, 0.09), rgba(255, 255, 255, 0.98) 34%),
-        #ffffff;
-      box-shadow: 0 18px 34px rgba(255, 90, 0, 0.12);
-      position: relative;
-    }
-
-    .offer-item.active::before {
-      content: "";
-      position: absolute;
-      left: -1px;
-      top: 14px;
-      bottom: 14px;
-      width: 4px;
-      border-radius: 999px;
-      background: var(--brand-primary);
-    }
-
-    .offer-top {
-      display: flex;
-      justify-content: space-between;
-      gap: 10px;
-      align-items: flex-start;
-    }
-
-    .offer-title {
-      margin: 0;
-      color: var(--brand-black);
-      font-size: 15px;
-      line-height: 1.25;
-      font-weight: 950;
-      overflow-wrap: anywhere;
-    }
-
-    .offer-meta {
-      margin: 0;
-      color: #5f6368;
-      font-size: 12px;
-      line-height: 1.45;
-      font-weight: 650;
-    }
-
-    .badge {
-      border-radius: var(--radius-pill);
-      padding: 5px 10px;
-      font-size: 10px;
-      font-weight: 950;
-      text-transform: uppercase;
-      letter-spacing: 0.035em;
-      background: var(--brand-bg);
-      color: var(--brand-primary);
-      white-space: nowrap;
-      border: 1px solid rgba(217, 217, 217, 0.8);
-    }
-
-    .badge.pending,
-    .badge.open {
-      background: #fff7ed;
-      color: #c2410c;
-      border-color: #fed7aa;
-    }
-
-    .badge.accepted,
-    .badge.matched {
-      background: #ecfdf3;
-      color: #027a48;
-      border-color: #bbf7d0;
-    }
-
-    .badge.rejected,
-    .badge.closed,
-    .badge.cancelled {
-      background: #fef2f2;
-      color: #b42318;
-      border-color: #fecaca;
-    }
-
-    .detail-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      gap: 12px;
-      flex-wrap: wrap;
-      padding-bottom: 6px;
-      border-bottom: 1px solid rgba(217, 217, 217, 0.76);
-    }
-
-    .detail-title {
-      margin: 0;
-      color: var(--brand-black);
-      font-size: clamp(24px, 3vw, 32px);
-      line-height: 1.08;
-      letter-spacing: -0.055em;
-      overflow-wrap: anywhere;
-      font-weight: 950;
-    }
-
-    .detail-meta {
-      margin: 6px 0 0;
-      color: #5f6368;
-      font-size: 13px;
-      font-weight: 700;
-    }
-
-    .detail-grid {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 12px;
-    }
-
-    .detail-card {
-      border: 1px solid rgba(217, 217, 217, 0.9);
-      background:
-        linear-gradient(180deg, #ffffff, #fbfbfb);
-      border-radius: 18px;
-      padding: 14px;
-      display: grid;
-      gap: 7px;
-      min-width: 0;
-      box-shadow: 0 8px 18px rgba(17, 17, 17, 0.035);
-    }
-
-    .detail-card span {
-      font-size: 11px;
-      text-transform: uppercase;
-      letter-spacing: 0.055em;
-      color: #6b7280;
-      font-weight: 950;
-    }
-
-    .detail-card strong {
-      font-size: 14px;
-      color: var(--brand-black);
-      word-break: break-word;
-      line-height: 1.45;
-    }
-
-    .section {
-      border: 1px solid rgba(217, 217, 217, 0.9);
-      border-radius: 20px;
-      padding: 16px;
-      background:
-        linear-gradient(180deg, #ffffff, #fcfcfc);
-      display: grid;
-      gap: 10px;
-      box-shadow: 0 8px 18px rgba(17, 17, 17, 0.035);
-    }
-
-    .section h3 {
-      margin: 0;
-      color: var(--brand-black);
-      font-size: 18px;
-      letter-spacing: -0.025em;
-      font-weight: 950;
-    }
-
-    .summary {
-      margin: 0;
-      color: #4b5563;
-      line-height: 1.65;
-      font-size: 14px;
-      white-space: pre-wrap;
-      overflow-wrap: anywhere;
-    }
-
-    .empty {
-      border: 1px dashed rgba(217, 217, 217, 1);
-      border-radius: 18px;
-      background:
-        linear-gradient(180deg, #ffffff, #fafafa);
-      padding: 18px;
-      color: #6b7280;
-      font-size: 13px;
-      line-height: 1.5;
-      text-align: center;
-    }
-
-    .empty strong {
-      display: block;
-      margin-bottom: 6px;
-      color: var(--brand-black);
-      font-size: 15px;
-      font-weight: 950;
-    }
-
-    a:focus-visible,
-    button:focus-visible {
-      outline: 3px solid rgba(255, 90, 0, 0.28);
-      outline-offset: 3px;
-    }
-
-    @media (max-width: 1080px) {
-      .layout {
-        grid-template-columns: 1fr;
-      }
-
-      .offers-list {
-        max-height: 380px;
-      }
-
-      .detail-grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-      }
-    }
-
-    @media (max-width: 720px) {
-      body {
-        padding: 14px;
-      }
-
-      .hero {
-        align-items: stretch;
-      }
-
-      .hero h1 {
-        font-size: 31px;
-      }
-
-      .hero-actions {
-        width: 100%;
-        display: grid;
-        grid-template-columns: 1fr;
-      }
-
-      .hero-actions .btn {
-        width: 100%;
-      }
-
-      .detail-grid,
-      .flow-strip {
-        grid-template-columns: 1fr;
-      }
-
-      .panel {
-        padding: 14px;
-        border-radius: 20px;
-      }
-
-      .detail-header {
-        display: grid;
-      }
-    }
-
-    @media (prefers-reduced-motion: reduce) {
-      *,
-      *::before,
-      *::after {
-        transition: none !important;
-        scroll-behavior: auto !important;
-      }
-    }
-  </style>
+  
 </head>
 
-<body>
-  <main class="page fx-layout-public">
+<body class="phase2-internal marketplace-offers-ds-page">
+  <main class="page fx-layout-public marketplace-ds fx-page fx-page--dense fx-min-w-0">
     <header class="hero fx-hero fx-section-head">
-      <div>
-        <h1>Marketplace Offers Inbox</h1>
-        <p>Track submitted offers, watch for accepted offers, then convert accepted marketplace work to an estimate.</p>
+      <div class="fx-stack fx-min-w-0">
+        <h1 class="fx-h3">Marketplace Offers Inbox</h1>
+        <p class="fx-caption">Track submitted offers, watch for accepted offers, then convert accepted marketplace work to an estimate.</p>
       </div>
 
-      <div class="hero-actions fx-cta-row">
+      <div class="hero-actions fx-cta-row fx-cluster">
         <a class="btn secondary fx-btn fx-btn--secondary" href="/marketplace-dashboard.html">Marketplace Dashboard</a>
         <a class="btn secondary fx-btn fx-btn--secondary" href="/marketplace-opportunities.html">New Opportunities</a>
         <a class="btn secondary fx-btn fx-btn--secondary" href="/messages.html">Messages</a>
@@ -622,48 +28,48 @@
 
     <div id="globalStatus" class="status-line" role="status" aria-live="polite"></div>
 
-    <section id="offersTrustSnapshot" class="panel fx-card" style="display:none;margin-bottom:16px;" aria-label="Trust snapshot">
-      <div class="list-head">
-        <h2>Your company trust</h2>
+    <section id="offersTrustSnapshot" class="panel fx-card fx-min-w-0" style="display:none;margin-bottom:16px;" aria-label="Trust snapshot">
+      <div class="list-head fx-cluster">
+        <h2 class="fx-h3">Your company trust</h2>
       </div>
-      <p class="subhead">Scores from analytics when available (staff token).</p>
-      <div id="offersTrustSnapshotBody" class="detail-grid"></div>
+      <p class="subhead fx-caption">Scores from analytics when available (staff token).</p>
+      <div id="offersTrustSnapshotBody" class="detail-grid fx-min-w-0"></div>
     </section>
 
-    <section class="flow-strip" aria-label="Marketplace lifecycle">
+    <section class="flow-strip fx-cluster" aria-label="Marketplace lifecycle">
       <div class="flow-step">Opportunity</div>
       <div class="flow-step">Submit Offer</div>
       <div class="flow-step">Accepted Offer</div>
       <div class="flow-step">Convert to Estimate</div>
     </section>
 
-    <section class="layout">
-      <aside class="panel fx-card">
-        <div class="list-head">
-          <h2>Submitted Offers</h2>
-          <span id="offerCountPill" class="pill">0</span>
+    <section class="layout fx-min-w-0">
+      <aside class="panel fx-card fx-min-w-0">
+        <div class="list-head fx-cluster">
+          <h2 class="fx-h3">Submitted Offers</h2>
+          <span id="offerCountPill" class="pill fx-badge fx-badge--info">0</span>
         </div>
 
-        <p class="subhead">Offers are ordered by latest submission time.</p>
+        <p class="subhead fx-caption">Offers are ordered by latest submission time.</p>
 
-        <div id="offersList" class="offers-list"></div>
+        <div id="offersList" class="offers-list fx-min-w-0"></div>
       </aside>
 
-      <section class="panel fx-card">
-        <div class="detail-header">
-          <div>
-            <h2 id="detailTitle" class="detail-title">Select an offer</h2>
-            <p id="detailMeta" class="detail-meta">Offer and request context will appear here.</p>
+      <section class="panel fx-card fx-min-w-0">
+        <div class="detail-header fx-cluster">
+          <div class="fx-stack fx-min-w-0">
+            <h2 id="detailTitle" class="detail-title fx-h3">Select an offer</h2>
+            <p id="detailMeta" class="detail-meta fx-caption">Offer and request context will appear here.</p>
           </div>
 
-          <span id="detailBadge" class="badge fx-badge">N/A</span>
+          <span id="detailBadge" class="badge fx-badge fx-badge--neutral">N/A</span>
         </div>
 
-        <div id="detailGrid" class="detail-grid"></div>
+        <div id="detailGrid" class="detail-grid fx-min-w-0"></div>
 
-        <section class="section">
-          <h3>Customer Request Summary</h3>
-          <p id="requestSummary" class="summary">Select an offer to view the request summary. Accepted offers are ready to convert from the marketplace request workflow.</p>
+        <section class="section fx-min-w-0">
+          <h3 class="fx-h3">Customer Request Summary</h3>
+          <p id="requestSummary" class="summary fx-caption">Select an offer to view the request summary. Accepted offers are ready to convert from the marketplace request workflow.</p>
         </section>
       </section>
     </section>
@@ -721,9 +127,19 @@
         return String(value || "unknown").replace(/_/g, " ").replace(/\b\w/g, function(ch) { return ch.toUpperCase(); });
       }
 
+      function offerBadgeFxTone(raw) {
+        const s = String(raw || "").toLowerCase();
+        if (s.indexOf("accept") !== -1) return "fx-badge--success";
+        if (s.indexOf("reject") !== -1 || s.indexOf("declin") !== -1) return "fx-badge--danger";
+        if (s.indexOf("pending") !== -1 || s.indexOf("submit") !== -1) return "fx-badge--warning";
+        if (s.indexOf("withdraw") !== -1 || s.indexOf("expired") !== -1) return "fx-badge--neutral";
+        return "fx-badge--info";
+      }
+
       function badgeClass(status) {
-        const s = String(status || "").toLowerCase();
-        return "badge " + (s || "pending");
+        const raw = String(status || "pending").toLowerCase();
+        const slug = raw.replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "") || "pending";
+        return "badge " + slug + " fx-badge " + offerBadgeFxTone(raw);
       }
 
       function money(value) {
@@ -799,7 +215,9 @@
         els.offerCountPill.textContent = String(state.offers.length);
 
         if (!state.offers.length) {
-          els.offersList.innerHTML = '<div class="empty fx-empty"><strong>No offers submitted</strong>Your marketplace offers will show here once submitted.</div>';
+          els.offersList.innerHTML =
+            '<div class="empty fx-empty"><strong class="fx-empty__title">No offers submitted</strong>' +
+            '<span class="fx-empty__text">Your marketplace offers will show here once submitted.</span></div>';
           return;
         }
 
@@ -809,7 +227,7 @@
             '<button type="button" class="offer-item' + active + '" data-offer-id="' + esc(item.id) + '">' +
               '<div class="offer-top">' +
                 '<p class="offer-title">' + esc(requestTitle(item)) + '</p>' +
-                '<span class="' + badgeClass(item.status) + ' fx-badge">' + esc(prettyStatus(item.status)) + "</span>" +
+                '<span class="' + badgeClass(item.status) + '">' + esc(prettyStatus(item.status)) + "</span>" +
               "</div>" +
               '<p class="offer-meta">Offer Price: ' + esc(money(item.price)) + "</p>" +
               '<p class="offer-meta">Estimated Date: ' + esc(fmtDateOnly(item.estimated_start_date)) + "</p>" +
@@ -824,9 +242,11 @@
         if (!item) {
           els.detailTitle.textContent = "Select an offer";
           els.detailMeta.textContent = "Offer and request context will appear here.";
-          els.detailBadge.className = "badge";
+          els.detailBadge.className = "badge fx-badge fx-badge--neutral";
           els.detailBadge.textContent = "N/A";
-          els.detailGrid.innerHTML = '<div class="empty fx-empty" style="grid-column:1 / -1;"><strong>No offer selected</strong>Select an offer from the inbox list.</div>';
+          els.detailGrid.innerHTML =
+            '<div class="empty fx-empty" style="grid-column:1 / -1;"><strong class="fx-empty__title">No offer selected</strong>' +
+            '<span class="fx-empty__text">Select an offer from the inbox list.</span></div>';
           els.requestSummary.textContent = "Select an offer to view the request summary.";
           return;
         }
